@@ -1,0 +1,270 @@
+package com.example.tacomamusicplayer.activity
+
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.appcompat.app.AppCompatActivity
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaBrowser
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.example.tacomamusicplayer.service.MusicService
+import com.example.tacomamusicplayer.SongModel
+import com.example.tacomamusicplayer.databinding.ActivityMainBinding
+import com.example.tacomamusicplayer.util.AppPermissionUtil
+import com.google.common.util.concurrent.MoreExecutors
+
+//TODO I NEED TO FIGURE OUT THE MEDIACONTROLLER, MEDIASESSION, AND UI of my app...
+//TODO Figure out the session and controller first, then work on UI
+//TODO work on making the UI pleasant
+//TODO work on the statistics aspect
+//TODO work on editing songs maybe? //This is probably not going to work...
+
+//TODO I can just have a button for refreshing the data / music...
+
+//TODO I need to make smart goals...
+
+//TODO I should use a ViewPager for determining what music to play / creating a playlist...
+
+
+class MainActivity : AppCompatActivity() {
+
+    val TAG: String = MainActivity::class.java.simpleName
+    private val permissionManager = AppPermissionUtil()
+
+    private var mediaController: MediaController? = null
+    private var mediaBrowser: MediaBrowser? = null
+
+    var psychoMediaItem: MediaItem? = null
+
+
+    private lateinit var binding: ActivityMainBinding
+
+    @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate: ")
+
+        // Setup view binding in the project
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        //determine if I have the permission to read media
+        if(!permissionManager.verifyReadMediaAudioPermission(this))
+            //request permission
+            permissionManager.requestReadMediaAudioPermission(this)
+        else {
+            //else I already have the permission, query audio from storage
+            //TODO move this to the service...
+            readAudioFromStorage()
+            readAlbumsFromStorage()
+        }
+
+
+        //check permission for notification [notification is needed for foreground service]
+        if(!permissionManager.verifyNotificationPermission(this))
+            permissionManager.requestNotificationPermission(this)
+        else {
+            val intent = Intent(this, MusicService::class.java)
+            this.startForegroundService(intent)
+
+            val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
+
+            //TODO why is this code in the else clause? this should be moved out?
+            val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+            controllerFuture.addListener({
+                //MediaController is available here with ControllerFuture.get()
+                mediaController = controllerFuture.get()
+                binding.playerView.player = mediaController
+                binding.playerView.showController() //why is this an unstable api!!!
+//               binding.playerViewTwo.player = mediaController
+
+                mediaController
+
+            }, MoreExecutors.directExecutor())
+
+            val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
+            browserFuture.addListener({
+                mediaBrowser = browserFuture.get()
+                val rootFuture = mediaBrowser!!.getLibraryRoot(null)
+                rootFuture.addListener({
+                    //root node MediaItem is available here with rootFuture.get().value
+                    val rootNode = rootFuture.get().value
+                    val b = "what what"
+
+                    val childrenFuture =
+                        mediaBrowser!!.getChildren(rootNode!!.mediaId, 0, Int.MAX_VALUE, null)
+
+                    childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
+                        val children = childrenFuture.get().value
+                        val c = "wu huh?"
+                    }, MoreExecutors.directExecutor())
+                }, MoreExecutors.directExecutor())
+            }, MoreExecutors.directExecutor())
+        }
+
+        //should this happen in the service?
+
+        //psychoMediaItem = MediaItem.fromUri("/storage/emulated/0/Music/01 Psycho CEO.mp3") //This actually works huh!? works if music is not in folder...
+        //psychoMediaItem = MediaItem.fromUri("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download/01 Psycho CEO.mp3") //This actually works huh!?
+        psychoMediaItem = MediaItem.fromUri("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download/14 Keep Pushin.mp3") //This actually works huh!?
+        val yeatAlbum = MediaItem.fromUri("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download") //This actually works huh!?
+
+        val rootItem = MediaItem.Builder()
+            .setMediaId("nodeRoot")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(false)
+                    .setIsPlayable(false)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                    .setTitle("musicapprootwhichisnotvisibletocontrollers")
+                    .build()
+            )
+            .build()
+
+        val musicFolder = MediaItem.Builder()
+            .setUri("/storage/emulated/0/Music/")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(true)
+                    .setIsPlayable(false)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                    .build()
+            )
+            .build()
+
+        val meta = MediaMetadataRetriever()
+        meta.setDataSource("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download/14 Keep Pushin.mp3")
+        val duration = meta.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) //good for manually getting information from uri...
+
+        //MediaMetadata.Builder().populate()
+
+        ///storage/emulated/0/Music/01 Psycho CEO.mp3
+        binding.psychoButton.setOnClickListener {
+            mediaController?.setMediaItem(psychoMediaItem!!)
+        }
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    private fun readAlbumsFromStorage() {
+        //this shouldn't be done all the time, should happen in background?
+
+        Log.d(TAG, "readAlbumsFromStorage: ")
+
+        val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+
+        val projection = arrayOf(
+            MediaStore.Audio.Albums.ALBUM,
+            MediaStore.Audio.Albums.ARTIST,
+        )
+
+
+        this.contentResolver.query(
+            uriExternal,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            while(cursor.moveToNext()) {
+                Log.d(TAG, "readAlbumsFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}") //setMedia items here?
+            }
+        }
+
+        Log.d(TAG, "readAlbumsFromStorage: done searching!")
+
+    }
+
+    //TODO -> do this operation in the service on background thread...
+    private fun readAudioFromStorage(): List<SongModel> {
+
+        //this shouldn't be done all the time, should happen in background?
+
+        Log.d(TAG, "readAudioFromStorage: ")
+        val tempAudioList: MutableList<SongModel> = ArrayList()
+
+        val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val uriInternal: Uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+
+        val projection = arrayOf(
+            MediaStore.Audio.AudioColumns.DATA,
+            MediaStore.Audio.AudioColumns.TITLE,
+            MediaStore.Audio.AudioColumns.ALBUM,
+            MediaStore.Audio.ArtistColumns.ARTIST,
+            MediaStore.Audio.AudioColumns.DURATION,
+            MediaStore.Audio.AudioColumns.TRACK,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Albums.ALBUM,
+            MediaStore.Audio.Albums.ARTIST,
+        )
+
+        val rootItem = MediaItem.Builder()
+            .setMediaId("nodeRoot")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(false)
+                    .setIsPlayable(false)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                    .setTitle("musicapprootwhichisnotvisibletocontrollers")
+                    .build()
+            )
+            .build()
+
+        this.contentResolver.query(
+            uriExternal,
+            projection,
+            null,
+            null, 
+            null
+        )?.use { cursor ->
+            while(cursor.moveToNext()) {
+                Log.d(TAG, "readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
+            }
+        }
+
+        Log.d(TAG, "readAudioFromStorage: done searching!")
+
+        return tempAudioList
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        Log.d(TAG, "onRequestPermissionsResult: requestCode=$requestCode")
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if(requestCode == AppPermissionUtil.notificationRequestCode) {
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                val intent = Intent(this, MusicService::class.java)
+                this.startForegroundService(intent)
+            }
+        }
+
+        else if(requestCode == AppPermissionUtil.readMediaAudioRequestCode) {
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                readAudioFromStorage()
+            }
+        }
+
+
+    }
+
+
+}
