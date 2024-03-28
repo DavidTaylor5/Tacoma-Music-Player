@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
@@ -18,6 +19,7 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.SongModel
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -32,11 +34,8 @@ class MusicService : MediaLibraryService() {
     lateinit var player: ExoPlayer
     private var session: MediaLibrarySession? = null
 
-    val musicMap: HashMap<String, List<MediaItem>> = HashMap()
-
-    //val availableAlbums: List<String>
-
-//    private var sessionToken: MediaSession. = null
+    //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
+    val albumToSongMap: HashMap<MediaItem, List<MediaItem>> = HashMap()
 
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
@@ -50,8 +49,8 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
-    val child1 = MediaItem.Builder()
-        .setMediaId("childNodeOne")
+    val playlistItem = MediaItem.Builder()
+        .setMediaId("playlistItem")
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setIsBrowsable(false)
@@ -62,8 +61,8 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
-    val child2 = MediaItem.Builder()
-        .setMediaId("childNodeTwo")
+    val libraryItem = MediaItem.Builder()
+        .setMediaId("libraryItem")
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setIsBrowsable(false)
@@ -85,6 +84,10 @@ class MusicService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<MediaItem>> {
+
+            //Because I'm getting the library root, I should actually start querying the songs in the background
+            queryMusicOnDevice()
+
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
 
@@ -100,37 +103,18 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
                     when(parentId) {
-                        "root" -> listOf(child1, child2)
+                        "root" -> listOf(playlistItem, libraryItem)
                         else -> listOf()
                     },
                     params
                 )
             )
-
-            return super.onGetChildren(session, browser, parentId, page, pageSize, params)
         }
 
         //TODO each album is a media item
         //TODO there is a root node media item
         //TODO each song is also a media item
         //I will use a hasmap which will have <albumNodeId>, list<MediaItem>
-
-        override fun onConnect(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo
-        ): MediaSession.ConnectionResult {
-
-//            val sessionCommands =
-//                ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-//                    .add(onCustomCommand())
-
-//            val playerCommands =
-//                ConnectionResult.DEFAULT_PLAYER_COMMANDS
-
-
-
-            return super.onConnect(session, controller)
-        }
     }
 
     private val serviceIOScope = CoroutineScope(Dispatchers.IO)
@@ -140,11 +124,101 @@ class MusicService : MediaLibraryService() {
     private lateinit var _notificationBuilder: Notification.Builder
     lateinit var channel: NotificationChannel
 
-    private fun queryMusic() {
+    /**
+     * Query Music in background coroutine, I don't want this causing stuttering on UI.
+     */
+    private fun queryMusicOnDevice() {
         serviceIOScope.launch {
-            //scan music
-            //add to tracklist...
+            readAudioFromStorage()
         }
+    }
+
+    /**
+     * Use MedaiStore to query music in android/music file. Requires permission \[permission...]
+     */
+    private fun readAudioFromStorage(): List<SongModel> {
+
+        Log.d(TAG, "readAudioFromStorage: ")
+        val tempAudioList: MutableList<SongModel> = ArrayList()
+
+        val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+
+        val projection: Array<String?> = arrayOf(
+            MediaStore.Audio.AudioColumns.DATA, // 0 -> url
+            MediaStore.Audio.AudioColumns.TITLE, //song title
+            MediaStore.Audio.AudioColumns.ALBUM, //album title
+            MediaStore.Audio.ArtistColumns.ARTIST, //artist
+            MediaStore.Audio.AudioColumns.DURATION, //duration in  milliseconds
+            MediaStore.Audio.AudioColumns.TRACK, // track # in album
+            MediaStore.Audio.Media.ALBUM_ID, //what the hell is this?
+            MediaStore.Audio.Albums.ALBUM, //album name again
+            MediaStore.Audio.Albums.ARTIST, //artist again...
+        )
+
+        //TODO I should also be able to registerContentObserver for contentResolver...
+
+        this.contentResolver.query(
+            uriExternal,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            while(cursor.moveToNext()) {
+                Log.d(TAG, "readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
+
+                //TODO createSongMediaItem
+                //TODO createAlbumMediaItem
+
+                //TODO Start making the albumToSongMap
+            }
+        }
+
+        Log.d(TAG, "readAudioFromStorage: done searching!")
+
+        return tempAudioList
+    }
+
+    private fun createSongMediaItem(
+        songTitle: String = "UNKONWN SONG TITLE",
+        albumTitle: String = "UNKNOWN ALBUM",
+        artist: String = "UNKNOWN ARTIST",
+        songDuration: Long,
+        trackNumber: Int
+        ): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId("libraryItem")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setTitle("musicapprootwhichisnotvisibletocontrollers")
+                    .setAlbumTitle("ALBUM TITLE")
+                    .setArtist("ARTIST")
+                    .setDescription("Description I'll just pass song length here... TODO calculate song minutes and seconds")
+                    .setTrackNumber(0)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .build()
+            )
+            .build()
+    }
+
+    private fun createAlbumMediaItem(
+        albumTitle: String = "UNKNOWN ALBUM",
+        artist: String = "UNKNOWN ARTIST",
+        ): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId("libraryItem")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(true)
+                    .setIsPlayable(false)
+                    .setAlbumArtist("ARTIST")
+                    .setAlbumTitle("ALBUM TITLE")
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
+                    .build()
+            )
+            .build()
     }
 
 
@@ -220,8 +294,6 @@ class MusicService : MediaLibraryService() {
         super.onCreate()
         initializePlayer()
         initializeMediaSession()
-
-        //setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build()) //THIS IS ONLY FOR CUSTOM NOTIFICATIONS requires unstable api
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

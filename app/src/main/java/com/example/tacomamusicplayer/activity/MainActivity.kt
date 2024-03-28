@@ -34,6 +34,8 @@ import com.google.common.util.concurrent.MoreExecutors
 
 //TODO I should use a ViewPager for determining what music to play / creating a playlist...
 
+//TODO when does service know when it can query MediaStore?
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -63,8 +65,9 @@ class MainActivity : AppCompatActivity() {
         else {
             //else I already have the permission, query audio from storage
             //TODO move this to the service...
-            readAudioFromStorage()
-            readAlbumsFromStorage()
+            //readAudioFromStorage()
+            //readAlbumsFromStorage()
+            //TODO without this permission -> show some UI that music player won't work without permission...
         }
 
 
@@ -101,6 +104,9 @@ class MainActivity : AppCompatActivity() {
 
                     val childrenFuture =
                         mediaBrowser!!.getChildren(rootNode!!.mediaId, 0, Int.MAX_VALUE, null)
+                    //I guess I can do this when I want the children? Don't allow browsing files If I don't have permission...
+
+                    //I should actually have room database here //if I have queried before and have permission, I can just start the music...
 
                     childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                         val children = childrenFuture.get().value
@@ -117,48 +123,15 @@ class MainActivity : AppCompatActivity() {
         psychoMediaItem = MediaItem.fromUri("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download/14 Keep Pushin.mp3") //This actually works huh!?
         val yeatAlbum = MediaItem.fromUri("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download") //This actually works huh!?
 
-        val rootItem = MediaItem.Builder()
-            .setMediaId("nodeRoot")
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(false)
-                    .setIsPlayable(false)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                    .setTitle("musicapprootwhichisnotvisibletocontrollers")
-                    .build()
-            )
-            .build()
-
-        val musicFolder = MediaItem.Builder()
-            .setUri("/storage/emulated/0/Music/")
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(true)
-                    .setIsPlayable(false)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                    .build()
-            )
-            .build()
-
         val meta = MediaMetadataRetriever()
         meta.setDataSource("/storage/emulated/0/Music/YEAT/2093 (P3) Digital Download/14 Keep Pushin.mp3")
         val duration = meta.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION) //good for manually getting information from uri...
-
-        //MediaMetadata.Builder().populate()
 
         ///storage/emulated/0/Music/01 Psycho CEO.mp3
         binding.psychoButton.setOnClickListener {
             mediaController?.setMediaItem(psychoMediaItem!!)
         }
 
-    }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
     }
 
     private fun readAlbumsFromStorage() {
@@ -213,18 +186,6 @@ class MainActivity : AppCompatActivity() {
             MediaStore.Audio.Albums.ARTIST,
         )
 
-        val rootItem = MediaItem.Builder()
-            .setMediaId("nodeRoot")
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(false)
-                    .setIsPlayable(false)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                    .setTitle("musicapprootwhichisnotvisibletocontrollers")
-                    .build()
-            )
-            .build()
-
         this.contentResolver.query(
             uriExternal,
             projection,
@@ -259,7 +220,9 @@ class MainActivity : AppCompatActivity() {
 
         else if(requestCode == AppPermissionUtil.readMediaAudioRequestCode) {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                readAudioFromStorage()
+                //readAudioFromStorage()
+            } else {
+                //TODO show permission error UI!
             }
         }
 
