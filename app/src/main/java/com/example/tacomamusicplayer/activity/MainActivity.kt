@@ -132,6 +132,11 @@ class MainActivity : AppCompatActivity() {
             mediaController?.setMediaItem(psychoMediaItem!!)
         }
 
+        binding.navigateChooseMusic.setOnClickListener {
+            val intent = Intent(this, ChooseMusicActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 
     private fun readAlbumsFromStorage() {
