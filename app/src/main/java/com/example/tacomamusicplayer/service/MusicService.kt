@@ -4,9 +4,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.app.ServiceCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -247,31 +251,31 @@ class MusicService : MediaLibraryService() {
 
         try {
 
-//            //starting in foreground with notification...
-//            channel = NotificationChannel(notificationChannelId, "David_Channel", NotificationManager.IMPORTANCE_DEFAULT)
-//            channel.description = "david's channel for foreground service notification"
-//
-//            val notificationManager = this.getSystemService(NotificationManager::class.java)
-//            notificationManager.createNotificationChannel(channel)
-//
-//            _notificationBuilder = Notification.Builder(this, notificationChannelId)
-//            _notificationBuilder.setContentTitle("MUSIC FOREGROUND SERVICE")
-//            _notificationBuilder.setContentText("Artist - Album")
-//            _notificationBuilder.setSmallIcon(R.drawable.baseline_play_arrow_24)
-//            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
+            //starting in foreground with notification...
+            channel = NotificationChannel(notificationChannelId, "David_Channel", NotificationManager.IMPORTANCE_DEFAULT)
+            channel.description = "david's channel for foreground service notification"
+
+            val notificationManager = this.getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+
+            _notificationBuilder = Notification.Builder(this, notificationChannelId)
+            _notificationBuilder.setContentTitle("MUSIC FOREGROUND SERVICE")
+            _notificationBuilder.setContentText("Artist - Album")
+            _notificationBuilder.setSmallIcon(R.drawable.baseline_play_arrow_24)
+            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
 //                .addAction(R.drawable.baseline_play_arrow_24, "back", backPendingIntent)
 //            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
 //                .addAction(R.drawable.baseline_play_arrow_24, "back", playPausePendingIntent)
 //            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
 //                .addAction(R.drawable.baseline_play_arrow_24, "back", skipPendingIntent)
-//            _notificationBuilder.setStyle(Notification.MediaStyle())
-//
-//            ServiceCompat.startForeground(
-//                this,
-//                100,
-//                _notificationBuilder.build(),
-//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
-//            )
+            _notificationBuilder.setStyle(Notification.MediaStyle())
+
+            ServiceCompat.startForeground(
+                this,
+                100,
+                _notificationBuilder.build(),
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
+            )
 
         } catch (e: Exception) {
             Log.d(TAG, "onStartCommand: error=$e")
@@ -289,9 +293,19 @@ class MusicService : MediaLibraryService() {
 
     }
 
-
     override fun onCreate() {
         super.onCreate()
+
+//        Log.d(TAG, "onCreate: STARTING FOREGROUND!")
+//        ServiceCompat.startForeground(
+//            this,
+//            100,
+//            _notificationBuilder.build(),
+//            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
+//        )
+
+
+
         initializePlayer()
         initializeMediaSession()
     }
@@ -328,7 +342,7 @@ class MusicService : MediaLibraryService() {
         player = playerBuilder.build()
 
         player.addListener(PlayerEventListener())
-        player.playWhenReady = true //this can be a variable
+        player.playWhenReady = false //this can be a variable
 
         val pkgName = applicationContext.packageName
         //path for local file...
@@ -338,11 +352,11 @@ class MusicService : MediaLibraryService() {
         //player.setMediaItem(MediaItem.fromUri(path))
         player.setMediaItems(listOf(MediaItem.fromUri(path), MediaItem.fromUri(path), MediaItem.fromUri(path)))
         player.prepare()
-        player.play()
+        //player.play()
         return true
     }
 
-    fun initializeMediaSession(): Boolean {
+    private fun initializeMediaSession(): Boolean {
 
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
             .build()

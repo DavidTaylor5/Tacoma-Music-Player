@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CustomNavigationControl">
+        <attr name="playlistImg" format="reference"/>
+        <attr name="albumBrowseImg" format="reference"/>
+        <attr name="albumImg" format="reference"/>
+    </declare-styleable>
+
+</resources>

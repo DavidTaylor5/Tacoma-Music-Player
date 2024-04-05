@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/section_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="#4CAF50"
+        android:gravity="center"
+        android:textColor="@color/white"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/display_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="600dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/section_title"
+        app:layout_constraintBottom_toTopOf="@id/navigation_control"
+        />
+
+<!--    TODO MOVE THIS TO ACTIVITY RATHER THAN FRAGMENT-->
+    <com.example.tacomamusicplayer.view.CustomNavigationControl
+        android:id="@+id/navigation_control"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:playlistImg="@drawable/playlist_icon"
+        app:albumBrowseImg="@drawable/browse_album_icon"
+        app:albumImg="@drawable/album_icon"
+        />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
