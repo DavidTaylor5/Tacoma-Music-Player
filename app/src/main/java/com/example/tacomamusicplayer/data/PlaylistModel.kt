@@ -1,4 +1,4 @@
 package com.example.tacomamusicplayer.data
 
-class AlbumModel {
+class PlaylistModel {
 }
