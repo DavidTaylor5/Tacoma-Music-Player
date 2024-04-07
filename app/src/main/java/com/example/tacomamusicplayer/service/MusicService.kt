@@ -2,15 +2,10 @@ package com.example.tacomamusicplayer.service
 
 import android.app.Notification
 import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import androidx.core.app.ServiceCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -23,7 +18,7 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.SongModel
+import com.example.tacomamusicplayer.data.SongModel
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -225,87 +220,8 @@ class MusicService : MediaLibraryService() {
             .build()
     }
 
-
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-//        //TODO MOVE THIS LATER...
-//        val ACTION_BACK = "action_back"
-//        val ACTION_PLAY_PAUSE = "action_play_pause"
-//        val ACTION_SKIP = "action_skip"
-//        val backIntent = Intent(this, NotificationControlReceiver::class.java).apply {
-//            action = ACTION_BACK
-//            putExtra("extraID", 11)
-//        }
-//        val backPendingIntent : PendingIntent = PendingIntent.getBroadcast(this, 0, backIntent, PendingIntent.FLAG_IMMUTABLE)
-//        val playPauseIntent = Intent(this, NotificationControlReceiver::class.java).apply {
-//            action = ACTION_PLAY_PAUSE
-//            putExtra("extraID", 22)
-//        }
-//        val playPausePendingIntent : PendingIntent = PendingIntent.getBroadcast(this, 0, playPauseIntent, PendingIntent.FLAG_IMMUTABLE)
-//        val skipIntent = Intent(this, NotificationControlReceiver::class.java).apply {
-//            action = ACTION_SKIP
-//            putExtra("extraID", 33)
-//        }
-//        val skipPendingIntent : PendingIntent = PendingIntent.getBroadcast(this, 0, skipIntent, PendingIntent.FLAG_IMMUTABLE)
-
-        try {
-
-            //starting in foreground with notification...
-            channel = NotificationChannel(notificationChannelId, "David_Channel", NotificationManager.IMPORTANCE_DEFAULT)
-            channel.description = "david's channel for foreground service notification"
-
-            val notificationManager = this.getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-
-            _notificationBuilder = Notification.Builder(this, notificationChannelId)
-            _notificationBuilder.setContentTitle("MUSIC FOREGROUND SERVICE")
-            _notificationBuilder.setContentText("Artist - Album")
-            _notificationBuilder.setSmallIcon(R.drawable.baseline_play_arrow_24)
-            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
-//                .addAction(R.drawable.baseline_play_arrow_24, "back", backPendingIntent)
-//            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
-//                .addAction(R.drawable.baseline_play_arrow_24, "back", playPausePendingIntent)
-//            _notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.baseline_play_arrow_24))
-//                .addAction(R.drawable.baseline_play_arrow_24, "back", skipPendingIntent)
-            _notificationBuilder.setStyle(Notification.MediaStyle())
-
-            ServiceCompat.startForeground(
-                this,
-                100,
-                _notificationBuilder.build(),
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
-            )
-
-        } catch (e: Exception) {
-            Log.d(TAG, "onStartCommand: error=$e")
-        }
-
-        return super.onStartCommand(intent, flags, startId)
-    }
-
-    private fun updateNotification() {
-        val notificationManager = this.getSystemService(NotificationManager::class.java)
-        _notificationBuilder.setContentTitle("new Title")
-        _notificationBuilder.setContentText("new text")
-
-        notificationManager.notify(100, _notificationBuilder.build())
-
-    }
-
     override fun onCreate() {
         super.onCreate()
-
-//        Log.d(TAG, "onCreate: STARTING FOREGROUND!")
-//        ServiceCompat.startForeground(
-//            this,
-//            100,
-//            _notificationBuilder.build(),
-//            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0
-//        )
-
-
-
         initializePlayer()
         initializeMediaSession()
     }
@@ -330,8 +246,7 @@ class MusicService : MediaLibraryService() {
         return session
     }
 
-    //NOW I JUST NEED TO MOVE THIS TO A SERVICE...
-    fun initializePlayer(): Boolean {
+    private fun initializePlayer(): Boolean {
 
         var playerBuilder: ExoPlayer.Builder = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this))
@@ -348,8 +263,7 @@ class MusicService : MediaLibraryService() {
         //path for local file...
         val path = Uri.parse("android.resource://" + pkgName + "/" + R.raw.earth)
 
-
-        //player.setMediaItem(MediaItem.fromUri(path))
+        //Test code that sets media Items with three of the same -> ui should choose music instead.
         player.setMediaItems(listOf(MediaItem.fromUri(path), MediaItem.fromUri(path), MediaItem.fromUri(path)))
         player.prepare()
         //player.play()
@@ -357,11 +271,8 @@ class MusicService : MediaLibraryService() {
     }
 
     private fun initializeMediaSession(): Boolean {
-
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
             .build()
-
-        //bruh moment the auto session notification didn't show up because I didn't actually add the session...
         addSession(session!!)
 
         return true

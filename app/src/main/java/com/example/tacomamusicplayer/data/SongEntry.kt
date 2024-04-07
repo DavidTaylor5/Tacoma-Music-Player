@@ -1,4 +1,4 @@
-package com.example.wrappedmp3.data
+package com.example.tacomamusicplayer.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

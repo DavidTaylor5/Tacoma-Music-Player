@@ -21,8 +21,6 @@ class ChooseMusicActivity: FragmentActivity() {
 
     private lateinit var binding: ActivityChooseMusicBinding
 
-    //TODO add a viewpager2 and have a fragment with album adapter, song adapter, playlist adapter...
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
