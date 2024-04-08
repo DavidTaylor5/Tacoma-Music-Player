@@ -16,6 +16,7 @@ import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.databinding.ActivityMainBinding
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 
 //TODO I NEED TO FIGURE OUT THE MEDIACONTROLLER, MEDIASESSION, AND UI of my app...
@@ -124,6 +125,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        UtilImpl.hideNavigationUI(window)
     }
 
     override fun onRequestPermissionsResult(

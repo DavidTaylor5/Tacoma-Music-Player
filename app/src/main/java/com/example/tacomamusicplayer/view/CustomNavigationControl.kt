@@ -48,5 +48,15 @@ class CustomNavigationControl @JvmOverloads constructor(
 
     }
 
+    fun setPlaylistButtonOnClick(callback: () -> Unit) {
+        playlistButton.setOnClickListener { callback() }
+    }
 
+    fun setBrowseAlbumButtonOnClick(callback: () -> Unit) {
+        browseAlbumButton.setOnClickListener { callback() }
+    }
+
+    fun setAlbumButtonOnClick(callback: () -> Unit) {
+        albumButton.setOnClickListener { callback() }
+    }
 }
