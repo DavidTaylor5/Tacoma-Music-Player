@@ -10,9 +10,9 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="#4CAF50"
+        android:background="@color/accent"
         android:gravity="center"
-        android:textColor="@color/white"/>
+        android:textColor="@color/text_icons"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/display_recyclerview"
@@ -20,20 +20,6 @@
         android:layout_height="600dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/section_title"
-        app:layout_constraintBottom_toTopOf="@id/navigation_control"
         />
-
-<!--    TODO MOVE THIS TO ACTIVITY RATHER THAN FRAGMENT-->
-    <com.example.tacomamusicplayer.view.CustomNavigationControl
-        android:id="@+id/navigation_control"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:playlistImg="@drawable/playlist_icon"
-        app:albumBrowseImg="@drawable/browse_album_icon"
-        app:albumImg="@drawable/album_icon"
-        />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
