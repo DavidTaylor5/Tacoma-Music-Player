@@ -1,11 +1,12 @@
 package com.example.tacomamusicplayer.activity
 
+import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.view.View
+import android.view.WindowInsets
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
-import com.example.tacomamusicplayer.AlbumAdapter
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.ActivityChooseMusicBinding
 
@@ -21,6 +22,7 @@ class ChooseMusicActivity: FragmentActivity() {
 
     private lateinit var binding: ActivityChooseMusicBinding
 
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -42,6 +44,24 @@ class ChooseMusicActivity: FragmentActivity() {
         } else {
             //otherwise, select the pervious step
             viewPager.currentItem = viewPager.currentItem - 1
+        }
+    }
+
+    /**
+     * Call this function onResume(). Removes the navigation bar from the bottom of the screen.
+     */
+    fun hideNavigationUI() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.hide(WindowInsets.Type.navigationBars())
+        } else {
+            val flags = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+
+            window.decorView.systemUiVisibility = flags
         }
     }
 
