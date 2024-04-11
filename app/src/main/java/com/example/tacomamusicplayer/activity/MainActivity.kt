@@ -17,7 +17,9 @@ import com.example.tacomamusicplayer.databinding.ActivityMainBinding
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
+import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import com.google.common.util.concurrent.MoreExecutors
+import androidx.activity.viewModels
 
 //TODO I NEED TO FIGURE OUT THE MEDIACONTROLLER, MEDIASESSION, AND UI of my app...
 //TODO Figure out the session and controller first, then work on UI
@@ -33,6 +35,9 @@ import com.google.common.util.concurrent.MoreExecutors
 
 //TODO when does service know when it can query MediaStore?
 
+//TODO learn data store and implement in the project
+//TODO figure out a system for querying songs [should this be it's own utility...]
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,6 +49,8 @@ class MainActivity : AppCompatActivity() {
 
     var psychoMediaItem: MediaItem? = null
 
+    val viewModel: MainViewModel by viewModels()
+
 
     private lateinit var binding: ActivityMainBinding
 
@@ -54,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         // Setup view binding in the project
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        viewModel.doSomething()
 
         //determine if I have the permission to read media
         if(!permissionManager.verifyReadMediaAudioPermission(this))

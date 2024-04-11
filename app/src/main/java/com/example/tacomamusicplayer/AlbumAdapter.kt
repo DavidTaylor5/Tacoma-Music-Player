@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 //I'm going to use this recyclerview to show all available albums...
-class AlbumAdapter(private val dataSet: Array<String>): RecyclerView.Adapter<AlbumAdapter.ViewHolder>() {
+class AlbumAdapter(private val dataSet: List<String>): RecyclerView.Adapter<AlbumAdapter.ViewHolder>() {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
