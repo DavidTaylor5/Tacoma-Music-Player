@@ -87,11 +87,12 @@ class MainActivity : AppCompatActivity() {
                 mediaController = controllerFuture.get()
                 binding.playerView.player = mediaController
                 binding.playerView.showController() //why is this an unstable api!!!
-//               binding.playerViewTwo.player = mediaController
 
                 mediaController
 
             }, MoreExecutors.directExecutor())
+
+            //This browserFuture logic needs to be simplified and moved to a different function....
 
             val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
             browserFuture.addListener({
