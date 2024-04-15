@@ -55,6 +55,8 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
+    //Timber logs
+    implementation("com.jakewharton.timber:timber:4.7.1")
 
     //media3, all modules need to be the same version
     implementation("androidx.media3:media3-exoplayer:1.2.1")
