@@ -18,6 +18,7 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.data.SongModel
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -34,7 +35,8 @@ class MusicService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
 
     //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
-    val albumToSongMap: HashMap<MediaItem, List<MediaItem>> = HashMap()
+    val albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
+    lateinit var albumList: List<MediaItem>
 
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
@@ -48,6 +50,7 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
+    //list of songs in a playlist
     val playlistItem = MediaItem.Builder()
         .setMediaId("playlistItem")
         .setMediaMetadata(
@@ -60,6 +63,7 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
+    //list of albums
     val libraryItem = MediaItem.Builder()
         .setMediaId("libraryItem")
         .setMediaMetadata(
@@ -103,7 +107,11 @@ class MusicService : MediaLibraryService() {
                 LibraryResult.ofItemList(
                     when(parentId) {
                         "root" -> listOf(playlistItem, libraryItem)
-                        else -> listOf()
+                        "libraryItem" -> albumList
+                        else ->  {
+                            //Get list of songs or if album doesn't exist return empty...
+                            getListOfSongMediaItemsFromAlbum(parentId) ?: listOf()
+                        }
                     },
                     params
                 )
@@ -133,7 +141,7 @@ class MusicService : MediaLibraryService() {
     }
 
     /**
-     * Use MedaiStore to query music in android/music file. Requires permission \[permission...]
+     * Use MediaStore to query music in android/music file. Requires permission \[permission...]
      */
     private fun readAudioFromStorage(): List<SongModel> {
 
@@ -144,18 +152,20 @@ class MusicService : MediaLibraryService() {
 
         val projection: Array<String?> = arrayOf(
             MediaStore.Audio.AudioColumns.DATA, // 0 -> url
-            MediaStore.Audio.AudioColumns.TITLE, //song title
-            MediaStore.Audio.AudioColumns.ALBUM, //album title
-            MediaStore.Audio.ArtistColumns.ARTIST, //artist
-            MediaStore.Audio.AudioColumns.DURATION, //duration in  milliseconds
-            MediaStore.Audio.AudioColumns.TRACK, // track # in album
-            MediaStore.Audio.Media.ALBUM_ID, //what the hell is this?
-            MediaStore.Audio.Albums.ALBUM, //album name again
-            MediaStore.Audio.Albums.ARTIST, //artist again...
+            MediaStore.Audio.AudioColumns.TITLE, //1 -> song title
+            MediaStore.Audio.AudioColumns.ALBUM, //2 -> album title
+            MediaStore.Audio.ArtistColumns.ARTIST, //3 -> artist
+            MediaStore.Audio.AudioColumns.DURATION, //4 -> duration in  milliseconds
+            MediaStore.Audio.AudioColumns.TRACK, //5 -> track # in album
+            MediaStore.Audio.Media.ALBUM_ID, //6 -> what the hell is this?
+            MediaStore.Audio.Albums.ALBUM, //7 -> album name again
+            MediaStore.Audio.Albums.ARTIST, //8 -> artist again...
         )
 
         //TODO I should also be able to registerContentObserver for contentResolver...
 
+
+        //TODO I could actually have the uriExternal be much more specific, meaning I wouldn't query every single album each time...
         this.contentResolver.query(
             uriExternal,
             projection,
@@ -166,16 +176,74 @@ class MusicService : MediaLibraryService() {
             while(cursor.moveToNext()) {
                 Log.d(TAG, "readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
 
+                val songUrl = cursor.getString(0)
+                val album = cursor.getString(2)
+                val artist = cursor.getString(3)
+                val songTitle = cursor.getString(1)
+                val durationMs = cursor.getString(4).toLong()
+
+
+                val songMediaItem = MediaItem.fromUri(songUrl)
+                val updatedSongMediaItem = songMediaItem.buildUpon().setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(false)
+                        .setIsPlayable(true)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                        .setTitle(songTitle)
+                        .setArtist(artist)
+                        .setAlbumTitle(album)
+                        .build()
+                ).setMediaId(songTitle)
+                    .build()
+
+
+                if(!albumToSongMap.containsKey(album)) {
+                    albumToSongMap[album] = mutableListOf(updatedSongMediaItem)
+                } else {
+                    albumToSongMap[album]?.add(updatedSongMediaItem)
+                }
+
                 //TODO createSongMediaItem
                 //TODO createAlbumMediaItem
 
                 //TODO Start making the albumToSongMap
             }
+
+
+
+            //now how should I create a media item from albums?
         }
 
         Log.d(TAG, "readAudioFromStorage: done searching!")
 
         return tempAudioList
+    }
+
+    fun getListOfSongMediaItemsFromAlbum(albumTitle: String): List<MediaItem>? {
+        return albumToSongMap[albumTitle]
+    }
+
+    fun createAlbumMediaItems() {
+
+        val albums = mutableListOf<MediaItem>()
+
+        //created from existing albumToSongMap
+        for(key in albumToSongMap.keys) {
+
+            //add album to my list...
+            albums.add(
+                MediaItem.Builder().setMediaId(key)
+                    .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                        .setTitle(key)
+                        .build()
+                    )
+                    .build()
+            )
+        }
     }
 
     private fun createSongMediaItem(

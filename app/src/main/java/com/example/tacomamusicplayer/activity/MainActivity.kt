@@ -46,8 +46,13 @@ class MainActivity : AppCompatActivity() {
 
     private var mediaController: MediaController? = null
     private var mediaBrowser: MediaBrowser? = null
+    private var rootMediaItem: MediaItem? = null
+    private var albumMediaItemList: List<MediaItem>? = null
+    private var currentAlbumsSongMediaItemList: List<MediaItem>? = null
+    //TODOwhen these values are updated I can update the main ui...
 
     var psychoMediaItem: MediaItem? = null
+    private lateinit var sessionToken: SessionToken
 
     val viewModel: MainViewModel by viewModels()
 
@@ -77,8 +82,10 @@ class MainActivity : AppCompatActivity() {
         if(!permissionManager.verifyNotificationPermission(this))
             permissionManager.requestNotificationPermission(this)
         else {
-            //SessionToken must start the Service!
-            val sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
+
+            createSessionToken()
+
+            //TODO REMOVE ALL OF THIS BELOW CODE, it will be handled by viewmodel livedata observers.
 
             //TODO why is this code in the else clause? this should be moved out?
             val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
@@ -87,11 +94,12 @@ class MainActivity : AppCompatActivity() {
                 mediaController = controllerFuture.get()
                 binding.playerView.player = mediaController
                 binding.playerView.showController() //why is this an unstable api!!!
-//               binding.playerViewTwo.player = mediaController
 
                 mediaController
 
             }, MoreExecutors.directExecutor())
+
+            //This browserFuture logic needs to be simplified and moved to a different function....
 
             val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
             browserFuture.addListener({
@@ -134,6 +142,80 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+    }
+
+    private fun createSessionToken() {
+        //SessionToken must start the Service!
+        sessionToken = SessionToken(this, ComponentName(this, MusicService::class.java))
+    }
+
+    @OptIn(UnstableApi::class) fun setupMediaController(session: SessionToken) {
+        //TODO why is this code in the else clause? this should be moved out?
+        val controllerFuture = MediaController.Builder(this, session).buildAsync()
+        controllerFuture.addListener({
+            //MediaController is available here with ControllerFuture.get()
+            mediaController = controllerFuture.get()
+            binding.playerView.player = mediaController
+            binding.playerView.showController() //why is this an unstable api!!!
+            //mediaController is available!
+        }, MoreExecutors.directExecutor())
+    }
+
+    //TODO move all of this update logic into the viewmodel...
+    fun setupMediaBrowser(session: SessionToken) {
+        val browserFuture = MediaBrowser.Builder(this, sessionToken).buildAsync()
+        browserFuture.addListener({
+            mediaBrowser = browserFuture.get()
+            //mediaBrowser is available...
+        }, MoreExecutors.directExecutor())
+
+    }
+
+    private fun getRoot() {
+        mediaBrowser?.let { browser ->
+            val rootFuture = browser.getLibraryRoot(null)
+            rootFuture.addListener({
+                //root node MediaItem is available here with rootFuture.get().value
+                rootMediaItem = rootFuture.get().value
+            }, MoreExecutors.directExecutor())
+            //notify ui that root is ready
+        }
+    }
+
+
+
+    fun queryAvailableAlbums() {
+
+        if(mediaBrowser != null) {
+
+            mediaBrowser?.let { browser ->
+                rootMediaItem?.let { rootItem ->
+                    val childrenFuture =
+                        browser.getChildren(rootItem.mediaId, 0, Int.MAX_VALUE, null)
+                    childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
+                        albumMediaItemList =  childrenFuture.get().value?.toList() ?: listOf()
+                    }, MoreExecutors.directExecutor())
+                }
+            }
+        } else {
+            //TOAST MESSAGE THAT mediaBrowser isn't ready...
+        }
+    }
+
+    fun querySongsFromAlbum(albumId: String) {
+
+        if(mediaBrowser != null) {
+
+            mediaBrowser?.let { browser ->
+                val childrenFuture =
+                    browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
+                childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
+                    currentAlbumsSongMediaItemList = childrenFuture.get().value?.toList() ?: listOf()
+                }, MoreExecutors.directExecutor())
+            }
+        } else {
+            //TOAST MESSAGE THAT mediaBrowser isn't ready...
+        }
     }
 
     override fun onResume() {
