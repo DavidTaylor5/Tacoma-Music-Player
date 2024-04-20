@@ -1,7 +1,6 @@
 package com.example.tacomamusicplayer
 
 import android.app.Application
-import androidx.media3.ui.BuildConfig
 import timber.log.Timber
 
 class TacomaMusicPlayerApplication: Application() {
@@ -13,5 +12,4 @@ class TacomaMusicPlayerApplication: Application() {
             Timber.plant(Timber.DebugTree())
         }
     }
-
 }

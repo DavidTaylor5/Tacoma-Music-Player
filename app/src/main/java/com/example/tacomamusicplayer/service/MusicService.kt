@@ -26,12 +26,10 @@ import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class MusicService : MediaLibraryService() {
-
-    val TAG = MusicService::class.java.simpleName
-
-    lateinit var player: ExoPlayer
+    private lateinit var player: ExoPlayer
     private var session: MediaLibrarySession? = null
 
     //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
@@ -144,8 +142,8 @@ class MusicService : MediaLibraryService() {
      * Use MediaStore to query music in android/music file. Requires permission \[permission...]
      */
     private fun readAudioFromStorage(): List<SongModel> {
+        Timber.d("readAudioFromStorage: ")
 
-        Log.d(TAG, "readAudioFromStorage: ")
         val tempAudioList: MutableList<SongModel> = ArrayList()
 
         val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -174,7 +172,7 @@ class MusicService : MediaLibraryService() {
             null
         )?.use { cursor ->
             while(cursor.moveToNext()) {
-                Log.d(TAG, "readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
+                Timber.d("readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
 
                 val songUrl = cursor.getString(0)
                 val album = cursor.getString(2)
@@ -213,8 +211,7 @@ class MusicService : MediaLibraryService() {
 
             //now how should I create a media item from albums?
         }
-
-        Log.d(TAG, "readAudioFromStorage: done searching!")
+        Timber.d("readAudioFromStorage: DONE SEARCHING!")
 
         return tempAudioList
     }
@@ -292,6 +289,7 @@ class MusicService : MediaLibraryService() {
         super.onCreate()
         initializePlayer()
         initializeMediaSession()
+        queryMusicOnDevice()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -310,11 +308,12 @@ class MusicService : MediaLibraryService() {
 
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
-        Log.d("SERVICE", "onGetSession: ")
+        Timber.d("onGetSession: ")
         return session
     }
 
     private fun initializePlayer(): Boolean {
+        Timber.d("initializePlayer: ")
 
         var playerBuilder: ExoPlayer.Builder = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this))
@@ -339,6 +338,7 @@ class MusicService : MediaLibraryService() {
     }
 
     private fun initializeMediaSession(): Boolean {
+        Timber.d("initializeMediaSession: ")
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
             .build()
         addSession(session!!)
