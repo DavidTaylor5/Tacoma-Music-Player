@@ -2,16 +2,11 @@ package com.example.tacomamusicplayer.viewmodel
 
 import android.app.Application
 import android.content.ComponentName
-import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
-import androidx.annotation.OptIn
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken

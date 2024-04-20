@@ -15,7 +15,7 @@ class PermissionDeniedFragment: Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         binding = FragmentPermissionDeniedBinding.inflate(inflater)
         return binding.root
