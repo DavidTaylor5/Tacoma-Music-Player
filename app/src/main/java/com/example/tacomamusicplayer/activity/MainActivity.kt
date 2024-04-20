@@ -11,23 +11,16 @@ import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-//TODO I NEED TO FIGURE OUT THE MEDIACONTROLLER, MEDIASESSION, AND UI of my app...
-//TODO Figure out the session and controller first, then work on UI
-//TODO work on making the UI pleasant
-//TODO work on the statistics aspect
-//TODO work on editing songs maybe? //This is probably not going to work...
-
-//TODO I can just have a button for refreshing the data / music...
-
 //TODO I need to make smart goals...
 
-//TODO I should use a ViewPager for determining what music to play / creating a playlist...
-
-//TODO when does service know when it can query MediaStore?
-
-//TODO learn data store and implement in the project
-//TODO figure out a system for querying songs [should this be it's own utility...]
-
+//TODO I need to solve permissions structure in new app
+//TODO I need start music service after permissions are implemented
+//TODO make the main activity just hold a framecontainer and swap around fragments...
+//TODO Create music playing screen as a fragment
+//TODO hook up UI to controller
+//TODO hook up UI to browser
+//TODO setup music service so that I can browse albums
+//TODO get music data from a specific album
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
