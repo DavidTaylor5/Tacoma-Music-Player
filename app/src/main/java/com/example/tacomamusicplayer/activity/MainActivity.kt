@@ -1,20 +1,14 @@
 package com.example.tacomamusicplayer.activity
 
-import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.databinding.ActivityMainBinding
-import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
-import com.google.common.util.concurrent.MoreExecutors
-import androidx.activity.viewModels
-import com.example.tacomamusicplayer.data.PermissionData
 import timber.log.Timber
 
 //TODO I NEED TO FIGURE OUT THE MEDIACONTROLLER, MEDIASESSION, AND UI of my app...
@@ -38,6 +32,7 @@ import timber.log.Timber
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
+    private val permissionManager = AppPermissionUtil()
 
     @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,22 +54,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        checkPermissions()
-    }
-
-    /**
-     * Determine If I have the Read Media Audio Permission.
-     * Determine If I have the notification permission for foreground service.
-     */
-    private fun checkPermissions() {
-        Timber.d("checkPermissions: ")
-
-        //determine if I have the permission to read media
-        if (!permissionManager.verifyReadMediaAudioPermission(this))
-            permissionManager.requestReadMediaAudioPermission(this)
-//
-//        if (!permissionManager.verifyNotificationPermission(this))
-//            permissionManager.requestNotificationPermission(this)
+        //Main activity will tell viewmodel when it is time to initalize music player
     }
 
     override fun onResume() {

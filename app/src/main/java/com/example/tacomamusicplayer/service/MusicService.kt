@@ -1,11 +1,8 @@
 package com.example.tacomamusicplayer.service
 
-import android.app.Notification
-import android.app.NotificationChannel
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -18,7 +15,6 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.data.SongModel
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -33,7 +29,7 @@ class MusicService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
 
     //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
-    val albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
+    private val albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
     lateinit var albumList: List<MediaItem>
 
     val rootItem = MediaItem.Builder()
@@ -115,19 +111,9 @@ class MusicService : MediaLibraryService() {
                 )
             )
         }
-
-        //TODO each album is a media item
-        //TODO there is a root node media item
-        //TODO each song is also a media item
-        //I will use a hasmap which will have <albumNodeId>, list<MediaItem>
     }
 
     private val serviceIOScope = CoroutineScope(Dispatchers.IO)
-    private val serviceMainScope = CoroutineScope(Dispatchers.Main)
-
-    val notificationChannelId = "CHANNEL_BRUH"
-    private lateinit var _notificationBuilder: Notification.Builder
-    lateinit var channel: NotificationChannel
 
     /**
      * Query Music in background coroutine, I don't want this causing stuttering on UI.
@@ -178,7 +164,7 @@ class MusicService : MediaLibraryService() {
                 val album = cursor.getString(2)
                 val artist = cursor.getString(3)
                 val songTitle = cursor.getString(1)
-                val durationMs = cursor.getString(4).toLong()
+                //val durationMs = cursor.getString(4).toLong()
 
 
                 val songMediaItem = MediaItem.fromUri(songUrl)
@@ -200,16 +186,7 @@ class MusicService : MediaLibraryService() {
                 } else {
                     albumToSongMap[album]?.add(updatedSongMediaItem)
                 }
-
-                //TODO createSongMediaItem
-                //TODO createAlbumMediaItem
-
-                //TODO Start making the albumToSongMap
             }
-
-
-
-            //now how should I create a media item from albums?
         }
         Timber.d("readAudioFromStorage: DONE SEARCHING!")
 
