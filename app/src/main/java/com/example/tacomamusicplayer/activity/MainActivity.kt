@@ -1,11 +1,22 @@
 package com.example.tacomamusicplayer.activity
 
 import android.os.Bundle
+import android.window.OnBackInvokedDispatcher
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
+import androidx.navigation.NavController
+import androidx.navigation.createGraph
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.fragment
+import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ActivityMainBinding
+import com.example.tacomamusicplayer.fragment.MusicChooserFragment
+import com.example.tacomamusicplayer.fragment.MusicPlayingFragment
+import com.example.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -21,11 +32,23 @@ import timber.log.Timber
 //TODO hook up UI to browser
 //TODO setup music service so that I can browse albums
 //TODO get music data from a specific album
+//TODO figure out how to send information when I'm navigating between fragments!
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
     private val permissionManager = AppPermissionUtil()
+    private lateinit var navController: NavController
+
+    private val onBackPressedCallback = object: OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            Timber.d("handleOnBackPressed: BACK PRESSED!")
+
+            if(!navController.popBackStack()) {
+                finish()
+            }
+        }
+    }
 
     @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,11 +58,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.mediaController.observe(this) { controller ->
-            binding.playerView.player = controller
-            binding.playerView.showController()
-        }
-
         viewModel.requestReadMediaAudioPermission.observe(this) {requestPermission ->
             if(requestPermission) {
                 permissionManager.requestReadMediaAudioPermission(this)
@@ -47,7 +65,27 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        //Main activity will tell viewmodel when it is time to initalize music player
+        //Retreive the NavController [will instantiate the fragment before grabbing it's navController]
+        navController = binding.navHostFragment.getFragment<NavHostFragment>().navController
+
+        // Add navigation graph to the NavController
+        navController.graph = navController.createGraph(
+            startDestination = "player"
+        ) {
+            //associate each destination with one of the route constants.
+            fragment<MusicPlayingFragment>("player") {
+                label = "Player"
+            }
+            fragment<MusicChooserFragment>("chooser") {
+                label = "Choose Music!"
+            }
+            fragment<PermissionDeniedFragment>("permission") {
+                label = "Permission Denied"
+            }
+            //TODO add all other fragments
+        }
+
+        onBackPressedDispatcher.addCallback(onBackPressedCallback)
     }
 
     override fun onResume() {
