@@ -5,31 +5,24 @@ import androidx.core.content.ContextCompat
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
+import timber.log.Timber
 
 class AppPermissionUtil {
 
     companion object {
-        val notificationRequestCode = 2
-        val externalRequestCode = 3
-        val readMediaAudioRequestCode = 4
+        const val notificationRequestCode = 2
+        const val externalRequestCode = 3
+        const val readMediaAudioRequestCode = 4
     }
-    
-    val TAG = AppPermissionUtil::class.java.simpleName
 
-    val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
-//    val notificationRequestCode = 2
-
-    val externalPermission = Manifest.permission.MANAGE_EXTERNAL_STORAGE
-//    val externalRequestCode = 3
-
-    val readMediaAudioPermission = Manifest.permission.READ_MEDIA_AUDIO
-//    val readMediaAudioRequestCode = 4
+    private val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
+    private val externalPermission = Manifest.permission.MANAGE_EXTERNAL_STORAGE
+    private val readMediaAudioPermission = Manifest.permission.READ_MEDIA_AUDIO
 
     fun verifyExternalPermission(context: Context): Boolean {
         var readExternalPermission: Int = ContextCompat.checkSelfPermission(context, externalPermission)
-        Log.d(TAG, "verifyExternalPermission: ${readExternalPermission == PackageManager.PERMISSION_GRANTED}")
+        Timber.d("verifyExternalPermission: ${readExternalPermission == PackageManager.PERMISSION_GRANTED}")
         return readExternalPermission == PackageManager.PERMISSION_GRANTED
     }
 
@@ -38,8 +31,8 @@ class AppPermissionUtil {
     }
 
     fun verifyReadMediaAudioPermission(context: Context): Boolean {
-        var readReadMediaAudioPermission: Int = ContextCompat.checkSelfPermission(context, readMediaAudioPermission)
-        Log.d(TAG, "verifyReadMediaAudioPermission: ${readReadMediaAudioPermission == PackageManager.PERMISSION_GRANTED}")
+        val readReadMediaAudioPermission: Int = ContextCompat.checkSelfPermission(context, readMediaAudioPermission)
+        Timber.d("verifyReadMediaAudioPermission: ${readReadMediaAudioPermission == PackageManager.PERMISSION_GRANTED}")
         return readReadMediaAudioPermission == PackageManager.PERMISSION_GRANTED
     }
 
@@ -49,7 +42,7 @@ class AppPermissionUtil {
 
     fun verifyNotificationPermission(context: Context): Boolean {
         var readNotificationPermission: Int = ContextCompat.checkSelfPermission(context, notificationPermission)
-        Log.d(TAG, "verifyNotificationPermission: ${readNotificationPermission == PackageManager.PERMISSION_GRANTED}")
+        Timber.d("verifyNotificationPermission: ${readNotificationPermission == PackageManager.PERMISSION_GRANTED}")
         return readNotificationPermission == PackageManager.PERMISSION_GRANTED
     }
 
