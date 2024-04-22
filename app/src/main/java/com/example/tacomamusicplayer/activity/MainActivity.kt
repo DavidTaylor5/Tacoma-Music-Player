@@ -1,7 +1,6 @@
 package com.example.tacomamusicplayer.activity
 
 import android.os.Bundle
-import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
@@ -9,11 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
-import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ActivityMainBinding
+import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.fragment.MusicChooserFragment
 import com.example.tacomamusicplayer.fragment.MusicPlayingFragment
 import com.example.tacomamusicplayer.fragment.PermissionDeniedFragment
@@ -58,39 +56,53 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.requestReadMediaAudioPermission.observe(this) {requestPermission ->
-            if(requestPermission) {
+        viewModel.isAudioPermissionGranted.observe(this) { isGranted ->
+            if(!isGranted) {
+                Timber.d("onCreate: isGranted=$isGranted")
                 permissionManager.requestReadMediaAudioPermission(this)
-                viewModel.handledRequestForReadMediaAudioPermission()
+            } else {
+                viewModel.initalizeMusicPlaying()
             }
         }
 
-        //Retreive the NavController [will instantiate the fragment before grabbing it's navController]
+        viewModel.screenState.observe(this) {data ->
+            Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
+
+            navController.navigate(data.currentScreen.route())
+        }
+
+        setupNavigation()
+
+        onBackPressedDispatcher.addCallback(onBackPressedCallback)
+    }
+
+    private fun setupNavigation() {
+        //Retrieve the NavController [will instantiate the fragment before grabbing it's navController]
         navController = binding.navHostFragment.getFragment<NavHostFragment>().navController
 
         // Add navigation graph to the NavController
         navController.graph = navController.createGraph(
-            startDestination = "player"
+            startDestination = ScreenType.MUSIC_PLAYING_SCREEN.route()
         ) {
             //associate each destination with one of the route constants.
-            fragment<MusicPlayingFragment>("player") {
+            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
                 label = "Player"
             }
-            fragment<MusicChooserFragment>("chooser") {
+            fragment<MusicChooserFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
                 label = "Choose Music!"
             }
-            fragment<PermissionDeniedFragment>("permission") {
+            fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
                 label = "Permission Denied"
             }
             //TODO add all other fragments
         }
-
-        onBackPressedDispatcher.addCallback(onBackPressedCallback)
     }
 
     override fun onResume() {
         super.onResume()
         UtilImpl.hideNavigationUI(window)
+
+        viewModel.checkPermissionsIfOnPermissionDeniedScreen()
     }
 
     override fun onRequestPermissionsResult(
