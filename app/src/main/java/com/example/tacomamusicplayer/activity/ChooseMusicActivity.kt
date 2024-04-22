@@ -17,6 +17,8 @@ import com.example.tacomamusicplayer.viewmodel.ChooseMusicViewModel
 //TODO this should actually be a fragment??...
 class ChooseMusicActivity: FragmentActivity() {
 
+    //TODO DELETE THIS CLASS BECAUSE IT IS NOT BEING USED ANYMORE!
+
     /**
      * The pager widget, which handles animation and allows swiping horizontally
      * to access previous and next wizard steps.
