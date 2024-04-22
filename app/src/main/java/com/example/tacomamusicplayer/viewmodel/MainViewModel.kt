@@ -68,11 +68,23 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    private fun setScreenData(nextScreen: ScreenType) {
+        Timber.d("setScreenData: ")
+
+        if(screenState.value == null) {
+            _screenState.value = ScreenData(nextScreen)
+        } else {
+            screenState.value?.let {
+                if(it.currentScreen != nextScreen) _screenState.value = ScreenData(nextScreen)
+            }
+        }
+    }
+
     fun initalizeMusicPlaying() {
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
-        _screenState.value = ScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
+        setScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
     }
 
     private fun createSessionToken(): SessionToken {
@@ -149,7 +161,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun checkPermissions() {
         val isAudioPermissionGranted = permissionManager.verifyReadMediaAudioPermission(getApplication<Application>().applicationContext)
         Timber.d("checkPermissions: isAudioPermissionGranted=$isAudioPermissionGranted")
-        _isAudioPermissionGranted.value = isAudioPermissionGranted
+        if(_isAudioPermissionGranted.value != isAudioPermissionGranted)
+            _isAudioPermissionGranted.value = isAudioPermissionGranted
     }
 
     /**
@@ -167,7 +180,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 _isAudioPermissionGranted.value = true
             } else {
                 Timber.d("handlePermissionResult: read audio NOT granted!")
-                _screenState.value = ScreenData(currentScreen = ScreenType.PERMISSION_DENIED_SCREEN)
+                setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
             }
         }
     }

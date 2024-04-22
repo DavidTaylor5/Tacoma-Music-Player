@@ -100,6 +100,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        
+        Timber.d("onResume: ")
+
         UtilImpl.hideNavigationUI(window)
 
         viewModel.checkPermissionsIfOnPermissionDeniedScreen()
