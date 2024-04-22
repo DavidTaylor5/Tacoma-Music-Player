@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Tacoma Music Player</string>
+    <string name="read_media_audio_denied_explanation">
+        The Read Audio Media Permission has been denied. This permission is required for this app to
+        play local mp3 file.
+        To resolve this issue and use the mp3 player, you will need to go into the app settings
+        and grant the "Music and audio permission" permission.
+    </string>
+    <string name="permission_denied_screen_title">User Notice</string>
 </resources>

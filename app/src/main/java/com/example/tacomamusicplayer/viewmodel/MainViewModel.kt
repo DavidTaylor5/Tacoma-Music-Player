@@ -11,6 +11,8 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.data.PermissionData
+import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.google.common.util.concurrent.MoreExecutors
@@ -36,10 +38,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _arePermissionsGranted
     private val _arePermissionsGranted: MutableLiveData<Boolean> = MutableLiveData()
 
-    val requestReadMediaAudioPermission: LiveData<Boolean>
-        get() = _requestReadMediaAudioPermission
-    private val _requestReadMediaAudioPermission: MutableLiveData<Boolean> = MutableLiveData()
+    val isAudioPermissionGranted: LiveData<Boolean>
+        get() = _isAudioPermissionGranted
+    private val _isAudioPermissionGranted: MutableLiveData<Boolean> = MutableLiveData()
 
+
+    val screenState : LiveData<ScreenData>
+        get() = _screenState
+    private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
 
     private var permissionData: PermissionData = PermissionData()
 
@@ -50,14 +56,35 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     init {
         Timber.d("init: ")
-//        initalizeMusicPlaying()
         checkPermissions()
     }
 
-    private fun initalizeMusicPlaying() {
+    fun checkPermissionsIfOnPermissionDeniedScreen() {
+        Timber.d("checkPermissionsIfOnPermissionDeniedScreen: ")
+
+        screenState.value?.let { data ->
+            if(data.currentScreen == ScreenType.PERMISSION_DENIED_SCREEN)
+                checkPermissions()
+        }
+    }
+
+    private fun setScreenData(nextScreen: ScreenType) {
+        Timber.d("setScreenData: ")
+
+        if(screenState.value == null) {
+            _screenState.value = ScreenData(nextScreen)
+        } else {
+            screenState.value?.let {
+                if(it.currentScreen != nextScreen) _screenState.value = ScreenData(nextScreen)
+            }
+        }
+    }
+
+    fun initalizeMusicPlaying() {
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
+        setScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
     }
 
     private fun createSessionToken(): SessionToken {
@@ -83,10 +110,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             mediaBrowser = browserFuture.get()
             getRoot()
         }, MoreExecutors.directExecutor())
-    }
-
-    fun handledRequestForReadMediaAudioPermission() {
-        _requestReadMediaAudioPermission.value = false
     }
 
     private fun getRoot() {
@@ -138,7 +161,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun checkPermissions() {
         val isAudioPermissionGranted = permissionManager.verifyReadMediaAudioPermission(getApplication<Application>().applicationContext)
         Timber.d("checkPermissions: isAudioPermissionGranted=$isAudioPermissionGranted")
-        _requestReadMediaAudioPermission.value = isAudioPermissionGranted
+        if(_isAudioPermissionGranted.value != isAudioPermissionGranted)
+            _isAudioPermissionGranted.value = isAudioPermissionGranted
     }
 
     /**
@@ -153,12 +177,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         if(requestCode == AppPermissionUtil.readMediaAudioRequestCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Timber.d("handlePermissionResult: read audio granted!")
-                permissionData = PermissionData(allowedToReadAudio = true, permissionData.allowedToShowNotification)
-                checkPermissions()
+                _isAudioPermissionGranted.value = true
             } else {
                 Timber.d("handlePermissionResult: read audio NOT granted!")
-                //TODO UI to show permission error
+                setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
             }
         }
     }
 }
+
+//viewmodel checks if I have the permission
+//If I do have the permission, tell activity -> activity queries to start music stuff
+//If I don't have the permission, tell activity -> activity queries user the permission? [what if it auto denies?]
+
+//When I handle the request
+//If I get permission granted
+//If I get permission not granted -> show permission denied
