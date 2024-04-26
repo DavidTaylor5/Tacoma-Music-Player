@@ -185,11 +185,3 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 }
-
-//viewmodel checks if I have the permission
-//If I do have the permission, tell activity -> activity queries to start music stuff
-//If I don't have the permission, tell activity -> activity queries user the permission? [what if it auto denies?]
-
-//When I handle the request
-//If I get permission granted
-//If I get permission not granted -> show permission denied
