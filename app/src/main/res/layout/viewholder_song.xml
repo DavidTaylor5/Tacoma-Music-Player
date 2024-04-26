@@ -19,7 +19,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:src="@drawable/wu_tang_placeholder"
+            android:src="@drawable/music_note_icon"
             />
 
         <TextView
@@ -31,12 +31,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:textColor="@color/text_icons"
-
             app:layout_constraintEnd_toEndOf="parent"
             />
-
-
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
