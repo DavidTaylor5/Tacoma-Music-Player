@@ -47,6 +47,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _screenState
     private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
 
+    val isRootAvailable: LiveData<Boolean>
+        get() = _isRootAvailable
+    private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
+
     private var permissionData: PermissionData = PermissionData()
 
 
@@ -119,12 +123,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             rootFuture.addListener({
                 //root node MediaItem is available here with rootFuture.get().value
                 rootMediaItem = rootFuture.get().value
+                _isRootAvailable.value = true
             }, MoreExecutors.directExecutor())
             //notify ui that root is ready
         }
     }
 
-    fun queryAvailableAlbums() {
+    //TODO I'll just keep playlists as database in room, I'll remove library node, I won't need it...
+
+    fun queryAvailableAlbums() { //this will actually return playlist and library item.... [do I really need playlist...]
         Timber.d("queryAvailableAlbums: ")
         if(mediaBrowser != null) {
 

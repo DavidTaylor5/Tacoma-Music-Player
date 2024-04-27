@@ -44,31 +44,31 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
-    //list of songs in a playlist
-    val playlistItem = MediaItem.Builder()
-        .setMediaId("playlistItem")
-        .setMediaMetadata(
-            MediaMetadata.Builder()
-                .setIsBrowsable(false)
-                .setIsPlayable(false)
-                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                .setTitle("musicapprootwhichisnotvisibletocontrollers")
-                .build()
-        )
-        .build()
-
-    //list of albums
-    val libraryItem = MediaItem.Builder()
-        .setMediaId("libraryItem")
-        .setMediaMetadata(
-            MediaMetadata.Builder()
-                .setIsBrowsable(false)
-                .setIsPlayable(false)
-                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                .setTitle("musicapprootwhichisnotvisibletocontrollers")
-                .build()
-        )
-        .build()
+//    //list of songs in a playlist
+//    val playlistItem = MediaItem.Builder()
+//        .setMediaId("playlistItem")
+//        .setMediaMetadata(
+//            MediaMetadata.Builder()
+//                .setIsBrowsable(false)
+//                .setIsPlayable(false)
+//                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+//                .setTitle("musicapprootwhichisnotvisibletocontrollers")
+//                .build()
+//        )
+//        .build()
+//
+//    //list of albums
+//    val libraryItem = MediaItem.Builder()
+//        .setMediaId("libraryItem")
+//        .setMediaMetadata(
+//            MediaMetadata.Builder()
+//                .setIsBrowsable(false)
+//                .setIsPlayable(false)
+//                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+//                .setTitle("musicapprootwhichisnotvisibletocontrollers")
+//                .build()
+//        )
+//        .build()
 
     //TODO I'm going to need to get Room database for linking known albums to music mp3 uris.... song items
 
@@ -100,8 +100,8 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
                     when(parentId) {
-                        "root" -> listOf(playlistItem, libraryItem)
-                        "libraryItem" -> albumList
+                        "root" -> albumList
+                        //"libraryItem" -> albumList
                         else ->  {
                             //Get list of songs or if album doesn't exist return empty...
                             getListOfSongMediaItemsFromAlbum(parentId) ?: listOf()
@@ -119,8 +119,10 @@ class MusicService : MediaLibraryService() {
      * Query Music in background coroutine, I don't want this causing stuttering on UI.
      */
     private fun queryMusicOnDevice() {
+        Timber.d("queryMusicOnDevice: ")
         serviceIOScope.launch {
             readAudioFromStorage()
+            albumList = createAlbumMediaItems()
         }
     }
 
@@ -146,10 +148,6 @@ class MusicService : MediaLibraryService() {
             MediaStore.Audio.Albums.ARTIST, //8 -> artist again...
         )
 
-        //TODO I should also be able to registerContentObserver for contentResolver...
-
-
-        //TODO I could actually have the uriExternal be much more specific, meaning I wouldn't query every single album each time...
         this.contentResolver.query(
             uriExternal,
             projection,
@@ -197,7 +195,7 @@ class MusicService : MediaLibraryService() {
         return albumToSongMap[albumTitle]
     }
 
-    fun createAlbumMediaItems() {
+    private fun createAlbumMediaItems(): MutableList<MediaItem> {
 
         val albums = mutableListOf<MediaItem>()
 
@@ -218,6 +216,8 @@ class MusicService : MediaLibraryService() {
                     .build()
             )
         }
+
+        return albums
     }
 
     private fun createSongMediaItem(
