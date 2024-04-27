@@ -65,6 +65,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        viewModel.isRootAvailable.observe(this) {isAvailable ->
+            //The root is available, I can now check albums and stuff
+            if(isAvailable) {
+                //TODO what should I do here?
+                //query available albums
+                //query avilable playlists
+                viewModel.queryAvailableAlbums()
+            }
+        }
+
+
+
         viewModel.screenState.observe(this) {data ->
             Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
 
