@@ -11,4 +11,10 @@
     <color name="primary_text">#FFFFFFFF</color>
     <color name="secondary_text">#757575</color>
     <color name="divider_color">#BDBDBD</color>
+
+    <color name="playlist_button_focused">#E91E63</color>
+    <color name="albumlist_button_focused">#673AB7</color>
+    <color name="songlist_button_focused">#FFC107</color>
+    <color name="unfocused_button">#7A7A79</color>
+
 </resources>

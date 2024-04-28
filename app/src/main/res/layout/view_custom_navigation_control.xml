@@ -12,20 +12,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="#E91E63"/>
+        android:background="@color/unfocused_button"/>
 
     <ImageView
-        android:id="@+id/album_browse_button"
+        android:id="@+id/albumlist_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="#673AB7"/>
+        android:background="@color/unfocused_button"/>
 
     <ImageView
-        android:id="@+id/album_button"
+        android:id="@+id/songlist_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:background="#FFC107"/>
+        android:background="@color/unfocused_button"/>
 
 </LinearLayout>

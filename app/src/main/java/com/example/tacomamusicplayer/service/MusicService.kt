@@ -19,10 +19,12 @@ import com.example.tacomamusicplayer.data.SongModel
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.Executors
 
 class MusicService : MediaLibraryService() {
     private lateinit var player: ExoPlayer
@@ -30,7 +32,7 @@ class MusicService : MediaLibraryService() {
 
     //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
     private val albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
-    lateinit var albumList: List<MediaItem>
+    private lateinit var albumList: List<MediaItem>
 
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
@@ -43,35 +45,6 @@ class MusicService : MediaLibraryService() {
                 .build()
         )
         .build()
-
-//    //list of songs in a playlist
-//    val playlistItem = MediaItem.Builder()
-//        .setMediaId("playlistItem")
-//        .setMediaMetadata(
-//            MediaMetadata.Builder()
-//                .setIsBrowsable(false)
-//                .setIsPlayable(false)
-//                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-//                .setTitle("musicapprootwhichisnotvisibletocontrollers")
-//                .build()
-//        )
-//        .build()
-//
-//    //list of albums
-//    val libraryItem = MediaItem.Builder()
-//        .setMediaId("libraryItem")
-//        .setMediaMetadata(
-//            MediaMetadata.Builder()
-//                .setIsBrowsable(false)
-//                .setIsPlayable(false)
-//                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-//                .setTitle("musicapprootwhichisnotvisibletocontrollers")
-//                .build()
-//        )
-//        .build()
-
-    //TODO I'm going to need to get Room database for linking known albums to music mp3 uris.... song items
-
 
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
         //TODO
@@ -100,7 +73,9 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
                     when(parentId) {
-                        "root" -> albumList
+                        "root" -> {
+                            albumList //TODO sometimes this isn't ready yet... How do I stop initializing if this is empty...
+                        }
                         //"libraryItem" -> albumList
                         else ->  {
                             //Get list of songs or if album doesn't exist return empty...
@@ -120,10 +95,13 @@ class MusicService : MediaLibraryService() {
      */
     private fun queryMusicOnDevice() {
         Timber.d("queryMusicOnDevice: ")
-        serviceIOScope.launch {
-            readAudioFromStorage()
-            albumList = createAlbumMediaItems()
-        }
+//        serviceIOScope.launch {
+//            readAudioFromStorage()
+//            albumList = createAlbumMediaItems()
+//        }
+        //TODO should I make this run in a background thread? Optimize this!
+        readAudioFromStorage()
+        albumList = createAlbumMediaItems()
     }
 
     /**

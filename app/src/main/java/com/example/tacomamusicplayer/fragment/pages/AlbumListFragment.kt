@@ -31,11 +31,11 @@ class AlbumListFragment(): Fragment() {
 
         binding = FragmentAlbumlistBinding.inflate(inflater)
 
-        val observer: Observer<List<MediaItem>> = object : Observer<List<MediaItem>> {
-            override fun onChanged(value: List<MediaItem>) {
-                Timber.d("onCreateView: found albumList.size=${value.size}")
+        val observer: Observer<List<MediaItem>> =
+            Observer<List<MediaItem>> { mediaList ->
+                Timber.d("onCreateView: found albumList.size=${mediaList.size}")
+                binding.displayRecyclerview.adapter = AlbumListAdapter(mediaList)
             }
-        }
 
         //Now I just need to create different fragments for each type?
         parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
@@ -48,7 +48,7 @@ class AlbumListFragment(): Fragment() {
     private fun setupPage() {
         binding.sectionTitle.text = "ALBUMS"
 
-        binding.displayRecyclerview.adapter = AlbumListAdapter(listOf("What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip"))
+        //binding.displayRecyclerview.adapter = AlbumListAdapter(listOf("What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip"))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }
