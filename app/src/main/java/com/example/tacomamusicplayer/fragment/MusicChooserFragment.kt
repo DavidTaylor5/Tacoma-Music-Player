@@ -12,18 +12,19 @@ import com.example.tacomamusicplayer.enum.PageType
 
 class MusicChooserFragment: Fragment() {
 
-    /**
-     * The pager widget, which handles animation and allows swiping horizontally
-     * to access previous and next wizard steps.
-     */
-    private lateinit var viewPager: ViewPager2
-
     private val PLAYLIST_FRAGMENT = 0
     private val BROWSE_ALBUMS_FRAGMENT = 1
     private val ALBUM_FRAGMENT = 2
 
+    private lateinit var pagerAdapter: ScreenSlidePagerAdapter
+
 
     private lateinit var binding: FragmentMusicChooserBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,28 +32,22 @@ class MusicChooserFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentMusicChooserBinding.inflate(inflater)
-        return binding.root
-    }
 
-    override fun onResume() {
-        super.onResume()
-
-        //Instantiate a ViewPager2 and a PagerAdapter
-        viewPager = binding.pager
-        val pagerAdapter = ScreenSlidePagerAdapter(requireActivity())
-        viewPager.adapter = pagerAdapter
+        binding.pager.adapter = pagerAdapter
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
 
-                when(position) {
+                when (position) {
                     PageType.PLAYLIST_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
                     }
+
                     PageType.ALBUM_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
                     }
+
                     PageType.SONG_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
                     }
@@ -60,16 +55,18 @@ class MusicChooserFragment: Fragment() {
             }
         }
 
-        viewPager.registerOnPageChangeCallback(onPageChangedCallback)
+        binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
         binding.navigationControl.setPlaylistButtonOnClick {
-            viewPager.currentItem = PLAYLIST_FRAGMENT
+            binding.pager.currentItem = PLAYLIST_FRAGMENT
         }
         binding.navigationControl.setBrowseAlbumButtonOnClick {
-            viewPager.currentItem = BROWSE_ALBUMS_FRAGMENT
+            binding.pager.currentItem = BROWSE_ALBUMS_FRAGMENT
         }
         binding.navigationControl.setAlbumButtonOnClick {
-            viewPager.currentItem = ALBUM_FRAGMENT
+            binding.pager.currentItem = ALBUM_FRAGMENT
         }
+
+        return binding.root
     }
 }

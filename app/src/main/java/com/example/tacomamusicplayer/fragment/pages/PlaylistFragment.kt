@@ -42,7 +42,7 @@ class PlaylistFragment(): Fragment() {
     private fun setupPage() {
         binding.sectionTitle.text = "PLAYLISTS"
 
-        binding.displayRecyclerview.adapter = PlaylistAdapter(listOf("What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip","What", "The", "Flip"))
+        binding.displayRecyclerview.adapter = PlaylistAdapter(listOf(MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

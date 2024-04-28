@@ -4,10 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 
-class PlaylistAdapter(private val dataSet: List<String>): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
+class PlaylistAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
