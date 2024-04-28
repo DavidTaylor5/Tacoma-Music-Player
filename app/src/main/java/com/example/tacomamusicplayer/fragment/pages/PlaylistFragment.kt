@@ -31,14 +31,8 @@ class PlaylistFragment(): Fragment() {
 
         binding = FragmentPlaylistBinding.inflate(inflater)
 
-        val observer: Observer<List<MediaItem>> = object : Observer<List<MediaItem>> {
-            override fun onChanged(value: List<MediaItem>) {
-                Timber.d("onCreateView: found albumList.size=${value.size}")
-            }
-        }
 
-        //Now I just need to create different fragments for each type?
-        parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
+        //TODO I'll want to query data store for playlists
 
         setupPage()
 

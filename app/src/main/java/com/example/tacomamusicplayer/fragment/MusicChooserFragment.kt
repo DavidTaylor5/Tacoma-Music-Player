@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicChooserBinding
+import com.example.tacomamusicplayer.enum.PageType
 
 class MusicChooserFragment: Fragment() {
 
@@ -40,6 +41,26 @@ class MusicChooserFragment: Fragment() {
         viewPager = binding.pager
         val pagerAdapter = ScreenSlidePagerAdapter(requireActivity())
         viewPager.adapter = pagerAdapter
+
+        val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+
+                when(position) {
+                    PageType.PLAYLIST_PAGE.type() -> {
+                        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
+                    }
+                    PageType.ALBUM_PAGE.type() -> {
+                        binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
+                    }
+                    PageType.SONG_PAGE.type() -> {
+                        binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
+                    }
+                }
+            }
+        }
+
+        viewPager.registerOnPageChangeCallback(onPageChangedCallback)
 
         binding.navigationControl.setPlaylistButtonOnClick {
             viewPager.currentItem = PLAYLIST_FRAGMENT
