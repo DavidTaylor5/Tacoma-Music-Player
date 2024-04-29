@@ -14,11 +14,13 @@ class AppPermissionUtil {
         const val notificationRequestCode = 2
         const val externalRequestCode = 3
         const val readMediaAudioRequestCode = 4
+        const val readMediaImages = 5
     }
 
     private val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
     private val externalPermission = Manifest.permission.MANAGE_EXTERNAL_STORAGE
     private val readMediaAudioPermission = Manifest.permission.READ_MEDIA_AUDIO
+    private val readMediaImagesPermission = Manifest.permission.READ_MEDIA_IMAGES
 
     fun verifyExternalPermission(context: Context): Boolean {
         var readExternalPermission: Int = ContextCompat.checkSelfPermission(context, externalPermission)
