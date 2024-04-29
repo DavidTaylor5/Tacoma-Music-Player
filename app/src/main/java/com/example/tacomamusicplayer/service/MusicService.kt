@@ -1,8 +1,12 @@
 package com.example.tacomamusicplayer.service
 
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.content.ContentUris.withAppendedId
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Size
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -24,6 +28,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.File
+import java.lang.Exception
 import java.util.concurrent.Executors
 
 class MusicService : MediaLibraryService() {
@@ -124,7 +130,10 @@ class MusicService : MediaLibraryService() {
             MediaStore.Audio.Media.ALBUM_ID, //6 -> what the hell is this?
             MediaStore.Audio.Albums.ALBUM, //7 -> album name again
             MediaStore.Audio.Albums.ARTIST, //8 -> artist again...
+            MediaStore.Audio.AudioColumns._ID, //9 id
         )
+
+        val resolver = this.contentResolver
 
         this.contentResolver.query(
             uriExternal,
@@ -134,14 +143,29 @@ class MusicService : MediaLibraryService() {
             null
         )?.use { cursor ->
             while(cursor.moveToNext()) {
-                Timber.d("readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}") //setMedia items here?
+                Timber.d("readAudioFromStorage: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}, ${cursor.getString(7)}, ${cursor.getString(8)}, ${cursor.getString(9)}") //setMedia items here?
 
                 val songUrl = cursor.getString(0)
                 val album = cursor.getString(2)
                 val artist = cursor.getString(3)
                 val songTitle = cursor.getString(1)
-                //val durationMs = cursor.getString(4).toLong()
+                val songId = cursor.getLong(9)  //used when I'm getting the album art...
 
+                try {
+
+                    //Create URI from MediaStore location and returned ID [Keeps actual file location protected?]
+                    val imageUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songId)
+
+                    Timber.d("readAudioFromStorage: Getting album art from URI=${imageUri.toString()}")
+
+                    //Album art as a bitmap, I need to work on what to do when this is blank / null?
+                    val albumArt = resolver.loadThumbnail(imageUri, Size(100, 100), null)
+
+                    Timber.d("readAudioFromStorage: SUCCESSFUL! ALBUM ART FOUND!")
+
+                } catch (e: Exception) {
+                    Timber.d("readAudioFromStorage: ERROR ON LOADING ALBUM ART e=$e")
+                }
 
                 val songMediaItem = MediaItem.fromUri(songUrl)
                 val updatedSongMediaItem = songMediaItem.buildUpon().setMediaMetadata(
