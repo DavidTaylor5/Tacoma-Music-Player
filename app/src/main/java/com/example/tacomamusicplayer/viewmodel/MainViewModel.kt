@@ -10,7 +10,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.tacomamusicplayer.data.PermissionData
 import com.example.tacomamusicplayer.data.ScreenData
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
@@ -18,6 +17,10 @@ import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.google.common.util.concurrent.MoreExecutors
 import timber.log.Timber
 
+/**
+ * The MainViewModel of the project, will include information on current screen, logic for handling
+ * permissions, and will provide the UI with media related information.
+ */
 class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
@@ -51,9 +54,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isRootAvailable
     private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
 
-    private var permissionData: PermissionData = PermissionData()
-
-
     private var mediaBrowser: MediaBrowser? = null
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
@@ -72,6 +72,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Sets the current screen of the application.
+     * @param nextScreen The next screen to be navigated to.
+     */
     private fun setScreenData(nextScreen: ScreenType) {
         Timber.d("setScreenData: ")
 
@@ -84,19 +88,28 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    fun initalizeMusicPlaying() {
+    /**
+     * Starts music service and sets up the media controller and media browser.
+     */
+    fun initializeMusicPlaying() {
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
         setScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
     }
 
+    /**
+     * A session token is needed to connect to the music service. [And start the service?]
+     */
     private fun createSessionToken(): SessionToken {
         Timber.d("createSessionToken: ")
-        //SessionToken must start the Service!
         return SessionToken(getApplication<Application>().applicationContext, ComponentName(getApplication<Application>().applicationContext, MusicService::class.java))
     }
 
+    /**
+     * Returns a mediaController, used to interact with the music session.
+     * @param session The session token associated with this app. [Should only be one]
+     */
     private fun setupMediaController(session: SessionToken) {
         Timber.d("setupMediaController: session=$session")
         val controllerFuture = MediaController.Builder(getApplication<Application>().applicationContext, session).buildAsync()
@@ -105,7 +118,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }, MoreExecutors.directExecutor())
     }
 
-    //TODO move all of this update logic into the viewmodel...
+    /**
+     * Sets up the MediaBrowser, which is used to browse music on the app.
+     * @param session The session token associated with this app. [Should only be one]
+     */
     private fun setupMediaBrowser(session: SessionToken) {
         Timber.d("setupMediaBrowser: session=$session")
 
@@ -116,21 +132,26 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }, MoreExecutors.directExecutor())
     }
 
+    /**
+     * The root is the top most node returned from the MediaLibraryService, media is organized as
+     * a tree of MediaItems.
+     */
     private fun getRoot() {
         Timber.d("getRoot: ")
         mediaBrowser?.let { browser ->
             val rootFuture = browser.getLibraryRoot(null)
             rootFuture.addListener({
-                //root node MediaItem is available here with rootFuture.get().value
                 rootMediaItem = rootFuture.get().value
                 _isRootAvailable.value = true
             }, MoreExecutors.directExecutor())
-            //notify ui that root is ready
         }
     }
 
     //TODO I'll just keep playlists as database in room, I'll remove library node, I won't need it...
 
+    /**
+     * Will return a list of MediaItems associated with albums on device storage.
+     */
     fun queryAvailableAlbums() { //this will actually return playlist and library item.... [do I really need playlist...]
         Timber.d("queryAvailableAlbums: ")
         if(mediaBrowser != null) {
@@ -149,6 +170,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * High level function that will attempt to set a list of songs (MediaItems) based on album title.
+     * @param albumId The title of an album to be queried.
+     */
     fun querySongsFromAlbum(albumId: String) {
         Timber.d("querySongsFromAlbum: ")
         if(mediaBrowser != null) {
@@ -165,6 +190,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Check if necessary permissions are granted.
+     */
     private fun checkPermissions() {
         val isAudioPermissionGranted = permissionManager.verifyReadMediaAudioPermission(getApplication<Application>().applicationContext)
         Timber.d("checkPermissions: isAudioPermissionGranted=$isAudioPermissionGranted")
@@ -173,7 +201,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
-     * I'm not sure that I need the notification permission.
+     * Based on results from asking user for permission, determine how to proceed. The app requires
+     * that read media audio permission is granted for functionality.
+     * If permission is not granted, send the user to a permission denied screen.
      */
     fun handlePermissionResult(
         requestCode: Int,

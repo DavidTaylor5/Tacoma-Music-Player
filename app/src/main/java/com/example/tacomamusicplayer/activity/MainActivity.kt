@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                 Timber.d("onCreate: isGranted=$isGranted")
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
-                viewModel.initalizeMusicPlaying()
+                viewModel.initializeMusicPlaying()
             }
         }
 
