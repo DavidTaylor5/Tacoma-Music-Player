@@ -70,8 +70,8 @@ class MainActivity : AppCompatActivity() {
             if(isAvailable) {
                 //TODO what should I do here?
                 //query available albums
-                //query avilable playlists
                 viewModel.queryAvailableAlbums()
+                //TODO query available playlists...
             }
         }
 

@@ -25,7 +25,7 @@ class MusicService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
     private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
 
-    //TODO I want to map Album MediaItems to Song MediaItems [albums contain songs...]
+    //Map albums to songs // This should really be <List<MediaItems>, List<MediaItems>>
     private var albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
     private lateinit var albumList: List<MediaItem>
 
@@ -41,9 +41,9 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
+    // MediaLibrarySession callback determines what information is going to be returned when
+    // UI queries music from the service.
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
-        //TODO
-
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -51,7 +51,7 @@ class MusicService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<MediaItem>> {
 
             //Because I'm getting the library root, I should actually start querying the songs in the background
-            queryMusicOnDevice()
+            queryMusicOnDevice() //TODO remove this...
 
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
@@ -69,11 +69,11 @@ class MusicService : MediaLibraryService() {
                 LibraryResult.ofItemList(
                     when(parentId) {
                         "root" -> {
-                            albumList //TODO sometimes this isn't ready yet... How do I stop initializing if this is empty...
+                            //TODO get album list from queryAvailableAlbums()
+                            albumList
                         }
-                        //"libraryItem" -> albumList
                         else ->  {
-                            //Get list of songs or if album doesn't exist return empty...
+                            //I'm given a albumId and I should return a list of song mediaItems
                             getListOfSongMediaItemsFromAlbum(parentId) ?: listOf()
                         }
                     },
@@ -82,8 +82,6 @@ class MusicService : MediaLibraryService() {
             )
         }
     }
-
-    //TODO why is the music being set up twice?
 
     /**
      * Query Music in background coroutine, I don't want this causing stuttering on UI.
@@ -158,6 +156,10 @@ class MusicService : MediaLibraryService() {
         return session
     }
 
+    /**
+     * Setups up the exoplayer instance that is core to the mp3 functionality. UI classes will
+     * use the mediacontroller to request changes to music content.
+     */
     private fun initializePlayer(): Boolean {
         Timber.d("initializePlayer: ")
 
@@ -179,10 +181,13 @@ class MusicService : MediaLibraryService() {
         //Test code that sets media Items with three of the same -> ui should choose music instead.
         player.setMediaItems(listOf(MediaItem.fromUri(path), MediaItem.fromUri(path), MediaItem.fromUri(path)))
         player.prepare()
-        //player.play()
         return true
     }
 
+    /**
+     * A media session is required for mp3 functionality, this will generate the default music
+     * notification.
+     */
     private fun initializeMediaSession(): Boolean {
         Timber.d("initializeMediaSession: ")
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)

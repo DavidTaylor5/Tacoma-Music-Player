@@ -4,7 +4,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.tacomamusicplayer.enum.PageType
-import com.example.tacomamusicplayer.fragment.ScreenSlidePageFragment
 import com.example.tacomamusicplayer.fragment.pages.AlbumListFragment
 import com.example.tacomamusicplayer.fragment.pages.PlaylistFragment
 import com.example.tacomamusicplayer.fragment.pages.SongListFragment

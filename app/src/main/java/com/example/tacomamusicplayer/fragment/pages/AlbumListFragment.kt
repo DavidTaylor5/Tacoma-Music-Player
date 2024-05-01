@@ -10,15 +10,11 @@ import androidx.lifecycle.Observer
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.AlbumListAdapter
-import com.example.tacomamusicplayer.adapter.PlaylistAdapter
-import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentAlbumlistBinding
-import com.example.tacomamusicplayer.databinding.FragmentScreenSlidePageBinding
-import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-class AlbumListFragment(): Fragment() {
+class AlbumListFragment: Fragment() {
 
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
@@ -32,7 +28,7 @@ class AlbumListFragment(): Fragment() {
         binding = FragmentAlbumlistBinding.inflate(inflater)
 
         val observer: Observer<List<MediaItem>> =
-            Observer<List<MediaItem>> { mediaList ->
+            Observer { mediaList ->
                 Timber.d("onCreateView: found albumList.size=${mediaList.size}")
                 binding.displayRecyclerview.adapter = AlbumListAdapter(mediaList)
             }
