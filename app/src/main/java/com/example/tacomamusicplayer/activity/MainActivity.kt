@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                 Timber.d("onCreate: isGranted=$isGranted")
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
-                viewModel.initalizeMusicPlaying()
+                viewModel.initializeMusicPlaying()
             }
         }
 
@@ -70,8 +70,8 @@ class MainActivity : AppCompatActivity() {
             if(isAvailable) {
                 //TODO what should I do here?
                 //query available albums
-                //query avilable playlists
                 viewModel.queryAvailableAlbums()
+                //TODO query available playlists...
             }
         }
 

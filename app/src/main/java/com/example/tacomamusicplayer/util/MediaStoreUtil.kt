@@ -11,6 +11,12 @@ import com.example.tacomamusicplayer.data.SongModel
 import timber.log.Timber
 import java.lang.Exception
 
+/**
+ * This class handles logic related to the android class MediaStore. MediaStore is an abstraction of
+ * the on device files in android. Newer versions of the android sdk has an emphasis on security, and
+ * having applications able to directly access on board storage could be dangerous. By using MediaStore
+ * I can request safe permissions from the user and query audio to use in the mp3 app.
+ */
 class MediaStoreUtil {
 
     /**
@@ -33,15 +39,6 @@ class MediaStoreUtil {
             MediaStore.Audio.AudioColumns.TRACK, //5 -> track # in album
             MediaStore.Audio.AudioColumns._ID, //6 id
         )
-
-        /*
-        This code works as a selector -> will return 3 gza songs that are greater than 5 minutes long
-        "${MediaStore.Audio.AudioColumns.DURATION} >= ?",
-                arrayOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES).toString()),*/
-
-        /*        This code works as a selector -> will return all songs with associated title Liquid Swords [Explicit]
-                "${MediaStore.Audio.AudioColumns.ALBUM} = ?",
-                arrayOf("Liquid Swords [Explicit]"),*/
 
         context.contentResolver.query(
             uriExternal,
@@ -107,8 +104,6 @@ class MediaStoreUtil {
         Timber.d("queryAllMediaItems: ")
 
         val map: HashMap<String, MutableList<MediaItem>> = hashMapOf()
-
-        val tempAudioList: MutableList<SongModel> = ArrayList()
 
         val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
@@ -185,6 +180,15 @@ class MediaStoreUtil {
         return map
     }
 
+    /**
+     * Create a media item from a song.
+     * @param songTitle
+     * @param albumTitle
+     * @param artist
+     * @param songDuration
+     * @param trackNumber
+     * @return A MediaItem with the associated data.
+     */
     private fun createSongMediaItem(
         songTitle: String = "UNKONWN SONG TITLE",
         albumTitle: String = "UNKNOWN ALBUM",
@@ -209,6 +213,11 @@ class MediaStoreUtil {
             .build()
     }
 
+    /**
+     * Creates a media item that represents an album.
+     * @param albumTitle
+     * @param artist
+     */
     private fun createAlbumMediaItem(
         albumTitle: String = "UNKNOWN ALBUM",
         artist: String = "UNKNOWN ARTIST",
@@ -227,3 +236,16 @@ class MediaStoreUtil {
             .build()
     }
 }
+
+
+/*
+I have added some examples of selection and selection args that can be used in media store for
+reference.
+
+This code works as a selector -> will return 3 gza songs that are greater than 5 minutes long
+"${MediaStore.Audio.AudioColumns.DURATION} >= ?",
+        arrayOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES).toString()),*/
+
+/*        This code works as a selector -> will return all songs with associated title Liquid Swords [Explicit]
+        "${MediaStore.Audio.AudioColumns.ALBUM} = ?",
+        arrayOf("Liquid Swords [Explicit]"),*/

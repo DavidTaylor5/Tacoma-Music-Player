@@ -10,6 +10,11 @@ import kotlin.time.toDuration
 class UtilImpl {
 
     companion object {
+
+        /**
+         * Translates a given millisecond value into minutes and seconds.
+         * @param msDuration Length in milliseconds.
+         */
         fun calculateHumanReadableTimeFromMilliseconds(msDuration: Long): String {
             //duration object from given milliseconds
             val duration = msDuration.toDuration(DurationUnit.MILLISECONDS)
