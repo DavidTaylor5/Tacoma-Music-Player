@@ -46,34 +46,28 @@
         android:layout_marginEnd="25dp"/>
 
     <LinearLayout
+        android:layout_marginTop="25dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/button_container"
         app:layout_constraintTop_toBottomOf="@id/exo_position"
+        android:gravity="center"
         >
 
         <ImageButton android:id="@id/exo_prev"
             style="@style/ExoMediaButton.Previous"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="45dp"
             android:layout_weight="1"
-            android:layout_marginLeft="100dp"/>
+           />
 
         <ImageButton android:id="@id/exo_play_pause"
             style="@style/ExoMediaButton.Play"
-            android:layout_marginTop="25dp"
-            android:layout_marginStart="20dp"
             android:layout_weight="1"
-            android:layout_marginBottom="100dp"
             />
 
         <ImageButton android:id="@id/exo_next"
             style="@style/ExoMediaButton.Next"
-            android:layout_marginTop="25dp"
-            android:layout_marginStart="45dp"
-            android:layout_weight="1"
-            android:layout_marginRight="100dp"/>
+            android:layout_weight="1" />
 
     </LinearLayout>
 
