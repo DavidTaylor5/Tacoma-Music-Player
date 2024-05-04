@@ -61,15 +61,14 @@ class MediaStoreUtil {
      * @param context Context associated with the application. Context needs permission READ_MEDIA_AUDIO.
      * @return A list of mediaItems associated with albums on device.
      */
-    fun queryAvailableAlbums(context: Context): List<SongModel> { //TODO should probably be AlbumModel
+    fun queryAvailableAlbums(context: Context): MutableList<MediaItem> { //TODO should probably be AlbumModel
 
         //WOW THIS IS ACTUALLY  WORKING!
 
         Timber.d("queryAvailableAlbums: ")
 
-        val tempAudioList: MutableList<SongModel> = ArrayList()
+        val albumList: MutableList<MediaItem> = mutableListOf()
 
-        //val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         val uriExternal: Uri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
         val projection: Array<String?> = arrayOf(
@@ -87,11 +86,19 @@ class MediaStoreUtil {
         )?.use { cursor ->
             while(cursor.moveToNext()) {
                 Timber.d("queryAvailableAlbums: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}")
+
+                val albumId = cursor.getString(0)
+                val albumTitle = cursor.getString(1)
+                val artist = cursor.getString(2)
+
+                val albumMediaItem = createAlbumMediaItem(albumTitle, artist)
+
+                albumList.add(albumMediaItem)
             }
         }
         Timber.d("queryAvailableAlbums: DONE SEARCHING!")
 
-        return listOf<SongModel>() //TODO I'll have to implement this, I should probably return some information here...
+        return albumList
     }
 
     /**
@@ -223,13 +230,13 @@ class MediaStoreUtil {
         artist: String = "UNKNOWN ARTIST",
     ): MediaItem {
         return MediaItem.Builder()
-            .setMediaId("libraryItem")
+            .setMediaId(albumTitle)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
-                    .setAlbumArtist("ARTIST")
-                    .setAlbumTitle("ALBUM TITLE")
+                    .setAlbumArtist(artist)
+                    .setAlbumTitle(albumTitle)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
                     .build()
             )

@@ -44,14 +44,24 @@ class MusicService : MediaLibraryService() {
     // MediaLibrarySession callback determines what information is going to be returned when
     // UI queries music from the service.
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
+
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>
+        ): ListenableFuture<MutableList<MediaItem>> {
+            return super.onAddMediaItems(mediaSession, controller, mediaItems)
+
+        }
+
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<MediaItem>> {
 
-            //Because I'm getting the library root, I should actually start querying the songs in the background
-            queryMusicOnDevice() //TODO remove this...
+//            //Because I'm getting the library root, I should actually start querying the songs in the background
+//            queryMusicOnDevice() //TODO remove this...
 
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
@@ -70,7 +80,8 @@ class MusicService : MediaLibraryService() {
                     when(parentId) {
                         "root" -> {
                             //TODO get album list from queryAvailableAlbums()
-                            albumList
+                            mediaStoreUtil.queryAvailableAlbums(this@MusicService)
+                            //mediaStoreUtil.queryAvailableAlbums(this@MusicService)
                         }
                         else ->  {
                             //I'm given a albumId and I should return a list of song mediaItems
@@ -123,7 +134,7 @@ class MusicService : MediaLibraryService() {
                         .setTitle(key)
                         .build()
                     )
-                    .build()
+                    .build() //TODO REPLACE THIS IMMEDIATELY, ROADBLOCK IS OVER! I'm so lucky!
             )
         }
 
