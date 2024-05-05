@@ -1,5 +1,9 @@
 package com.example.tacomamusicplayer.adapter
 
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,34 +11,67 @@ import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
+import timber.log.Timber
 
 class SongListAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
-    class SongViewHolder(view: View): RecyclerView.ViewHolder(view) { //TODO I need to make a viewholder for this class
-        val albumInfo: TextView
-
-        init {
-            albumInfo = view.findViewById(R.id.album_info)
-        }
-    }
+    class SongViewHolder(val binding: ViewholderSongBinding): RecyclerView.ViewHolder(binding.root)
 
     //Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
-        //Create a new view, which defines the UI of teh list item
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.viewholder_song, parent, false)
+        Timber.d("onCreateViewHolder: ")
 
-        return SongViewHolder(view)
+        val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val binding = ViewholderSongBinding.inflate(inflater, parent, false)
+
+        return SongViewHolder(binding)
     }
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: SongViewHolder, position: Int) {
+        Timber.d("onBindViewHolder: ")
 
-        // Get element from  your dataset at this position and replace the contents of the view with that element
-        viewHolder.albumInfo.text = "Default Song Title \n Default Artist \n Default Duration"//dataSet[position]
+        var songTitle = "DEFAULT SONG TITLE"
+        var songArtist = "DEFAULT SONG ARTIST"
+        var albumTitle = "DEFAULT ALBUM TITLE"
+        var songDuration = "DEFUALT SONG DURATION"
+        var artworkUri = Uri.EMPTY
+
+        //First check that dataSet has a value for position
+        if(position < dataSet.size) {
+
+            val songData = dataSet[position].mediaMetadata
+            Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songData.title},  songArtist=${songData.artist}, albumTitle=${songData.albumTitle}, albumArtUri=${songData.artworkUri}")
+
+            songTitle = songData.title.toString()
+            songArtist = songData.artist.toString()
+            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
+            artworkUri = dataSet[position].mediaMetadata.artworkUri
+
+            //TODO what to do when a song is clicked?
+            //viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+
+            val resolver = viewHolder.itemView.context.contentResolver
+
+            try {
+
+                Timber.d("queryAllMediaItems: Getting album art from URI=${artworkUri}")
+
+                //Album art as a bitmap, I need to work on what to do when this is blank / null?
+                val albumArt = resolver.loadThumbnail(artworkUri, Size(100, 100), null)
+                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
+
+                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
+
+                Timber.d("queryAllMediaItems: SUCCESSFUL! ALBUM ART FOUND!")
+
+            } catch (e: Exception) {
+                Timber.d("queryAllMediaItems: ERROR ON LOADING ALBUM ART e=$e")
+            }
+        }
+
+        viewHolder.binding.albumInfo.text = "$songTitle \n $songArtist \n $albumTitle"
     }
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {

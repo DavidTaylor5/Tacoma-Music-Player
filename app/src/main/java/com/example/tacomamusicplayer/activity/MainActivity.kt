@@ -22,15 +22,13 @@ import timber.log.Timber
 
 //TODO I need to make smart goals...
 
-//TODO I need to solve permissions structure in new app
-//TODO I need start music service after permissions are implemented
-//TODO make the main activity just hold a framecontainer and swap around fragments...
-//TODO Create music playing screen as a fragment
-//TODO hook up UI to controller
-//TODO hook up UI to browser
-//TODO setup music service so that I can browse albums
-//TODO get music data from a specific album
-//TODO figure out how to send information when I'm navigating between fragments!
+//TODO when I click an album I want the songListFragment to populate
+//TODO When I click a songlist, I want the song to start playing...
+//TODO When I start playing, I want a small screen on the bottom of the screen to show currently playing music
+//TODO I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
+//TODO I need to redo the main music playing screen, I also want to be able to scroll through the music playing screen
+
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
