@@ -25,10 +25,6 @@ class MusicService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
     private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
 
-    //Map albums to songs // This should really be <List<MediaItems>, List<MediaItems>>
-    private var albumToSongMap: HashMap<String, MutableList<MediaItem>> = HashMap() //album titles to list of mediaItems
-    private lateinit var albumList: List<MediaItem>
-
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
         .setMediaMetadata(
@@ -59,10 +55,6 @@ class MusicService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<MediaItem>> {
-
-//            //Because I'm getting the library root, I should actually start querying the songs in the background
-//            queryMusicOnDevice() //TODO remove this...
-
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
 
@@ -79,13 +71,10 @@ class MusicService : MediaLibraryService() {
                 LibraryResult.ofItemList(
                     when(parentId) {
                         "root" -> {
-                            //TODO get album list from queryAvailableAlbums()
                             mediaStoreUtil.queryAvailableAlbums(this@MusicService)
-                            //mediaStoreUtil.queryAvailableAlbums(this@MusicService)
                         }
                         else ->  {
-                            //I'm given a albumId and I should return a list of song mediaItems
-                            getListOfSongMediaItemsFromAlbum(parentId) ?: listOf()
+                            getListOfSongMediaItemsFromAlbum(parentId)
                         }
                     },
                     params
@@ -94,51 +83,8 @@ class MusicService : MediaLibraryService() {
         }
     }
 
-    /**
-     * Query Music in background coroutine, I don't want this causing stuttering on UI.
-     */
-    private fun queryMusicOnDevice() {
-        Timber.d("queryMusicOnDevice: ")
-
-        mediaStoreUtil.queryAvailableAlbums(this) //test to show I can query available albums
-        //queryAvailableAlbums()
-        Timber.d("queryMusicOnDevice: =============================================================")
-        val albumName = "Liquid Swords [Explicit]"
-        mediaStoreUtil.querySongsFromAlbum(this, albumName)
-        //querySongsFromAlbum(albumName)
-        Timber.d("GZA: =============================================================")
-        albumToSongMap = mediaStoreUtil.queryAllMediaItems(this)
-        albumList = createAlbumMediaItems()
-    }
-
-    fun getListOfSongMediaItemsFromAlbum(albumTitle: String): List<MediaItem>? {
-        return albumToSongMap[albumTitle]
-    }
-
-    //TODO remove this function, replace with mediaStoreUtil.queryAvailableAlbums() ....
-    private fun createAlbumMediaItems(): MutableList<MediaItem> {
-
-        val albums = mutableListOf<MediaItem>()
-
-        //created from existing albumToSongMap
-        for(key in albumToSongMap.keys) {
-
-            //add album to my list...
-            albums.add(
-                MediaItem.Builder().setMediaId(key)
-                    .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setIsBrowsable(true)
-                        .setIsPlayable(false)
-                        .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-                        .setTitle(key)
-                        .build()
-                    )
-                    .build() //TODO REPLACE THIS IMMEDIATELY, ROADBLOCK IS OVER! I'm so lucky!
-            )
-        }
-
-        return albums
+    fun getListOfSongMediaItemsFromAlbum(albumTitle: String): List<MediaItem> {
+        return mediaStoreUtil.querySongsFromAlbum(this, albumTitle)
     }
 
     override fun onCreate() {

@@ -1,40 +1,30 @@
 package com.example.tacomamusicplayer.adapter
 
+import android.content.ContentUris
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.provider.MediaStore
+import android.util.Size
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.annotation.OptIn
-import androidx.core.os.ExecutorCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.MetadataRetriever
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.TrackGroupArray
 import androidx.recyclerview.widget.RecyclerView
-import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewholderAlbumBinding
-import com.google.common.util.concurrent.FutureCallback
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.ListeningExecutorService
-import com.google.common.util.concurrent.MoreExecutors
 import timber.log.Timber
-import java.util.concurrent.Executors
+import java.lang.Exception
 
-//I'm going to use this recyclerview to show all available albums...
+/**
+ * A recyclerview adapter that is able to take a list of Album Media Items and display them.
+ */
 class AlbumListAdapter(private val dataSet: List<MediaItem>): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
-    class AlbumViewHolder(val binding : ViewholderAlbumBinding): RecyclerView.ViewHolder(binding.root) {
-
-    }
+    class AlbumViewHolder(val binding : ViewholderAlbumBinding): RecyclerView.ViewHolder(binding.root)
 
     //Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumViewHolder {
@@ -53,85 +43,39 @@ class AlbumListAdapter(private val dataSet: List<MediaItem>): RecyclerView.Adapt
         var albumTitle = "Default ALBUM"
         var albumArtist = ""
         var albumDuration = ""
-        var albumUri = "" //TODO I'll have to get a solution  for this... else default picture
+        var albumUri = Uri.EMPTY //TODO I'll have to get a solution  for this... else default picture
 
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
 
-//            val a = dataSet[position]
-//            val b = DefaultMediaSourceFactory(viewHolder.itemView.context)
-//
-//            val trackGroupsFuture = MetadataRetriever.retrieveMetadata(b, dataSet[position])
-//
-//            val executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1))
-//
-//
-//            dataSet[position].requestMetadata.toBundle().apply {
-//                this.getString()
-//            }
+            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${dataSet[0].mediaMetadata.albumTitle}, albumArtist=${dataSet[0].mediaMetadata.albumArtist}, albumArtUri=${dataSet[0].mediaMetadata.artworkUri}")
 
-            //val player = ExoPlayer.Builder(viewHolder.itemView.context).build()
+            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
+            albumArtist = dataSet[position].mediaMetadata.albumArtist.toString()
+            albumUri = dataSet[position].mediaMetadata.artworkUri
 
-            //player.setMediaItems(listOf(dataSet[0]))
+            val resolver = viewHolder.itemView.context.contentResolver
 
+            try {
 
+                Timber.d("queryAllMediaItems: Getting album art from URI=${albumUri.toString()}")
 
-            //player.mediaMetadata
+                //Album art as a bitmap, I need to work on what to do when this is blank / null?
+                val albumArt = resolver.loadThumbnail(albumUri, Size(100, 100), null)
+                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
 
-//            val a = dataSet[0].requestMetadata.extras.toString()
-//            val b = dataSet[0].requestMetadata.mediaUri
+                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
 
-            Timber.d("onBindViewHolder: CHECKING VALUES player.mediaMetadata=${dataSet[0].mediaId}, ${dataSet[0].mediaMetadata} ${dataSet[0].localConfiguration} ${dataSet[0].requestMetadata.mediaUri} ${dataSet[0].mediaMetadata.title}, ${dataSet[0].mediaMetadata.albumTitle}, ${dataSet[0].mediaMetadata.albumArtist}, ${dataSet[0].mediaMetadata.artworkUri}")
+                Timber.d("queryAllMediaItems: SUCCESSFUL! ALBUM ART FOUND!")
 
-
-
-//            Futures.addCallback(
-//                trackGroupsFuture,
-//                object : FutureCallback<TrackGroupArray?> {
-//                    override fun onSuccess(trackGroups: TrackGroupArray?) {
-//                        Timber.d("onSuccess: ")
-////                        if (trackGroups != null) {
-////                            Timber.d("onSuccess: trackGroups not null!")
-////
-////                            handleMetadata(trackGroups)
-////                        }
-//                    }
-//
-//                    override fun onFailure(t: Throwable) {
-//                        Timber.d("onFailure: ")
-////                        handleFailure(t)
-//                    }
-//
-//                    fun handleMetadata(trackGroupArray: TrackGroupArray) {
-//                        Timber.d("handleMetadata: trackGroupArray=${trackGroupArray}")
-//
-//                    }
-//
-//                    fun handleFailure(t: Throwable) {
-//                        Timber.d("handleFailure: t=$t")
-//                    }
-//
-//                },
-//                executor
-//            )
-
+            } catch (e: Exception) {
+                Timber.d("queryAllMediaItems: ERROR ON LOADING ALBUM ART e=$e")
+            }
         }
-
-        fun handleMetaData(trackGroupArray: TrackGroupArray) {
-
-        }
-
-        fun handleFailure(t: Throwable) {
-
-        }
-
 
         // Get element from  your dataset at this position and replace the contents of the view with that element
         //viewHolder.albumInfo.text = "Default ALBUM \n Default Artist \n Default Duration"//dataSet[position]
-        viewHolder.binding.albumInfo.text = "Default ALBUM \n Default Artist \n Default Duration"
-
-
-
+        viewHolder.binding.albumInfo.text = "$albumTitle \n $albumArtist"
 
 
     }
