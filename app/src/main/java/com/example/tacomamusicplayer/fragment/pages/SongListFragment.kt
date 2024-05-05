@@ -13,6 +13,7 @@ import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
+import timber.log.Timber
 
 class SongListFragment(
     val navigationCallback: (PageType) -> Unit
@@ -31,15 +32,28 @@ class SongListFragment(
 
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
 
+        parentViewModel.currentSongList.observe(viewLifecycleOwner) {songs ->
+            Timber.d("onCreateView: songs.size=${songs.size}")
+            binding.displayRecyclerview.adapter = SongListAdapter(songs)
+            determineIfShowingInformationScreen(songs)
+        }
+
         setupPage()
 
         return binding.root
     }
 
+    private fun determineIfShowingInformationScreen(songs: List<MediaItem>) {
+        if(songs.isEmpty()) {
+            binding.songListInformationScreen.visibility = View.VISIBLE
+        } else {
+            binding.songListInformationScreen.visibility = View.GONE
+        }
+    }
+
     private fun setupPage() {
         binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
 
-        binding.displayRecyclerview.adapter = SongListAdapter(listOf(MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, ))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         //First Icon will be the playlists

@@ -33,9 +33,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _albumMediaItemList
     private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
-    val currentAlbumsSongMediaItemList: LiveData<List<MediaItem>>
-        get() = _currentAlbumsSongMediaItemList
-    private val _currentAlbumsSongMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
+    //Song list can be either a playlist or an album
+    val currentSongList: LiveData<List<MediaItem>>
+        get() = _currentSongList
+    private val _currentSongList: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
 
     val arePermissionsGranted: LiveData<Boolean>
         get() = _arePermissionsGranted
@@ -182,7 +183,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 val childrenFuture =
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                    _currentAlbumsSongMediaItemList.value = childrenFuture.get().value?.toList() ?: listOf()
+                    _currentSongList.value = childrenFuture.get().value?.toList() ?: listOf()
                 }, MoreExecutors.directExecutor())
             }
         } else {

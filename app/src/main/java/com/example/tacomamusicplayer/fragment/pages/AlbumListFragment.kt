@@ -11,10 +11,13 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.AlbumListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentAlbumlistBinding
+import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-class AlbumListFragment: Fragment() {
+class AlbumListFragment(
+    val navigationCallback: (PageType) -> Unit
+): Fragment() {
 
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
@@ -30,7 +33,7 @@ class AlbumListFragment: Fragment() {
         val observer: Observer<List<MediaItem>> =
             Observer { mediaList ->
                 Timber.d("onCreateView: found albumList.size=${mediaList.size}")
-                binding.displayRecyclerview.adapter = AlbumListAdapter(mediaList)
+                binding.displayRecyclerview.adapter = AlbumListAdapter(mediaList, this::onAlbumClick)
             }
 
         //Now I just need to create different fragments for each type?
@@ -39,6 +42,11 @@ class AlbumListFragment: Fragment() {
         setupPage()
 
         return binding.root
+    }
+
+    private fun onAlbumClick(albumTitle: String) {
+        parentViewModel.querySongsFromAlbum(albumTitle)
+        navigationCallback(PageType.SONG_PAGE)
     }
 
     private fun setupPage() {
