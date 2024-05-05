@@ -11,19 +11,12 @@ import com.example.tacomamusicplayer.databinding.FragmentMusicChooserBinding
 import com.example.tacomamusicplayer.enum.PageType
 
 class MusicChooserFragment: Fragment() {
-
-    private val PLAYLIST_FRAGMENT = 0
-    private val BROWSE_ALBUMS_FRAGMENT = 1
-    private val ALBUM_FRAGMENT = 2
-
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
-
-
     private lateinit var binding: FragmentMusicChooserBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
+        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity(), ::setPage)
     }
 
     override fun onCreateView(
@@ -58,15 +51,19 @@ class MusicChooserFragment: Fragment() {
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
         binding.navigationControl.setPlaylistButtonOnClick {
-            binding.pager.currentItem = PLAYLIST_FRAGMENT
+            setPage(PageType.PLAYLIST_PAGE)
         }
         binding.navigationControl.setBrowseAlbumButtonOnClick {
-            binding.pager.currentItem = BROWSE_ALBUMS_FRAGMENT
+            setPage(PageType.ALBUM_PAGE)
         }
         binding.navigationControl.setAlbumButtonOnClick {
-            binding.pager.currentItem = ALBUM_FRAGMENT
+            setPage(PageType.SONG_PAGE)
         }
 
         return binding.root
+    }
+
+    private fun setPage(page: PageType) {
+        binding.pager.currentItem = page.type()
     }
 }

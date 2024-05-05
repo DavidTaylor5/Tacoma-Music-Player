@@ -1,15 +1,11 @@
 package com.example.tacomamusicplayer.view
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.databinding.CustomExoControllerUpdateBinding
 import com.example.tacomamusicplayer.databinding.ViewCustomNavigationControlBinding
 import com.example.tacomamusicplayer.enum.PageType
 
@@ -37,6 +33,8 @@ class CustomNavigationControl @JvmOverloads constructor(
             val playlistImg = typedArray.getResourceId(R.styleable.CustomNavigationControl_playlistImg, 0)
             val albumBrowseImg = typedArray.getResourceId(R.styleable.CustomNavigationControl_albumBrowseImg, 0)
             val albumImg = typedArray.getResourceId(R.styleable.CustomNavigationControl_albumImg, 0)
+
+            typedArray.close()
 
             binding.playlistButton.setImageDrawable(ContextCompat.getDrawable(context, playlistImg))
             binding.albumlistButton.setImageDrawable(ContextCompat.getDrawable(context, albumBrowseImg))

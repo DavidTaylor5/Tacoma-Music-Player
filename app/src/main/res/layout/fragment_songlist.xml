@@ -22,4 +22,10 @@
         app:layout_constraintTop_toBottomOf="@id/section_title"
         />
 
+    <com.example.tacomamusicplayer.view.CustomInformationScreen
+        android:id="@+id/songListInformationScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
