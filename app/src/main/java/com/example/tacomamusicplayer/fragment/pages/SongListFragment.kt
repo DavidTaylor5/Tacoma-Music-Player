@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -37,5 +38,9 @@ class SongListFragment: Fragment() {
 
         binding.displayRecyclerview.adapter = SongListAdapter(listOf(MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, ))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+
+        binding.songListInformationScreen.setInformationText("THIS IS INFORMATION TEXT")
+        binding.songListInformationScreen.setImageIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
+        //TODO also add a callback to the imageSrcIcon... should be the same as the navigation tab...
     }
 }
