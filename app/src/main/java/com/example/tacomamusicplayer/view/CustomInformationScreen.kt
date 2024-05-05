@@ -25,17 +25,31 @@ class CustomInformationScreen @JvmOverloads constructor(
         }
     }
 
-    fun setImageIcon(imageDrawable: Drawable) {
-        binding.informationIcon.setImageDrawable(imageDrawable)
+    fun setFirstIcon(imageDrawable: Drawable) {
+        binding.firstIcon.setImageDrawable(imageDrawable)
     }
 
-    fun setInformationText(info: String) {
-        binding.informationText.text = info
-    }
-
-    fun setImageClickCallback(callback: () -> Unit) {
-        binding.informationIcon.setOnClickListener {
+    fun setFirstIconCallback(callback: () -> Unit) {
+        binding.firstClickable.setOnClickListener {
             callback()
         }
+    }
+
+    fun setSecondIcon(imageDrawable: Drawable) {
+        binding.secondIcon.setImageDrawable(imageDrawable)
+    }
+
+    fun setSecondIconCallback(callback: () -> Unit) {
+        binding.secondClickable.setOnClickListener {
+            callback()
+        }
+    }
+
+    fun setFirstInfo(info: String) {
+        binding.firstInfo.text = info
+    }
+
+    fun setSecondInfo(info: String) {
+        binding.secondInfo.text = info
     }
 }

@@ -42,8 +42,14 @@ class SongListFragment(
         binding.displayRecyclerview.adapter = SongListAdapter(listOf(MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, ))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
-        binding.songListInformationScreen.setInformationText("THIS IS INFORMATION TEXT")
-        binding.songListInformationScreen.setImageIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
-        binding.songListInformationScreen.setImageClickCallback { navigationCallback(PageType.ALBUM_PAGE) }
+        //First Icon will be the playlists
+        binding.songListInformationScreen.setFirstInfo("Choose a playlist to View")
+        binding.songListInformationScreen.setFirstIcon(resources.getDrawable(R.drawable.playlist_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setFirstIconCallback { navigationCallback(PageType.PLAYLIST_PAGE) }
+
+        //Second Icon will be the Albums
+        binding.songListInformationScreen.setSecondInfo("Choose an album to View")
+        binding.songListInformationScreen.setSecondIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setSecondIconCallback { navigationCallback(PageType.ALBUM_PAGE) }
     }
 }
