@@ -1,7 +1,6 @@
 package com.example.tacomamusicplayer.service
 
 import android.content.Intent
-import android.net.Uri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -13,7 +12,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -46,8 +44,10 @@ class MusicService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            return super.onAddMediaItems(mediaSession, controller, mediaItems)
 
+            //Technically this is a security breach... exposes on device uri to mediacontrollers...
+            val updatedMediaItems = mediaItems.map { it -> it.buildUpon().setUri(it.mediaId).build() }.toMutableList()
+            return Futures.immediateFuture(updatedMediaItems)
         }
 
         override fun onGetLibraryRoot(
@@ -128,15 +128,17 @@ class MusicService : MediaLibraryService() {
 
         player = playerBuilder.build()
 
+        val a = player.availableCommands
+
         player.addListener(PlayerEventListener())
         player.playWhenReady = false //this can be a variable
 
-        val pkgName = applicationContext.packageName
-        //path for local file...
-        val path = Uri.parse("android.resource://" + pkgName + "/" + R.raw.earth)
+//        val pkgName = applicationContext.packageName
+//        //path for local file...
+//        val path = Uri.parse("android.resource://" + pkgName + "/" + R.raw.earth)
 
         //Test code that sets media Items with three of the same -> ui should choose music instead.
-        player.setMediaItems(listOf(MediaItem.fromUri(path), MediaItem.fromUri(path), MediaItem.fromUri(path)))
+        player.setMediaItems(listOf())
         player.prepare()
         return true
     }
