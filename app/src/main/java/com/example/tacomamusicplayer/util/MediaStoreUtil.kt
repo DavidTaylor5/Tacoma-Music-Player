@@ -58,7 +58,7 @@ class MediaStoreUtil {
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
-                val songMediaItem = createSongMediaItem(songTitle = title, albumTitle = album, artist = artist, artworkUri = artworkUri, trackNumber = track)
+                val songMediaItem = createSongMediaItem(songUri = url, songTitle = title, albumTitle = album, artist = artist, artworkUri = artworkUri, trackNumber = track)
                 albumSongs.add(songMediaItem)
             }
         }
@@ -124,6 +124,7 @@ class MediaStoreUtil {
      * @return A MediaItem with the associated data.
      */
     private fun createSongMediaItem(
+        songUri: String = "UNKNOWN URI", //I'm adding the Uri to be mediaid however this is going to be a security breach...
         songTitle: String = "UNKONWN SONG TITLE",
         albumTitle: String = "UNKNOWN ALBUM",
         artist: String = "UNKNOWN ARTIST",
@@ -131,7 +132,7 @@ class MediaStoreUtil {
         trackNumber: Int
     ): MediaItem {
         return MediaItem.Builder()
-            .setMediaId(songTitle)
+            .setMediaId(songUri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setIsBrowsable(false)
