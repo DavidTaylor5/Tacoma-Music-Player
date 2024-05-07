@@ -4,30 +4,96 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="85dp"
-    android:background="@color/primary"
+    android:layout_height="wrap_content"
+    android:background="@color/songlist_button_focused"
     >
 
     <ImageView
         android:id="@+id/album_art"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         android:src="@drawable/music_note_icon"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="10dp"
+        android:paddingBottom="10dp"
         />
 
-    <TextView
-        android:id="@+id/album_info"
+    <LinearLayout
+        android:id="@+id/text_vertical_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="DEFAULT Text"
-        app:layout_constraintStart_toStartOf="@id/album_art"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/album_art"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="10dp"
+        android:background="@color/albumlist_button_focused"
+        >
+
+        <TextView
+            android:id="@+id/song_title_text_view"
+            android:layout_width="200dp"
+            android:maxLines="1"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:textAlignment="viewStart"
+            android:text="DEFAULT Text"
+            android:textSize="20dp"
+            android:textColor="@color/text_icons"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:includeFontPadding="false"
+            />
+
+        <TextView
+            android:id="@+id/artist_text_view"
+            android:layout_width="200dp"
+            android:textSize="10dp"
+            android:maxLines="1"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:textAlignment="viewStart"
+            android:text="DEFAULT Text"
+            android:textColor="@color/text_icons"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:includeFontPadding="false"
+            />
+
+        <TextView
+            android:id="@+id/duration_text_view"
+            android:layout_width="200dp"
+            android:maxLines="1"
+            android:textSize="10dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:textAlignment="viewStart"
+            android:text="DEFAULT Text"
+            android:textColor="@color/text_icons"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:includeFontPadding="false"
+            />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/add_icon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/add_icon"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:textColor="@color/text_icons"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/text_vertical_container"
+        />
+
+    <View
+        android:id="@+id/menu_icon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/menu_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/add_icon"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -71,7 +71,10 @@ class SongListAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapt
             }
         }
 
-        viewHolder.binding.albumInfo.text = "$songTitle \n $songArtist \n $albumTitle"
+        viewHolder.binding.songTitleTextView.text = songTitle
+        viewHolder.binding.artistTextView.text = songArtist
+        viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
+
     }
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {

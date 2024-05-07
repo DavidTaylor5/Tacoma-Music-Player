@@ -50,19 +50,10 @@ class MusicPlayingFragment: Fragment() {
 
         parentViewModel.currentSongList.observe(this) { songs ->
             Timber.d("onStart: CHANGING controller songs to be songs.size=${songs.size}")
+
+            //TODO remove this and change with song queue
             controller?.clearMediaItems()
             controller?.addMediaItems(songs)
-            //controller?.addMediaItem(songs[0])
-//            val a = controller?.availableCommands
-//            val b = controller?.availableSessionCommands
-//            val c = "bruhg"
-            //controller?.prepare()
-//            val pkgName = this@MusicPlayingFragment.context?.let {
-//                val path = Uri.parse("android.resource://" + it.packageName + "/" + R.raw.earth)
-//                controller?.addMediaItem(MediaItem.fromUri(path))
-//                controller?.prepare()
-//                //TODO if controller is null and songs are not...
-//            }
         }
 
 
