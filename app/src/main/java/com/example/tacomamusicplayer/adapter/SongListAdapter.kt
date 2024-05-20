@@ -5,9 +5,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
@@ -74,6 +74,25 @@ class SongListAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapt
         viewHolder.binding.songTitleTextView.text = songTitle
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
+
+        viewHolder.binding.addIcon.setOnClickListener {
+            Toast.makeText(viewHolder.itemView.context, "Added Song:SONG", Toast.LENGTH_SHORT).show()
+            //todo add this to current queue or add to a playlist?
+        }
+
+        viewHolder.binding.menuIcon.setOnClickListener {
+
+            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+
+            menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                return@setOnMenuItemClickListener true
+                //TODO set actual options here....
+                //TODO create a custom component for these song components...
+            }
+            menu.show()
+        }
 
     }
     // Return the size of your dataset (invoked by the layout manager)
