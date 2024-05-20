@@ -133,10 +133,6 @@ class MusicService : MediaLibraryService() {
         player.addListener(PlayerEventListener())
         player.playWhenReady = false //this can be a variable
 
-//        val pkgName = applicationContext.packageName
-//        //path for local file...
-//        val path = Uri.parse("android.resource://" + pkgName + "/" + R.raw.earth)
-
         //Test code that sets media Items with three of the same -> ui should choose music instead.
         player.setMediaItems(listOf())
         player.prepare()
