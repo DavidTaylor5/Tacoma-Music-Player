@@ -28,7 +28,7 @@ import timber.log.Timber
 //TODO I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
 //TODO I need to redo the main music playing screen, I also want to be able to scroll through the music playing screen
 
-
+//TODO the app crashes when I rotate it [viewmodel recreation issues...]
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -72,8 +72,6 @@ class MainActivity : AppCompatActivity() {
                 //TODO query available playlists...
             }
         }
-
-
 
         viewModel.screenState.observe(this) {data ->
             Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")

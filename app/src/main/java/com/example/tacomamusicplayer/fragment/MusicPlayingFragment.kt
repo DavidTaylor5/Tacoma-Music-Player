@@ -48,14 +48,9 @@ class MusicPlayingFragment: Fragment() {
             binding.playerView.showController()
         }
 
-        parentViewModel.currentSongList.observe(this) { songs ->
-            Timber.d("onStart: CHANGING controller songs to be songs.size=${songs.size}")
-
-            //TODO remove this and change with song queue
-            controller?.clearMediaItems()
+        parentViewModel.songQueue.observe(this) { songs ->
             controller?.addMediaItems(songs)
         }
-
 
         binding.psychoButton.setOnClickListener {
             findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
