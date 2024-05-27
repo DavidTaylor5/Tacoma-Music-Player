@@ -11,6 +11,7 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
@@ -33,10 +34,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _albumMediaItemList
     private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
-    //Song list can be either a playlist or an album
+    val songQueue: LiveData<List<MediaItem>>
+        get() = _songQueue
+    private val _songQueue: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
+
+    //List of songs to be inspected... albums or playlists
     val currentSongList: LiveData<List<MediaItem>>
         get() = _currentSongList
     private val _currentSongList: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
+
+    //List of songs to be inspected... albums or playlists
+    val songListTitle: LiveData<String>
+        get() = _songListTitle
+    private val _songListTitle: MutableLiveData<String> = MutableLiveData("DEFAULT")
 
     val arePermissionsGranted: LiveData<Boolean>
         get() = _arePermissionsGranted
@@ -55,6 +65,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isRootAvailable
     private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
 
+    val currentpage: LiveData<PageType>
+        get() = _currentpage
+    private val _currentpage: MutableLiveData<PageType> = MutableLiveData()
+
+    /**
+     * Experimental code, which page for music chooser fragment?
+     */
+    fun setPage(page: PageType) {
+        _currentpage.value = page
+    }
+
     private var mediaBrowser: MediaBrowser? = null
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
@@ -71,6 +92,36 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             if(data.currentScreen == ScreenType.PERMISSION_DENIED_SCREEN)
                 checkPermissions()
         }
+    }
+
+    //TODO I should be able to move all of this queue logic to a seperate class?
+    /**
+     * Add a single song to the end of the queue.
+     */
+    fun addSongToQueue(song: MediaItem) {
+        val songList = _songQueue.value ?: listOf()
+        val changeSongList = songList.toMutableList()
+        changeSongList.add(song)
+
+        _songQueue.value = changeSongList
+    }
+
+    /**
+     * Add a list of songs to the end of the queue
+     */
+    private fun addSongListToQueue(songs: List<MediaItem>) {
+        val songList = _songQueue.value ?: listOf()
+        val changeSongList = songList.toMutableList()
+        changeSongList.addAll(songs)
+
+        _songQueue.value = changeSongList
+    }
+
+    /**
+     * Remove the Queue and replace with a new song list.
+     */
+    private fun replaceAllSongsInQueueWithSongList(songs: List<MediaItem>) {
+        _songQueue.value = songs
     }
 
     /**
@@ -184,6 +235,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                     _currentSongList.value = childrenFuture.get().value?.toList() ?: listOf()
+                    _songListTitle.value = "Album: $albumId"
                 }, MoreExecutors.directExecutor())
             }
         } else {

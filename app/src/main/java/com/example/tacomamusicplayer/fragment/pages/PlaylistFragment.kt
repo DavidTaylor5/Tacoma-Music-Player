@@ -6,19 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.PlaylistAdapter
 import com.example.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
+import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
 
 class PlaylistFragment(
-    val navigationCallback: (PageType) -> Unit
+
 ): Fragment() {
 
     private lateinit var binding: FragmentPlaylistBinding
-    private val parentViewModel: MainViewModel by activityViewModels()
+    //private val parentFragViewModel: MusicChooserViewModel by viewModels({requireParentFragment()})
 
     override fun onCreateView(
         inflater: LayoutInflater,

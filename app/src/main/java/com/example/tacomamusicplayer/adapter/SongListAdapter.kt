@@ -14,7 +14,11 @@ import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
 import timber.log.Timber
 
-class SongListAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
+class SongListAdapter(
+    private val dataSet:  List<MediaItem>,
+    val onAddIconClick: (MediaItem) -> Unit,
+    val onMenuIconClick: () -> Unit
+): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     class SongViewHolder(val binding: ViewholderSongBinding): RecyclerView.ViewHolder(binding.root)
 
@@ -76,7 +80,8 @@ class SongListAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapt
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
 
         viewHolder.binding.addIcon.setOnClickListener {
-            Toast.makeText(viewHolder.itemView.context, "Added Song:SONG", Toast.LENGTH_SHORT).show()
+            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
+            onAddIconClick(dataSet[position])
             //todo add this to current queue or add to a playlist?
         }
 
