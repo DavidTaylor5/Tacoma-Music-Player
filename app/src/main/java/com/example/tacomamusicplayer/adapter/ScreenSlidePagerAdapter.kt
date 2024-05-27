@@ -13,16 +13,23 @@ import com.example.tacomamusicplayer.fragment.pages.SongListFragment
  */
 private const val NUM_PAGES = 3
 class ScreenSlidePagerAdapter(
-    fa: FragmentActivity,
-    private val navigationCallback: (PageType) -> Unit
+    fa: FragmentActivity
 ): FragmentStateAdapter(fa) {
     override fun getItemCount(): Int  = NUM_PAGES
     override fun createFragment(position: Int): Fragment{
         return when(position) {
-            PageType.PLAYLIST_PAGE.type() -> PlaylistFragment(navigationCallback)
-            PageType.ALBUM_PAGE.type() -> AlbumListFragment(navigationCallback)
-            PageType.SONG_PAGE.type() -> SongListFragment(navigationCallback)
-            else -> SongListFragment(navigationCallback)
+            PageType.PLAYLIST_PAGE.type() -> {
+                PlaylistFragment()
+            }
+            PageType.ALBUM_PAGE.type() -> {
+                AlbumListFragment()
+            }
+            PageType.SONG_PAGE.type() -> {
+                SongListFragment()
+            }
+            else -> {
+                SongListFragment()
+            }
         }
     }
 }

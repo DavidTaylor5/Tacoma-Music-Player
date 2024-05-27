@@ -11,6 +11,7 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
@@ -42,6 +43,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _currentSongList
     private val _currentSongList: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
 
+    //List of songs to be inspected... albums or playlists
+    val songListTitle: LiveData<String>
+        get() = _songListTitle
+    private val _songListTitle: MutableLiveData<String> = MutableLiveData("DEFAULT")
+
     val arePermissionsGranted: LiveData<Boolean>
         get() = _arePermissionsGranted
     private val _arePermissionsGranted: MutableLiveData<Boolean> = MutableLiveData()
@@ -58,6 +64,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val isRootAvailable: LiveData<Boolean>
         get() = _isRootAvailable
     private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
+
+    val currentpage: LiveData<PageType>
+        get() = _currentpage
+    private val _currentpage: MutableLiveData<PageType> = MutableLiveData()
+
+    /**
+     * Experimental code, which page for music chooser fragment?
+     */
+    fun setPage(page: PageType) {
+        _currentpage.value = page
+    }
 
     private var mediaBrowser: MediaBrowser? = null
     private var rootMediaItem: MediaItem? = null
@@ -218,6 +235,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                     _currentSongList.value = childrenFuture.get().value?.toList() ?: listOf()
+                    _songListTitle.value = "Album: $albumId"
                 }, MoreExecutors.directExecutor())
             }
         } else {

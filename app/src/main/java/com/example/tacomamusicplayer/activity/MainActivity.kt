@@ -29,6 +29,21 @@ import timber.log.Timber
 //TODO I need to redo the main music playing screen, I also want to be able to scroll through the music playing screen
 
 //TODO the app crashes when I rotate it [viewmodel recreation issues...]
+/*
+* TODO It appears I need to refactor my fragment logic based on this,
+*  Every fragment must have an empty constructor, so it can be instantiated when restoring its activity's
+* state. It is strongly recommended that subclasses do not have other constructors with paramters, since
+* these constructors will not be called when the fragment is re-instantiated; instead, arguments can
+* be supplied by the caller with setArguments(Bundle) and later retrieved by the Fragment with
+* getArguments().
+*
+* Applications should generally not implement a constructor. Prefer onAttach(android.content.Context)
+* instead. It is the first place application code can run where the fragment is ready to be used -
+* the point where the fragment is actually associated with its context. Some applications may also
+* want to implement onInflate(Activity, AttributeSet, Bundle) to retrieve attributes from a layout
+* resource, although note this happens when the fragment is attached.
+*
+* */
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()

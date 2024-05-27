@@ -5,18 +5,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicChooserBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.viewmodel.MainViewModel
+import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
 
 class MusicChooserFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: FragmentMusicChooserBinding
 
+    private val viewModel: MusicChooserViewModel by viewModels()
+    private val parentViewModel: MainViewModel by activityViewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity(), ::setPage)
+        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
     }
 
     override fun onCreateView(
@@ -51,19 +58,26 @@ class MusicChooserFragment: Fragment() {
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
         binding.navigationControl.setPlaylistButtonOnClick {
-            setPage(PageType.PLAYLIST_PAGE)
+//            setPage(PageType.PLAYLIST_PAGE)
+            parentViewModel.setPage(PageType.PLAYLIST_PAGE)
         }
         binding.navigationControl.setBrowseAlbumButtonOnClick {
-            setPage(PageType.ALBUM_PAGE)
+//            setPage(PageType.ALBUM_PAGE)
+            parentViewModel.setPage(PageType.ALBUM_PAGE)
         }
         binding.navigationControl.setAlbumButtonOnClick {
-            setPage(PageType.SONG_PAGE)
+//            setPage(PageType.SONG_PAGE)
+            parentViewModel.setPage(PageType.SONG_PAGE)
+        }
+
+        parentViewModel.currentpage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
+            binding.pager.currentItem = page.type()
         }
 
         return binding.root
     }
 
-    private fun setPage(page: PageType) {
-        binding.pager.currentItem = page.type()
-    }
+//    private fun setPage(page: PageType) {
+//        binding.pager.currentItem = page.type()
+//    }
 }
