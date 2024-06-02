@@ -22,28 +22,18 @@ import timber.log.Timber
 
 //TODO I need to make smart goals...
 
-//TODO when I click an album I want the songListFragment to populate
-//TODO When I click a songlist, I want the song to start playing...
-//TODO When I start playing, I want a small screen on the bottom of the screen to show currently playing music
-//TODO I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
-//TODO I need to redo the main music playing screen, I also want to be able to scroll through the music playing screen
+//TODO HIGH PRIORITY TASKS
+// Click to Play from Song List : I want the song to start playing off the rip if item clicked
+// Playlist Capability : I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
+// Current Queue Fragment : I want another fragment to swipe up from the bottom which will have the current queue [whats on deck...]
 
-//TODO the app crashes when I rotate it [viewmodel recreation issues...]
-/*
-* TODO It appears I need to refactor my fragment logic based on this,
-*  Every fragment must have an empty constructor, so it can be instantiated when restoring its activity's
-* state. It is strongly recommended that subclasses do not have other constructors with paramters, since
-* these constructors will not be called when the fragment is re-instantiated; instead, arguments can
-* be supplied by the caller with setArguments(Bundle) and later retrieved by the Fragment with
-* getArguments().
-*
-* Applications should generally not implement a constructor. Prefer onAttach(android.content.Context)
-* instead. It is the first place application code can run where the fragment is ready to be used -
-* the point where the fragment is actually associated with its context. Some applications may also
-* want to implement onInflate(Activity, AttributeSet, Bundle) to retrieve attributes from a layout
-* resource, although note this happens when the fragment is attached.
-*
-* */
+//TODO MEDIUM PRIORITY TASKS
+
+//TODO LOW PRIORITY TASKS
+// UI CHANGES ...
+// Small Current Player Floating : When I start playing, I want a small screen on the bottom of the screen to show currently playing music [this might be difficult]
+// Orientation Change: Stay on Music Chooser Fragment, currently I'm being sent back to must player fragment
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -75,6 +65,15 @@ class MainActivity : AppCompatActivity() {
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
                 viewModel.initializeMusicPlaying()
+            }
+        }
+
+        viewModel.getAllPlaylistLiveData().observe(this) { playlists ->
+            Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
+            if(playlists.isNotEmpty()) {
+                for(playlist in playlists) {
+                    Timber.d("AllPlaylistLiveData: playlist.id=${playlist.uid} playlist.title=${playlist.title}, songs=${playlist.songs}")
+                }
             }
         }
 
