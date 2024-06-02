@@ -7,8 +7,11 @@ import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.data.Playlist
 
-class PlaylistAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
+class PlaylistAdapter(
+    private val playlists:  List<Playlist>
+): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -34,11 +37,11 @@ class PlaylistAdapter(private val dataSet:  List<MediaItem>): RecyclerView.Adapt
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
 
         // Get element from  your dataset at this position and replace the contents of the view with that element
-        viewHolder.albumInfo.text = "Default PLAYLIST NAME \n # of songs \n Default Duration"//dataSet[position]
+        viewHolder.albumInfo.text = playlists[position].title
     }
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
-        return dataSet.size
+        return playlists.size
     }
 
 }
