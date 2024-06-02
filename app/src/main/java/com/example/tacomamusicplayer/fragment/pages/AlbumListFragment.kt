@@ -23,7 +23,6 @@ class AlbumListFragment(
 
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
-    //private val parentFragViewModel: MusicChooserViewModel by viewModels({requireParentFragment()})
 
     override fun onCreateView(
         inflater: LayoutInflater,
