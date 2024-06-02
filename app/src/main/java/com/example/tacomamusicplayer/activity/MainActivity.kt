@@ -68,6 +68,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        viewModel.getAllPlaylistLiveData().observe(this) { playlists ->
+            Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
+            if(playlists.isNotEmpty()) {
+                for(playlist in playlists) {
+                    Timber.d("AllPlaylistLiveData: playlist.id=${playlist.uid} playlist.title=${playlist.title}, songs=${playlist.songs}")
+                }
+            }
+        }
+
         viewModel.isRootAvailable.observe(this) {isAvailable ->
             //The root is available, I can now check albums and stuff
             if(isAvailable) {

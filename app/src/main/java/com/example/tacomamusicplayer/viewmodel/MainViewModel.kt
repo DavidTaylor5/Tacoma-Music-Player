@@ -6,16 +6,26 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.room.Room
+import com.example.tacomamusicplayer.data.Converters
+import com.example.tacomamusicplayer.data.Playlist
+import com.example.tacomamusicplayer.data.PlaylistData
+import com.example.tacomamusicplayer.data.PlaylistDatabase
 import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.google.common.util.concurrent.MoreExecutors
+import com.squareup.moshi.Moshi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -69,6 +79,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _currentpage
     private val _currentpage: MutableLiveData<PageType> = MutableLiveData()
 
+
+    val playlistDatabase = Room.databaseBuilder(
+        getApplication<Application>().applicationContext,
+            PlaylistDatabase::class.java,
+            "playlist-db"
+        ).build()
+
     /**
      * Experimental code, which page for music chooser fragment?
      */
@@ -83,6 +100,67 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     init {
         Timber.d("init: ")
         checkPermissions()
+
+        val tester = Playlist(
+            title = "first playlist",
+            songs = PlaylistData(
+                listOf(
+                    SongData(
+                        songUri = "uri",
+                        songTitle = "songTitle",
+                        albumTitle = "albumTitle",
+                        artist = "artist",
+                        artworkUri = 100L
+                    )
+                )
+            )
+        )
+
+        val songs = PlaylistData(
+            listOf(
+                SongData(
+                    songUri = "uri",
+                    songTitle = "songTitle",
+                    albumTitle = "albumTitle",
+                    artist = "artist",
+                    artworkUri = 100L
+                )
+            )
+        )
+
+        val song =                 SongData(
+            songUri = "uri",
+            songTitle = "songTitle",
+            albumTitle = "albumTitle",
+            artist = "artist",
+            artworkUri = 100L
+        )
+
+        //TODO Example of adding a playlist
+//        viewModelScope.launch(Dispatchers.IO) {
+//            playlistDatabase.playlistDao().insertAll(
+//                tester
+//            )
+//        }
+
+//        playlistDatabase.playlistDao().insertAll(
+//            tester
+//        )
+
+        val testValue = playlistDatabase.playlistDao().getAll()
+        Timber.d("init: testValue.length = ${testValue.value?.size}, ")
+
+//        val moshi = Moshi.Builder().build()
+//        val adapter = moshi.adapter(SongData::class.java)
+//        val word = adapter.toJson(song)
+//
+//        val words = Converters().stringFromSongData(songs)
+//        Timber.d("init: words=$words")
+
+    }
+
+    fun getAllPlaylistLiveData(): LiveData<List<Playlist>> {
+        return playlistDatabase.playlistDao().getAll()
     }
 
     fun checkPermissionsIfOnPermissionDeniedScreen() {

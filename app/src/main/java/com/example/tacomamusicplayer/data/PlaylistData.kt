@@ -1,7 +1,8 @@
 package com.example.tacomamusicplayer.data
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class PlaylistData (
-    val playlistName: String,
-    var tracks: Int,
-    val duration: Double,
+    val songs: List<SongData> = listOf()
 )
