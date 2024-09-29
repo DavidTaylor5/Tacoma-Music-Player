@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.OptIn
+import androidx.core.view.GestureDetectorCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
@@ -17,6 +18,7 @@ import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.example.tacomamusicplayer.enum.ScreenType
+import com.example.tacomamusicplayer.util.MusicGestureDetector
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -60,4 +62,5 @@ class MusicPlayingFragment: Fragment() {
             findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
         }
     }
+
 }
