@@ -37,6 +37,8 @@ import timber.log.Timber
 // Small Current Player Floating : When I start playing, I want a small screen on the bottom of the screen to show currently playing music [this might be difficult]
 // Orientation Change: Stay on Music Chooser Fragment, currently I'm being sent back to must player fragment
 
+//TODO I want to animate sliding up and down from library to player, I also want to implement gesture detector for this...
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -154,11 +156,11 @@ class MainActivity : AppCompatActivity() {
         viewModel.handlePermissionResult(requestCode, permissions, grantResults)
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return if (mDetector.onTouchEvent(event)) {
-            true
-        } else {
-            super.onTouchEvent(event)
-        }
-    }
+//    override fun onTouchEvent(event: MotionEvent): Boolean {
+//        return if (mDetector.onTouchEvent(event)) {
+//            true
+//        } else {
+//            super.onTouchEvent(event)
+//        }
+//    }
 }
