@@ -1,10 +1,12 @@
 package com.example.tacomamusicplayer.activity
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GestureDetectorCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -16,6 +18,7 @@ import com.example.tacomamusicplayer.fragment.MusicChooserFragment
 import com.example.tacomamusicplayer.fragment.MusicPlayingFragment
 import com.example.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.example.tacomamusicplayer.util.AppPermissionUtil
+import com.example.tacomamusicplayer.util.MusicGestureDetector
 import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
@@ -34,12 +37,16 @@ import timber.log.Timber
 // Small Current Player Floating : When I start playing, I want a small screen on the bottom of the screen to show currently playing music [this might be difficult]
 // Orientation Change: Stay on Music Chooser Fragment, currently I'm being sent back to must player fragment
 
+//TODO I want to animate sliding up and down from library to player, I also want to implement gesture detector for this...
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
     private val permissionManager = AppPermissionUtil()
     private lateinit var navController: NavController
+
+    private lateinit var mDetector: GestureDetectorCompat
 
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -96,6 +103,16 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
 
         onBackPressedDispatcher.addCallback(onBackPressedCallback)
+
+        //val musicGestureDetector = MusicGestureDetector()
+
+
+        //Timber.d("onStart: SET mDetector")
+
+        //mDetector = GestureDetectorCompat(this, musicGestureDetector)
+
+        //mDetector.setOnDoubleTapListener(musicGestureDetector)
+
     }
 
     private fun setupNavigation() {
@@ -138,4 +155,12 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         viewModel.handlePermissionResult(requestCode, permissions, grantResults)
     }
+
+//    override fun onTouchEvent(event: MotionEvent): Boolean {
+//        return if (mDetector.onTouchEvent(event)) {
+//            true
+//        } else {
+//            super.onTouchEvent(event)
+//        }
+//    }
 }
