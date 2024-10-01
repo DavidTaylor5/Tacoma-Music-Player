@@ -3,7 +3,9 @@ package com.example.tacomamusicplayer.fragment
 import android.graphics.drawable.AnimationDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -33,6 +35,34 @@ class MusicPlayingFragment: Fragment() {
 
     private var controller: MediaController? = null
 
+    val detector = object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            Timber.d("onDoubleTap: ")
+            return super.onDoubleTap(e)
+        }
+
+        override fun onDown(e: MotionEvent): Boolean {
+            Timber.d("onDown: ")
+
+            return true
+        }
+
+
+
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
+            Timber.d("onFling: ")
+
+            return super.onFling(e1, e2, velocityX, velocityY)
+        }
+    }
+
+    val gesture = GestureDetector(activity, detector)
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -42,6 +72,39 @@ class MusicPlayingFragment: Fragment() {
         binding = FragmentMusicPlayingBinding.inflate(inflater)
 
         setupLibraryButtonAnimation(binding)
+
+        val gesture = GestureDetector(container!!.context, detector)
+
+        //TODO clean up this code
+
+        //TODO rename library button -> library section /  its actually an image view
+        //TODO set the final behavior for this part of the app, section swipe up or double tap will go to library...
+
+        binding.libraryButton!!.setOnTouchListener{ v, event ->
+
+            val a = gesture.onTouchEvent(event)
+
+            Timber.d("onCreateView: onTouch! consumed - ${a}")
+
+            a
+        }
+
+//        binding.libraryButton!!.setOnTouchListener { v, event ->
+//            val a = gesture.onTouchEvent(event)
+//
+//            Timber.d("onCreateView: onTouch! consumed - ${a}")
+//
+//            v.performClick()
+//        }
+
+//        container!!.setOnTouchListener { v, event ->
+//
+//            val a = gesture.onTouchEvent(event)
+//
+//            Timber.d("onCreateView: onTouch! consumed - ${a}")
+//
+//            v.performClick()
+//        }
 
         return binding.root
     }
@@ -73,9 +136,10 @@ class MusicPlayingFragment: Fragment() {
             findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
         }
 
-        binding.libraryButton?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-        }
+//        binding.libraryButton?.setOnClickListener {
+//            Timber.d("Button CLicked: ")
+//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+//        }
     }
 
 }
