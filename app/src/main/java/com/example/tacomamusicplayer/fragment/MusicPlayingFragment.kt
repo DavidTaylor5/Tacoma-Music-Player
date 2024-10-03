@@ -73,6 +73,8 @@ class MusicPlayingFragment: Fragment() {
         //TODO rename library button -> library section /  its actually an image view
         //TODO set the final behavior for this part of the app, section swipe up or double tap will go to library...
 
+        //TODO I'll have a clear area that will be the swipe zone / double press zone [single press can cause lots of accidental user input]
+
         binding.libraryButton!!.setOnTouchListener{ v, event ->
 
             val a = gesture.onTouchEvent(event)
