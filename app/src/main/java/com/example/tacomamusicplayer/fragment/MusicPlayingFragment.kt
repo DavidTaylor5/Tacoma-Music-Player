@@ -1,26 +1,21 @@
 package com.example.tacomamusicplayer.fragment
 
 import android.graphics.drawable.AnimationDrawable
-import android.net.Uri
 import android.os.Bundle
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.Animation
 import androidx.annotation.OptIn
-import androidx.core.view.GestureDetectorCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.navigation.fragment.findNavController
-import androidx.viewpager2.widget.ViewPager2
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.example.tacomamusicplayer.enum.ScreenType
-import com.example.tacomamusicplayer.util.MusicGestureDetector
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -33,6 +28,34 @@ class MusicPlayingFragment: Fragment() {
 
     private var controller: MediaController? = null
 
+    val detector = object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            Timber.d("onDoubleTap: ")
+            return super.onDoubleTap(e)
+        }
+
+        override fun onDown(e: MotionEvent): Boolean {
+            Timber.d("onDown: ")
+
+            return true
+        }
+
+
+
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
+            Timber.d("onFling: ")
+
+            return super.onFling(e1, e2, velocityX, velocityY)
+        }
+    }
+
+    val gesture = GestureDetector(activity, detector)
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,11 +66,46 @@ class MusicPlayingFragment: Fragment() {
 
         setupLibraryButtonAnimation(binding)
 
+        val gesture = GestureDetector(container!!.context, detector)
+
+        //TODO clean up this code
+
+        //TODO rename library button -> library section /  its actually an image view
+        //TODO set the final behavior for this part of the app, section swipe up or double tap will go to library...
+
+        //TODO I'll have a clear area that will be the swipe zone / double press zone [single press can cause lots of accidental user input]
+
+        binding.libraryButton!!.setOnTouchListener{ v, event ->
+
+            val a = gesture.onTouchEvent(event)
+
+            Timber.d("onCreateView: onTouch! consumed - ${a}")
+
+            a
+        }
+
+//        binding.libraryButton!!.setOnTouchListener { v, event ->
+//            val a = gesture.onTouchEvent(event)
+//
+//            Timber.d("onCreateView: onTouch! consumed - ${a}")
+//
+//            v.performClick()
+//        }
+
+//        container!!.setOnTouchListener { v, event ->
+//
+//            val a = gesture.onTouchEvent(event)
+//
+//            Timber.d("onCreateView: onTouch! consumed - ${a}")
+//
+//            v.performClick()
+//        }
+
         return binding.root
     }
 
     private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
-        binding.libraryButton!!.setBackgroundResource(R.drawable.library_button_animation)
+        binding.libraryButton!!.setBackgroundResource(R.drawable.playing_animation)
         val frameAnimation = binding.libraryButton.background as AnimationDrawable
         frameAnimation.start()
     }
@@ -73,9 +131,10 @@ class MusicPlayingFragment: Fragment() {
             findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
         }
 
-        binding.libraryButton?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-        }
+//        binding.libraryButton?.setOnClickListener {
+//            Timber.d("Button CLicked: ")
+//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+//        }
     }
 
 }

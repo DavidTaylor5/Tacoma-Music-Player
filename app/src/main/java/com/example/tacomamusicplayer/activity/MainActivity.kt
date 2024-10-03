@@ -1,6 +1,8 @@
 package com.example.tacomamusicplayer.activity
 
 import android.os.Bundle
+import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val permissionManager = AppPermissionUtil()
     private lateinit var navController: NavController
 
-    private lateinit var mDetector: GestureDetectorCompat
+    val TAG = MainActivity::class.java.simpleName
 
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -58,9 +60,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    lateinit var gesture: GestureDetector
+
+    val detector = object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            Log.d(TAG, "onDoubleTap: ")
+            return super.onDoubleTap(e)
+        }
+
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
+            Log.d(TAG,"onFling: ")
+
+            return super.onFling(e1, e2, velocityX, velocityY)
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        //Log.d(TAG, "onTouchEvent: ")
+//        event?.let {
+//            gesture.onTouchEvent(event)
+//        }
+        return super.onTouchEvent(event)
+    }
+
+
+
     @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate: ")
+
+        gesture = GestureDetector(this, detector)
 
         // Setup view binding in the project
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -103,16 +137,6 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
 
         onBackPressedDispatcher.addCallback(onBackPressedCallback)
-
-        //val musicGestureDetector = MusicGestureDetector()
-
-
-        //Timber.d("onStart: SET mDetector")
-
-        //mDetector = GestureDetectorCompat(this, musicGestureDetector)
-
-        //mDetector.setOnDoubleTapListener(musicGestureDetector)
-
     }
 
     private fun setupNavigation() {
@@ -155,12 +179,4 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         viewModel.handlePermissionResult(requestCode, permissions, grantResults)
     }
-
-//    override fun onTouchEvent(event: MotionEvent): Boolean {
-//        return if (mDetector.onTouchEvent(event)) {
-//            true
-//        } else {
-//            super.onTouchEvent(event)
-//        }
-//    }
 }
