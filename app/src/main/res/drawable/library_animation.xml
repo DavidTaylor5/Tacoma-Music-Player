@@ -28,4 +28,7 @@
     <item android:drawable="@drawable/library_26" android:duration="50"/>
     <item android:drawable="@drawable/library_27" android:duration="50"/>
     <item android:drawable="@drawable/library_28" android:duration="50"/>
+    <item android:drawable="@drawable/library_29" android:duration="50"/>
+    <item android:drawable="@drawable/library_30" android:duration="50"/>
+    <item android:drawable="@drawable/library_31" android:duration="50"/>
 </animation-list>
