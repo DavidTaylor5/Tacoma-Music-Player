@@ -43,9 +43,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:id="@+id/library_button"
+        android:id="@+id/library_animation"
         android:layout_width="300dp"
         android:layout_height="100dp"
-        android:contentDescription="@string/library_button_animation" />
+        android:contentDescription="@string/library_animation" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
