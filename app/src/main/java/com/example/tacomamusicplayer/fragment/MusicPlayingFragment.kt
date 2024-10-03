@@ -75,7 +75,11 @@ class MusicPlayingFragment: Fragment() {
 
         //TODO I'll have a clear area that will be the swipe zone / double press zone [single press can cause lots of accidental user input]
 
-        binding.libraryButton!!.setOnTouchListener{ v, event ->
+        //TODO Animation changes work but I will need to fix the horizontal layouts for the APP [WILL CRASH on orientation change!]
+
+        //TODO IMPLEMENT THE GESTURE DETECTION / ADD ANIMATION BETWEEN MUSICPLAYINGFRAGMENT AND MUSICCHOOSINGFRAGMENT
+
+        binding.libraryAnimation!!.setOnTouchListener{ v, event ->
 
             val a = gesture.onTouchEvent(event)
 
@@ -105,8 +109,8 @@ class MusicPlayingFragment: Fragment() {
     }
 
     private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
-        binding.libraryButton!!.setBackgroundResource(R.drawable.playing_animation)
-        val frameAnimation = binding.libraryButton.background as AnimationDrawable
+        binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
+        val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
         frameAnimation.start()
     }
 

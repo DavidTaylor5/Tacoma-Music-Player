@@ -1,5 +1,6 @@
 package com.example.tacomamusicplayer.fragment
 
+import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
+import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicChooserBinding
+import com.example.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
@@ -26,12 +29,20 @@ class MusicChooserFragment: Fragment() {
         pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
     }
 
+    private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
+        binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
+        val frameAnimation = binding.playingAnimation.background as AnimationDrawable
+        frameAnimation.start()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentMusicChooserBinding.inflate(inflater)
+
+        setupPlayingAnimation(binding)
 
         binding.pager.adapter = pagerAdapter
 

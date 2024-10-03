@@ -7,5 +7,6 @@
         and grant the "Music and audio permission" permission.
     </string>
     <string name="permission_denied_screen_title">User Notice</string>
-    <string name="library_button_animation">library button animation</string>
+    <string name="library_animation">library animation</string>
+    <string name="playing_animation">playing_animation</string>
 </resources>
