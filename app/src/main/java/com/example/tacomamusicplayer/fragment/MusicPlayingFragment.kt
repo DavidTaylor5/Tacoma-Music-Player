@@ -103,7 +103,7 @@ class MusicPlayingFragment: Fragment() {
     }
 
     private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
-        binding.libraryButton!!.setBackgroundResource(R.drawable.library_animation)
+        binding.libraryButton!!.setBackgroundResource(R.drawable.playing_animation)
         val frameAnimation = binding.libraryButton.background as AnimationDrawable
         frameAnimation.start()
     }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android" android:oneshot="false">
+    <item android:drawable="@drawable/playing_01" android:duration="50"/>
+    <item android:drawable="@drawable/playing_02" android:duration="50"/>
+    <item android:drawable="@drawable/playing_03" android:duration="50"/>
+    <item android:drawable="@drawable/playing_04" android:duration="50"/>
+    <item android:drawable="@drawable/playing_05" android:duration="50"/>
+    <item android:drawable="@drawable/playing_06" android:duration="50"/>
+    <item android:drawable="@drawable/playing_07" android:duration="50"/>
+    <item android:drawable="@drawable/playing_08" android:duration="50"/>
+    <item android:drawable="@drawable/playing_09" android:duration="50"/>
+    <item android:drawable="@drawable/playing_10" android:duration="50"/>
+    <item android:drawable="@drawable/playing_11" android:duration="50"/>
+    <item android:drawable="@drawable/playing_12" android:duration="50"/>
+    <item android:drawable="@drawable/playing_13" android:duration="50"/>
+    <item android:drawable="@drawable/playing_14" android:duration="50"/>
+    <item android:drawable="@drawable/playing_15" android:duration="50"/>
+    <item android:drawable="@drawable/playing_16" android:duration="50"/>
+    <item android:drawable="@drawable/playing_17" android:duration="50"/>
+    <item android:drawable="@drawable/playing_18" android:duration="50"/>
+    <item android:drawable="@drawable/playing_19" android:duration="50"/>
+    <item android:drawable="@drawable/playing_20" android:duration="50"/>
+    <item android:drawable="@drawable/playing_21" android:duration="50"/>
+    <item android:drawable="@drawable/playing_22" android:duration="50"/>
+    <item android:drawable="@drawable/playing_23" android:duration="50"/>
+    <item android:drawable="@drawable/playing_24" android:duration="50"/>
+    <item android:drawable="@drawable/playing_25" android:duration="50"/>
+</animation-list>
