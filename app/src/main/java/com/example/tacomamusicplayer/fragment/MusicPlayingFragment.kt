@@ -2,6 +2,7 @@ package com.example.tacomamusicplayer.fragment
 
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
+import android.transition.TransitionInflater
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -28,7 +29,7 @@ class MusicPlayingFragment: Fragment() {
 
     private var controller: MediaController? = null
 
-    val detector = object : GestureDetector.SimpleOnGestureListener() {
+    private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
             Timber.d("onDoubleTap: navigate to the music chooser screen!")
 
@@ -60,6 +61,13 @@ class MusicPlayingFragment: Fragment() {
 
             return super.onFling(e1, e2, velocityX, velocityY)
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val inflater = TransitionInflater.from(requireContext())
+        enterTransition = inflater.inflateTransition(R.transition.slide_down)
     }
 
     override fun onCreateView(
