@@ -48,6 +48,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _songQueue
     private val _songQueue: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
 
+    val addSongToEndOfQueue: LiveData<MediaItem>
+        get() = _addSongToEndOfQueue
+    private val _addSongToEndOfQueue: MutableLiveData<MediaItem> = MutableLiveData()
+
     //List of songs to be inspected... albums or playlists
     val currentSongList: LiveData<List<MediaItem>>
         get() = _currentSongList
@@ -173,6 +177,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     //TODO I should be able to move all of this queue logic to a seperate class?
+    //TODO I NEED TO RENAME THIS FUNCTION TO SOMETHING LIKE ADD ENTIRE PLAYLIST / ALBUM
     /**
      * Add a single song to the end of the queue.
      */
@@ -183,6 +188,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         _songQueue.value = changeSongList
     }
+
+    /**
+     * Add song to end of current play queue
+     * @param song Song to add
+     */
+    fun addSongToEndOfQueue(song: MediaItem) {
+        _addSongToEndOfQueue.postValue(song)
+    }
+
 
     /**
      * Add a list of songs to the end of the queue

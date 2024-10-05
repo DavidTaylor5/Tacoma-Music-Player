@@ -2,6 +2,7 @@ package com.example.tacomamusicplayer.fragment
 
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
+import android.transition.TransitionInflater
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -28,19 +29,20 @@ class MusicPlayingFragment: Fragment() {
 
     private var controller: MediaController? = null
 
-    val detector = object : GestureDetector.SimpleOnGestureListener() {
+    private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: ")
+            Timber.d("onDoubleTap: navigate to the music chooser screen!")
+
+            //navigate to the music chooser fragment...
+            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+
             return super.onDoubleTap(e)
         }
 
         override fun onDown(e: MotionEvent): Boolean {
             Timber.d("onDown: ")
-
             return true
         }
-
-
 
         override fun onFling(
             e1: MotionEvent?,
@@ -48,13 +50,25 @@ class MusicPlayingFragment: Fragment() {
             velocityX: Float,
             velocityY: Float
         ): Boolean {
-            Timber.d("onFling: ")
+            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
+
+            if(velocityY < -500) {
+                Timber.d("onFling: navigate to the music chooser screen!")
+
+                //navigate to the music chooser fragment...
+                findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+            }
 
             return super.onFling(e1, e2, velocityX, velocityY)
         }
     }
 
-    val gesture = GestureDetector(activity, detector)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val inflater = TransitionInflater.from(requireContext())
+        enterTransition = inflater.inflateTransition(R.transition.slide_down)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,30 +94,8 @@ class MusicPlayingFragment: Fragment() {
         //TODO IMPLEMENT THE GESTURE DETECTION / ADD ANIMATION BETWEEN MUSICPLAYINGFRAGMENT AND MUSICCHOOSINGFRAGMENT
 
         binding.libraryAnimation!!.setOnTouchListener{ v, event ->
-
-            val a = gesture.onTouchEvent(event)
-
-            Timber.d("onCreateView: onTouch! consumed - ${a}")
-
-            a
+            gesture.onTouchEvent(event)
         }
-
-//        binding.libraryButton!!.setOnTouchListener { v, event ->
-//            val a = gesture.onTouchEvent(event)
-//
-//            Timber.d("onCreateView: onTouch! consumed - ${a}")
-//
-//            v.performClick()
-//        }
-
-//        container!!.setOnTouchListener { v, event ->
-//
-//            val a = gesture.onTouchEvent(event)
-//
-//            Timber.d("onCreateView: onTouch! consumed - ${a}")
-//
-//            v.performClick()
-//        }
 
         return binding.root
     }
@@ -123,8 +115,13 @@ class MusicPlayingFragment: Fragment() {
             binding.playerView.showController()
         }
 
-        parentViewModel.songQueue.observe(this) { songs ->
-            controller?.addMediaItems(songs)
+        //TODO Add this back later when I want to clear media items, then add a playlist, or album in totality
+//        parentViewModel.songQueue.observe(this) { songs ->
+//            controller?.addMediaItems(songs)
+//        }
+
+        parentViewModel.addSongToEndOfQueue.observe(this) {song ->
+            controller?.addMediaItem(song)
         }
 
         binding.psychoButton.setOnClickListener {

@@ -27,6 +27,12 @@ import timber.log.Timber
 
 //TODO I need to make smart goals...
 
+//TODO HIGHEST PRIORITY
+//TODO FIX FOR ADDING MUTIPLE SONGS into the current queue, this is breaking by adding previous selected songs again...
+//TODO FIX for Playlists / Creation, should already be mostly setup...
+//TODO Add feature to start playing an entire album from specific point in an album
+//TODO Add feature to mix songs in a playlist without repeating old songs before queue is up. [shuffle songs literally?]
+
 //TODO HIGH PRIORITY TASKS
 // Click to Play from Song List : I want the song to start playing off the rip if item clicked
 // Playlist Capability : I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
