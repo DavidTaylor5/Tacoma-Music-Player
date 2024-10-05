@@ -115,8 +115,13 @@ class MusicPlayingFragment: Fragment() {
             binding.playerView.showController()
         }
 
-        parentViewModel.songQueue.observe(this) { songs ->
-            controller?.addMediaItems(songs)
+        //TODO Add this back later when I want to clear media items, then add a playlist, or album in totality
+//        parentViewModel.songQueue.observe(this) { songs ->
+//            controller?.addMediaItems(songs)
+//        }
+
+        parentViewModel.addSongToEndOfQueue.observe(this) {song ->
+            controller?.addMediaItem(song)
         }
 
         binding.psychoButton.setOnClickListener {

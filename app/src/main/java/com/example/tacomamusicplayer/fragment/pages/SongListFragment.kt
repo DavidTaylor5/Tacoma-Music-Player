@@ -38,7 +38,7 @@ class SongListFragment(
             Timber.d("onCreateView: songs.size=${songs.size}")
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
-                parentViewModel::addSongToQueue,
+                parentViewModel::addSongToEndOfQueue,
                 { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ }
             )
             determineIfShowingInformationScreen(songs)
