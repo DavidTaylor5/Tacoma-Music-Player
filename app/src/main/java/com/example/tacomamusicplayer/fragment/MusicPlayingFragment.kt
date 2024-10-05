@@ -30,17 +30,18 @@ class MusicPlayingFragment: Fragment() {
 
     val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: ")
+            Timber.d("onDoubleTap: navigate to the music chooser screen!")
+
+            //navigate to the music chooser fragment...
+            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+
             return super.onDoubleTap(e)
         }
 
         override fun onDown(e: MotionEvent): Boolean {
             Timber.d("onDown: ")
-
             return true
         }
-
-
 
         override fun onFling(
             e1: MotionEvent?,
@@ -48,13 +49,18 @@ class MusicPlayingFragment: Fragment() {
             velocityX: Float,
             velocityY: Float
         ): Boolean {
-            Timber.d("onFling: ")
+            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
+
+            if(velocityY < -500) {
+                Timber.d("onFling: navigate to the music chooser screen!")
+
+                //navigate to the music chooser fragment...
+                findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+            }
 
             return super.onFling(e1, e2, velocityX, velocityY)
         }
     }
-
-    val gesture = GestureDetector(activity, detector)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,30 +86,8 @@ class MusicPlayingFragment: Fragment() {
         //TODO IMPLEMENT THE GESTURE DETECTION / ADD ANIMATION BETWEEN MUSICPLAYINGFRAGMENT AND MUSICCHOOSINGFRAGMENT
 
         binding.libraryAnimation!!.setOnTouchListener{ v, event ->
-
-            val a = gesture.onTouchEvent(event)
-
-            Timber.d("onCreateView: onTouch! consumed - ${a}")
-
-            a
+            gesture.onTouchEvent(event)
         }
-
-//        binding.libraryButton!!.setOnTouchListener { v, event ->
-//            val a = gesture.onTouchEvent(event)
-//
-//            Timber.d("onCreateView: onTouch! consumed - ${a}")
-//
-//            v.performClick()
-//        }
-
-//        container!!.setOnTouchListener { v, event ->
-//
-//            val a = gesture.onTouchEvent(event)
-//
-//            Timber.d("onCreateView: onTouch! consumed - ${a}")
-//
-//            v.performClick()
-//        }
 
         return binding.root
     }
