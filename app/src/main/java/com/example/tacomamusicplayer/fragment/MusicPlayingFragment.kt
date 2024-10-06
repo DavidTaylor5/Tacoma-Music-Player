@@ -93,6 +93,8 @@ class MusicPlayingFragment: Fragment() {
 
         //TODO IMPLEMENT THE GESTURE DETECTION / ADD ANIMATION BETWEEN MUSICPLAYINGFRAGMENT AND MUSICCHOOSINGFRAGMENT
 
+        //TODO save the currently playing queue for when I exit and start the app again...
+
         binding.libraryAnimation!!.setOnTouchListener{ v, event ->
             gesture.onTouchEvent(event)
         }
@@ -125,17 +127,30 @@ class MusicPlayingFragment: Fragment() {
         }
 
         binding.psychoButton.setOnClickListener {
-            findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
-        }
 
-        binding.navigateChooseMusic.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-        }
+            controller?.pause()
 
-//        binding.libraryButton?.setOnClickListener {
-//            Timber.d("Button CLicked: ")
+            //TODO I can just create my own UI and control the media player myself...
+
+
+
+//            controller?.play()
+//
+//            controller?.isPlaying
+//
+//            controller?.hasNextMediaItem()
+//
+//            controller?.seekToNextMediaItem()
+//
+//            controller?.seekToPrevious()
+
+//            findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
+        }
+//
+//        binding.navigateChooseMusic.setOnClickListener {
 //            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
 //        }
+
     }
 
 }

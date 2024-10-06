@@ -12,9 +12,11 @@
 <!--        android:background="@android:color/black"/>-->
 
     <ImageView android:id="@id/exo_artwork"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:scaleType="fitXY"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        />
 
     <View android:id="@id/exo_controller_placeholder"
         android:layout_width="match_parent"
