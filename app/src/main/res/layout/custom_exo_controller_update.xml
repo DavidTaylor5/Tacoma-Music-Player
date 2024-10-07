@@ -68,10 +68,11 @@
 <!--        android:layout_width="100dp"-->
 <!--        android:layout_height="100dp"-->
 <!--        android:id="@id/exo_play_pause"-->
-<!--        style="@style/ExoMediaButton.Play"-->
 <!--        android:layout_weight="1"-->
 <!--        android:layout_marginTop="30dp"-->
 <!--        />-->
+
+<!--&lt;!&ndash;    style="@style/ExoMediaButton.Play"&ndash;&gt;-->
 
 <!--    <ImageButton-->
 <!--        app:layout_constraintStart_toEndOf="@id/exo_play_pause"-->

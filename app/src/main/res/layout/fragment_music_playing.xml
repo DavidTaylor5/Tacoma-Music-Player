@@ -14,6 +14,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/play_button"
         app:show_timeout="0"
         app:controller_layout_id="@layout/custom_exo_controller_update"
         app:player_layout_id="@layout/custom_exo_player_update"
@@ -24,14 +25,16 @@
         app:auto_show="false"
         />
 
-    <Button
-        android:id="@+id/psycho_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        android:text="DEFAULT"
-        android:backgroundTint="@color/accent"
-        app:layout_constraintTop_toBottomOf="@id/player_view"/>
+<!--    app:layout_constraintBottom_toTopOf="@id/play_button"-->
+
+<!--    <Button-->
+<!--        android:id="@+id/psycho_button"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        android:text="DEFAULT"-->
+<!--        android:backgroundTint="@color/accent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/player_view"/>-->
 
 <!--    <Button-->
 <!--        android:id="@+id/navigate_choose_music"-->
@@ -44,12 +47,46 @@
 
 
     <!--    TODO PLAY BUTTON-->
-    <!--    TODO NEXT BUTTON-->
-    <!--    TODO PREV BUTTON-->
-    <!--    TODO Add -->
-    <!--    TODO-->
 
 
+    <Button
+        android:id="@+id/prev_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/baseline_keyboard_double_arrow_left_24"
+        android:backgroundTint="@color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintBottom_toBottomOf="@id/play_button"
+        app:layout_constraintTop_toTopOf="@id/play_button"
+        app:layout_constraintEnd_toStartOf="@id/play_button"
+        android:layout_marginEnd="25dp"
+        />
+
+    <Button
+        android:id="@+id/play_button"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@drawable/baseline_play_arrow_24"
+        android:backgroundTint="@color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintBottom_toTopOf="@id/library_animation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="30dp"
+        />
+
+    <Button
+        android:id="@+id/next_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/baseline_keyboard_double_arrow_right_24"
+        android:backgroundTint="@color/white"
+        app:backgroundTint="@null"
+        app:layout_constraintBottom_toBottomOf="@id/play_button"
+        app:layout_constraintTop_toTopOf="@id/play_button"
+        app:layout_constraintStart_toEndOf="@id/play_button"
+        android:layout_marginStart="25dp"
+        />
 
     <ImageView
         app:layout_constraintStart_toStartOf="parent"

@@ -64,6 +64,8 @@ class MusicPlayingFragment: Fragment() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Timber.d("onCreate: ")
+
         super.onCreate(savedInstanceState)
 
         val inflater = TransitionInflater.from(requireContext())
@@ -115,6 +117,12 @@ class MusicPlayingFragment: Fragment() {
             binding.playerView.player = controller
             this.controller = controller
             binding.playerView.showController()
+
+            if(controller.isPlaying) {
+                binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+            } else {
+                binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
+            }
         }
 
         //TODO Add this back later when I want to clear media items, then add a playlist, or album in totality
@@ -122,35 +130,64 @@ class MusicPlayingFragment: Fragment() {
 //            controller?.addMediaItems(songs)
 //        }
 
-        parentViewModel.addSongToEndOfQueue.observe(this) {song ->
+        parentViewModel.addSongToEndOfQueue.observe(this) { song ->
             controller?.addMediaItem(song)
         }
 
-        binding.psychoButton.setOnClickListener {
-
-            controller?.pause()
-
-            //TODO I can just create my own UI and control the media player myself...
-
-
-
-//            controller?.play()
-//
-//            controller?.isPlaying
-//
-//            controller?.hasNextMediaItem()
-//
-//            controller?.seekToNextMediaItem()
-//
-//            controller?.seekToPrevious()
-
-//            findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
+        binding.prevButton?.setOnClickListener {
+            Timber.d("prevButton_onClick: ")
+            controller?.seekToPrevious()
         }
-//
-//        binding.navigateChooseMusic.setOnClickListener {
-//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-//        }
 
+        //TODO I need to move the setting backgorund resource to an observable livedata in mainviewmodel
+
+        binding.playButton?.setOnClickListener { button ->
+            Timber.d("playButton_onClick: ")
+
+            controller?.let {
+                if(!it.isPlaying) {
+                    button.setBackgroundResource(R.drawable.baseline_pause_24)
+                    it.play()
+                } else {
+                    //change icon
+                    //pause
+                    button.setBackgroundResource(R.drawable.baseline_play_arrow_24)
+                    it.pause()
+                }
+            }
+        }
+
+        binding.nextButton?.setOnClickListener {
+            Timber.d("nextButton_onClick: ")
+            controller?.seekToNextMediaItem()
+        }
+
+//        binding.psychoButton.setOnClickListener {
+//
+//            controller?.pause()
+//
+//            //TODO I can just create my own UI and control the media player myself...
+//
+//
+//
+////            controller?.play()
+////
+////            controller?.isPlaying
+////
+////            controller?.hasNextMediaItem()
+////
+////            controller?.seekToNextMediaItem()
+////
+////            controller?.seekToPrevious()
+//
+////            findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
+//        }
+////
+////        binding.navigateChooseMusic.setOnClickListener {
+////            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+////        }
+//
+//    }
     }
 
 }
