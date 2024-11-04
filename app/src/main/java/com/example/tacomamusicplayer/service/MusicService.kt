@@ -88,6 +88,7 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun onCreate() {
+        Timber.d("onCreate: ")
         super.onCreate()
         initializePlayer()
         initializeMediaSession()
@@ -100,6 +101,7 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        Timber.d("onDestroy: ")
         session?.run {
             player.release()
             session = null
