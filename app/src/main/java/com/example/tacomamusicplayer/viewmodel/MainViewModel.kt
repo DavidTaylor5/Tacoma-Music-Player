@@ -163,6 +163,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        Timber.d("onCleared: ")
+    }
+
     fun getAllPlaylistLiveData(): LiveData<List<Playlist>> {
         return playlistDatabase.playlistDao().getAll()
     }
