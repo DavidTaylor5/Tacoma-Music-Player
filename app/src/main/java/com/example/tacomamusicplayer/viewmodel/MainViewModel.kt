@@ -202,11 +202,20 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         _addSongToEndOfQueue.postValue(song)
     }
 
+    /**
+     * Add a song directly to the end of the controller, TODO I might also want to track the songs
+     * in the queue
+     * so the user can scroll through the current queue
+     */
+    fun addSongToEndOfQueueViaController(song: MediaItem) {
+        mediaController.value?.addMediaItem(song)
+    }
+
 
     /**
      * Add a list of songs to the end of the queue
      */
-    private fun addSongListToQueue(songs: List<MediaItem>) {
+    private fun addSongListToEndOfQueue(songs: List<MediaItem>) {
         val songList = _songQueue.value ?: listOf()
         val changeSongList = songList.toMutableList()
         changeSongList.addAll(songs)
