@@ -72,6 +72,11 @@ class MusicChooserFragment: Fragment() {
         enterTransition = inflater.inflateTransition(R.transition.slide_up)
     }
 
+    override fun onStart() {
+        super.onStart()
+        //TODO add code to add to controller new music...
+    }
+
     private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
         binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
         val frameAnimation = binding.playingAnimation.background as AnimationDrawable

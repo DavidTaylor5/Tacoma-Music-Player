@@ -130,9 +130,11 @@ class MusicPlayingFragment: Fragment() {
 //            controller?.addMediaItems(songs)
 //        }
 
-        parentViewModel.addSongToEndOfQueue.observe(this) { song ->
-            controller?.addMediaItem(song)
-        }
+        //Moved, let the music chooser fragment add the song to controller
+
+//        parentViewModel.addSongToEndOfQueue.observe(this) { song ->
+//            controller?.addMediaItem(song)
+//        }
 
         binding.prevButton?.setOnClickListener {
             Timber.d("prevButton_onClick: ")
