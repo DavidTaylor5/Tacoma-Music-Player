@@ -105,6 +105,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("init: ")
         checkPermissions()
 
+        /*TODO I need to be able to convert between
+
+        //TODO do an investigation for how mediaItems look like for albums and songs...
+
+
+        * Playlist ... "should the the title when I move to the song list"
+        * PlayListData -> MediaItem
+        * SongData -> MediaItem
+        *
+        *
+        * */
+
         val tester = Playlist(
             title = "first playlist",
             songs = PlaylistData(
@@ -120,25 +132,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             )
         )
 
-        val songs = PlaylistData(
-            listOf(
-                SongData(
-                    songUri = "uri",
-                    songTitle = "songTitle",
-                    albumTitle = "albumTitle",
-                    artist = "artist",
-                    artworkUri = 100L
-                )
-            )
-        )
-
-        val song =                 SongData(
-            songUri = "uri",
-            songTitle = "songTitle",
-            albumTitle = "albumTitle",
-            artist = "artist",
-            artworkUri = 100L
-        )
+//        val songs = PlaylistData(
+//            listOf(
+//                SongData(
+//                    songUri = "uri",
+//                    songTitle = "songTitle",
+//                    albumTitle = "albumTitle",
+//                    artist = "artist",
+//                    artworkUri = 100L
+//                )
+//            )
+//        )
+//
+//        val song =                 SongData(
+//            songUri = "uri",
+//            songTitle = "songTitle",
+//            albumTitle = "albumTitle",
+//            artist = "artist",
+//            artworkUri = 100L
+//        )
 
         //TODO Example of adding a playlist
 //        viewModelScope.launch(Dispatchers.IO) {
@@ -161,6 +173,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //        val words = Converters().stringFromSongData(songs)
 //        Timber.d("init: words=$words")
 
+    }
+
+    fun createNamedPlaylist(name: String) {
+
+        val playlist = Playlist(
+            title = name,
+            songs = PlaylistData(
+                listOf()
+            )
+        )
+
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDatabase.playlistDao().insertAll(
+                playlist
+            )
+        }
     }
 
     override fun onCleared() {
