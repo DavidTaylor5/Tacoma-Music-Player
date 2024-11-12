@@ -378,6 +378,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     * High level function that will attempt to set a list of songs (MediaItems) based on a playlist.
+     * @param albumId The title of an playlist to be queried.
+     */
+    fun querySongsFromPlaylist(albumId: String) {
+        Timber.d("querySongsFromPlaylist: ")
+        val playlist =  playlistDatabase.playlistDao().findByName(albumId)
+        val songs = playlist.songs.songs
+
+        //TODO convert list<SongData> into MediaItems.... [in a util function?]
+    }
+
+    /**
      * Check if necessary permissions are granted.
      */
     private fun checkPermissions() {
