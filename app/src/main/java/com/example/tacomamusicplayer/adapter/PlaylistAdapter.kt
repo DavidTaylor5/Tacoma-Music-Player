@@ -10,7 +10,8 @@ import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
 
 class PlaylistAdapter(
-    private val playlists:  List<Playlist>
+    private val playlists:  List<Playlist>,
+    private val onAlbumClick: (String) -> Unit,
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**

@@ -37,7 +37,7 @@ class PlaylistFragment(
 
         parentViewModel.getAllPlaylistLiveData().observe(viewLifecycleOwner) { playlists ->
             //set the rv adapter here... or modify the rv here?...
-            binding.displayRecyclerview.adapter = PlaylistAdapter(playlists)
+            binding.displayRecyclerview.adapter = PlaylistAdapter(playlists, this::onPlaylistClick)
         }
 
         binding.fab.setOnClickListener {
@@ -63,9 +63,10 @@ class PlaylistFragment(
         return binding.root
     }
 
-    private fun onPlaylistClick(playlistTitle: String) {
+    private fun onPlaylistClick(playlistTitle: String) { //TODO I need to use this function just like AlbumListFragment...
         //parentViewModel.querySongsFromAlbum(albumTitle)
         //TODO I want to query songs from the database... like parentViewModel.querySongsFromPlaylist(playlistTitle)
+        parentViewModel.querySongsFromPlaylist(playlistTitle) //TODO is the playlist name the id?
         parentViewModel.setPage(PageType.SONG_PAGE)
     }
 

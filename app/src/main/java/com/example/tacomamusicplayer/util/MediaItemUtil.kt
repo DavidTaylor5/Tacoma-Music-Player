@@ -3,6 +3,7 @@ package com.example.tacomamusicplayer.util
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.example.tacomamusicplayer.data.SongData
 
 class MediaItemUtil {
     /**
@@ -37,6 +38,43 @@ class MediaItemUtil {
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .build()
             )
+            .build()
+    }
+
+    /**
+     * Convert a list of songdata into mediaItems.
+     */
+    fun convertListOfSongDataIntoListOfMediaItem(
+        songs: List<SongData>
+    ): List<MediaItem> {
+         return songs.map {data ->
+             createSongMediaItem(data)
+         }
+    }
+
+
+    /**
+     * SongData is used in the database, so I use this function to convert songData into MediaItems
+     * that I can play.
+     */
+    private fun createSongMediaItem(
+        song: SongData
+    ): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(song.songUri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setTitle(song.songTitle)
+                    .setAlbumTitle(song.albumTitle)
+                    .setArtist(song.artist)
+                    .setArtworkUri(Uri.parse(song.artworkUri))
+                    .setDescription("Description I'll just pass song length here... TODO calculate song minutes and seconds")
+//                    .setTrackNumber(5) //TODO should this be changed or removed?
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .build()
+                )
             .build()
     }
 
