@@ -22,6 +22,7 @@ import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
+import com.example.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.util.concurrent.MoreExecutors
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
@@ -100,6 +101,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private var mediaBrowser: MediaBrowser? = null
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
+
+    private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
+
 
     init {
         Timber.d("init: ")

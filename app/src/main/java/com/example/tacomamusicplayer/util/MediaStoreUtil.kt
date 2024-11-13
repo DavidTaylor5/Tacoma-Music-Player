@@ -16,6 +16,8 @@ import timber.log.Timber
  */
 class MediaStoreUtil {
 
+    private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
+
     /**
      * Query all songs from associated album on device storage.
      * @param context Context associated with the application. Context needs permission READ_MEDIA_AUDIO.
@@ -46,8 +48,18 @@ class MediaStoreUtil {
             arrayOf(album),
             null
         )?.use { cursor ->
-            while(cursor.moveToNext()) {
-                Timber.d("querySongsFromAlbum: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${cursor.getString(6)}")
+            while (cursor.moveToNext()) {
+                Timber.d(
+                    "querySongsFromAlbum: ${cursor.getString(0)}, ${cursor.getString(1)}, ${
+                        cursor.getString(
+                            2
+                        )
+                    }, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${
+                        cursor.getString(
+                            6
+                        )
+                    }"
+                )
 
                 val url = cursor.getString(0)
                 val title = cursor.getString(1)
@@ -58,7 +70,14 @@ class MediaStoreUtil {
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
-                val songMediaItem = createSongMediaItem(songUri = url, songTitle = title, albumTitle = album, artist = artist, artworkUri = artworkUri, trackNumber = track)
+                val songMediaItem = mediaItemUtil.createSongMediaItem(
+                    songUri = url,
+                    songTitle = title,
+                    albumTitle = album,
+                    artist = artist,
+                    artworkUri = artworkUri,
+                    trackNumber = track
+                )
                 albumSongs.add(songMediaItem)
             }
         }
@@ -95,8 +114,14 @@ class MediaStoreUtil {
             null,
             null
         )?.use { cursor ->
-            while(cursor.moveToNext()) {
-                Timber.d("queryAvailableAlbums: ${cursor.getString(0)}, ${cursor.getString(1)}, ${cursor.getString(2)}")
+            while (cursor.moveToNext()) {
+                Timber.d(
+                    "queryAvailableAlbums: ${cursor.getString(0)}, ${cursor.getString(1)}, ${
+                        cursor.getString(
+                            2
+                        )
+                    }"
+                )
 
                 val albumId = cursor.getLong(0)
                 val albumTitle = cursor.getString(1)
@@ -104,7 +129,8 @@ class MediaStoreUtil {
                 val artworkUri = ContentUris.withAppendedId(uriExternal, albumId)
 
                 //Create Media Item from information
-                val albumMediaItem = createAlbumMediaItem(albumTitle, artist, artworkUri)
+                val albumMediaItem =
+                    mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri)
 
                 albumList.add(albumMediaItem)
             }
@@ -112,66 +138,6 @@ class MediaStoreUtil {
         Timber.d("queryAvailableAlbums: DONE SEARCHING!")
 
         return albumList
-    }
-
-    /**
-     * Create a media item from a song.
-     * @param songTitle
-     * @param albumTitle
-     * @param artist
-     * @param songDuration
-     * @param trackNumber
-     * @return A MediaItem with the associated data.
-     */
-    private fun createSongMediaItem(
-        songUri: String = "UNKNOWN URI", //I'm adding the Uri to be mediaid however this is going to be a security breach...
-        songTitle: String = "UNKONWN SONG TITLE",
-        albumTitle: String = "UNKNOWN ALBUM",
-        artist: String = "UNKNOWN ARTIST",
-        artworkUri: Uri = Uri.EMPTY,
-        trackNumber: Int
-    ): MediaItem {
-        return MediaItem.Builder()
-            .setMediaId(songUri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(false)
-                    .setIsPlayable(true)
-                    .setTitle(songTitle)
-                    .setAlbumTitle(albumTitle)
-                    .setArtist(artist)
-                    .setArtworkUri(artworkUri)
-                    .setDescription("Description I'll just pass song length here... TODO calculate song minutes and seconds")
-                    .setTrackNumber(trackNumber)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                    .build()
-            )
-            .build()
-    }
-
-    /**
-     * Creates a media item that represents an album.
-     * @param albumTitle
-     * @param artist
-     */
-    private fun createAlbumMediaItem(
-        albumTitle: String = "UNKNOWN ALBUM",
-        artist: String = "UNKNOWN ARTIST",
-        artworkUri: Uri = Uri.EMPTY
-    ): MediaItem {
-        return MediaItem.Builder()
-            .setMediaId(albumTitle)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(true)
-                    .setIsPlayable(false)
-                    .setAlbumArtist(artist)
-                    .setAlbumTitle(albumTitle)
-                    .setArtworkUri(artworkUri)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
-                    .build()
-            )
-            .build()
     }
 }
 
