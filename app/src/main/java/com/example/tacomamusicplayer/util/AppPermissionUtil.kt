@@ -57,14 +57,13 @@ class AppPermissionUtil {
         ActivityCompat.requestPermissions(context as Activity, arrayOf(readMediaAudioPermission), readMediaAudioRequestCode)
     }
 
-    fun verifyNotificationPermission(context: Context): Boolean {
-        var readNotificationPermission: Int = ContextCompat.checkSelfPermission(context, notificationPermission)
-        Timber.d("verifyNotificationPermission: ${readNotificationPermission == PackageManager.PERMISSION_GRANTED}")
-        return readNotificationPermission == PackageManager.PERMISSION_GRANTED
-    }
-
-    fun requestNotificationPermission(context: Context) {
-        ActivityCompat.requestPermissions(context as Activity, arrayOf(notificationPermission), notificationRequestCode)
-    }
-
+//    fun verifyNotificationPermission(context: Context): Boolean {
+//        var readNotificationPermission: Int = ContextCompat.checkSelfPermission(context, notificationPermission)
+//        Timber.d("verifyNotificationPermission: ${readNotificationPermission == PackageManager.PERMISSION_GRANTED}")
+//        return readNotificationPermission == PackageManager.PERMISSION_GRANTED
+//    }
+//
+//    fun requestNotificationPermission(context: Context) {
+//        ActivityCompat.requestPermissions(context as Activity, arrayOf(notificationPermission), notificationRequestCode)
+//    }
 }

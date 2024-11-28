@@ -158,7 +158,7 @@ class MusicService : MediaLibraryService() {
     private class PlayerEventListener : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
             if (playbackState == Player.STATE_ENDED) {
-                //TODO SOMETHING
+                //TODO SOMETHING Analytics?
             }
         }
 

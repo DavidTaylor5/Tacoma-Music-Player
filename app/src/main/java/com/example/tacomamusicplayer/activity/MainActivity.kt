@@ -20,7 +20,6 @@ import com.example.tacomamusicplayer.fragment.MusicChooserFragment
 import com.example.tacomamusicplayer.fragment.MusicPlayingFragment
 import com.example.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.example.tacomamusicplayer.util.AppPermissionUtil
-import com.example.tacomamusicplayer.util.MusicGestureDetector
 import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber

@@ -111,53 +111,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("init: ")
         checkPermissions()
 
-        /*TODO I need to be able to convert between
-
-        //TODO do an investigation for how mediaItems look like for albums and songs...
-
-
-        * Playlist ... "should the the title when I move to the song list"
-        * PlayListData -> MediaItem
-        * SongData -> MediaItem
-        *
-        *
-        * */
-
-        val tester = Playlist(
-            title = "first playlist",
-            songs = PlaylistData(
-                listOf(
-                    SongData(
-                        songUri = "uri",
-                        songTitle = "songTitle",
-                        albumTitle = "albumTitle",
-                        artist = "artist",
-                        artworkUri = "media/5555"
-                    )
-                )
-            )
-        )
-
-//        val songs = PlaylistData(
-//            listOf(
-//                SongData(
-//                    songUri = "uri",
-//                    songTitle = "songTitle",
-//                    albumTitle = "albumTitle",
-//                    artist = "artist",
-//                    artworkUri = 100L
-//                )
-//            )
-//        )
-//
-//        val song =                 SongData(
-//            songUri = "uri",
-//            songTitle = "songTitle",
-//            albumTitle = "albumTitle",
-//            artist = "artist",
-//            artworkUri = 100L
-//        )
-
         //TODO Example of adding a playlist
 //        viewModelScope.launch(Dispatchers.IO) {
 //            playlistDatabase.playlistDao().insertAll(
@@ -165,20 +118,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //            )
 //        }
 
-//        playlistDatabase.playlistDao().insertAll(
-//            tester
-//        )
-
         val testValue = playlistDatabase.playlistDao().getAll()
         Timber.d("init: testValue.length = ${testValue.value?.size}, ")
-
-//        val moshi = Moshi.Builder().build()
-//        val adapter = moshi.adapter(SongData::class.java)
-//        val word = adapter.toJson(song)
-//
-//        val words = Converters().stringFromSongData(songs)
-//        Timber.d("init: words=$words")
-
     }
 
     /**
@@ -350,8 +291,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    //TODO I'll just keep playlists as database in room, I'll remove library node, I won't need it...
-
     /**
      * Will return a list of MediaItems associated with albums on device storage.
      */
@@ -369,7 +308,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 }
             }
         } else {
-            //TOAST MESSAGE THAT mediaBrowser isn't ready...
+            Timber.d("queryAvailableAlbums: mediaBrowser isn't ready...")
         }
     }
 
@@ -390,7 +329,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 }, MoreExecutors.directExecutor())
             }
         } else {
-            //TOAST MESSAGE THAT mediaBrowser isn't ready...
+            Timber.d("querySongsFromAlbum: mediaBrowser isn't ready...")
         }
     }
 
@@ -404,7 +343,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         val songs = playlist.songs.songs
 
         return mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-        //TODO convert list<SongData> into MediaItems.... [in a util function?]
     }
 
     /**

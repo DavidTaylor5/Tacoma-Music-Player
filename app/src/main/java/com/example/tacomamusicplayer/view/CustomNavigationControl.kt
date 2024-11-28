@@ -9,6 +9,9 @@ import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewCustomNavigationControlBinding
 import com.example.tacomamusicplayer.enum.PageType
 
+/**
+ * CustomNavigationControl is used to move between music chooser fragments, playlists, albums, songs.
+ */
 class CustomNavigationControl @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,

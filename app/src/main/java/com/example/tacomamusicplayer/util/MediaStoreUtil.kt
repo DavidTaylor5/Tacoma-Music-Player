@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import timber.log.Timber
 
 /**
