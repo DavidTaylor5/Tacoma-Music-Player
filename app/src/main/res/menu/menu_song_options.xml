@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/playlist_add"
+        android:title="Add to Playlist" />
 
     <item
-        android:id="@+id/java"
-        android:title="Java" />
+        android:id="@+id/queue_add"
+        android:title="Add to Queue" />
 
     <item
-        android:id="@+id/kotlin"
-        android:title="Kotlin" />
-
-    <item
-        android:id="@+id/android"
-        android:title="Android" />
-
-    <item
-        android:id="@+id/react_native"
-        android:title="React Native" />
+        android:id="@+id/stats_check"
+        android:title="Check Stats" />
 
 </menu>

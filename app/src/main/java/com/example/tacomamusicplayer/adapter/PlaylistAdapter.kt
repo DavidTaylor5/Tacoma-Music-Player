@@ -1,5 +1,6 @@
 package com.example.tacomamusicplayer.adapter
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,7 +8,11 @@ import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.adapter.AlbumListAdapter.AlbumViewHolder
 import com.example.tacomamusicplayer.data.Playlist
+import com.example.tacomamusicplayer.databinding.ViewholderAlbumBinding
+import com.example.tacomamusicplayer.databinding.ViewholderPlaylistBinding
+import timber.log.Timber
 
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
@@ -17,28 +22,34 @@ class PlaylistAdapter(
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
-    class PlaylistViewHolder(view: View): RecyclerView.ViewHolder(view) { //TODO I need to make a viewholder for this class
-        val albumInfo: TextView
+    class PlaylistViewHolder(val binding: ViewholderPlaylistBinding): RecyclerView.ViewHolder(binding.root)
 
-        init {
-            albumInfo = view.findViewById(R.id.album_info)
-        }
-    }
-
-    //Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
-        //Create a new view, which defines the UI of teh list item
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.viewholder_playlist, parent, false)
+        Timber.d("onCreateViewHolder: ")
 
-        return PlaylistViewHolder(view)
+        val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val binding = ViewholderPlaylistBinding.inflate(inflater, parent, false)
+
+        return PlaylistViewHolder(binding)
     }
+
+//    //Create new views (invoked by the layout manager)
+//    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
+//        //Create a new view, which defines the UI of teh list item
+//        val view = LayoutInflater.from(parent.context)
+//            .inflate(R.layout.viewholder_playlist, parent, false)
+//
+//        return PlaylistViewHolder(view)
+//    }
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
+        viewHolder.binding.albumInfo.text = playlists[position].title
 
-        // Get element from  your dataset at this position and replace the contents of the view with that element
-        viewHolder.albumInfo.text = playlists[position].title
+        //TODO On Click navigate...
+        viewHolder.binding.playlistItem.setOnClickListener {
+            onAlbumClick(playlists[position].title ?: "Unknown title?") //TODO replace with playlist title....
+        }
     }
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {

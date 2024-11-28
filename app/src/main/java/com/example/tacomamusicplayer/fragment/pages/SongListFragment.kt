@@ -21,6 +21,8 @@ class SongListFragment(
 
 ): Fragment() {
 
+    //TODO what to do if the current song list is empty?
+
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -53,12 +55,20 @@ class SongListFragment(
         return binding.root
     }
 
+    /**
+     * Shows a prompt for the user to choose a playlist or album.
+     * Should show when there is no songs in the current song list, not an empty playlist.
+     */
     private fun determineIfShowingInformationScreen(songs: List<MediaItem>) {
         if(songs.isEmpty()) {
             binding.songListInformationScreen.visibility = View.VISIBLE
         } else {
             binding.songListInformationScreen.visibility = View.GONE
         }
+    }
+
+    private fun determineIfShowingEmptyPlaylistScreen() {
+        //TODO show Empty Playlist screen...
     }
 
     private fun setupPage() {

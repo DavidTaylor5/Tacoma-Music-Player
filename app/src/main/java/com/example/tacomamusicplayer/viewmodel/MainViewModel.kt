@@ -131,13 +131,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             title = name,
             songs = PlaylistData(
                 listOf(
-                    SongData(
-                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
-                        songTitle = "The Love Below",
-                        albumTitle = "Speakerboxxx",
-                        artist = "Outkast",
-                        artworkUri = "content://media/external/audio/media/1000102936"
-                    )
+//                    SongData(
+//                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
+//                        songTitle = "The Love Below",
+//                        albumTitle = "Speakerboxxx",
+//                        artist = "Outkast",
+//                        artworkUri = "content://media/external/audio/media/1000102936" //TODO this song data isn't working... probably works...
+//                    )
                 )
             )
         )
@@ -294,7 +294,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Will return a list of MediaItems associated with albums on device storage.
      */
-    fun queryAvailableAlbums() { //this will actually return playlist and library item.... [do I really need playlist...]
+    fun queryAvailableAlbums() {
         Timber.d("queryAvailableAlbums: ")
         if(mediaBrowser != null) {
 
@@ -325,7 +325,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                     _currentSongList.value = childrenFuture.get().value?.toList() ?: listOf()
-                    _songListTitle.value = "Album: $albumId"
+                    _songListTitle.value = "ALBUM: $albumId"
                 }, MoreExecutors.directExecutor())
             }
         } else {
@@ -337,12 +337,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * High level function that will attempt to set a list of songs (MediaItems) based on a playlist.
      * @param albumId The title of an playlist to be queried.
      */
-    fun querySongsFromPlaylist(playlistId: String): List<MediaItem> {
+    fun querySongsFromPlaylist(playlistId: String) {
         Timber.d("querySongsFromPlaylist: ")
-        val playlist =  playlistDatabase.playlistDao().findByName(playlistId)
-        val songs = playlist.songs.songs
-
-        return mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlist =  playlistDatabase.playlistDao().findByName(playlistId)
+            val songs = playlist.songs.songs
+            val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            _currentSongList.postValue(mediaItems)
+            _songListTitle.postValue("PLAYLIST: $playlistId")
+        }
     }
 
     /**
