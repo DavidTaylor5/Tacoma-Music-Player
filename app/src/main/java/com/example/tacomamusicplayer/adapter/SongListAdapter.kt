@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
@@ -78,6 +79,10 @@ class SongListAdapter(
         viewHolder.binding.songTitleTextView.text = songTitle
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
+
+        viewHolder.binding.favoriteIcon.setOnClickListener {
+            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
+        }
 
         viewHolder.binding.addIcon.setOnClickListener {
             Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
