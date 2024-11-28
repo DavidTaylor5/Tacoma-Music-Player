@@ -8,7 +8,7 @@ data class SongData(
     val songTitle: String,
     val albumTitle: String,
     val artist: String,
-    val artworkUri: Long,
+    val artworkUri: String,
 )
 
 //songUri = url, songTitle = title, albumTitle = album, artist = artist, artworkUri = artworkUri,

@@ -8,6 +8,8 @@ import androidx.room.Query
 
 @Dao
 interface PlaylistDao {
+
+    //TODO I need to rename / add / some functions so that this is more clear
     @Query("SELECT * FROM playlist")
     fun getAll(): LiveData<List<Playlist>> //For now I'll use this one...
 

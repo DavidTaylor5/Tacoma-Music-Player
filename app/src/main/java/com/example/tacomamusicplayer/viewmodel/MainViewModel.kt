@@ -22,6 +22,8 @@ import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
+import com.example.tacomamusicplayer.util.MediaItemUtil
+import com.example.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.util.concurrent.MoreExecutors
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
@@ -101,9 +103,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
 
+    private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
+    private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
+
+
     init {
         Timber.d("init: ")
         checkPermissions()
+
+        /*TODO I need to be able to convert between
+
+        //TODO do an investigation for how mediaItems look like for albums and songs...
+
+
+        * Playlist ... "should the the title when I move to the song list"
+        * PlayListData -> MediaItem
+        * SongData -> MediaItem
+        *
+        *
+        * */
 
         val tester = Playlist(
             title = "first playlist",
@@ -114,31 +132,31 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         songTitle = "songTitle",
                         albumTitle = "albumTitle",
                         artist = "artist",
-                        artworkUri = 100L
+                        artworkUri = "media/5555"
                     )
                 )
             )
         )
 
-        val songs = PlaylistData(
-            listOf(
-                SongData(
-                    songUri = "uri",
-                    songTitle = "songTitle",
-                    albumTitle = "albumTitle",
-                    artist = "artist",
-                    artworkUri = 100L
-                )
-            )
-        )
-
-        val song =                 SongData(
-            songUri = "uri",
-            songTitle = "songTitle",
-            albumTitle = "albumTitle",
-            artist = "artist",
-            artworkUri = 100L
-        )
+//        val songs = PlaylistData(
+//            listOf(
+//                SongData(
+//                    songUri = "uri",
+//                    songTitle = "songTitle",
+//                    albumTitle = "albumTitle",
+//                    artist = "artist",
+//                    artworkUri = 100L
+//                )
+//            )
+//        )
+//
+//        val song =                 SongData(
+//            songUri = "uri",
+//            songTitle = "songTitle",
+//            albumTitle = "albumTitle",
+//            artist = "artist",
+//            artworkUri = 100L
+//        )
 
         //TODO Example of adding a playlist
 //        viewModelScope.launch(Dispatchers.IO) {
@@ -161,6 +179,33 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //        val words = Converters().stringFromSongData(songs)
 //        Timber.d("init: words=$words")
 
+    }
+
+    /**
+     * Create a playlist with a name //TODO I need ot add some sort of validation?
+     */
+    fun createNamedPlaylist(name: String) {
+
+        val playlist = Playlist(
+            title = name,
+            songs = PlaylistData(
+                listOf(
+                    SongData(
+                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
+                        songTitle = "The Love Below",
+                        albumTitle = "Speakerboxxx",
+                        artist = "Outkast",
+                        artworkUri = "content://media/external/audio/media/1000102936"
+                    )
+                )
+            )
+        )
+
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistDatabase.playlistDao().insertAll(
+                playlist
+            )
+        }
     }
 
     override fun onCleared() {
@@ -347,6 +392,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         } else {
             //TOAST MESSAGE THAT mediaBrowser isn't ready...
         }
+    }
+
+    /**
+     * High level function that will attempt to set a list of songs (MediaItems) based on a playlist.
+     * @param albumId The title of an playlist to be queried.
+     */
+    fun querySongsFromPlaylist(playlistId: String): List<MediaItem> {
+        Timber.d("querySongsFromPlaylist: ")
+        val playlist =  playlistDatabase.playlistDao().findByName(playlistId)
+        val songs = playlist.songs.songs
+
+        return mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+        //TODO convert list<SongData> into MediaItems.... [in a util function?]
     }
 
     /**
