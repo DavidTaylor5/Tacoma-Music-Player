@@ -101,6 +101,10 @@ class MusicPlayingFragment: Fragment() {
             gesture.onTouchEvent(event)
         }
 
+        binding.queueButton?.setOnClickListener {
+            findNavController().navigate(ScreenType.MUSIC_QUEUE_SCREEN.route())
+        }
+
         return binding.root
     }
 

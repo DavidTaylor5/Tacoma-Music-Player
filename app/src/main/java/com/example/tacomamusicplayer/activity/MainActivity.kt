@@ -16,6 +16,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 import com.example.tacomamusicplayer.databinding.ActivityMainBinding
 import com.example.tacomamusicplayer.enum.ScreenType
+import com.example.tacomamusicplayer.fragment.CurrentQueueFragment
 import com.example.tacomamusicplayer.fragment.MusicChooserFragment
 import com.example.tacomamusicplayer.fragment.MusicPlayingFragment
 import com.example.tacomamusicplayer.fragment.PermissionDeniedFragment
@@ -164,7 +165,9 @@ class MainActivity : AppCompatActivity() {
             fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
                 label = "Permission Denied"
             }
-            //TODO add all other fragments
+            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
+                label = "Music Queue"
+            }
         }
     }
 

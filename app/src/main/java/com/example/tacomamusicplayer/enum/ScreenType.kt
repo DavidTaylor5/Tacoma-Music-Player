@@ -12,6 +12,10 @@ enum class ScreenType {
 
     PERMISSION_DENIED_SCREEN {
         override fun route(): String = "PERMISSION_DENIED_SCREEN"
+    },
+
+    MUSIC_QUEUE_SCREEN {
+        override fun route(): String = "MUSIC_QUEUE_SCREEN"
     };
 
     abstract fun route(): String
