@@ -105,4 +105,18 @@
         android:layout_height="100dp"
         android:contentDescription="@string/library_animation" />
 
+    <Button
+        android:id="@+id/queue_button"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:textAlignment="center"
+        android:text="Currently Playing"
+        android:textSize="20dp"
+        android:background="@color/accent"
+        android:textColor="@color/white"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

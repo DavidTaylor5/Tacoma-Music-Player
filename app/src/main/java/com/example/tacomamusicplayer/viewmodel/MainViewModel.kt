@@ -12,12 +12,10 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.room.Room
-import com.example.tacomamusicplayer.data.Converters
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.data.PlaylistDatabase
 import com.example.tacomamusicplayer.data.ScreenData
-import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.service.MusicService
@@ -25,7 +23,6 @@ import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.MediaItemUtil
 import com.example.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.util.concurrent.MoreExecutors
-import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -46,10 +43,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _albumMediaItemList
     private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
+    //SongQueue should be shown in the CurrentQueueFragment
     val songQueue: LiveData<List<MediaItem>>
         get() = _songQueue
     private val _songQueue: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
 
+    //TODO remove this?
     val addSongToEndOfQueue: LiveData<MediaItem>
         get() = _addSongToEndOfQueue
     private val _addSongToEndOfQueue: MutableLiveData<MediaItem> = MutableLiveData()
@@ -194,6 +193,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * so the user can scroll through the current queue
      */
     fun addSongToEndOfQueueViaController(song: MediaItem) {
+        //Also add to the queue?
+        val updatedQueue = mutableListOf<MediaItem>()
+        _songQueue.value?.let {
+            updatedQueue.addAll(_songQueue.value!!)
+        }
+        updatedQueue.add(song)
+        _songQueue.postValue(updatedQueue)
+
+        //TODO move this code to the activity, mediaController will be watching the current queue
         mediaController.value?.addMediaItem(song)
     }
 
