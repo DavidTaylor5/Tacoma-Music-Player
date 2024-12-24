@@ -10,6 +10,7 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
+import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -17,12 +18,9 @@ import timber.log.Timber
 
 class CurrentQueueFragment: Fragment() {
 
-
-    //TOOD this fragment should be a recyclerview of the currently playing songs...
-
     //TODO what to do if the current song list is empty?
 
-    private lateinit var binding: FragmentSonglistBinding //TODO I need to use a different xml for the CurrentQueueFragment...
+    private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -31,7 +29,7 @@ class CurrentQueueFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        binding = FragmentSonglistBinding.inflate(inflater)
+        binding = FragmentCurrentQueueBinding.inflate(inflater)
 
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
         parentViewModel.songQueue.observe(viewLifecycleOwner) {songs ->
@@ -41,7 +39,7 @@ class CurrentQueueFragment: Fragment() {
                 parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
                 { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ }
             )
-            determineIfShowingInformationScreen(songs)
+            determineIfShowingEmptyPlaylistScreen(songs)
         }
 
         parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
@@ -57,31 +55,17 @@ class CurrentQueueFragment: Fragment() {
      * Shows a prompt for the user to choose a playlist or album.
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
-    private fun determineIfShowingInformationScreen(songs: List<MediaItem>) {
-        if(songs.isEmpty()) {
-            binding.songListInformationScreen.visibility = View.VISIBLE
+    private fun determineIfShowingEmptyPlaylistScreen(songs: List<MediaItem>) {
+        if(songs.isEmpty()){
+            binding.noMusicAddedText.visibility = View.VISIBLE
         } else {
-            binding.songListInformationScreen.visibility = View.GONE
+            binding.noMusicAddedText.visibility = View.GONE
         }
-    }
-
-    private fun determineIfShowingEmptyPlaylistScreen() {
-        //TODO show Empty Playlist screen...
     }
 
     private fun setupPage() {
         binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
 
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-
-        //First Icon will be the playlists
-        binding.songListInformationScreen.setFirstInfo("Choose a playlist to View")
-        binding.songListInformationScreen.setFirstIcon(resources.getDrawable(R.drawable.playlist_icon)) //TODO add theme here?
-        binding.songListInformationScreen.setFirstIconCallback { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
-
-        //Second Icon will be the Albums
-        binding.songListInformationScreen.setSecondInfo("Choose an album to View")
-        binding.songListInformationScreen.setSecondIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
-        binding.songListInformationScreen.setSecondIconCallback { parentViewModel.setPage(PageType.ALBUM_PAGE) }
     }
 }
