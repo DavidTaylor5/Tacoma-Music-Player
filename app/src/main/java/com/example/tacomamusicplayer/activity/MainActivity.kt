@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.getAllPlaylistLiveData().observe(this) { playlists ->
+        viewModel.availablePlaylists.observe(this) { playlists ->
             Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
             if(playlists.isNotEmpty()) {
                 for(playlist in playlists) {

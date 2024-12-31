@@ -35,7 +35,7 @@ class PlaylistFragment(
         //TODO I'll want to query data store for playlists
         //TODO Add actual functionality of adding a playlist here...
 
-        parentViewModel.getAllPlaylistLiveData().observe(viewLifecycleOwner) { playlists ->
+        parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
             //set the rv adapter here... or modify the rv here?...
             binding.displayRecyclerview.adapter = PlaylistAdapter(playlists, this::onPlaylistClick)
         }

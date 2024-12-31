@@ -12,13 +12,16 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
 import timber.log.Timber
 
 class SongListAdapter(
     private val dataSet:  List<MediaItem>,
     val onAddIconClick: (MediaItem) -> Unit,
-    val onMenuIconClick: () -> Unit
+    val onAddToPlaylistClick: () -> Unit, //TODO I flag the fragment to make a floating window with a recyclerview of available playlsits...
+    val onAddToQueueClick: (MediaItem) -> Unit,
+    val onCheckStatsClick: () -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     class SongViewHolder(val binding: ViewholderSongBinding): RecyclerView.ViewHolder(binding.root)
@@ -105,6 +108,14 @@ class SongListAdapter(
         }
 
     }
+
+    private fun openAddToPlaylistPrompt() {
+        //TODO I should have a floating prompt that I can scroll to many playlists with...
+        //I need to add a recyclerview with all of the avilable playlists...
+        //TODO I should flag the above fragment that I want to show the playlist settings option...
+        //should also have an option to create a new playlist? [add later...]
+    }
+
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
         return dataSet.size

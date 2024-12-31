@@ -35,6 +35,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
 
+    private val playlistDatabase = Room.databaseBuilder(
+        getApplication<Application>().applicationContext,
+        PlaylistDatabase::class.java,
+        "playlist-db"
+    ).build()
+
+    val availablePlaylists: LiveData<List<Playlist>> = playlistDatabase.playlistDao().getAll()
+
     val mediaController: LiveData<MediaController>
         get() = _mediaController
     private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
@@ -83,13 +91,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val currentpage: LiveData<PageType>
         get() = _currentpage
     private val _currentpage: MutableLiveData<PageType> = MutableLiveData()
-
-
-    val playlistDatabase = Room.databaseBuilder(
-        getApplication<Application>().applicationContext,
-            PlaylistDatabase::class.java,
-            "playlist-db"
-        ).build()
 
     /**
      * Experimental code, which page for music chooser fragment?
@@ -153,8 +154,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("onCleared: ")
     }
 
-    fun getAllPlaylistLiveData(): LiveData<List<Playlist>> {
-        return playlistDatabase.playlistDao().getAll()
+    //TODO use this for the settings prompt..
+    fun getCurrentPlaylists(): List<Playlist> {
+        return availablePlaylists.value ?: listOf()
     }
 
     fun checkPermissionsIfOnPermissionDeniedScreen() {
