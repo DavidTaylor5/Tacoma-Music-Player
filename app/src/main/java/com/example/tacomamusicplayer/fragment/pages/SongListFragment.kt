@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
+import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -41,7 +42,9 @@ class SongListFragment(
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
                 parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
-                { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ }
+                { /* parentViewModel::AddSongToPlaylist*/ },
+                parentViewModel::addSongToEndOfQueueViaController,
+                {}
             )
             determineIfShowingInformationScreen(songs)
         }
@@ -49,6 +52,8 @@ class SongListFragment(
         parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
             binding.sectionTitle.text = title
         }
+
+        binding.playlistPrompt.setPlaylistData(parentViewModel.getCurrentPlaylists())
 
         setupPage()
 
@@ -67,8 +72,23 @@ class SongListFragment(
         }
     }
 
+    //TODO create a new adapter for the new prompt??
     private fun determineIfShowingEmptyPlaylistScreen() {
         //TODO show Empty Playlist screen...
+    }
+
+    //Should display "Add to Playlist Prompt" Based on available Playlists.
+    private fun displayAddToPlaylistPrompt(playlists: List<Playlist>) { //TODO should be given a list of playlists from the viewmodel
+        //Make view visible
+        //Make the view have a new recyclerview based on playlists from viewmodel...
+    }
+
+    /**
+     * Clicking the "Add to Playlist" option should open a prompt where the user can add song/s to playlist/s.
+     */
+    private fun onPlaylistSettingClicked() {
+        val playlistOptions = parentViewModel.getCurrentPlaylists()
+        displayAddToPlaylistPrompt(playlistOptions)
     }
 
     private fun setupPage() {

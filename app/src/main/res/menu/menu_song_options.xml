@@ -6,10 +6,12 @@
 
     <item
         android:id="@+id/queue_add"
-        android:title="Add to Queue" />
+        android:title="Add to Queue"
+        android:titleCondensed=""/>
 
     <item
         android:id="@+id/stats_check"
-        android:title="Check Stats" />
+        android:title="Check Stats"
+        />
 
 </menu>

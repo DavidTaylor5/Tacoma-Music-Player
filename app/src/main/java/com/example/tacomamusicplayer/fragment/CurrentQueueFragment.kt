@@ -37,7 +37,9 @@ class CurrentQueueFragment: Fragment() {
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
                 parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
-                { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ }
+                { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ },
+                parentViewModel::addSongToEndOfQueueViaController,
+                {}
             )
             determineIfShowingEmptyPlaylistScreen(songs)
         }
