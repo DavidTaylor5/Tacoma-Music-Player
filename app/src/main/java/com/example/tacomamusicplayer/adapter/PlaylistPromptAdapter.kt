@@ -1,24 +1,22 @@
 package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
-import android.util.Size
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.OptIn
-import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
+import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderPlaylistPromptBinding
 import timber.log.Timber
+import kotlin.math.log
 
 /**
- * A recyclerview adapter that is able to take a list of Album Media Items and display them.
+ * A recyclerview adapter that is able to take a list of Playlist Items and displays them.
  */
 class PlaylistPromptAdapter(
-    private val dataSet: List<MediaItem>, //TODO I also need to setup what this class needs....
-    private val onAlbumClick: (String) -> Unit,
+    private val playlists: List<Playlist>, //TODO I also need to setup what this class needs....
+    private val onPlaylistClick: (String) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
     /**
@@ -40,50 +38,37 @@ class PlaylistPromptAdapter(
     @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: PlaylistPromptViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
-        //TODO
+        //TODO what should the text be -> Playlist Name
+        viewHolder.binding.playlistName.text = playlists[position].title
 
-//        var albumTitle = "Default ALBUM"
-//        var albumArtist = ""
-//        var albumDuration = ""
-//        var albumUri = Uri.EMPTY //TODO I'll have to get a solution  for this... else default picture
-//
-//        //First check that dataSet has a value for position
-//        if(position < dataSet.size) {
-//
-//            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${dataSet[0].mediaMetadata.albumTitle}, albumArtist=${dataSet[0].mediaMetadata.albumArtist}, albumArtUri=${dataSet[0].mediaMetadata.artworkUri}")
-//
-//            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
-//            albumArtist = dataSet[position].mediaMetadata.albumArtist.toString()
-//            albumUri = dataSet[position].mediaMetadata.artworkUri
-//
-//            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
-//
-//            val resolver = viewHolder.itemView.context.contentResolver
-//
-//            try {
-//
-//                Timber.d("queryAllMediaItems: Getting album art from URI=${albumUri.toString()}")
-//
-//                //Album art as a bitmap, I need to work on what to do when this is blank / null?
-//                val albumArt = resolver.loadThumbnail(albumUri, Size(100, 100), null)
-//                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
-//
-//                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
-//
-//                Timber.d("queryAllMediaItems: SUCCESSFUL! ALBUM ART FOUND!")
-//
-//            } catch (e: Exception) {
-//                Timber.d("queryAllMediaItems: ERROR ON LOADING ALBUM ART e=$e")
-//            }
-//        }
-//
-//        // Get element from  your dataset at this position and replace the contents of the view with that element
-//        //viewHolder.albumInfo.text = "Default ALBUM \n Default Artist \n Default Duration"//dataSet[position]
-//        viewHolder.binding.albumInfo.text = "$albumTitle \n $albumArtist"
+        viewHolder.binding.root.setOnClickListener {
+            //TODO test to see if clicking anywhere on the recyclerview will cause the check mark to appear?
+            viewHolder.binding.addCheckbox.isChecked = !viewHolder.binding.addCheckbox.isChecked
+        }
+
+        //What should the checkbox signify? How do I work with checkboxes in android?
     }
+
+    override fun onBindViewHolder(
+        holder: PlaylistPromptViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        super.onBindViewHolder(holder, position, payloads)
+        
+        Timber.d("onBindViewHolder: ")
+        
+        
+        
+    }
+
+    override fun registerAdapterDataObserver(observer: RecyclerView.AdapterDataObserver) {
+        super.registerAdapterDataObserver(observer)
+    }
+    
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
-        return dataSet.size
+        return playlists.size
     }
 
 }

@@ -5,6 +5,10 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tacomamusicplayer.adapter.PlaylistPromptAdapter
+import com.example.tacomamusicplayer.data.Playlist
+import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.databinding.ViewCustomInformationScreenBinding
 import com.example.tacomamusicplayer.databinding.ViewCustomPlaylistPromptBinding
 
@@ -23,10 +27,23 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 
             //I gotta remember to actually attach to the view
             binding = ViewCustomPlaylistPromptBinding.inflate(inflater, this, true)
+
+            //Note don't forget the layoutManager
+            binding.displayRecyclerview.layoutManager = LinearLayoutManager(this.context)
         }
     }
 
-    fun setPlaylistData() {
+    /**
+     * Show all available playlists in the prompt.
+     */
+    fun setPlaylistData(playlists: List<Playlist>) {
+        binding.displayRecyclerview.adapter = PlaylistPromptAdapter(
+            playlists
+        ) {  /* TODO */ }
 
+        //Now that data has changed -> notify the rv to update!
+        val rv = binding.displayRecyclerview
+        val rvAdapter = rv.adapter
+        rvAdapter!!.notifyDataSetChanged()
     }
 }

@@ -53,6 +53,8 @@ class SongListFragment(
             binding.sectionTitle.text = title
         }
 
+        binding.playlistPrompt.setPlaylistData(parentViewModel.getCurrentPlaylists())
+
         setupPage()
 
         return binding.root
