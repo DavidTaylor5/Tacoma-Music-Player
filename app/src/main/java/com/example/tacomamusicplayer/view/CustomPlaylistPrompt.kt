@@ -29,32 +29,4 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
     fun setPlaylistData() {
 
     }
-
-    fun setFirstIcon(imageDrawable: Drawable) {
-        binding.firstIcon.setImageDrawable(imageDrawable)
-    }
-
-    fun setFirstIconCallback(callback: () -> Unit) {
-        binding.firstClickable.setOnClickListener {
-            callback()
-        }
-    }
-
-    fun setSecondIcon(imageDrawable: Drawable) {
-        binding.secondIcon.setImageDrawable(imageDrawable)
-    }
-
-    fun setSecondIconCallback(callback: () -> Unit) {
-        binding.secondClickable.setOnClickListener {
-            callback()
-        }
-    }
-
-    fun setFirstInfo(info: String) {
-        binding.firstInfo.text = info
-    }
-
-    fun setSecondInfo(info: String) {
-        binding.secondInfo.text = info
-    }
 }
