@@ -69,7 +69,7 @@ class MediaStoreUtil {
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
-                val songMediaItem = mediaItemUtil.createSongMediaItem(
+                val songMediaItem = mediaItemUtil.createMediaItemFromSongData(
                     songUri = url,
                     songTitle = title,
                     albumTitle = album,

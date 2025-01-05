@@ -5,6 +5,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -14,7 +15,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
+import com.example.tacomamusicplayer.util.SongSettingsUtil
 import timber.log.Timber
+
+/*TODO I want to use my new MediaItemUtil.createSongDataFromMediaItem
+*  to add individual songs into specific playlists next!
+* */
 
 class SongListAdapter(
     private val dataSet:  List<MediaItem>,
@@ -22,6 +28,7 @@ class SongListAdapter(
     val onAddToPlaylistClick: () -> Unit, //TODO I flag the fragment to make a floating window with a recyclerview of available playlsits...
     val onAddToQueueClick: (MediaItem) -> Unit,
     val onCheckStatsClick: () -> Unit,
+    val showPlaylistPrompt: () -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     class SongViewHolder(val binding: ViewholderSongBinding): RecyclerView.ViewHolder(binding.root)
@@ -83,6 +90,7 @@ class SongListAdapter(
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
 
+        //TODO allow songs to be unfavorited...
         viewHolder.binding.favoriteIcon.setOnClickListener {
             viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
         }
@@ -100,13 +108,33 @@ class SongListAdapter(
             menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleMenuItem(it)
                 return@setOnMenuItemClickListener true
-                //TODO set actual options here....
-                //TODO create a custom component for these song components...
             }
             menu.show()
         }
+    }
 
+    private fun handleMenuItem(item: MenuItem) {
+        when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
+            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
+            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue()
+            SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
+            SongSettingsUtil.Setting.UNKNOWN -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+
+        }
+    }
+
+    private fun handleAddToPlaylist() {
+        showPlaylistPrompt()
+    }
+
+    private fun handleAddToQueue() {
+
+    }
+
+    private fun handleCheckStatus() {
+        //TODO Add statistics logic...
     }
 
     private fun openAddToPlaylistPrompt() {

@@ -16,6 +16,7 @@ import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
+import com.example.tacomamusicplayer.viewmodel.SongListViewModel
 import timber.log.Timber
 
 class SongListFragment(
@@ -26,6 +27,7 @@ class SongListFragment(
 
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+    private val viewModel: SongListViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,7 +46,8 @@ class SongListFragment(
                 parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
                 { /* parentViewModel::AddSongToPlaylist*/ },
                 parentViewModel::addSongToEndOfQueueViaController,
-                {}
+                {},
+                viewModel::showPlaylistPrompt
             )
             determineIfShowingInformationScreen(songs)
         }
@@ -53,7 +56,17 @@ class SongListFragment(
             binding.sectionTitle.text = title
         }
 
-        binding.playlistPrompt.setPlaylistData(parentViewModel.getCurrentPlaylists())
+        parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
+            binding.playlistPrompt.setPlaylistData(playlists)
+        }
+
+        viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
+            if(isShowing) {
+                binding.playlistPrompt.visibility = View.VISIBLE
+            } else {
+                binding.playlistPrompt.visibility = View.GONE
+            }
+        }
 
         setupPage()
 

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
@@ -13,6 +14,7 @@ import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.viewmodel.CurrentQueueViewModel
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -22,6 +24,7 @@ class CurrentQueueFragment: Fragment() {
 
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+    private val viewModel: CurrentQueueViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,7 +42,8 @@ class CurrentQueueFragment: Fragment() {
                 parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
                 { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ },
                 parentViewModel::addSongToEndOfQueueViaController,
-                {}
+                {},
+                viewModel::showPlaylistPrompt
             )
             determineIfShowingEmptyPlaylistScreen(songs)
         }

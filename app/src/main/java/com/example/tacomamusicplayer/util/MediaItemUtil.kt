@@ -15,7 +15,7 @@ class MediaItemUtil {
      * @param trackNumber
      * @return A MediaItem with the associated data.
      */
-    fun createSongMediaItem(
+    fun createMediaItemFromSongData(
         songUri: String = "UNKNOWN URI", //I'm adding the Uri to be mediaid however this is going to be a security breach...
         songTitle: String = "UNKONWN SONG TITLE",
         albumTitle: String = "UNKNOWN ALBUM",
@@ -48,7 +48,7 @@ class MediaItemUtil {
         songs: List<SongData>
     ): List<MediaItem> {
          return songs.map {data ->
-             createSongMediaItem(data)
+             createMediaItemFromSongData(data)
          }
     }
 
@@ -57,7 +57,7 @@ class MediaItemUtil {
      * SongData is used in the database, so I use this function to convert songData into MediaItems
      * that I can play.
      */
-    private fun createSongMediaItem(
+    private fun createMediaItemFromSongData(
         song: SongData
     ): MediaItem {
         return MediaItem.Builder()
@@ -76,6 +76,22 @@ class MediaItemUtil {
                     .build()
                 )
             .build()
+    }
+
+    /**
+     * Used when I have a media item and I want to store it into a playlist!
+     * @param songMediaItem associated with a song.
+     */
+    fun createSongDataFromMediaItem(
+        songMediaItem: MediaItem
+    ): SongData {
+        return SongData(
+            songUri = songMediaItem.mediaId,
+            songTitle = songMediaItem.mediaMetadata.title.toString(),
+            albumTitle = songMediaItem.mediaMetadata.albumTitle.toString(),
+            artist = songMediaItem.mediaMetadata.artist.toString(),
+            artworkUri = songMediaItem.mediaMetadata.artworkUri.toString()
+        )
     }
 
     /**
