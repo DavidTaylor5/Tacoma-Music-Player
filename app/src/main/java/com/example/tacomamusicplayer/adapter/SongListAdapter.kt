@@ -18,6 +18,10 @@ import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.example.tacomamusicplayer.util.SongSettingsUtil
 import timber.log.Timber
 
+/*TODO I want to use my new MediaItemUtil.createSongDataFromMediaItem
+*  to add individual songs into specific playlists next!
+* */
+
 class SongListAdapter(
     private val dataSet:  List<MediaItem>,
     val onAddIconClick: (MediaItem) -> Unit,
@@ -86,6 +90,7 @@ class SongListAdapter(
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
 
+        //TODO allow songs to be unfavorited...
         viewHolder.binding.favoriteIcon.setOnClickListener {
             viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
         }
