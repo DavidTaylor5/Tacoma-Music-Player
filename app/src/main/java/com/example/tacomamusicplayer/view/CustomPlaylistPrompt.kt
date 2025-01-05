@@ -1,15 +1,13 @@
 package com.example.tacomamusicplayer.view
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.PlaylistPromptAdapter
 import com.example.tacomamusicplayer.data.Playlist
-import com.example.tacomamusicplayer.data.PlaylistData
-import com.example.tacomamusicplayer.databinding.ViewCustomInformationScreenBinding
 import com.example.tacomamusicplayer.databinding.ViewCustomPlaylistPromptBinding
 
 class CustomPlaylistPrompt @JvmOverloads constructor(
@@ -19,6 +17,8 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 ): LinearLayout(context, attrs, defStyleAttr) {
 
     private lateinit var binding: ViewCustomPlaylistPromptBinding
+
+    private var onAddButtonClicked : () -> Unit = {}
 
     init {
         attrs?.let {
@@ -30,6 +30,18 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 
             //Note don't forget the layoutManager
             binding.displayRecyclerview.layoutManager = LinearLayoutManager(this.context)
+
+            binding.closeButton.setOnClickListener {
+                closePrompt()
+            }
+
+            binding.promptBackground.setOnClickListener {
+                closePrompt()
+            }
+
+            binding.addButton.setOnClickListener {
+                onAddButtonClicked()
+            }
         }
     }
 
@@ -45,5 +57,13 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
         val rv = binding.displayRecyclerview
         val rvAdapter = rv.adapter
         rvAdapter!!.notifyDataSetChanged()
+    }
+
+    private fun closePrompt() {
+        this.visibility = View.GONE
+    }
+
+    fun onAddButtonClick(onAdd: () -> Unit) {
+        onAddButtonClicked = onAdd
     }
 }
