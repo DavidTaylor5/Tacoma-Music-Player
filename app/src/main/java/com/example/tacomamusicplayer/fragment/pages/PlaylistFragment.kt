@@ -17,9 +17,6 @@ class PlaylistFragment(
 ): Fragment() {
 
     //TODO I need to make sure that I can't make multiple playlists with the same name...
-
-    //TODO Create a function that can turn songData into a MediaItem and albumData into a MediaItem...
-
     private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -31,10 +28,6 @@ class PlaylistFragment(
 
         binding = FragmentPlaylistBinding.inflate(inflater)
 
-
-        //TODO I'll want to query data store for playlists
-        //TODO Add actual functionality of adding a playlist here...
-
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
             //set the rv adapter here... or modify the rv here?...
             binding.displayRecyclerview.adapter = PlaylistAdapter(playlists, this::onPlaylistClick)
@@ -43,19 +36,19 @@ class PlaylistFragment(
         binding.fab.setOnClickListener {
             binding.fab.visibility = View.GONE
             //binding.createPlaylistTitleInputText.text = Editable.Factory.getInstance().newEditable("")
-            binding.createPlaylistTitleInputText.setText("")
-            binding.createPlaylistView.visibility = View.VISIBLE
+            binding.createPlaylistPrompt.resetCurrentPlaylistTitle()
+            binding.createPlaylistPrompt.visibility = View.VISIBLE
         }
 
-        binding.addButton.setOnClickListener {
+        binding.createPlaylistPrompt.setAddButtonFunctionality {
             binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistView.visibility = View.GONE
-            parentViewModel.createNamedPlaylist(binding.createPlaylistTitleInputText.text.toString())
+            binding.createPlaylistPrompt.visibility = View.GONE
+            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getCurrentPlaylistTitle())
         }
 
-        binding.cancelButton.setOnClickListener {
+        binding.createPlaylistPrompt.setCancelButtonFunctionality {
             binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistView.visibility = View.GONE
+            binding.createPlaylistPrompt.visibility = View.GONE
         }
 
         setupPage()
