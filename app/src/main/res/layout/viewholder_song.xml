@@ -8,27 +8,25 @@
     android:background="@color/songlist_button_focused"
     >
 
-<!--    <ImageView-->
-<!--        android:id="@+id/album_art"-->
-<!--        android:layout_width="60dp"-->
-<!--        android:layout_height="60dp"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent"-->
-<!--        android:src="@drawable/music_note_icon"-->
-<!--        android:layout_marginTop="10dp"-->
-<!--        android:layout_marginStart="10dp"-->
-<!--        android:paddingBottom="10dp"-->
-<!--        />-->
-
     <ImageView
-        android:id="@+id/album_art"
+        android:id="@+id/favorite_animation"
         android:layout_width="60dp"
         android:layout_height="60dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="10dp"
         android:layout_marginStart="10dp"
-        android:paddingBottom="10dp"
+        />
+
+    <ImageView
+        android:id="@+id/album_art"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:src="@drawable/music_note_icon"
+        android:layout_marginTop="15dp"
+        android:layout_marginStart="15dp"
         />
 
     <LinearLayout
