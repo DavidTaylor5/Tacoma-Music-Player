@@ -32,6 +32,8 @@ class SongListAdapter(
     val showPlaylistPrompt: () -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
+    private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
+
     class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
     //Create new views (invoked by the layout manager)
@@ -75,23 +77,42 @@ class SongListAdapter(
                 Timber.d("queryAllMediaItems: Getting album art from URI=${artworkUri}")
 
                 //Album art as a bitmap, I need to work on what to do when this is blank / null?
-//                val albumArt = resolver.loadThumbnail(artworkUri, Size(100, 100), null)
-//                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
-//
-//                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
+                val albumArt = resolver.loadThumbnail(artworkUri, Size(100, 100), null)
+                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
+
+                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
+
 
                 //TEST CODE FOR LIKE ANIMATION...
+                //ISSUE -> It shouldn't be the viewholder but the data which determines what should be shown...
+                viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
+//                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
+                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
+//                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
+                viewHolder.isFavorited = false
+
+                if(favoriteList[position]) {
+                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
+                } else {
+                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
+                }
+
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).selectDrawable(0)
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).invalidateSelf()
 
                 viewHolder.binding.albumArt.setOnClickListener {
 
-                    if(viewHolder.isFavorited) { //currently favorited so, ontap turn to un favorited...
-                        viewHolder.binding.albumArt.setBackgroundResource(R.drawable.unfavorite_animation)
+                    if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
+                        viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
                         viewHolder.isFavorited = false
+                        favoriteList[position] = false
                     } else { //currently un favorited, turn to favorited...
-                        viewHolder.binding.albumArt.setBackgroundResource(R.drawable.favorite_animation)
+                        viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
                         viewHolder.isFavorited = true
+                        favoriteList[position] = true
                     }
-                    val frameAnimation = it.background as AnimationDrawable
+                    val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
                     frameAnimation.start()
                 }
 //                val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
