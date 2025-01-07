@@ -8,13 +8,24 @@
     android:background="@color/songlist_button_focused"
     >
 
+<!--    <ImageView-->
+<!--        android:id="@+id/album_art"-->
+<!--        android:layout_width="60dp"-->
+<!--        android:layout_height="60dp"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        android:src="@drawable/music_note_icon"-->
+<!--        android:layout_marginTop="10dp"-->
+<!--        android:layout_marginStart="10dp"-->
+<!--        android:paddingBottom="10dp"-->
+<!--        />-->
+
     <ImageView
         android:id="@+id/album_art"
         android:layout_width="60dp"
         android:layout_height="60dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:src="@drawable/music_note_icon"
         android:layout_marginTop="10dp"
         android:layout_marginStart="10dp"
         android:paddingBottom="10dp"
@@ -86,15 +97,15 @@
         app:layout_constraintStart_toEndOf="@id/text_vertical_container"
         />
 
-    <View
-        android:id="@+id/favorite_icon"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:background="@drawable/baseline_star_border_24_white"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/add_icon"
-        />
+<!--    <View-->
+<!--        android:id="@+id/favorite_icon"-->
+<!--        android:layout_width="35dp"-->
+<!--        android:layout_height="35dp"-->
+<!--        android:background="@drawable/baseline_star_border_24_white"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintStart_toEndOf="@id/add_icon"-->
+<!--        />-->
 
     <View
         android:id="@+id/menu_icon"
@@ -103,7 +114,7 @@
         android:background="@drawable/menu_icon"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/favorite_icon"
+        app:layout_constraintStart_toEndOf="@id/add_icon"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
