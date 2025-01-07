@@ -1,6 +1,7 @@
 package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
+import android.graphics.drawable.AnimationDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
@@ -31,7 +32,7 @@ class SongListAdapter(
     val showPlaylistPrompt: () -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
-    class SongViewHolder(val binding: ViewholderSongBinding): RecyclerView.ViewHolder(binding.root)
+    class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
     //Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
@@ -74,10 +75,27 @@ class SongListAdapter(
                 Timber.d("queryAllMediaItems: Getting album art from URI=${artworkUri}")
 
                 //Album art as a bitmap, I need to work on what to do when this is blank / null?
-                val albumArt = resolver.loadThumbnail(artworkUri, Size(100, 100), null)
-                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
+//                val albumArt = resolver.loadThumbnail(artworkUri, Size(100, 100), null)
+//                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
+//
+//                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
 
-                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
+                //TEST CODE FOR LIKE ANIMATION...
+
+                viewHolder.binding.albumArt.setOnClickListener {
+
+                    if(viewHolder.isFavorited) { //currently favorited so, ontap turn to un favorited...
+                        viewHolder.binding.albumArt.setBackgroundResource(R.drawable.unfavorite_animation)
+                        viewHolder.isFavorited = false
+                    } else { //currently un favorited, turn to favorited...
+                        viewHolder.binding.albumArt.setBackgroundResource(R.drawable.favorite_animation)
+                        viewHolder.isFavorited = true
+                    }
+                    val frameAnimation = it.background as AnimationDrawable
+                    frameAnimation.start()
+                }
+//                val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
+//                frameAnimation.start()
 
                 Timber.d("queryAllMediaItems: SUCCESSFUL! ALBUM ART FOUND!")
 
@@ -91,9 +109,11 @@ class SongListAdapter(
         viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
 
         //TODO allow songs to be unfavorited...
-        viewHolder.binding.favoriteIcon.setOnClickListener {
-            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
-        }
+//        viewHolder.binding.favoriteIcon.setOnClickListener {
+//            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
+//        }
+
+
 
         viewHolder.binding.addIcon.setOnClickListener {
             Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
