@@ -36,6 +36,12 @@
                 android:visibility="gone"
                 />
 
+            <com.example.tacomamusicplayer.view.CustomCreatePlaylistPrompt
+                android:id="@+id/create_playlist_prompt"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView

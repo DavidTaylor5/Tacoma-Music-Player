@@ -14,6 +14,7 @@ import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.util.SongSettingsUtil
 import com.example.tacomamusicplayer.viewmodel.CurrentQueueViewModel
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
@@ -39,11 +40,7 @@ class CurrentQueueFragment: Fragment() {
             Timber.d("onCreateView: songs.size=${songs.size}")
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
-                parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
-                { /*TODO what to do on menu icon click [hint show the menu icon stuff]*/ },
-                parentViewModel::addSongToEndOfQueueViaController,
-                {},
-                viewModel::showPlaylistPrompt
+                this::handleSongSetting
             )
             determineIfShowingEmptyPlaylistScreen(songs)
         }
@@ -67,6 +64,16 @@ class CurrentQueueFragment: Fragment() {
         } else {
             binding.noMusicAddedText.visibility = View.GONE
         }
+    }
+
+    //TODO update this later...
+    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem? = null) {
+//        when (setting) {
+//            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
+//            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
+//            SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStats()
+//            SongSettingsUtil.Setting.UNKNOWN -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+//        }
     }
 
     private fun setupPage() {

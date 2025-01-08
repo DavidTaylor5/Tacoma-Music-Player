@@ -14,8 +14,9 @@ import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.util.SongSettingsUtil
+import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.*
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
-import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
 import com.example.tacomamusicplayer.viewmodel.SongListViewModel
 import timber.log.Timber
 
@@ -43,11 +44,7 @@ class SongListFragment(
             Timber.d("onCreateView: songs.size=${songs.size}")
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
-                parentViewModel::addSongToEndOfQueueViaController, //TODO This is way better, I need to comment out the old logic...
-                { /* parentViewModel::AddSongToPlaylist*/ },
-                parentViewModel::addSongToEndOfQueueViaController,
-                {},
-                viewModel::showPlaylistPrompt
+                this::handleSongSetting
             )
             determineIfShowingInformationScreen(songs)
         }
@@ -68,9 +65,57 @@ class SongListFragment(
             }
         }
 
+        setupCreatePlaylistPrompt()
+        setupPlaylistPrompt()
+
         setupPage()
 
         return binding.root
+    }
+
+    private fun setupCreatePlaylistPrompt() {
+        binding.createPlaylistPrompt.setAddButtonFunctionality {
+            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getCurrentPlaylistTitle())
+        }
+        binding.createPlaylistPrompt.setCancelButtonFunctionality {
+            binding.createPlaylistPrompt.closePrompt()
+        }
+    }
+
+    private fun setupPlaylistPrompt() {
+        binding.playlistPrompt.onAddButtonClick {
+            //TODO...
+        }
+        binding.playlistPrompt.onCreateNewPlaylistClicked {
+            binding.createPlaylistPrompt.showPrompt()
+        }
+        binding.playlistPrompt.onCloseButtonClicked {
+            binding.createPlaylistPrompt.closePrompt()
+            binding.playlistPrompt.closePrompt()
+        }
+    }
+
+    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem? = null) {
+        when (setting) {
+            ADD_TO_PLAYLIST -> handleAddToPlaylist()
+            ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
+            CHECK_STATS -> handleCheckStats()
+            UNKNOWN -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+        }
+    }
+
+    private fun handleAddToPlaylist() {
+        binding.playlistPrompt.showPrompt()
+    }
+
+    private fun handleAddToQueue(mediaItem: MediaItem?) {
+        mediaItem?.let {
+            parentViewModel.addSongToEndOfQueueViaController(it)
+        }
+    }
+
+    private fun handleCheckStats() {
+        //TODO...
     }
 
     /**

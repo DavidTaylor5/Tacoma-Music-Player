@@ -36,6 +36,14 @@ class CustomCreatePlaylistPrompt @JvmOverloads constructor(
         }
     }
 
+    fun closePrompt() {
+        this.visibility = View.GONE
+    }
+
+    fun showPrompt() {
+        this.visibility = View.VISIBLE
+    }
+
     fun setAddButtonFunctionality(onClick: () -> Unit) {
         onAddButtonClicked = onClick
     }
