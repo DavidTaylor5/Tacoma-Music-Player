@@ -25,11 +25,7 @@ import timber.log.Timber
 
 class SongListAdapter(
     private val dataSet:  List<MediaItem>,
-    val onAddIconClick: (MediaItem) -> Unit,
-    val onAddToPlaylistClick: () -> Unit, //TODO I flag the fragment to make a floating window with a recyclerview of available playlsits...
-    val onAddToQueueClick: (MediaItem) -> Unit,
-    val onCheckStatsClick: () -> Unit,
-    val showPlaylistPrompt: () -> Unit,
+    val handleSongSetting: (SongSettingsUtil.Setting, MediaItem?) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
@@ -134,12 +130,9 @@ class SongListAdapter(
 //            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
 //        }
 
-
-
         viewHolder.binding.addIcon.setOnClickListener {
             Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-            onAddIconClick(dataSet[position])
-            //todo add this to current queue or add to a playlist?
+            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, dataSet[position])
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {
@@ -149,29 +142,28 @@ class SongListAdapter(
             menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it)
+                handleMenuItem(it, position)
                 return@setOnMenuItemClickListener true
             }
             menu.show()
         }
     }
 
-    private fun handleMenuItem(item: MenuItem) {
+    private fun handleMenuItem(item: MenuItem, position: Int) {
         when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
             SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
-            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue()
+            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(position)
             SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
             SongSettingsUtil.Setting.UNKNOWN -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
-
         }
     }
 
     private fun handleAddToPlaylist() {
-        showPlaylistPrompt()
+        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_PLAYLIST, null)
     }
 
-    private fun handleAddToQueue() {
-
+    private fun handleAddToQueue(position: Int) {
+        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, dataSet[position])
     }
 
     private fun handleCheckStatus() {

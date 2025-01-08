@@ -37,6 +37,7 @@
                 android:text="Create New Playlist"/>
 
             <Button
+                android:id="@+id/create_new_playlist_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="+"

@@ -19,6 +19,9 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
     private lateinit var binding: ViewCustomPlaylistPromptBinding
 
     private var onAddButtonClicked : () -> Unit = {}
+    private var onCreateNewPlaylistClicked : () -> Unit = {}
+    private var onCloseButtonClicked : () -> Unit = {}
+
 
     init {
         attrs?.let {
@@ -42,6 +45,14 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
             binding.addButton.setOnClickListener {
                 onAddButtonClicked()
             }
+
+            binding.createNewPlaylistBtn.setOnClickListener {
+                onCreateNewPlaylistClicked()
+            }
+
+            binding.closeButton.setOnClickListener {
+                onCloseButtonClicked()
+            }
         }
     }
 
@@ -59,11 +70,23 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
         rvAdapter!!.notifyDataSetChanged()
     }
 
-    private fun closePrompt() {
+    fun closePrompt() {
         this.visibility = View.GONE
+    }
+
+    fun showPrompt() {
+        this.visibility = View.VISIBLE
     }
 
     fun onAddButtonClick(onAdd: () -> Unit) {
         onAddButtonClicked = onAdd
+    }
+
+    fun onCloseButtonClicked(onClose: () -> Unit) {
+        onCloseButtonClicked = onClose
+    }
+
+    fun onCreateNewPlaylistClicked(onClick: () -> Unit) {
+        onCreateNewPlaylistClicked = onClick
     }
 }
