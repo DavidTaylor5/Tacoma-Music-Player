@@ -41,7 +41,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         "playlist-db"
     ).build()
 
-    val availablePlaylists: LiveData<List<Playlist>> = playlistDatabase.playlistDao().getAll()
+    val availablePlaylists: LiveData<List<Playlist>> = playlistDatabase.playlistDao().getAllPlaylists()
 
     val mediaController: LiveData<MediaController>
         get() = _mediaController
@@ -118,7 +118,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //            )
 //        }
 
-        val testValue = playlistDatabase.playlistDao().getAll()
+        val testValue = playlistDatabase.playlistDao().getAllPlaylists()
         Timber.d("init: testValue.length = ${testValue.value?.size}, ")
     }
 
@@ -129,23 +129,48 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         val playlist = Playlist(
             title = name,
-            songs = PlaylistData(
-                listOf(
-//                    SongData(
-//                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
-//                        songTitle = "The Love Below",
-//                        albumTitle = "Speakerboxxx",
-//                        artist = "Outkast",
-//                        artworkUri = "content://media/external/audio/media/1000102936" //TODO this song data isn't working... probably works...
-//                    )
-                )
-            )
+            songs = PlaylistData(listOf())
         )
+//                listOf(
+////                    SongData(
+////                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
+////                        songTitle = "The Love Below",
+////                        albumTitle = "Speakerboxxx",
+////                        artist = "Outkast",
+////                        artworkUri = "content://media/external/audio/media/1000102936" //TODO this song data isn't working... probably works...
+////                    )
+//
+//            )
 
         viewModelScope.launch(Dispatchers.IO) {
-            playlistDatabase.playlistDao().insertAll(
+            playlistDatabase.playlistDao().insertPlaylists(
                 playlist
             )
+        }
+    }
+
+    fun addSongToPlaylists(playlistTitles: List<String>, songs: List<MediaItem>) {
+        //TODO I need to remove the nested loop, this cannot be the most efficient way...
+            playlistTitles.forEach { playlist ->
+                songs.forEach { song ->
+                    addSongToPlaylist(playlist, song)
+                }
+            }
+    }
+
+    private fun addSongToPlaylist(playlistTitle: String, song: MediaItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlist = playlistDatabase.playlistDao().findPlaylistByName(playlistTitle)
+
+            val storableSong = MediaItemUtil().createSongDataFromMediaItem(song)
+
+            val modifiedSongList = playlist.songs.songs.toMutableList()
+            modifiedSongList.add(
+                storableSong
+            )
+
+            playlist.songs = PlaylistData(modifiedSongList)
+            playlistDatabase.playlistDao().updatePlaylists(playlist)
         }
     }
 
@@ -350,7 +375,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun querySongsFromPlaylist(playlistId: String) {
         Timber.d("querySongsFromPlaylist: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  playlistDatabase.playlistDao().findByName(playlistId)
+            val playlist =  playlistDatabase.playlistDao().findPlaylistByName(playlistId)
             val songs = playlist.songs.songs
             val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
             _currentSongList.postValue(mediaItems)

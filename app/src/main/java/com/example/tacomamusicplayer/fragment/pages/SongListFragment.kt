@@ -26,6 +26,8 @@ class SongListFragment(
 
     //TODO what to do if the current song list is empty?
 
+    //TODO Give the ability for the user to load an entire album or playlist into a new queue...
+
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: SongListViewModel by viewModels()
@@ -79,13 +81,27 @@ class SongListFragment(
         }
         binding.createPlaylistPrompt.setCancelButtonFunctionality {
             binding.createPlaylistPrompt.closePrompt()
+            viewModel.clearPreparedSongsForPlaylists()
         }
     }
 
+    /**
+     * Sets up the adding a song to a Playlist Prompt functionality.
+     */
     private fun setupPlaylistPrompt() {
+        //When add button is clicked, I should add songs into playlists
         binding.playlistPrompt.onAddButtonClick {
-            //TODO...
+            val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value ?: listOf()
+            val playlistAddSongs: List<MediaItem> = viewModel.playlistAddSongs.value ?: listOf()
+
+            parentViewModel.addSongToPlaylists(
+                checkedPlaylists,
+                playlistAddSongs
+            )
+
+            binding.playlistPrompt.closePrompt()
         }
+
         binding.playlistPrompt.onCreateNewPlaylistClicked {
             binding.createPlaylistPrompt.showPrompt()
         }
@@ -93,9 +109,19 @@ class SongListFragment(
             binding.createPlaylistPrompt.closePrompt()
             binding.playlistPrompt.closePrompt()
         }
+
+        binding.playlistPrompt.setPlaylistCheckedHandler { playlistTitle, isChecked ->
+            viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
+        }
+
+        viewModel.isPlaylistPromptAddClickable.observe(viewLifecycleOwner) { isClickable ->
+            binding.playlistPrompt.updateAddButtonClickability(isClickable)
+        }
     }
 
-    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem? = null) {
+    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem) {
+        viewModel.prepareSongForPlaylists(mediaItem)
+
         when (setting) {
             ADD_TO_PLAYLIST -> handleAddToPlaylist()
             ADD_TO_QUEUE -> handleAddToQueue(mediaItem)

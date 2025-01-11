@@ -16,7 +16,7 @@ import kotlin.math.log
  */
 class PlaylistPromptAdapter(
     private val playlists: List<Playlist>, //TODO I also need to setup what this class needs....
-    private val onPlaylistClick: (String) -> Unit,
+    private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
     /**
@@ -44,6 +44,10 @@ class PlaylistPromptAdapter(
         viewHolder.binding.root.setOnClickListener {
             //TODO test to see if clicking anywhere on the recyclerview will cause the check mark to appear?
             viewHolder.binding.addCheckbox.isChecked = !viewHolder.binding.addCheckbox.isChecked
+        }
+
+        viewHolder.binding.addCheckbox.setOnCheckedChangeListener { compoundButton, b ->
+            onPlaylistChecked(playlists[position].title ?: "UNKNOWN", b)
         }
 
         //What should the checkbox signify? How do I work with checkboxes in android?

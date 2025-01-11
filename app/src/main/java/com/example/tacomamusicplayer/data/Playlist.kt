@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class Playlist(
     @PrimaryKey(autoGenerate = true) val uid: Int = 0,
     @ColumnInfo(name = "playlist_title") val title: String?,
-    @ColumnInfo(name = "playlist_songs") val songs: PlaylistData
+    @ColumnInfo(name = "playlist_songs") var songs: PlaylistData
 )
