@@ -25,7 +25,7 @@ import timber.log.Timber
 
 class SongListAdapter(
     private val dataSet:  List<MediaItem>,
-    val handleSongSetting: (SongSettingsUtil.Setting, MediaItem?) -> Unit
+    val handleSongSetting: (SongSettingsUtil.Setting, MediaItem) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
@@ -151,15 +151,15 @@ class SongListAdapter(
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
-            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
+            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
             SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(position)
             SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
             SongSettingsUtil.Setting.UNKNOWN -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
-    private fun handleAddToPlaylist() {
-        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_PLAYLIST, null)
+    private fun handleAddToPlaylist(position: Int) {
+        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_PLAYLIST, dataSet[position])
     }
 
     private fun handleAddToQueue(position: Int) {

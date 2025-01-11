@@ -5,23 +5,26 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface PlaylistDao {
 
-    //TODO I need to rename / add / some functions so that this is more clear
     @Query("SELECT * FROM playlist")
-    fun getAll(): LiveData<List<Playlist>> //For now I'll use this one...
+    fun getAllPlaylists(): LiveData<List<Playlist>> //For now I'll use this one...
 
     @Query("SELECT * FROM playlist WHERE uid IN (:playlistIds)")
     fun loadAllByIds(playlistIds: IntArray): LiveData<List<Playlist>>
 
     @Query("SELECT * FROM playlist WHERE playlist_title LIKE :title LIMIT 1")
-    fun findByName(title: String): Playlist
+    fun findPlaylistByName(title: String): Playlist
+
+    @Update
+    fun updatePlaylists(vararg playlist: Playlist)
 
     @Insert
-    fun insertAll(vararg playlists: Playlist) //this one...
+    fun insertPlaylists(vararg playlists: Playlist)
 
     @Delete
-    fun delete(playlist: Playlist) //this one...
+    fun deletePlaylists(playlist: Playlist)
 }

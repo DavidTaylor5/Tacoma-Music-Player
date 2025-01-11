@@ -21,6 +21,9 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
     private var onAddButtonClicked : () -> Unit = {}
     private var onCreateNewPlaylistClicked : () -> Unit = {}
     private var onCloseButtonClicked : () -> Unit = {}
+    private var playlistCheckedHandler: (String, Boolean) -> Unit = { playlistTitle, isChecked ->
+
+    }
 
 
     init {
@@ -53,6 +56,8 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
             binding.closeButton.setOnClickListener {
                 onCloseButtonClicked()
             }
+
+
         }
     }
 
@@ -61,13 +66,18 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
      */
     fun setPlaylistData(playlists: List<Playlist>) {
         binding.displayRecyclerview.adapter = PlaylistPromptAdapter(
-            playlists
-        ) {  /* TODO */ }
+            playlists,
+            this::onPlaylistChecked
+        )
 
         //Now that data has changed -> notify the rv to update!
         val rv = binding.displayRecyclerview
         val rvAdapter = rv.adapter
         rvAdapter!!.notifyDataSetChanged()
+    }
+
+    private fun onPlaylistChecked(playlist: String, boolean: Boolean) {
+        playlistCheckedHandler(playlist, boolean)
     }
 
     fun closePrompt() {
@@ -89,4 +99,13 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
     fun onCreateNewPlaylistClicked(onClick: () -> Unit) {
         onCreateNewPlaylistClicked = onClick
     }
+
+    fun setPlaylistCheckedHandler(handler: (String, Boolean) -> Unit) {
+        playlistCheckedHandler = handler
+    }
+
+    fun updateAddButtonClickability(canClick: Boolean) {
+        binding.addButton.isEnabled = canClick
+    }
+
 }
