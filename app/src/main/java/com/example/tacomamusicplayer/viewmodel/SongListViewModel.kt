@@ -33,6 +33,13 @@ class SongListViewModel: ViewModel() {
 
     //Clicking on the song settings for a song should add it as a potential add for playlists.
     fun prepareSongForPlaylists(song: MediaItem) {
+        val resetCheckedPlaylists = mutableListOf<String>()
+
+        //As I prepare a song for playlists, I don't yet know which playlist I'm going to add it to
+        _checkedPlaylists.postValue(resetCheckedPlaylists)
+
+        updatePlaylistPromptAddClickability(resetCheckedPlaylists)
+
         _playlistAddSongs.value?.let { songs ->
             val modList = songs.toMutableList()
             modList.add(song)
@@ -83,5 +90,4 @@ class SongListViewModel: ViewModel() {
             _isPlaylistPromptAddClickable.postValue(true)
         }
     }
-
 }

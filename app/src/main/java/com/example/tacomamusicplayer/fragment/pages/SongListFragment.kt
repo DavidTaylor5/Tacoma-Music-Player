@@ -67,6 +67,18 @@ class SongListFragment(
             }
         }
 
+        binding.overallAddIcon.setOnClickListener {
+            parentViewModel.currentSongList.value?.let { currentSongs ->
+                parentViewModel.addSongsToEndOfQueueViaController(currentSongs)
+
+                //TODO for overall playlist or album, I probably want to clear the previous playlist first...
+            }
+        }
+
+        binding.overallMenuIcon.setOnClickListener {
+            //TODO open the menu prompt
+        }
+
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 
@@ -99,6 +111,7 @@ class SongListFragment(
                 playlistAddSongs
             )
 
+            viewModel.clearPreparedSongsForPlaylists()
             binding.playlistPrompt.closePrompt()
         }
 
