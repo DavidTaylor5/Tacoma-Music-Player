@@ -232,6 +232,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         mediaController.value?.addMediaItem(song)
     }
 
+    /**
+     * Adds multiple songs to the end of the controller in the queue
+     */
+    fun addSongsToEndOfQueueViaController(songs: List<MediaItem>) {
+        //Also add to the queue?
+        val updatedQueue = mutableListOf<MediaItem>()
+        _songQueue.value?.let {
+            updatedQueue.addAll(_songQueue.value!!)
+        }
+        updatedQueue.addAll(songs)
+        _songQueue.postValue(updatedQueue)
+
+        //TODO move this code to the activity, mediaController will be watching the current queue
+        mediaController.value?.addMediaItems(songs)
+    }
 
     /**
      * Add a list of songs to the end of the queue
