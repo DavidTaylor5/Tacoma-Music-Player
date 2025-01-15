@@ -99,6 +99,7 @@ class SongListFragment(
                 playlistAddSongs
             )
 
+            viewModel.clearPreparedSongsForPlaylists()
             binding.playlistPrompt.closePrompt()
         }
 
