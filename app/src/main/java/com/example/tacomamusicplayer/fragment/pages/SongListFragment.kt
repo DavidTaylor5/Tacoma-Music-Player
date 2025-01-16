@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -67,16 +69,23 @@ class SongListFragment(
             }
         }
 
-//        binding.overallAddIcon.setOnClickListener {
-////            parentViewModel.currentSongList.value?.let { currentSongs ->
-////                parentViewModel.addSongsToEndOfQueueViaController(currentSongs)
-////
-////                //TODO for overall playlist or album, I probably want to clear the previous playlist first...
-////            }
-//        }
+        //I want an extra option on menu that will differentiate adding all to the end of the queue
+        //adding all to the empty queue...
 
         binding.overallMenuIcon.setOnClickListener {
-            //TODO open the menu prompt
+
+            val menu = PopupMenu(binding.root.context, binding.overallMenuIcon)
+
+            menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleSongSetting(
+                    SongSettingsUtil.determineSettingFromTitle(it.toString()),
+                    parentViewModel.currentSongList.value ?: listOf()
+                )
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
         }
 
         setupCreatePlaylistPrompt()
@@ -132,7 +141,9 @@ class SongListFragment(
         }
     }
 
-    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem) {
+    //TODO I still need to implement logic for adding a whole album to a playlist...
+
+    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: List<MediaItem>) {
         viewModel.prepareSongForPlaylists(mediaItem)
 
         when (setting) {
@@ -147,9 +158,9 @@ class SongListFragment(
         binding.playlistPrompt.showPrompt()
     }
 
-    private fun handleAddToQueue(mediaItem: MediaItem?) {
-        mediaItem?.let {
-            parentViewModel.addSongToEndOfQueueViaController(it)
+    private fun handleAddToQueue(songs: List<MediaItem>?) {
+        songs?.let {
+            parentViewModel.addSongsToEndOfQueueViaController(it)
         }
     }
 

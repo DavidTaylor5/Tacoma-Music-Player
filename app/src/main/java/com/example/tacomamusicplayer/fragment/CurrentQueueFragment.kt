@@ -67,7 +67,7 @@ class CurrentQueueFragment: Fragment() {
     }
 
     //TODO update this later...
-    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: MediaItem? = null) {
+    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItems: List<MediaItem> = listOf()) {
 //        when (setting) {
 //            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
 //            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
