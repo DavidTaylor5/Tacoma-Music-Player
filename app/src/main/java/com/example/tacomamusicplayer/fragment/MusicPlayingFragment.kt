@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.navigation.fragment.findNavController
@@ -70,6 +72,12 @@ class MusicPlayingFragment: Fragment() {
 
         val inflater = TransitionInflater.from(requireContext())
         enterTransition = inflater.inflateTransition(R.transition.slide_down)
+
+        parentViewModel.mediaController.value?.addListener(object: Player.Listener {
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                super.onMediaMetadataChanged(mediaMetadata)
+            } //TODO BUILD ON THIS TO DETERMINE WHAT IS HAPPENING WITH THE CURRENT PLAYING SESSION / Controller
+        })
     }
 
     override fun onCreateView(
@@ -87,13 +95,8 @@ class MusicPlayingFragment: Fragment() {
         //TODO clean up this code
 
         //TODO rename library button -> library section /  its actually an image view
-        //TODO set the final behavior for this part of the app, section swipe up or double tap will go to library...
-
-        //TODO I'll have a clear area that will be the swipe zone / double press zone [single press can cause lots of accidental user input]
 
         //TODO Animation changes work but I will need to fix the horizontal layouts for the APP [WILL CRASH on orientation change!]
-
-        //TODO IMPLEMENT THE GESTURE DETECTION / ADD ANIMATION BETWEEN MUSICPLAYINGFRAGMENT AND MUSICCHOOSINGFRAGMENT
 
         //TODO save the currently playing queue for when I exit and start the app again...
 
