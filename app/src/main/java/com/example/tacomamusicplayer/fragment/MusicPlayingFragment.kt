@@ -1,6 +1,5 @@
 package com.example.tacomamusicplayer.fragment
 
-import android.app.PendingIntent
 import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.transition.TransitionInflater
@@ -66,7 +65,7 @@ class MusicPlayingFragment: Fragment() {
         }
     }
 
-    @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
 
         super.onCreate(savedInstanceState)
