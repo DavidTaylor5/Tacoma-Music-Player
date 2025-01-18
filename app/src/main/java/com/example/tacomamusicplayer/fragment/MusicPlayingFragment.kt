@@ -1,8 +1,10 @@
 package com.example.tacomamusicplayer.fragment
 
 import android.graphics.drawable.AnimationDrawable
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.transition.TransitionInflater
+import android.util.Size
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -30,6 +32,9 @@ class MusicPlayingFragment: Fragment() {
     private lateinit var binding: FragmentMusicPlayingBinding
 
     private var controller: MediaController? = null
+
+    //TODO when I first add the media controller -> show current song info
+    //TODO When mediaController metadata changes -> show changes to song info
 
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -76,6 +81,7 @@ class MusicPlayingFragment: Fragment() {
         parentViewModel.mediaController.value?.addListener(object: Player.Listener {
             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                 super.onMediaMetadataChanged(mediaMetadata)
+                //TODO when metadata changes, update song info also...
             } //TODO BUILD ON THIS TO DETERMINE WHAT IS HAPPENING WITH THE CURRENT PLAYING SESSION / Controller
         })
     }
@@ -117,6 +123,41 @@ class MusicPlayingFragment: Fragment() {
         frameAnimation.start()
     }
 
+    private fun updateUIForCurrentSong() {
+        updateCurrentSongArt()
+        updateCurrentSongTitle()
+        updateCurrentSongArtist()
+        updateCurrentAlbumTitle()
+    }
+
+    private fun updateCurrentSongArt() {
+        this.context?.resources?.let { res ->
+            this.context?.contentResolver?.let { resolver ->
+                controller?.mediaMetadata?.artworkUri?.let { artwork ->
+                    try {
+                        val songArt = resolver.loadThumbnail(artwork, Size(500, 500), null)
+                        val songDrawable = BitmapDrawable(res, songArt)
+                        binding.songArt?.setImageDrawable(songDrawable)
+                    } catch(e: Exception) {
+                        Timber.d("onStart: Couldn't load song art, e=$e")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateCurrentSongTitle() {
+
+    }
+
+    private fun updateCurrentSongArtist() {
+
+    }
+
+    private fun updateCurrentAlbumTitle() {
+
+    }
+
     @OptIn(UnstableApi::class) override fun onStart() {
         super.onStart()
 
@@ -124,6 +165,10 @@ class MusicPlayingFragment: Fragment() {
             binding.playerView.player = controller
             this.controller = controller
             binding.playerView.showController()
+
+            //TODO set the first song info here...
+
+            updateCurrentSongArt()
 
             if(controller.isPlaying) {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
@@ -170,33 +215,6 @@ class MusicPlayingFragment: Fragment() {
             Timber.d("nextButton_onClick: ")
             controller?.seekToNextMediaItem()
         }
-
-//        binding.psychoButton.setOnClickListener {
-//
-//            controller?.pause()
-//
-//            //TODO I can just create my own UI and control the media player myself...
-//
-//
-//
-////            controller?.play()
-////
-////            controller?.isPlaying
-////
-////            controller?.hasNextMediaItem()
-////
-////            controller?.seekToNextMediaItem()
-////
-////            controller?.seekToPrevious()
-//
-////            findNavController().navigate(ScreenType.PERMISSION_DENIED_SCREEN.route())
-//        }
-////
-////        binding.navigateChooseMusic.setOnClickListener {
-////            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-////        }
-//
-//    }
     }
 
 }

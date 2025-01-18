@@ -12,26 +12,26 @@
 <!--        android:layout_height="match_parent"-->
 <!--        android:background="@android:color/black"/>-->
 
-    <ImageView android:id="@+id/no_music_image"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/exo_controller_placeholder"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:background="@color/white"
-        android:src="@drawable/chopper_default"
-        android:backgroundTint="#8BC34A"
-        />
+<!--    <ImageView android:id="@+id/no_music_image"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/exo_controller_placeholder"-->
+<!--        android:scaleType="fitCenter"-->
+<!--        android:adjustViewBounds="true"-->
+<!--        android:background="@color/white"-->
+<!--        android:src="@drawable/chopper_default"-->
+<!--        android:backgroundTint="#8BC34A"-->
+<!--        />-->
 
-    <ImageView android:id="@id/exo_artwork"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@id/exo_controller_placeholder"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:background="@color/white"
-        android:backgroundTint="#8BC34A"
-        />
+<!--    <ImageView android:id="@id/exo_artwork"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/exo_controller_placeholder"-->
+<!--        android:scaleType="fitCenter"-->
+<!--        android:adjustViewBounds="true"-->
+<!--        android:background="@color/white"-->
+<!--        android:backgroundTint="#8BC34A"-->
+<!--        />-->
 
 <!--    <View-->
 <!--        android:layout_width="match_parent"-->
