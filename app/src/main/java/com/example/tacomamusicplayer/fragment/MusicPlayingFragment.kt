@@ -32,9 +32,24 @@ class MusicPlayingFragment: Fragment() {
     private lateinit var binding: FragmentMusicPlayingBinding
 
     private var controller: MediaController? = null
+    private var currentSongInfo: Triple<String, String, String>? = null
 
-    //TODO when I first add the media controller -> show current song info
-    //TODO When mediaController metadata changes -> show changes to song info
+    private val playerListener = object: Player.Listener {
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            val artist = mediaMetadata.artist.toString()
+            val title = mediaMetadata.title.toString()
+            val albumTitle = mediaMetadata.albumTitle.toString()
+            Timber.d("onMediaMetadataChanged: artist=$artist, title=$title, albumTitle=$albumTitle")
+
+            val songInfo = Triple(artist, title, albumTitle)
+
+            if(currentSongInfo != songInfo) {
+                currentSongInfo = songInfo
+                updateUIForCurrentSong()
+            }
+            super.onMediaMetadataChanged(mediaMetadata)
+        }
+    }
 
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -77,13 +92,6 @@ class MusicPlayingFragment: Fragment() {
 
         val inflater = TransitionInflater.from(requireContext())
         enterTransition = inflater.inflateTransition(R.transition.slide_down)
-
-        parentViewModel.mediaController.value?.addListener(object: Player.Listener {
-            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                super.onMediaMetadataChanged(mediaMetadata)
-                //TODO when metadata changes, update song info also...
-            } //TODO BUILD ON THIS TO DETERMINE WHAT IS HAPPENING WITH THE CURRENT PLAYING SESSION / Controller
-        })
     }
 
     override fun onCreateView(
@@ -117,6 +125,20 @@ class MusicPlayingFragment: Fragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        //Start listening to changes in player
+        parentViewModel.mediaController.value?.addListener(playerListener)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        //I no longer need to listen to changes in the player
+        parentViewModel.mediaController.value?.removeListener(playerListener)
+    }
+
     private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
         binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
         val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
@@ -147,15 +169,21 @@ class MusicPlayingFragment: Fragment() {
     }
 
     private fun updateCurrentSongTitle() {
-
+        controller?.mediaMetadata?.title?.let { title ->
+            binding.songTitleTextview?.text  = title
+        }
     }
 
     private fun updateCurrentSongArtist() {
-
+        controller?.mediaMetadata?.artist?.let { artist ->
+            binding.artistNameTextview?.text  = artist
+        }
     }
 
     private fun updateCurrentAlbumTitle() {
-
+        controller?.mediaMetadata?.albumTitle?.let { albumTitle ->
+            binding.albumTitleTextview?.text  = albumTitle
+        }
     }
 
     @OptIn(UnstableApi::class) override fun onStart() {
@@ -166,9 +194,8 @@ class MusicPlayingFragment: Fragment() {
             this.controller = controller
             binding.playerView.showController()
 
-            //TODO set the first song info here...
-
-            updateCurrentSongArt()
+            //Update UI with current song in the controller (this will be called when I first come to this fragment!)
+            updateUIForCurrentSong()
 
             if(controller.isPlaying) {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
