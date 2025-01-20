@@ -48,7 +48,8 @@ class SongListFragment(
             Timber.d("onCreateView: songs.size=${songs.size}")
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songs,
-                this::handleSongSetting
+                this::handleSongSetting,
+                { }
             )
             determineIfShowingInformationScreen(songs)
         }

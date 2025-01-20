@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -24,13 +25,46 @@ import timber.log.Timber
 * */
 
 class SongListAdapter(
-    private val dataSet:  List<MediaItem>,
-    val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit
+    private var dataSet:  List<MediaItem>,
+    val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
+    val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
 
     class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
+
+
+    fun moveItem(from: Int, to: Int) {
+        if(from == to) return
+
+        val dataCopy = dataSet.toMutableList()
+        val dataCopyIndexes = dataCopy.mapIndexed { index, mediaItem ->
+            index
+        }
+
+        val front = dataCopyIndexes.subList(0, to).toMutableList()
+        val end = dataCopyIndexes.subList(to, dataCopyIndexes.size).toMutableList()
+        front.removeIf { index ->
+            index == from
+        }
+        end.removeIf { index ->
+            index == from
+        }
+
+        val newIndexes = mutableListOf<Int>()
+        newIndexes.addAll(front)
+        newIndexes.add(from)
+        newIndexes.addAll(end)
+
+        Timber.d("moveItem: newIndexes=$newIndexes")
+
+        val newData = newIndexes.map {index ->
+            dataSet[index]
+        }
+
+        dataSet = newData
+    }
 
     //Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
@@ -39,7 +73,17 @@ class SongListAdapter(
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val binding = ViewholderSongBinding.inflate(inflater, parent, false)
 
-        return SongViewHolder(binding)
+        val viewHolder = SongViewHolder(binding)
+
+        //This code allows for the songHandle for dragging songs inside of the queue
+        viewHolder.binding.songHandle.setOnTouchListener { v, event ->
+            if(event.actionMasked == MotionEvent.ACTION_DOWN) {
+                onHandleDrag(viewHolder)
+            }
+            return@setOnTouchListener true
+        }
+
+        return viewHolder
     }
 
     // Replace the contents of a view (invoked by the layout manager)
