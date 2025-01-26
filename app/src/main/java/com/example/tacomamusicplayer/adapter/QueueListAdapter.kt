@@ -8,17 +8,13 @@ import android.util.Size
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.data.Playlist
-import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
-import com.example.tacomamusicplayer.enum.SongGroupType
+import com.example.tacomamusicplayer.databinding.ViewholderQueueSongBinding
 import com.example.tacomamusicplayer.util.SongSettingsUtil
 import timber.log.Timber
 
@@ -26,16 +22,15 @@ import timber.log.Timber
 *  to add individual songs into specific playlists next!
 * */
 
-class SongListAdapter(
+class QueueListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
-    val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
-): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
+): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
 
-    class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
+    class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
 
     fun moveItem(from: Int, to: Int) {
@@ -70,13 +65,13 @@ class SongListAdapter(
     }
 
     //Create new views (invoked by the layout manager)
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SongViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QueueSongViewHolder {
         Timber.d("onCreateViewHolder: ")
 
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val binding = ViewholderSongBinding.inflate(inflater, parent, false)
+        val binding = ViewholderQueueSongBinding.inflate(inflater, parent, false)
 
-        val viewHolder = SongViewHolder(binding)
+        val viewHolder = QueueSongViewHolder(binding)
 
         //This code allows for the songHandle for dragging songs inside of the queue
         viewHolder.binding.songHandle.setOnTouchListener { v, event ->
@@ -86,18 +81,11 @@ class SongListAdapter(
             return@setOnTouchListener true
         }
 
-        if(songGroupType.equals(SongGroupType.PLAYLIST)) {
-            viewHolder.binding.songHandle.visibility = View.VISIBLE
-        } else {
-            //User shouldn't be able to update order of album songs which have intrinsic ordering
-            viewHolder.binding.songHandle.visibility = View.GONE
-        }
-
         return viewHolder
     }
 
     // Replace the contents of a view (invoked by the layout manager)
-    override fun onBindViewHolder(viewHolder: SongViewHolder, position: Int) {
+    override fun onBindViewHolder(viewHolder: QueueSongViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
         var songTitle = "DEFAULT SONG TITLE"
@@ -184,10 +172,10 @@ class SongListAdapter(
 //            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
 //        }
 
-        viewHolder.binding.addIcon.setOnClickListener {
-            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
-        }
+//        viewHolder.binding.addIcon.setOnClickListener {
+//            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
+//            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+//        }
 
         viewHolder.binding.menuIcon.setOnClickListener {
 

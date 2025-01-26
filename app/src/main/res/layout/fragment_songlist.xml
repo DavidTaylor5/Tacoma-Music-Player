@@ -78,7 +78,6 @@
             android:layout_gravity="center"
             android:src="@drawable/menu_icon"
             android:background="@color/albumlist_button_focused"
-            android:layout_weight="1"
             />
 
     </LinearLayout>

@@ -123,15 +123,12 @@ class MusicChooserFragment: Fragment() {
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
         binding.navigationControl.setPlaylistButtonOnClick {
-//            setPage(PageType.PLAYLIST_PAGE)
             parentViewModel.setPage(PageType.PLAYLIST_PAGE)
         }
         binding.navigationControl.setBrowseAlbumButtonOnClick {
-//            setPage(PageType.ALBUM_PAGE)
             parentViewModel.setPage(PageType.ALBUM_PAGE)
         }
         binding.navigationControl.setAlbumButtonOnClick {
-//            setPage(PageType.SONG_PAGE)
             parentViewModel.setPage(PageType.SONG_PAGE)
         }
 
@@ -141,8 +138,4 @@ class MusicChooserFragment: Fragment() {
 
         return binding.root
     }
-
-//    private fun setPage(page: PageType) {
-//        binding.pager.currentItem = page.type()
-//    }
 }

@@ -10,18 +10,15 @@ import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
-import androidx.recyclerview.widget.ItemTouchHelper.START
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
-import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.ItemTouchHelper.END
+import androidx.recyclerview.widget.ItemTouchHelper.START
+import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.adapter.SongListAdapter
+import com.example.tacomamusicplayer.adapter.QueueListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
-import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
-import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.util.SongSettingsUtil
 import com.example.tacomamusicplayer.viewmodel.CurrentQueueViewModel
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -66,7 +63,7 @@ class CurrentQueueFragment: Fragment() {
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                val adapter = recyclerView.adapter as SongListAdapter
+                val adapter = recyclerView.adapter as QueueListAdapter
                 val from = viewHolder.bindingAdapterPosition
                 val to = target.bindingAdapterPosition
 
@@ -77,6 +74,9 @@ class CurrentQueueFragment: Fragment() {
                 implement reordering of the backing model inside the method.
                  */
                 adapter.moveItem(from, to)
+
+                // Update the mediaController playlist
+                parentViewModel.mediaController.value?.moveMediaItem(from, to)
 
                 // 3. Tell adapter to render the model update.
                 adapter.notifyItemMoved(from, to)
@@ -109,7 +109,7 @@ class CurrentQueueFragment: Fragment() {
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
         parentViewModel.songQueue.observe(viewLifecycleOwner) {songs ->
             Timber.d("onCreateView: songs.size=${songs.size}")
-            binding.displayRecyclerview.adapter = SongListAdapter( //TODO I need a different adapter and viewholder for queue fragment
+            binding.displayRecyclerview.adapter = QueueListAdapter( //TODO I need a different adapter and viewholder for queue fragment
                 songs,
                 this::handleSongSetting,
                 this::handleViewHolderHandleDrag
@@ -119,9 +119,11 @@ class CurrentQueueFragment: Fragment() {
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 
-        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
-            binding.sectionTitle.text = title
-        }
+        //TODO update with queue information... [sometimes I will play a queue, a playlist, or random songs]
+        //Maybe I should just remove this in general?
+//        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
+//            binding.sectionTitle.text = title
+//        }
 
         setupPage()
 
