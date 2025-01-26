@@ -30,6 +30,8 @@ class SongListFragment(
 
     //TODO Give the ability for the user to load an entire album or playlist into a new queue...
 
+    //TODO I don't want to move around songs in an album, I will allow moving songs in a playlist.
+
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: SongListViewModel by viewModels()
@@ -44,18 +46,17 @@ class SongListFragment(
 
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
 
-        parentViewModel.currentSongList.observe(viewLifecycleOwner) {songs ->
-            Timber.d("onCreateView: songs.size=${songs.size}")
+        parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroup ->
+            Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
             binding.displayRecyclerview.adapter = SongListAdapter(
-                songs,
+                songGroup.songs,
                 this::handleSongSetting,
-                { }
+                songGroup.type,
+                {  } //TODO update playlist order if this is a playlist...
             )
-            determineIfShowingInformationScreen(songs)
-        }
+            determineIfShowingInformationScreen(songGroup.songs)
 
-        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
-            binding.sectionTitle.text = title
+            binding.sectionTitle.text = songGroup.title
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
@@ -82,7 +83,7 @@ class SongListFragment(
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
                     SongSettingsUtil.determineSettingFromTitle(it.toString()),
-                    parentViewModel.currentSongList.value ?: listOf()
+                    parentViewModel.currentSongList.value?.songs ?: listOf()
                 )
                 return@setOnMenuItemClickListener true
             }

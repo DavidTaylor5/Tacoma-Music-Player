@@ -16,8 +16,10 @@ import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.data.PlaylistDatabase
 import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.data.SongGroup
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
+import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.MediaItemUtil
@@ -62,14 +64,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _addSongToEndOfQueue: MutableLiveData<MediaItem> = MutableLiveData()
 
     //List of songs to be inspected... albums or playlists
-    val currentSongList: LiveData<List<MediaItem>>
+    val currentSongList: LiveData<SongGroup>
         get() = _currentSongList
-    private val _currentSongList: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
-
-    //List of songs to be inspected... albums or playlists
-    val songListTitle: LiveData<String>
-        get() = _songListTitle
-    private val _songListTitle: MutableLiveData<String> = MutableLiveData("DEFAULT")
+    private val _currentSongList: MutableLiveData<SongGroup> = MutableLiveData()
 
     val arePermissionsGranted: LiveData<Boolean>
         get() = _arePermissionsGranted
@@ -374,8 +371,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 val childrenFuture =
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                    _currentSongList.value = childrenFuture.get().value?.toList() ?: listOf()
-                    _songListTitle.value = "ALBUM: $albumId"
+                    val songs = childrenFuture.get().value?.toList() ?: listOf()
+                    val title = "ALBUM: $albumId"
+                    val songGroupType = SongGroupType.ALBUM
+                    _currentSongList.value = SongGroup(songGroupType, songs, title)
                 }, MoreExecutors.directExecutor())
             }
         } else {
@@ -393,8 +392,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val playlist =  playlistDatabase.playlistDao().findPlaylistByName(playlistId)
             val songs = playlist.songs.songs
             val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-            _currentSongList.postValue(mediaItems)
-            _songListTitle.postValue("PLAYLIST: $playlistId")
+
+            val songGroupType = SongGroupType.PLAYLIST
+            val title = "PLAYLIST: $playlistId"
+
+            _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
         }
     }
 

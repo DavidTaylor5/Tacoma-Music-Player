@@ -172,10 +172,10 @@ class QueueListAdapter(
 //            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
 //        }
 
-        viewHolder.binding.addIcon.setOnClickListener {
-            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
-        }
+//        viewHolder.binding.addIcon.setOnClickListener {
+//            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
+//            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+//        }
 
         viewHolder.binding.menuIcon.setOnClickListener {
 

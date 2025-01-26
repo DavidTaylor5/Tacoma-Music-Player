@@ -8,6 +8,7 @@ import android.util.Size
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
+import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.util.SongSettingsUtil
 import timber.log.Timber
 
@@ -27,6 +29,7 @@ import timber.log.Timber
 class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
+    val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
@@ -81,6 +84,13 @@ class SongListAdapter(
                 onHandleDrag(viewHolder)
             }
             return@setOnTouchListener true
+        }
+
+        if(songGroupType.equals(SongGroupType.PLAYLIST)) {
+            viewHolder.binding.songHandle.visibility = View.VISIBLE
+        } else {
+            //User shouldn't be able to update order of album songs which have intrinsic ordering
+            viewHolder.binding.songHandle.visibility = View.GONE
         }
 
         return viewHolder

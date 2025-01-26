@@ -119,9 +119,11 @@ class CurrentQueueFragment: Fragment() {
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 
-        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
-            binding.sectionTitle.text = title
-        }
+        //TODO update with queue information... [sometimes I will play a queue, a playlist, or random songs]
+        //Maybe I should just remove this in general?
+//        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
+//            binding.sectionTitle.text = title
+//        }
 
         setupPage()
 
