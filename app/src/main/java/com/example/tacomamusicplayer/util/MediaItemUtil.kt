@@ -79,6 +79,17 @@ class MediaItemUtil {
     }
 
     /**
+     * Creates a list of SongData from a List of MediaItems that represent songs.
+     */
+    fun createSongDataFromListOfMediaItem(
+        mediaItems: List<MediaItem>
+    ): List<SongData> {
+        return mediaItems.map { songMediaItem ->
+            createSongDataFromMediaItem(songMediaItem)
+        }
+    }
+
+    /**
      * Used when I have a media item and I want to store it into a playlist!
      * @param songMediaItem associated with a song.
      */

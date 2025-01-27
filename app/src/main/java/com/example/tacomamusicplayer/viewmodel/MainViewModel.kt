@@ -122,22 +122,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Create a playlist with a name //TODO I need ot add some sort of validation?
      */
-    fun createNamedPlaylist(name: String) {
+    fun createNamedPlaylist(playlistName: String) {
+        Timber.d("createNamedPlaylist: playlistName=$playlistName")
 
         val playlist = Playlist(
-            title = name,
+            title = playlistName,
             songs = PlaylistData(listOf())
         )
-//                listOf(
-////                    SongData(
-////                        songUri = "/storage/emulated/0/Music/Speakerboxxx-The Love Below [Explicit]/(Disc 2) 01 - The Love Below (Intro).mp3",
-////                        songTitle = "The Love Below",
-////                        albumTitle = "Speakerboxxx",
-////                        artist = "Outkast",
-////                        artworkUri = "content://media/external/audio/media/1000102936" //TODO this song data isn't working... probably works...
-////                    )
-//
-//            )
 
         viewModelScope.launch(Dispatchers.IO) {
             playlistDatabase.playlistDao().insertPlaylists(
@@ -146,25 +137,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    fun addSongToPlaylists(playlistTitles: List<String>, songs: List<MediaItem>) {
-        //TODO I need to remove the nested loop, this cannot be the most efficient way...
-            playlistTitles.forEach { playlist ->
-                songs.forEach { song ->
-                    addSongToPlaylist(playlist, song)
-                }
-            }
+    fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
+        playlistTitles.forEach { playlist ->
+            addListOfSongMediaItemsToAPlaylist(playlist, songs)
+        }
     }
 
-    private fun addSongToPlaylist(playlistTitle: String, song: MediaItem) {
+    /**
+     * Add a list of songs to the Playlist. Even if adding only one song still use this function.
+     */
+    private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
+        Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = playlistDatabase.playlistDao().findPlaylistByName(playlistTitle)
 
-            val storableSong = MediaItemUtil().createSongDataFromMediaItem(song)
+            val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
 
             val modifiedSongList = playlist.songs.songs.toMutableList()
-            modifiedSongList.add(
-                storableSong
-            )
+            modifiedSongList.addAll(storableSongs)
 
             playlist.songs = PlaylistData(modifiedSongList)
             playlistDatabase.playlistDao().updatePlaylists(playlist)
@@ -176,7 +166,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("onCleared: ")
     }
 
-    //TODO use this for the settings prompt..
     fun getCurrentPlaylists(): List<Playlist> {
         return availablePlaylists.value ?: listOf()
     }
@@ -190,8 +179,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    //TODO I should be able to move all of this queue logic to a seperate class?
-    //TODO I NEED TO RENAME THIS FUNCTION TO SOMETHING LIKE ADD ENTIRE PLAYLIST / ALBUM
+    //TODO remove this logic at some point
     /**
      * Add a single song to the end of the queue.
      */

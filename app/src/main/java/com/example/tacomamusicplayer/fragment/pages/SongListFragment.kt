@@ -117,7 +117,7 @@ class SongListFragment(
             val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value ?: listOf()
             val playlistAddSongs: List<MediaItem> = viewModel.playlistAddSongs.value ?: listOf()
 
-            parentViewModel.addSongToPlaylists(
+            parentViewModel.addSongsToAPlaylist(
                 checkedPlaylists,
                 playlistAddSongs
             )
