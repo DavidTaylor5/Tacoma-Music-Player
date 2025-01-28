@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewholderQueueSongBinding
 import com.example.tacomamusicplayer.util.SongSettingsUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
 /*TODO I want to use my new MediaItemUtil.createSongDataFromMediaItem
@@ -93,6 +94,7 @@ class QueueListAdapter(
         var albumTitle = "DEFAULT ALBUM TITLE"
         var songDuration = "DEFUALT SONG DURATION"
         var artworkUri = Uri.EMPTY
+        var songDurationReadable = "Unknown Duration"
 
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
@@ -104,6 +106,12 @@ class QueueListAdapter(
             songArtist = songData.artist.toString()
             albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
             artworkUri = dataSet[position].mediaMetadata.artworkUri
+            songDuration = dataSet[position].mediaMetadata.description.toString()
+
+            val songDurationInLong = songDuration.toLongOrNull()
+            songDurationInLong?.let {
+                songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
+            }
 
             //TODO what to do when a song is clicked?
             //viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
@@ -165,7 +173,7 @@ class QueueListAdapter(
 
         viewHolder.binding.songTitleTextView.text = songTitle
         viewHolder.binding.artistTextView.text = songArtist
-        viewHolder.binding.durationTextView.text = "DEFAULT DURATION"
+        viewHolder.binding.durationTextView.text = songDurationReadable
 
         //TODO allow songs to be unfavorited...
 //        viewHolder.binding.favoriteIcon.setOnClickListener {
