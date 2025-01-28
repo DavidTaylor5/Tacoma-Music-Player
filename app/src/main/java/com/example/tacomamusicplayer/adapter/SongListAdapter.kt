@@ -116,6 +116,8 @@ class SongListAdapter(
             songArtist = songData.artist.toString()
             albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
             artworkUri = dataSet[position].mediaMetadata.artworkUri
+            //val dur = dataSet[position].mediaMetadata.description
+            //val duh = dataSet[position].mediaMetadata.
 
             //TODO what to do when a song is clicked?
             //viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }

@@ -6,40 +6,6 @@ import androidx.media3.common.MediaMetadata
 import com.example.tacomamusicplayer.data.SongData
 
 class MediaItemUtil {
-    /**
-     * Create a media item from a song.
-     * @param songTitle
-     * @param albumTitle
-     * @param artist
-     * @param songDuration
-     * @param trackNumber
-     * @return A MediaItem with the associated data.
-     */
-    fun createMediaItemFromSongData(
-        songUri: String = "UNKNOWN URI", //I'm adding the Uri to be mediaid however this is going to be a security breach...
-        songTitle: String = "UNKONWN SONG TITLE",
-        albumTitle: String = "UNKNOWN ALBUM",
-        artist: String = "UNKNOWN ARTIST",
-        artworkUri: Uri = Uri.EMPTY,
-        trackNumber: Int
-    ): MediaItem {
-        return MediaItem.Builder()
-            .setMediaId(songUri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setIsBrowsable(false)
-                    .setIsPlayable(true)
-                    .setTitle(songTitle)
-                    .setAlbumTitle(albumTitle)
-                    .setArtist(artist)
-                    .setArtworkUri(artworkUri)
-                    .setDescription("Description I'll just pass song length here... TODO calculate song minutes and seconds")
-                    .setTrackNumber(trackNumber)
-                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                    .build()
-            )
-            .build()
-    }
 
     /**
      * Convert a list of songdata into mediaItems.
@@ -52,12 +18,11 @@ class MediaItemUtil {
          }
     }
 
-
     /**
      * SongData is used in the database, so I use this function to convert songData into MediaItems
      * that I can play.
      */
-    private fun createMediaItemFromSongData(
+    fun createMediaItemFromSongData(
         song: SongData
     ): MediaItem {
         return MediaItem.Builder()
@@ -93,7 +58,7 @@ class MediaItemUtil {
      * Used when I have a media item and I want to store it into a playlist!
      * @param songMediaItem associated with a song.
      */
-    fun createSongDataFromMediaItem(
+    private fun createSongDataFromMediaItem(
         songMediaItem: MediaItem
     ): SongData {
         return SongData(
@@ -101,7 +66,7 @@ class MediaItemUtil {
             songTitle = songMediaItem.mediaMetadata.title.toString(),
             albumTitle = songMediaItem.mediaMetadata.albumTitle.toString(),
             artist = songMediaItem.mediaMetadata.artist.toString(),
-            artworkUri = songMediaItem.mediaMetadata.artworkUri.toString()
+            artworkUri = songMediaItem.mediaMetadata.artworkUri.toString(),
         )
     }
 

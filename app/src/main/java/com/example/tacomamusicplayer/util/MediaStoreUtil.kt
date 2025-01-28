@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.media3.common.MediaItem
+import com.example.tacomamusicplayer.data.SongData
 import timber.log.Timber
 
 /**
@@ -64,18 +65,21 @@ class MediaStoreUtil {
                 val title = cursor.getString(1)
                 val album = cursor.getString(2)
                 val artist = cursor.getString(3)
-                val duration = cursor.getString(4)
+                //TODO ERROR WITH ADDING ANOTHER ELEMENT TO SONGDATA, WHY!?
+                val duration = cursor.getString(4) //TODO DEBUG HERE I WANT TO PASS DURATION IN DESCRIPTION
+                //val durationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(duration)
                 val track = cursor.getInt(5)
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
                 val songMediaItem = mediaItemUtil.createMediaItemFromSongData(
-                    songUri = url,
-                    songTitle = title,
-                    albumTitle = album,
-                    artist = artist,
-                    artworkUri = artworkUri,
-                    trackNumber = track
+                    SongData(
+                        songUri = url,
+                        songTitle = title,
+                        albumTitle = album,
+                        artist = artist,
+                        artworkUri = artworkUri.toString(),
+                    )
                 )
                 albumSongs.add(songMediaItem)
             }

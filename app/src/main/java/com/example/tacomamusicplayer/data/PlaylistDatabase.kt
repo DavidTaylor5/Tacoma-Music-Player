@@ -2,7 +2,6 @@ package com.example.tacomamusicplayer.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 
 @Database(entities = [Playlist::class], version = 1)
