@@ -23,7 +23,8 @@ class UtilImpl {
             //subtract whole minutes from original milliseconds to get remaining whole seconds.
             val seconds = duration.minus(minutes.toDuration(DurationUnit.MINUTES)).inWholeSeconds
             //Return formatted string
-            return "$minutes:$seconds"
+
+            return if(seconds < 10) "$minutes:0$seconds" else "$minutes:$seconds"
         }
 
         /**

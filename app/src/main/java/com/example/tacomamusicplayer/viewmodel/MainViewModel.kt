@@ -11,7 +11,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.room.Room
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.data.PlaylistDatabase
@@ -97,22 +96,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
     private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
 
-
     init {
         Timber.d("init: ")
         checkPermissions()
 
-
         //TODO this should be moved into dependency injection...
         availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
-
-
-        //TODO Example of adding a playlist
-//        viewModelScope.launch(Dispatchers.IO) {
-//            playlistDatabase.playlistDao().insertAll(
-//                tester
-//            )
-//        }
 
         val testValue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
         Timber.d("init: testValue.length = ${testValue.value?.size}, ")

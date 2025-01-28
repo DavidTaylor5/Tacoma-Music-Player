@@ -67,7 +67,6 @@ class MediaStoreUtil {
                 val artist = cursor.getString(3)
                 //TODO ERROR WITH ADDING ANOTHER ELEMENT TO SONGDATA, WHY!?
                 val duration = cursor.getString(4) //TODO DEBUG HERE I WANT TO PASS DURATION IN DESCRIPTION
-                //val durationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(duration)
                 val track = cursor.getInt(5)
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
@@ -79,7 +78,7 @@ class MediaStoreUtil {
                         albumTitle = album,
                         artist = artist,
                         artworkUri = artworkUri.toString(),
-                        ""
+                        duration = duration
                     )
                 )
                 albumSongs.add(songMediaItem)
