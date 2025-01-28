@@ -10,4 +10,5 @@ data class SongData(
     val albumTitle: String,
     val artist: String,
     val artworkUri: String,
+    val duration: String,
 )

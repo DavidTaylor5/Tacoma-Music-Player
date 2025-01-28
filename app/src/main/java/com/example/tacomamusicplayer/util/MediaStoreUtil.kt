@@ -79,6 +79,7 @@ class MediaStoreUtil {
                         albumTitle = album,
                         artist = artist,
                         artworkUri = artworkUri.toString(),
+                        ""
                     )
                 )
                 albumSongs.add(songMediaItem)
