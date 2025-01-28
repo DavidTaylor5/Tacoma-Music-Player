@@ -37,13 +37,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
 
-    private val playlistDatabase = Room.databaseBuilder(
-        getApplication<Application>().applicationContext,
-        PlaylistDatabase::class.java,
-        "playlist-db"
-    ).build()
-
-    val availablePlaylists: LiveData<List<Playlist>> = playlistDatabase.playlistDao().getAllPlaylists()
+    var availablePlaylists: LiveData<List<Playlist>>
 
     val mediaController: LiveData<MediaController>
         get() = _mediaController
@@ -108,6 +102,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("init: ")
         checkPermissions()
 
+
+        //TODO this should be moved into dependency injection...
+        availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
+
+
         //TODO Example of adding a playlist
 //        viewModelScope.launch(Dispatchers.IO) {
 //            playlistDatabase.playlistDao().insertAll(
@@ -115,7 +114,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //            )
 //        }
 
-        val testValue = playlistDatabase.playlistDao().getAllPlaylists()
+        val testValue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
         Timber.d("init: testValue.length = ${testValue.value?.size}, ")
     }
 
@@ -131,7 +130,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            playlistDatabase.playlistDao().insertPlaylists(
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
                 playlist
             )
         }
@@ -149,7 +148,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = playlistDatabase.playlistDao().findPlaylistByName(playlistTitle)
+            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
 
             val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
 
@@ -157,7 +156,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             modifiedSongList.addAll(storableSongs)
 
             playlist.songs = PlaylistData(modifiedSongList)
-            playlistDatabase.playlistDao().updatePlaylists(playlist)
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
         }
     }
 
@@ -377,7 +376,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun querySongsFromPlaylist(playlistId: String) {
         Timber.d("querySongsFromPlaylist: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  playlistDatabase.playlistDao().findPlaylistByName(playlistId)
+            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
             val songs = playlist.songs.songs
             val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 

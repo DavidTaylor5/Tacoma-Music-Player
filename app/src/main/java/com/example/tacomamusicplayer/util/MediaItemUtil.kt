@@ -67,6 +67,7 @@ class MediaItemUtil {
             albumTitle = songMediaItem.mediaMetadata.albumTitle.toString(),
             artist = songMediaItem.mediaMetadata.artist.toString(),
             artworkUri = songMediaItem.mediaMetadata.artworkUri.toString(),
+            ""
         )
     }
 
