@@ -1,9 +1,14 @@
 package com.example.tacomamusicplayer.util
 
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Build
+import android.util.Size
 import android.view.View
 import android.view.Window
 import android.view.WindowInsets
+import android.widget.ImageView
+import timber.log.Timber
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -42,6 +47,27 @@ class UtilImpl {
                         or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
 
                 window.decorView.systemUiVisibility = flags
+            }
+        }
+
+        /**
+         * Call this function to draw a Uri onto an ImageView, return true if drawn without exception.
+         */
+        fun drawUriOntoImageView(view: ImageView, uri: Uri, size: Size): Boolean {
+            Timber.d("drawUriOntoImageView: view=$view, uri=$uri, size=$size")
+            val resolver = view.context.contentResolver
+            try {
+                //Album art as a bitmap, I need to work on what to do when this is blank / null?
+                val albumArt = resolver.loadThumbnail(uri, size, null)
+                val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
+
+                view.setImageDrawable(albumDrawable)
+
+                Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")
+                return true
+            } catch (e: Exception) {
+                Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW e=$e")
+                return false
             }
         }
     }

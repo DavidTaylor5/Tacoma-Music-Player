@@ -115,6 +115,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         val playlist = Playlist(
             title = playlistName,
+            artUri = "",
             songs = PlaylistData(listOf())
         )
 

@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.databinding.ViewholderAlbumBinding
+import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
 /**
@@ -55,23 +56,11 @@ class AlbumListAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
-            val resolver = viewHolder.itemView.context.contentResolver
-
-            try {
-
-                Timber.d("queryAllMediaItems: Getting album art from URI=${albumUri.toString()}")
-
-                //Album art as a bitmap, I need to work on what to do when this is blank / null?
-                val albumArt = resolver.loadThumbnail(albumUri, Size(100, 100), null)
-                val albumDrawable = BitmapDrawable(viewHolder.itemView.context.resources, albumArt)
-
-                viewHolder.binding.albumArt.setImageDrawable(albumDrawable)
-
-                Timber.d("queryAllMediaItems: SUCCESSFUL! ALBUM ART FOUND!")
-
-            } catch (e: Exception) {
-                Timber.d("queryAllMediaItems: ERROR ON LOADING ALBUM ART e=$e")
-            }
+            UtilImpl.drawUriOntoImageView(
+                viewHolder.binding.albumArt,
+                albumUri,
+                Size(100, 100)
+            )
         }
 
         // Get element from  your dataset at this position and replace the contents of the view with that element
