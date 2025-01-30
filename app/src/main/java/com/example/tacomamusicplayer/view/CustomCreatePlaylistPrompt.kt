@@ -5,11 +5,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.tacomamusicplayer.adapter.PlaylistPromptAdapter
-import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewCustomCreatePlaylistPromptBinding
-import com.example.tacomamusicplayer.databinding.ViewCustomPlaylistPromptBinding
 
 class CustomCreatePlaylistPrompt @JvmOverloads constructor(
     context: Context,

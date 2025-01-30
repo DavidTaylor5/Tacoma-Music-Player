@@ -58,7 +58,7 @@ class SongListFragment(
             )
             determineIfShowingInformationScreen(songGroup.songs)
 
-            binding.sectionTitle.text = songGroup.title
+            binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
@@ -88,9 +88,8 @@ class SongListFragment(
         //I want an extra option on menu that will differentiate adding all to the end of the queue
         //adding all to the empty queue...
 
-        binding.overallMenuIcon.setOnClickListener {
-
-            val menu = PopupMenu(binding.root.context, binding.overallMenuIcon)
+        binding.songGroupInfo.setOnMenuIconPressed {
+            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
 
             menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
@@ -216,7 +215,7 @@ class SongListFragment(
     }
 
     private fun setupPage() {
-        binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
+        binding.songGroupInfo.setSongGroupTitleText("PARTICULAR ALBUM - ARTIST")
 
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 

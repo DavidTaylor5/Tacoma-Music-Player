@@ -33,19 +33,9 @@
             android:textColor="@color/white"
             />
 
-<!--        REMOVE THIS FROM THIS SCREEN
-<com.example.tacomamusicplayer.view.CustomInformationScreen-->
-<!--            android:id="@+id/songListInformationScreen"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            />-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/section_title"
+    <com.example.tacomamusicplayer.view.CustomSongGroupInfoView
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="@color/accent"
-        android:gravity="center"
-        android:textColor="@color/text_icons"/>
+        android:layout_height="100dp"/>
 </LinearLayout>
