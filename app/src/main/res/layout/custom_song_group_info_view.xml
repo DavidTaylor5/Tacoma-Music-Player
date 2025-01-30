@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/song_group_info"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/song_group_image"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:background="#8BC34A"
+        android:layout_gravity="center"
+        android:src="@drawable/wu_tang_placeholder"
+        />
+
+    <TextView
+        android:id="@+id/song_group_title"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="#FF9800"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:text="Queue DESCRIPTION ..."/>
+
+    <View
+        android:id="@+id/menu_icon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/menu_icon"
+        android:layout_gravity="center"
+        />
+
+</LinearLayout>

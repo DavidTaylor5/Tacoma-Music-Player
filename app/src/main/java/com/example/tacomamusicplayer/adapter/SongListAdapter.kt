@@ -220,13 +220,6 @@ class SongListAdapter(
         //TODO Add statistics logic...
     }
 
-    private fun openAddToPlaylistPrompt() {
-        //TODO I should have a floating prompt that I can scroll to many playlists with...
-        //I need to add a recyclerview with all of the avilable playlists...
-        //TODO I should flag the above fragment that I want to show the playlist settings option...
-        //should also have an option to create a new playlist? [add later...]
-    }
-
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
         return dataSet.size

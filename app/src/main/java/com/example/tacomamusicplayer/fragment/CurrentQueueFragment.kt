@@ -157,7 +157,7 @@ class CurrentQueueFragment: Fragment() {
     }
 
     private fun setupPage() {
-        binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
+        //binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
 
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
