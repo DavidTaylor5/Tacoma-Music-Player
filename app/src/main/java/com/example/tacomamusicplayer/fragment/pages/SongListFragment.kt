@@ -2,12 +2,12 @@ package com.example.tacomamusicplayer.fragment.pages
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -18,8 +18,13 @@ import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.util.SongSettingsUtil
-import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.*
+import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.ADD_TO_PLAYLIST
+import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.ADD_TO_QUEUE
+import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.CHECK_STATS
+import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.UNKNOWN
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import com.example.tacomamusicplayer.viewmodel.SongListViewModel
 import timber.log.Timber
@@ -56,9 +61,23 @@ class SongListFragment(
                 songGroup.type,
                 {  } //TODO update playlist order if this is a playlist...
             )
-            determineIfShowingInformationScreen(songGroup.songs)
+            determineIfShowingInformationScreen(songGroup.songs, songGroup.type)
 
             binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
+
+            // Determine what icon to display for song group
+            if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
+                songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
+                    UtilImpl.drawUriOntoImageView(
+                        binding.songGroupInfo.getSongGroupImage(),
+                        songArt,
+                        Size(200, 200)
+                    )
+                }
+
+            } else { // Playlist icon
+
+            }
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
@@ -187,8 +206,9 @@ class SongListFragment(
      * Shows a prompt for the user to choose a playlist or album.
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
-    private fun determineIfShowingInformationScreen(songs: List<MediaItem>) {
-        if(songs.isEmpty()) {
+    private fun determineIfShowingInformationScreen(songs: List<MediaItem>, songGroupType: SongGroupType) {
+        //Only show user information screen on app startup [?]
+        if( songGroupType != SongGroupType.PLAYLIST && songs.isEmpty()) {
             binding.songListInformationScreen.visibility = View.VISIBLE
         } else {
             binding.songListInformationScreen.visibility = View.GONE
