@@ -12,6 +12,7 @@ import com.example.tacomamusicplayer.adapter.AlbumListAdapter.AlbumViewHolder
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.example.tacomamusicplayer.databinding.ViewholderPlaylistBinding
+import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
 class PlaylistAdapter(
@@ -33,27 +34,30 @@ class PlaylistAdapter(
         return PlaylistViewHolder(binding)
     }
 
-//    //Create new views (invoked by the layout manager)
-//    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
-//        //Create a new view, which defines the UI of teh list item
-//        val view = LayoutInflater.from(parent.context)
-//            .inflate(R.layout.viewholder_playlist, parent, false)
-//
-//        return PlaylistViewHolder(view)
-//    }
-
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
-        viewHolder.binding.albumInfo.text = playlists[position].title
+        viewHolder.binding.playlistName.text = playlists[position].title
 
         //TODO On Click navigate...
-        viewHolder.binding.playlistItem.setOnClickListener {
-            onAlbumClick(playlists[position].title ?: "Unknown title?") //TODO replace with playlist title....
+        viewHolder.binding.itemContainer.setOnClickListener {
+            //TODO I need to update onAlbumClick to have a songGroup passed through? Also name change...
+            onAlbumClick(playlists[position].title ?: "Unknown title?")
         }
+
+        //Determine Playlist Duration Information
+        val numberOfSongs = playlists[position].songs.songs.size
+        viewHolder.binding.durationTracks.text = if(numberOfSongs == 1) "1 track" else {"$numberOfSongs tracks"}
+
+        val playlistDuration = playlists[position].songs.songs.fold(0L) { acc, songData ->
+            val songDuration = songData.duration.toLongOrNull() ?: 0
+            acc + songDuration
+        }
+
+        val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
+        viewHolder.binding.durationTime.text = playlistDurationReadable
     }
-    // Return the size of your dataset (invoked by the layout manager)
+
     override fun getItemCount(): Int {
         return playlists.size
     }
-
 }
