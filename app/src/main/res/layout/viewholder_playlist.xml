@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<com.google.android.material.card.MaterialCardView android:id="@+id/item_container"
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/item_container"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="60dp"
@@ -38,7 +39,7 @@
             android:id="@+id/duration_info"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="4"
+            android:layout_weight="1"
             android:background="@color/albumlist_button_focused"
             android:orientation="vertical"
             android:gravity="center"
@@ -61,7 +62,6 @@
         </LinearLayout>
 
     </LinearLayout>
-
 
 </com.google.android.material.card.MaterialCardView>
 

@@ -78,7 +78,8 @@ class MediaItemUtil {
     fun createAlbumMediaItem(
         albumTitle: String = "UNKNOWN ALBUM",
         artist: String = "UNKNOWN ARTIST",
-        artworkUri: Uri = Uri.EMPTY
+        artworkUri: Uri = Uri.EMPTY,
+        releaseYear: Int = 0
     ): MediaItem {
         return MediaItem.Builder()
             .setMediaId(albumTitle)
@@ -89,9 +90,9 @@ class MediaItemUtil {
                     .setAlbumArtist(artist)
                     .setAlbumTitle(albumTitle)
                     .setArtworkUri(artworkUri)
+                    .setReleaseYear(releaseYear)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
                     .build()
-            )
-            .build()
+            ).build()
     }
 }

@@ -2,15 +2,9 @@ package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
-import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.adapter.AlbumListAdapter.AlbumViewHolder
 import com.example.tacomamusicplayer.data.Playlist
-import com.example.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.example.tacomamusicplayer.databinding.ViewholderPlaylistBinding
 import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber

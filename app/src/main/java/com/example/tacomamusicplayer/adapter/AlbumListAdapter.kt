@@ -1,7 +1,6 @@
 package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
@@ -18,7 +17,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
 class AlbumListAdapter(
-    private val dataSet: List<MediaItem>,
+    private val albums: List<MediaItem>, //This should be a list of songGroup? or Album?
     private val onAlbumClick: (String) -> Unit,
 ): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() {
 
@@ -46,13 +45,13 @@ class AlbumListAdapter(
         var albumUri = Uri.EMPTY //TODO I'll have to get a solution  for this... else default picture
 
         //First check that dataSet has a value for position
-        if(position < dataSet.size) {
+        if(position < albums.size) {
 
-            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${dataSet[0].mediaMetadata.albumTitle}, albumArtist=${dataSet[0].mediaMetadata.albumArtist}, albumArtUri=${dataSet[0].mediaMetadata.artworkUri}")
+            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albums[0].mediaMetadata.albumTitle}, albumArtist=${albums[0].mediaMetadata.albumArtist}, albumArtUri=${albums[0].mediaMetadata.artworkUri}")
 
-            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
-            albumArtist = dataSet[position].mediaMetadata.albumArtist.toString()
-            albumUri = dataSet[position].mediaMetadata.artworkUri
+            albumTitle = albums[position].mediaMetadata.albumTitle.toString()
+            albumArtist = albums[position].mediaMetadata.albumArtist.toString()
+            albumUri = albums[position].mediaMetadata.artworkUri
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
@@ -65,11 +64,20 @@ class AlbumListAdapter(
 
         // Get element from  your dataset at this position and replace the contents of the view with that element
         //viewHolder.albumInfo.text = "Default ALBUM \n Default Artist \n Default Duration"//dataSet[position]
-        viewHolder.binding.albumInfo.text = "$albumTitle \n $albumArtist"
+        viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
+
+        albums[position].mediaMetadata.releaseYear?.let { year ->
+            if(year > 0) {
+                viewHolder.binding.releaseYear.text = year.toString()
+            }
+        }
+
+        //Determine Playlist Duration Information
+        //val bruh = albums[position].mediaMetadata.recordingYear //TODO add this..
+
     }
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
-        return dataSet.size
+        return albums.size
     }
-
 }
