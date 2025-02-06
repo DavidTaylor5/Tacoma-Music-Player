@@ -95,9 +95,6 @@ class MediaStoreUtil {
      * @return A list of mediaItems associated with albums on device.
      */
     fun queryAvailableAlbums(context: Context): MutableList<MediaItem> { //TODO should probably be AlbumModel
-
-        //TODO how do I get the album art ???
-
         Timber.d("queryAvailableAlbums: ")
 
         val albumList: MutableList<MediaItem> = mutableListOf()
@@ -105,9 +102,10 @@ class MediaStoreUtil {
         val uriExternal: Uri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
         val projection: Array<String?> = arrayOf(
-            MediaStore.Audio.Media.ALBUM_ID, //1 -> what the hell is this?
-            MediaStore.Audio.Albums.ALBUM, //2 -> album name again
-            MediaStore.Audio.Albums.ARTIST, //3 -> artist again...
+            MediaStore.Audio.Media.ALBUM_ID, //0 -> what the hell is this?
+            MediaStore.Audio.Albums.ALBUM, //1 -> album name again
+            MediaStore.Audio.Albums.ARTIST, //2 -> artist again...
+            MediaStore.Audio.Albums.LAST_YEAR //3
         )
 
         context.contentResolver.query(
@@ -126,14 +124,41 @@ class MediaStoreUtil {
                     }"
                 )
 
-                val albumId = cursor.getLong(0)
-                val albumTitle = cursor.getString(1)
-                val artist = cursor.getString(2)
+                var albumId = 0L
+                var albumTitle = ""
+                var artist = ""
+                var releaseYear = 0
+
+                try {
+                    albumId = cursor.getLong(0)
+                } catch (e: Exception) {
+                    Timber.d("queryAvailableAlbums: No album ID specified.")
+                }
+
+                try {
+                    albumTitle = cursor.getString(1)
+                } catch (e: Exception) {
+                    Timber.d("queryAvailableAlbums: No album title specified.")
+                }
+
+                try {
+                    artist = cursor.getString(2)
+                } catch (e: Exception) {
+                    Timber.d("queryAvailableAlbums: No artist specified.")
+                }
+
+                try {
+                    val releaseYearString = cursor.getString(3)
+                    releaseYearString.toIntOrNull()?.let { releaseYear = it }
+                } catch (e: Exception) {
+                    Timber.d("queryAvailableAlbums: No release year specified.")
+                }
+
                 val artworkUri = ContentUris.withAppendedId(uriExternal, albumId)
 
                 //Create Media Item from information
                 val albumMediaItem =
-                    mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri)
+                    mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri, releaseYear)
 
                 albumList.add(albumMediaItem)
             }

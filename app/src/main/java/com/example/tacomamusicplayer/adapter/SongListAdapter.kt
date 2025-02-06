@@ -2,7 +2,6 @@ package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
@@ -12,11 +11,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
-import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.util.SongSettingsUtil
