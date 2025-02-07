@@ -201,7 +201,7 @@ class SongListAdapter(
             SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
             SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(position)
             SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
-            SongSettingsUtil.Setting.UNKNOWN -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
