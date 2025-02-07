@@ -1,6 +1,5 @@
 package com.example.tacomamusicplayer.fragment.pages
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Size
 import android.view.LayoutInflater
@@ -122,6 +121,11 @@ class SongListFragment(
             menu.show()
         }
 
+        binding.songGroupInfo.setOnClickListener {
+            //CLEAR THE QUEUE
+            //START PLAYING THE ALBUM FROM THE START
+        }
+
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 
@@ -184,7 +188,7 @@ class SongListFragment(
             ADD_TO_PLAYLIST -> handleAddToPlaylist()
             ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             CHECK_STATS -> handleCheckStats()
-            UNKNOWN -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+            else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
 
@@ -194,7 +198,7 @@ class SongListFragment(
 
     private fun handleAddToQueue(songs: List<MediaItem>?) {
         songs?.let {
-            parentViewModel.addSongsToEndOfQueueViaController(it)
+            parentViewModel.addSongsToEndOfQueue(it)
         }
     }
 

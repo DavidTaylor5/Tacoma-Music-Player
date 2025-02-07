@@ -112,22 +112,23 @@ class CurrentQueueFragment: Fragment() {
             binding.displayRecyclerview.adapter = QueueListAdapter( //TODO I need a different adapter and viewholder for queue fragment
                 songs,
                 this::handleSongSetting,
-                this::handleViewHolderHandleDrag
+                this::handleViewHolderHandleDrag,
+                this::handleRemoveSong
             )
             determineIfShowingEmptyPlaylistScreen(songs)
         }
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 
-        //TODO update with queue information... [sometimes I will play a queue, a playlist, or random songs]
-        //Maybe I should just remove this in general?
-//        parentViewModel.songListTitle.observe(viewLifecycleOwner) { title ->
-//            binding.sectionTitle.text = title
-//        }
-
         setupPage()
 
         return binding.root
+    }
+
+    private fun handleRemoveSong(songPosition: Int) {
+        binding.displayRecyclerview.adapter?.notifyItemRemoved(songPosition)
+        parentViewModel.removeSongAtPosition(songPosition) //TODO why does the cool animation disappear when I add this code
+        parentViewModel.mediaController.value?.removeMediaItem(songPosition)
     }
 
     /**

@@ -168,48 +168,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    //TODO remove this logic at some point
-    /**
-     * Add a single song to the end of the queue.
-     */
-    fun addSongToQueue(song: MediaItem) {
-        val songList = _songQueue.value ?: listOf()
-        val changeSongList = songList.toMutableList()
-        changeSongList.add(song)
+    fun removeSongAtPosition(position: Int) {
+        val currentQueue = _songQueue.value?.toMutableList()
+        currentQueue?.let { queue ->
+            queue.removeAt(position)
 
-        _songQueue.value = changeSongList
-    }
-
-    /**
-     * Add song to end of current play queue
-     * @param song Song to add
-     */
-    fun addSongToEndOfQueue(song: MediaItem) {
-        _addSongToEndOfQueue.postValue(song)
-    }
-
-    /**
-     * Add a song directly to the end of the controller, TODO I might also want to track the songs
-     * in the queue
-     * so the user can scroll through the current queue
-     */
-    fun addSongToEndOfQueueViaController(song: MediaItem) {
-        //Also add to the queue?
-        val updatedQueue = mutableListOf<MediaItem>()
-        _songQueue.value?.let {
-            updatedQueue.addAll(_songQueue.value!!)
+            _songQueue.postValue(queue)
         }
-        updatedQueue.add(song)
-        _songQueue.postValue(updatedQueue)
-
-        //TODO move this code to the activity, mediaController will be watching the current queue
-        mediaController.value?.addMediaItem(song)
     }
 
     /**
      * Adds multiple songs to the end of the controller in the queue
      */
-    fun addSongsToEndOfQueueViaController(songs: List<MediaItem>) {
+    fun addSongsToEndOfQueue(songs: List<MediaItem>) {
         //Also add to the queue?
         val updatedQueue = mutableListOf<MediaItem>()
         _songQueue.value?.let {
@@ -222,23 +193,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         mediaController.value?.addMediaItems(songs)
     }
 
-    /**
-     * Add a list of songs to the end of the queue
-     */
-    private fun addSongListToEndOfQueue(songs: List<MediaItem>) {
-        val songList = _songQueue.value ?: listOf()
-        val changeSongList = songList.toMutableList()
-        changeSongList.addAll(songs)
-
-        _songQueue.value = changeSongList
+    fun clearQueue() {
+        _songQueue.postValue( listOf() )
+        mediaController.value?.clearMediaItems() //TODO move this code out at some point...
     }
 
-    /**
-     * Remove the Queue and replace with a new song list.
-     */
-    private fun replaceAllSongsInQueueWithSongList(songs: List<MediaItem>) {
-        _songQueue.value = songs
+    fun playAlbum(songs: List<MediaItem>) {
+        clearQueue()
+        addSongsToEndOfQueue(songs)
     }
+
+//    fun playPlaylist() {
+//
+//    }
 
     /**
      * Sets the current screen of the application.

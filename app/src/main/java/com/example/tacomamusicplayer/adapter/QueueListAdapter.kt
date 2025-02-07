@@ -26,7 +26,8 @@ import timber.log.Timber
 class QueueListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
-    val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
+    val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
+    val onRemoveSong: (Int) -> Unit
 ): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
@@ -177,10 +178,10 @@ class QueueListAdapter(
 
             val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
 
-            menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.menu_queue_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it, position)
+                handleMenuItem(it, viewHolder.absoluteAdapterPosition) //TODO not done yet
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -190,9 +191,9 @@ class QueueListAdapter(
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
             SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
-            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(position)
+            SongSettingsUtil.Setting.REMOVE_FROM_QUEUE -> handleRemoveFromQueue(position)
             SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
-            SongSettingsUtil.Setting.UNKNOWN -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
@@ -202,6 +203,10 @@ class QueueListAdapter(
 
     private fun handleAddToQueue(position: Int) {
         handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+    }
+
+    private fun handleRemoveFromQueue(position: Int) {
+        onRemoveSong(position)
     }
 
     private fun handleCheckStatus() {
