@@ -18,11 +18,10 @@ import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.SongGroupType
-import com.example.tacomamusicplayer.util.SongSettingsUtil
-import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.ADD_TO_PLAYLIST
-import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.ADD_TO_QUEUE
-import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.CHECK_STATS
-import com.example.tacomamusicplayer.util.SongSettingsUtil.Setting.UNKNOWN
+import com.example.tacomamusicplayer.util.MenuOptionUtil
+import com.example.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
+import com.example.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
+import com.example.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
 import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import com.example.tacomamusicplayer.viewmodel.SongListViewModel
@@ -109,11 +108,11 @@ class SongListFragment(
         binding.songGroupInfo.setOnMenuIconPressed {
             val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
 
-            menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
-                    SongSettingsUtil.determineSettingFromTitle(it.toString()),
+                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
                     parentViewModel.currentSongList.value?.songs ?: listOf()
                 )
                 return@setOnMenuItemClickListener true
@@ -181,10 +180,10 @@ class SongListFragment(
 
     //TODO I still need to implement logic for adding a whole album to a playlist...
 
-    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItem: List<MediaItem>) {
+    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItem: List<MediaItem>) {
         viewModel.prepareSongForPlaylists(mediaItem)
 
-        when (setting) {
+        when (menuOption) {
             ADD_TO_PLAYLIST -> handleAddToPlaylist()
             ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             CHECK_STATS -> handleCheckStats()

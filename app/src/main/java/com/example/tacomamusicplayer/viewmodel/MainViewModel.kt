@@ -23,6 +23,7 @@ import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.MediaItemUtil
 import com.example.tacomamusicplayer.util.MediaStoreUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,16 +46,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val albumMediaItemList: LiveData<List<MediaItem>>
         get() = _albumMediaItemList
     private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
-
-    //SongQueue should be shown in the CurrentQueueFragment
-    val songQueue: LiveData<List<MediaItem>>
-        get() = _songQueue
-    private val _songQueue: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
-
-    //TODO remove this?
-    val addSongToEndOfQueue: LiveData<MediaItem>
-        get() = _addSongToEndOfQueue
-    private val _addSongToEndOfQueue: MutableLiveData<MediaItem> = MutableLiveData()
 
     //List of songs to be inspected... albums or playlists
     val currentSongList: LiveData<SongGroup>
@@ -169,32 +160,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun removeSongAtPosition(position: Int) {
-        val currentQueue = _songQueue.value?.toMutableList()
-        currentQueue?.let { queue ->
-            queue.removeAt(position)
-
-            _songQueue.postValue(queue)
-        }
+        _mediaController.value?.removeMediaItem(position)
     }
 
     /**
      * Adds multiple songs to the end of the controller in the queue
      */
     fun addSongsToEndOfQueue(songs: List<MediaItem>) {
-        //Also add to the queue?
-        val updatedQueue = mutableListOf<MediaItem>()
-        _songQueue.value?.let {
-            updatedQueue.addAll(_songQueue.value!!)
-        }
-        updatedQueue.addAll(songs)
-        _songQueue.postValue(updatedQueue)
-
-        //TODO move this code to the activity, mediaController will be watching the current queue
         mediaController.value?.addMediaItems(songs)
     }
 
-    fun clearQueue() {
-        _songQueue.postValue( listOf() )
+    private fun clearQueue() {
         mediaController.value?.clearMediaItems() //TODO move this code out at some point...
     }
 

@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.example.tacomamusicplayer.enum.SongGroupType
-import com.example.tacomamusicplayer.util.SongSettingsUtil
+import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -26,7 +26,7 @@ import timber.log.Timber
 
 class SongListAdapter(
     private var dataSet:  List<MediaItem>,
-    val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
+    val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
@@ -179,14 +179,14 @@ class SongListAdapter(
 
         viewHolder.binding.addIcon.setOnClickListener {
             Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+            handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {
 
             val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
 
-            menu.menuInflater.inflate(R.menu.menu_song_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleMenuItem(it, position)
@@ -197,20 +197,20 @@ class SongListAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
-            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
-            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(position)
-            SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
+        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(position)
+            MenuOptionUtil.MenuOption.CHECK_STATS -> handleCheckStatus()
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
     private fun handleAddToPlaylist(position: Int) {
-        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_PLAYLIST, listOf(dataSet[position]))
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position]))
     }
 
     private fun handleAddToQueue(position: Int) {
-        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
     }
 
     private fun handleCheckStatus() {
