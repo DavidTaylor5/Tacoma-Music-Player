@@ -30,13 +30,6 @@ import timber.log.Timber
 class SongListFragment(
 
 ): Fragment() {
-
-    //TODO what to do if the current song list is empty?
-
-    //TODO Give the ability for the user to load an entire album or playlist into a new queue...
-
-    //TODO I don't want to move around songs in an album, I will allow moving songs in a playlist.
-
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: SongListViewModel by viewModels()
@@ -46,10 +39,7 @@ class SongListFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentSonglistBinding.inflate(inflater)
-
-        //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
 
         parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroup ->
             Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
@@ -178,8 +168,7 @@ class SongListFragment(
         }
     }
 
-    //TODO I still need to implement logic for adding a whole album to a playlist...
-
+    //TODO move this logic ?
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItem: List<MediaItem>) {
         viewModel.prepareSongForPlaylists(mediaItem)
 
@@ -216,25 +205,6 @@ class SongListFragment(
         } else {
             binding.songListInformationScreen.visibility = View.GONE
         }
-    }
-
-    //TODO create a new adapter for the new prompt??
-    private fun determineIfShowingEmptyPlaylistScreen() {
-        //TODO show Empty Playlist screen...
-    }
-
-    //Should display "Add to Playlist Prompt" Based on available Playlists.
-    private fun displayAddToPlaylistPrompt(playlists: List<Playlist>) { //TODO should be given a list of playlists from the viewmodel
-        //Make view visible
-        //Make the view have a new recyclerview based on playlists from viewmodel...
-    }
-
-    /**
-     * Clicking the "Add to Playlist" option should open a prompt where the user can add song/s to playlist/s.
-     */
-    private fun onPlaylistSettingClicked() {
-        val playlistOptions = parentViewModel.getCurrentPlaylists()
-        displayAddToPlaylistPrompt(playlistOptions)
     }
 
     private fun setupPage() {

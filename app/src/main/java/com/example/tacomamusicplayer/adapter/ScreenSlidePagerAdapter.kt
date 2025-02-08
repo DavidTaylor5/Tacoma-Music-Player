@@ -8,9 +8,6 @@ import com.example.tacomamusicplayer.fragment.pages.AlbumListFragment
 import com.example.tacomamusicplayer.fragment.pages.PlaylistFragment
 import com.example.tacomamusicplayer.fragment.pages.SongListFragment
 
-/**
- * The number of pages to show.
- */
 private const val NUM_PAGES = 3
 class ScreenSlidePagerAdapter(
     fa: FragmentActivity

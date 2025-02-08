@@ -14,7 +14,6 @@ import com.example.tacomamusicplayer.adapter.AlbumListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentAlbumlistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
-import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
 import timber.log.Timber
 
 class AlbumListFragment(

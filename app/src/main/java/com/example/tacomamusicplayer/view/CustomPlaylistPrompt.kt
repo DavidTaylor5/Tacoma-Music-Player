@@ -28,10 +28,7 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 
     init {
         attrs?.let {
-
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-            //I gotta remember to actually attach to the view
             binding = ViewCustomPlaylistPromptBinding.inflate(inflater, this, true)
 
             //Note don't forget the layoutManager

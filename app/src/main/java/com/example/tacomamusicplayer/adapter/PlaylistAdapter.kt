@@ -32,9 +32,7 @@ class PlaylistAdapter(
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
         viewHolder.binding.playlistName.text = playlists[position].title
 
-        //TODO On Click navigate...
         viewHolder.binding.itemContainer.setOnClickListener {
-            //TODO I need to update onAlbumClick to have a songGroup passed through? Also name change...
             onAlbumClick(playlists[position].title ?: "Unknown title?")
         }
 

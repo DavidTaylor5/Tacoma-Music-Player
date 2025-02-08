@@ -10,24 +10,20 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.example.tacomamusicplayer.databinding.FragmentMusicChooserBinding
-import com.example.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
-import com.example.tacomamusicplayer.viewmodel.MusicChooserViewModel
 import timber.log.Timber
 
 class MusicChooserFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: FragmentMusicChooserBinding
 
-    private val viewModel: MusicChooserViewModel by viewModels()
     private val parentViewModel: MainViewModel by activityViewModels()
 
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
@@ -132,7 +128,7 @@ class MusicChooserFragment: Fragment() {
             parentViewModel.setPage(PageType.SONG_PAGE)
         }
 
-        parentViewModel.currentpage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
+        parentViewModel.currentPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
             binding.pager.currentItem = page.type()
         }
 

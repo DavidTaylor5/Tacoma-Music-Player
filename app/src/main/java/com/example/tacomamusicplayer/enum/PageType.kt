@@ -1,7 +1,8 @@
 package com.example.tacomamusicplayer.enum
 
-//position determines what I'm showing, the ordering shall be as follows
-//0 playlists, 1 albums, 2 songs
+/**
+ * Pages associated to choosing a song.
+ */
 enum class PageType {
     PLAYLIST_PAGE {
         override fun type(): Int {

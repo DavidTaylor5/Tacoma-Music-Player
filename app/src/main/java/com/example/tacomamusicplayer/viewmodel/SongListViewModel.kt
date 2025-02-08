@@ -23,15 +23,9 @@ class SongListViewModel: ViewModel() {
         get() = _isPlaylistPromptAddClickable
     private val _isPlaylistPromptAddClickable: MutableLiveData<Boolean> = MutableLiveData(false)
 
-    fun showPlaylistPrompt() {
-        _isShowingPlaylistPrompt.postValue(true)
-    }
-
-    fun removePlaylistPrompt() {
-        _isShowingPlaylistPrompt.postValue(false)
-    }
-
-    //Clicking on the song settings for a song should add it as a potential add for playlists.
+    /**
+     * @param newSongs List of songs that can be potentially added to a playlist.
+     */
     fun prepareSongForPlaylists(newSongs: List<MediaItem>) {
         val resetCheckedPlaylists = mutableListOf<String>()
 
@@ -51,6 +45,12 @@ class SongListViewModel: ViewModel() {
         _playlistAddSongs.postValue(listOf())
     }
 
+    /**
+     * Determines whether a given playlist is checked, aka part of the selected playlists for
+     * adding songs.
+     * @param playlistTitle The title of a playlist.
+     * @param isChecked Boolean value, true if user selected the playlist.
+     */
     fun updateCheckedPlaylists(playlistTitle: String, isChecked: Boolean ) {
 
         //I keep a copy of updated playlists, to determine if 'Add' button is enabled.
@@ -81,7 +81,7 @@ class SongListViewModel: ViewModel() {
     }
 
     /**
-     * If no playlists are available I should not let the add button be clicked...
+     * If no playlists are selected, don't let the user press the "add" button.
      */
     private fun updatePlaylistPromptAddClickability(checkedPlaylists: MutableList<String>) {
         if(checkedPlaylists.isEmpty()) {

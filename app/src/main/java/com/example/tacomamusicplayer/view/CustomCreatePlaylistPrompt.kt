@@ -20,10 +20,7 @@ class CustomCreatePlaylistPrompt @JvmOverloads constructor(
 
     init {
         attrs?.let {
-
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-            //I gotta remember to actually attach to the view
             binding = ViewCustomCreatePlaylistPromptBinding.inflate(inflater, this, true)
 
             binding.addButton.setOnClickListener { onAddButtonClicked() }

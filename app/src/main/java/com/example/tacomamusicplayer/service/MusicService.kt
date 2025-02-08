@@ -18,6 +18,9 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import timber.log.Timber
 
+/**
+ * MusicService serves up a way to query albums and songs for the UI.
+ */
 class MusicService : MediaLibraryService() {
     private lateinit var player: ExoPlayer
     private var session: MediaLibrarySession? = null

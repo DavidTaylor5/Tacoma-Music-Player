@@ -17,7 +17,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
 class AlbumListAdapter(
-    private val albums: List<MediaItem>, //This should be a list of songGroup? or Album?
+    private val albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
 ): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() {
 
@@ -42,7 +42,7 @@ class AlbumListAdapter(
         var albumTitle = "Default ALBUM"
         var albumArtist = ""
         var albumDuration = ""
-        var albumUri = Uri.EMPTY //TODO I'll have to get a solution  for this... else default picture
+        var albumUri = Uri.EMPTY
 
         //First check that dataSet has a value for position
         if(position < albums.size) {
@@ -62,8 +62,6 @@ class AlbumListAdapter(
             )
         }
 
-        // Get element from  your dataset at this position and replace the contents of the view with that element
-        //viewHolder.albumInfo.text = "Default ALBUM \n Default Artist \n Default Duration"//dataSet[position]
         viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
 
         albums[position].mediaMetadata.releaseYear?.let { year ->
@@ -71,12 +69,8 @@ class AlbumListAdapter(
                 viewHolder.binding.releaseYear.text = year.toString()
             }
         }
-
-        //Determine Playlist Duration Information
-        //val bruh = albums[position].mediaMetadata.recordingYear //TODO add this..
-
     }
-    // Return the size of your dataset (invoked by the layout manager)
+
     override fun getItemCount(): Int {
         return albums.size
     }

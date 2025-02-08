@@ -20,10 +20,6 @@ import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
-/*TODO I want to use my new MediaItemUtil.createSongDataFromMediaItem
-*  to add individual songs into specific playlists next!
-* */
-
 class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
@@ -35,36 +31,17 @@ class SongListAdapter(
 
     class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
-
+    /**
+     * Move Items in the recyclerview to adjacent positions
+     */
     fun moveItem(from: Int, to: Int) {
-        if(from == to) return
+        val modData = dataSet.toMutableList()
+        val temp = dataSet[to]
 
-        val dataCopy = dataSet.toMutableList()
-        val dataCopyIndexes = dataCopy.mapIndexed { index, mediaItem ->
-            index
-        }
+        modData[to] = dataSet[from]
+        modData[from] = temp
 
-        val front = dataCopyIndexes.subList(0, to).toMutableList()
-        val end = dataCopyIndexes.subList(to, dataCopyIndexes.size).toMutableList()
-        front.removeIf { index ->
-            index == from
-        }
-        end.removeIf { index ->
-            index == from
-        }
-
-        val newIndexes = mutableListOf<Int>()
-        newIndexes.addAll(front)
-        newIndexes.add(from)
-        newIndexes.addAll(end)
-
-        Timber.d("moveItem: newIndexes=$newIndexes")
-
-        val newData = newIndexes.map {index ->
-            dataSet[index]
-        }
-
-        dataSet = newData
+        dataSet = modData
     }
 
     //Create new views (invoked by the layout manager)
@@ -163,19 +140,11 @@ class SongListAdapter(
                 val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
                 frameAnimation.start()
             }
-//                val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
-//                frameAnimation.start()
-
         }
 
         viewHolder.binding.songTitleTextView.text = songTitle
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = songDurationReadable
-
-        //TODO allow songs to be unfavorited...
-//        viewHolder.binding.favoriteIcon.setOnClickListener {
-//            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
-//        }
 
         viewHolder.binding.addIcon.setOnClickListener {
             Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
@@ -196,6 +165,7 @@ class SongListAdapter(
         }
     }
 
+    //TODO move out of adapters?
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)

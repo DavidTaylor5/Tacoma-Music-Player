@@ -24,10 +24,7 @@ class CustomNavigationControl @JvmOverloads constructor(
     init {
 
         attrs?.let {
-
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-            //I gotta remember to actually attach to the view
             binding = ViewCustomNavigationControlBinding.inflate(inflater, this, true)
 
             val typedArray = context.obtainStyledAttributes(it, R.styleable.CustomNavigationControl)

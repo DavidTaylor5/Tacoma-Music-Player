@@ -1,5 +1,8 @@
 package com.example.tacomamusicplayer.enum
 
+/**
+ * Screens on the app.
+ */
 enum class ScreenType {
 
     MUSIC_PLAYING_SCREEN {

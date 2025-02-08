@@ -13,7 +13,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
-import com.example.tacomamusicplayer.data.PlaylistDatabase
+import com.example.tacomamusicplayer.database.PlaylistDatabase
 import com.example.tacomamusicplayer.data.ScreenData
 import com.example.tacomamusicplayer.data.SongGroup
 import com.example.tacomamusicplayer.enum.PageType
@@ -22,8 +22,6 @@ import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.MediaItemUtil
-import com.example.tacomamusicplayer.util.MediaStoreUtil
-import com.example.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,31 +34,49 @@ import timber.log.Timber
 class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-
     var availablePlaylists: LiveData<List<Playlist>>
 
+    /**
+     * Reference to the app's mediaController.
+     */
     val mediaController: LiveData<MediaController>
         get() = _mediaController
     private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
 
+    /**
+     * Livedata observable list of albums on the device.
+     */
     val albumMediaItemList: LiveData<List<MediaItem>>
         get() = _albumMediaItemList
     private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
-    //List of songs to be inspected... albums or playlists
+    /**
+     * List of songs to be inspected.
+     */
     val currentSongList: LiveData<SongGroup>
         get() = _currentSongList
     private val _currentSongList: MutableLiveData<SongGroup> = MutableLiveData()
 
-    val arePermissionsGranted: LiveData<Boolean>
-        get() = _arePermissionsGranted
-    private val _arePermissionsGranted: MutableLiveData<Boolean> = MutableLiveData()
-
+    /**
+     * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
+     */
     val isAudioPermissionGranted: LiveData<Boolean>
         get() = _isAudioPermissionGranted
     private val _isAudioPermissionGranted: MutableLiveData<Boolean> = MutableLiveData()
 
+    /**
+     * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
+     */
+    val isPlaylistNameDuplicate: LiveData<Boolean>
+        get() = _isPlaylistNameDuplicate
+    private val _isPlaylistNameDuplicate: MutableLiveData<Boolean> = MutableLiveData()
 
+    //TODO move the playlist prompt to the overall fragment?
+    //TODO move playlist add prompt to the overall fragment?
+
+    /**
+     * Used to observe the current screen of the app, used for navigation.
+     */
     val screenState : LiveData<ScreenData>
         get() = _screenState
     private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
@@ -69,22 +85,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isRootAvailable
     private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
 
-    val currentpage: LiveData<PageType>
-        get() = _currentpage
-    private val _currentpage: MutableLiveData<PageType> = MutableLiveData()
+    val currentPage: LiveData<PageType>
+        get() = _currentPage
+    private val _currentPage: MutableLiveData<PageType> = MutableLiveData()
 
     /**
      * Experimental code, which page for music chooser fragment?
      */
     fun setPage(page: PageType) {
-        _currentpage.value = page
+        _currentPage.value = page
     }
 
     private var mediaBrowser: MediaBrowser? = null
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
 
-    private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
     private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
 
     init {
@@ -93,16 +108,28 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         //TODO this should be moved into dependency injection...
         availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
-
-        val testValue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
-        Timber.d("init: testValue.length = ${testValue.value?.size}, ")
     }
 
     /**
-     * Create a playlist with a name //TODO I need ot add some sort of validation?
+     * Creates a playlist in memory.
+     * @param playlistName Name of a new playlist. TODO Don't allow two albums of the same name.
      */
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
+
+        getCurrentPlaylists().find { playlist ->
+            playlist.title == playlistName
+        }
+
+        val isExistingTitle = getCurrentPlaylists().any { playlist ->
+            playlist.title == playlistName
+        }
+
+        if(isExistingTitle) {
+            //TODO Use this in the code...
+            _isPlaylistNameDuplicate.postValue(true)
+            return
+        }
 
         val playlist = Playlist(
             title = playlistName,
@@ -117,6 +144,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Call when playlistNameDuplicate has occurred and has been handled.
+     */
+    fun handledPlaylistNameDuplicate() {
+        _isPlaylistNameDuplicate.postValue(false)
+    }
+
+    /**
+     * Ability to add a list of songs to a list of playlists.
+     */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
         playlistTitles.forEach { playlist ->
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
@@ -146,6 +183,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("onCleared: ")
     }
 
+    /**
+     * Returns a list of playlists saved on the device.
+     */
     fun getCurrentPlaylists(): List<Playlist> {
         return availablePlaylists.value ?: listOf()
     }
@@ -159,10 +199,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    fun removeSongAtPosition(position: Int) {
-        _mediaController.value?.removeMediaItem(position)
-    }
-
     /**
      * Adds multiple songs to the end of the controller in the queue
      */
@@ -171,17 +207,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun clearQueue() {
-        mediaController.value?.clearMediaItems() //TODO move this code out at some point...
+        mediaController.value?.clearMediaItems()
     }
-
-    fun playAlbum(songs: List<MediaItem>) {
-        clearQueue()
-        addSongsToEndOfQueue(songs)
-    }
-
-//    fun playPlaylist() {
-//
-//    }
 
     /**
      * Sets the current screen of the application.
