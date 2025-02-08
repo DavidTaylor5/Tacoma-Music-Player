@@ -85,11 +85,6 @@ class QueueListAdapter(
         var artworkUri = Uri.EMPTY
         var songDurationReadable = "Unknown Duration"
 
-        val p1 = position
-        val p2 = viewHolder.absoluteAdapterPosition
-        val p3 = viewHolder.bindingAdapterPosition
-        val p4 = "bruh"
-
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
 
