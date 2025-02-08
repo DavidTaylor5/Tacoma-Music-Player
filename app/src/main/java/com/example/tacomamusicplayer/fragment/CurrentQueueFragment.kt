@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -17,9 +19,11 @@ import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.QueueListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
-import com.example.tacomamusicplayer.util.SongSettingsUtil
+import com.example.tacomamusicplayer.util.MenuOptionUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.CurrentQueueViewModel
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
@@ -74,6 +78,7 @@ class CurrentQueueFragment: Fragment() {
                 implement reordering of the backing model inside the method.
                  */
                 adapter.moveItem(from, to)
+                //parentViewModel.swapAdjacentSongsInQueue(from, to) //TODO this code is somewhat redundant...
 
                 // Update the mediaController playlist
                 parentViewModel.mediaController.value?.moveMediaItem(from, to)
@@ -94,6 +99,9 @@ class CurrentQueueFragment: Fragment() {
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
+    //TODO when I leave this queue I should
+    //TODO MAYBE I SHOULD REMOVE SONGQUEUE ALTOGETHER AND JUST USE THE MEDIACONTROLLER?
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -107,8 +115,9 @@ class CurrentQueueFragment: Fragment() {
         //TODO I shouldn't have the handle on albums but I can have the handle on playlists...
 
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
-        parentViewModel.songQueue.observe(viewLifecycleOwner) {songs ->
-            Timber.d("onCreateView: songs.size=${songs.size}")
+        parentViewModel.mediaController.value?.let { controller ->
+            val songs = UtilImpl.getSongListFromMediaController(controller)
+
             binding.displayRecyclerview.adapter = QueueListAdapter( //TODO I need a different adapter and viewholder for queue fragment
                 songs,
                 this::handleSongSetting,
@@ -116,6 +125,21 @@ class CurrentQueueFragment: Fragment() {
                 this::handleRemoveSong
             )
             determineIfShowingEmptyPlaylistScreen(songs)
+        }
+
+        binding.songGroupInfo.setOnMenuIconPressed {
+            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
+
+            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleSongSetting(
+                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+                    parentViewModel.currentSongList.value?.songs ?: listOf()
+                )
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
         }
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
@@ -127,7 +151,6 @@ class CurrentQueueFragment: Fragment() {
 
     private fun handleRemoveSong(songPosition: Int) {
         binding.displayRecyclerview.adapter?.notifyItemRemoved(songPosition)
-        parentViewModel.removeSongAtPosition(songPosition) //TODO why does the cool animation disappear when I add this code
         parentViewModel.mediaController.value?.removeMediaItem(songPosition)
     }
 
@@ -148,13 +171,16 @@ class CurrentQueueFragment: Fragment() {
     }
 
     //TODO update this later...
-    private fun handleSongSetting(setting: SongSettingsUtil.Setting, mediaItems: List<MediaItem> = listOf()) {
-//        when (setting) {
-//            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist()
-//            SongSettingsUtil.Setting.ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
-//            SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStats()
-//            SongSettingsUtil.Setting.UNKNOWN -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
-//        }
+    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem> = listOf()) {
+        when (menuOption) {
+            MenuOptionUtil.MenuOption.CLEAR_QUEUE -> {
+                //TODO clear queue code
+            }
+            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
+                //TODO ADD to playlist code
+            }
+            else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+        }
     }
 
     private fun setupPage() {

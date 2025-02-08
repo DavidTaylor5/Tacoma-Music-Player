@@ -2,7 +2,6 @@ package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.graphics.drawable.AnimationDrawable
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
@@ -15,7 +14,7 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.databinding.ViewholderQueueSongBinding
-import com.example.tacomamusicplayer.util.SongSettingsUtil
+import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -23,9 +22,12 @@ import timber.log.Timber
 *  to add individual songs into specific playlists next!
 * */
 
+//TODO SAVE THE SONG QUEUE AS A HIDDEN PLAYLIST, I CAN KEEP IT IN THE DATABASE when I leave the app?
+//TODO I ALSO WANT TO SAVE MY POSITION IN THE QUEUE
+
 class QueueListAdapter(
     private var dataSet:  List<MediaItem>,
-    val handleSongSetting: (SongSettingsUtil.Setting, List<MediaItem>) -> Unit,
+    val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
     val onRemoveSong: (Int) -> Unit
 ): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
@@ -34,36 +36,22 @@ class QueueListAdapter(
 
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
+    //TODO START REMOVING THE SONGQUEUE variable....
 
+
+
+
+    /**
+     * Move Items in the recyclerview to adjacent positions
+     */
     fun moveItem(from: Int, to: Int) {
-        if(from == to) return
+        val modData = dataSet.toMutableList()
+        val temp = dataSet[to]
 
-        val dataCopy = dataSet.toMutableList()
-        val dataCopyIndexes = dataCopy.mapIndexed { index, mediaItem ->
-            index
-        }
+        modData[to] = dataSet[from]
+        modData[from] = temp
 
-        val front = dataCopyIndexes.subList(0, to).toMutableList()
-        val end = dataCopyIndexes.subList(to, dataCopyIndexes.size).toMutableList()
-        front.removeIf { index ->
-            index == from
-        }
-        end.removeIf { index ->
-            index == from
-        }
-
-        val newIndexes = mutableListOf<Int>()
-        newIndexes.addAll(front)
-        newIndexes.add(from)
-        newIndexes.addAll(end)
-
-        Timber.d("moveItem: newIndexes=$newIndexes")
-
-        val newData = newIndexes.map {index ->
-            dataSet[index]
-        }
-
-        dataSet = newData
+        dataSet = modData
     }
 
     //Create new views (invoked by the layout manager)
@@ -164,21 +152,11 @@ class QueueListAdapter(
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = songDurationReadable
 
-        //TODO allow songs to be unfavorited...
-//        viewHolder.binding.favoriteIcon.setOnClickListener {
-//            viewHolder.binding.favoriteIcon.background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.baseline_star_24_green)
-//        }
-
-//        viewHolder.binding.addIcon.setOnClickListener {
-//            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-//            handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
-//        }
-
         viewHolder.binding.menuIcon.setOnClickListener {
 
             val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
 
-            menu.menuInflater.inflate(R.menu.menu_queue_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.queue_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleMenuItem(it, viewHolder.absoluteAdapterPosition) //TODO not done yet
@@ -189,20 +167,16 @@ class QueueListAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        when(SongSettingsUtil.determineSettingFromTitle(item.title.toString())) {
-            SongSettingsUtil.Setting.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
-            SongSettingsUtil.Setting.REMOVE_FROM_QUEUE -> handleRemoveFromQueue(position)
-            SongSettingsUtil.Setting.CHECK_STATS -> handleCheckStatus()
+        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
+            MenuOptionUtil.MenuOption.REMOVE_FROM_QUEUE -> handleRemoveFromQueue(position)
+            MenuOptionUtil.MenuOption.CHECK_STATS -> handleCheckStatus()
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
     private fun handleAddToPlaylist(position: Int) {
-        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_PLAYLIST, listOf(dataSet[position]))
-    }
-
-    private fun handleAddToQueue(position: Int) {
-        handleSongSetting(SongSettingsUtil.Setting.ADD_TO_QUEUE, listOf(dataSet[position]))
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position]))
     }
 
     private fun handleRemoveFromQueue(position: Int) {

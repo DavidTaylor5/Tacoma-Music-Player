@@ -13,5 +13,4 @@
         android:id="@+id/stats_check"
         android:title="Check Stats"
         />
-
 </menu>

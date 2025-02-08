@@ -8,6 +8,8 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
+import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaController
 import timber.log.Timber
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -69,6 +71,18 @@ class UtilImpl {
                 Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW e=$e")
                 return false
             }
+        }
+
+        /**
+         *  A function to grab the current songs in a media controller.
+         */
+        fun getSongListFromMediaController(controller: MediaController): MutableList<MediaItem> {
+            val controllerSongLength = controller.mediaItemCount
+            val songList = mutableListOf<MediaItem>()
+            for(i in 0..<controllerSongLength) {
+                songList.add(controller.getMediaItemAt(i))
+            }
+            return songList
         }
     }
 }
