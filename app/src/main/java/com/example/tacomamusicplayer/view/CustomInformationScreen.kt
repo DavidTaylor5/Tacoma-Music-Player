@@ -17,10 +17,7 @@ class CustomInformationScreen @JvmOverloads constructor(
 
     init {
         attrs?.let {
-
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-            //I gotta remember to actually attach to the view
             binding = ViewCustomInformationScreenBinding.inflate(inflater, this, true)
         }
     }

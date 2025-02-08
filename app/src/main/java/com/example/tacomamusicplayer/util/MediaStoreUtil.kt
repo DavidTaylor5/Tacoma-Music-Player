@@ -22,7 +22,7 @@ class MediaStoreUtil {
      * Query all songs from associated album on device storage.
      * @param context Context associated with the application. Context needs permission READ_MEDIA_AUDIO.
      * @param album The title of an album.
-     * @return A list of MediaItems [songs] associated with the given album title.
+     * @return A list of MediaItems songs associated with the given album title.
      */
     fun querySongsFromAlbum(context: Context, album: String): List<MediaItem> {
         Timber.d("querySongsFromAlbum: ")
@@ -32,13 +32,13 @@ class MediaStoreUtil {
         val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
 
         val projection: Array<String?> = arrayOf(
-            MediaStore.Audio.AudioColumns.DATA, // 0 -> url
-            MediaStore.Audio.AudioColumns.TITLE, //1 -> song title
-            MediaStore.Audio.AudioColumns.ALBUM, //2 -> album title
-            MediaStore.Audio.ArtistColumns.ARTIST, //3 -> artist
+            MediaStore.Audio.AudioColumns.DATA,     //0 -> url
+            MediaStore.Audio.AudioColumns.TITLE,    //1 -> song title
+            MediaStore.Audio.AudioColumns.ALBUM,    //2 -> album title
+            MediaStore.Audio.ArtistColumns.ARTIST,  //3 -> artist
             MediaStore.Audio.AudioColumns.DURATION, //4 -> duration in  milliseconds
-            MediaStore.Audio.AudioColumns.TRACK, //5 -> track # in album
-            MediaStore.Audio.AudioColumns._ID, //6 id
+            MediaStore.Audio.AudioColumns.TRACK,    //5 -> track # in album
+            MediaStore.Audio.AudioColumns._ID,      //6 id
         )
 
         context.contentResolver.query(
@@ -65,8 +65,7 @@ class MediaStoreUtil {
                 val title = cursor.getString(1)
                 val album = cursor.getString(2)
                 val artist = cursor.getString(3)
-                //TODO ERROR WITH ADDING ANOTHER ELEMENT TO SONGDATA, WHY!?
-                val duration = cursor.getString(4) //TODO DEBUG HERE I WANT TO PASS DURATION IN DESCRIPTION
+                val duration = cursor.getString(4)
                 val track = cursor.getInt(5)
                 val songId = cursor.getLong(6)
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
@@ -102,10 +101,10 @@ class MediaStoreUtil {
         val uriExternal: Uri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
         val projection: Array<String?> = arrayOf(
-            MediaStore.Audio.Media.ALBUM_ID, //0 -> what the hell is this?
-            MediaStore.Audio.Albums.ALBUM, //1 -> album name again
-            MediaStore.Audio.Albums.ARTIST, //2 -> artist again...
-            MediaStore.Audio.Albums.LAST_YEAR //3
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Albums.ALBUM,
+            MediaStore.Audio.Albums.ARTIST,
+            MediaStore.Audio.Albums.LAST_YEAR
         )
 
         context.contentResolver.query(

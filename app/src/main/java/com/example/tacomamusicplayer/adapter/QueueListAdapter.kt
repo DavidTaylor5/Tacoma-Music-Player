@@ -36,11 +36,6 @@ class QueueListAdapter(
 
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
-    //TODO START REMOVING THE SONGQUEUE variable....
-
-
-
-
     /**
      * Move Items in the recyclerview to adjacent positions
      */
@@ -180,6 +175,10 @@ class QueueListAdapter(
     }
 
     private fun handleRemoveFromQueue(position: Int) {
+        val modData = dataSet.toMutableList()
+        modData.removeAt(position)
+        dataSet = modData
+
         onRemoveSong(position)
     }
 

@@ -8,7 +8,6 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -24,7 +23,6 @@ import com.example.tacomamusicplayer.adapter.QueueListAdapter
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
-import com.example.tacomamusicplayer.viewmodel.CurrentQueueViewModel
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -34,7 +32,6 @@ class CurrentQueueFragment: Fragment() {
 
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
-    private val viewModel: CurrentQueueViewModel by viewModels()
 
     //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
@@ -150,8 +147,10 @@ class CurrentQueueFragment: Fragment() {
     }
 
     private fun handleRemoveSong(songPosition: Int) {
-        binding.displayRecyclerview.adapter?.notifyItemRemoved(songPosition)
-        parentViewModel.mediaController.value?.removeMediaItem(songPosition)
+        binding.displayRecyclerview.adapter?.let { adapter ->
+            adapter.notifyItemRemoved(songPosition)
+            parentViewModel.mediaController.value?.removeMediaItem(songPosition)
+        }
     }
 
     /**

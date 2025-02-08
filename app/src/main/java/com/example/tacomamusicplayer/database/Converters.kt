@@ -1,15 +1,16 @@
-package com.example.tacomamusicplayer.data
+package com.example.tacomamusicplayer.database
 
 import androidx.room.TypeConverter
+import com.example.tacomamusicplayer.data.PlaylistData
 import com.squareup.moshi.Moshi
 
 class Converters {
 
-    val moshi = Moshi.Builder().build()
-    val playlistAdapter = moshi.adapter(PlaylistData::class.java)
+    private val moshi = Moshi.Builder().build()
+    private val playlistAdapter = moshi.adapter(PlaylistData::class.java)
 
     @TypeConverter
-    fun SongDataFromString(data: String): PlaylistData {
+    fun songDataFromString(data: String): PlaylistData {
         return playlistAdapter.fromJson(data) ?: PlaylistData()
     }
 

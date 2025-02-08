@@ -15,8 +15,6 @@ import com.example.tacomamusicplayer.viewmodel.MainViewModel
 class PlaylistFragment(
 
 ): Fragment() {
-
-    //TODO I need to make sure that I can't make multiple playlists with the same name...
     private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -29,13 +27,11 @@ class PlaylistFragment(
         binding = FragmentPlaylistBinding.inflate(inflater)
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-            //set the rv adapter here... or modify the rv here?...
             binding.displayRecyclerview.adapter = PlaylistAdapter(playlists, this::onPlaylistClick)
         }
 
         binding.fab.setOnClickListener {
             binding.fab.visibility = View.GONE
-            //binding.createPlaylistTitleInputText.text = Editable.Factory.getInstance().newEditable("")
             binding.createPlaylistPrompt.resetCurrentPlaylistTitle()
             binding.createPlaylistPrompt.visibility = View.VISIBLE
         }
@@ -56,17 +52,13 @@ class PlaylistFragment(
         return binding.root
     }
 
-    private fun onPlaylistClick(playlistTitle: String) { //TODO I need to use this function just like AlbumListFragment...
-        //parentViewModel.querySongsFromAlbum(albumTitle)
-        //TODO I want to query songs from the database... like parentViewModel.querySongsFromPlaylist(playlistTitle)
-        parentViewModel.querySongsFromPlaylist(playlistTitle) //TODO is the playlist name the id?
+    private fun onPlaylistClick(playlistTitle: String) {
+        parentViewModel.querySongsFromPlaylist(playlistTitle)
         parentViewModel.setPage(PageType.SONG_PAGE)
     }
 
     private fun setupPage() {
         binding.sectionTitle.text = "PLAYLISTS"
-
-        //binding.displayRecyclerview.adapter = PlaylistAdapter(listOf(MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY, MediaItem.EMPTY))
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

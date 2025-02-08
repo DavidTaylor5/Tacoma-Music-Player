@@ -11,16 +11,14 @@ import timber.log.Timber
 class AppPermissionUtil {
 
     companion object {
-        const val notificationRequestCode = 2
         const val externalRequestCode = 3
         const val readMediaAudioRequestCode = 4
-        const val readMediaImages = 5
     }
 
-    private val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
+//    private val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
     private val externalPermission = Manifest.permission.MANAGE_EXTERNAL_STORAGE
     private val readMediaAudioPermission = Manifest.permission.READ_MEDIA_AUDIO
-    private val readMediaImagesPermission = Manifest.permission.READ_MEDIA_IMAGES
+//    private val readMediaImagesPermission = Manifest.permission.READ_MEDIA_IMAGES
 
     /**
      * Determine if permission "MANAGE_EXTERNAL_STORAGE" is granted on the device.
@@ -56,14 +54,4 @@ class AppPermissionUtil {
     fun requestReadMediaAudioPermission(context: Context) {
         ActivityCompat.requestPermissions(context as Activity, arrayOf(readMediaAudioPermission), readMediaAudioRequestCode)
     }
-
-//    fun verifyNotificationPermission(context: Context): Boolean {
-//        var readNotificationPermission: Int = ContextCompat.checkSelfPermission(context, notificationPermission)
-//        Timber.d("verifyNotificationPermission: ${readNotificationPermission == PackageManager.PERMISSION_GRANTED}")
-//        return readNotificationPermission == PackageManager.PERMISSION_GRANTED
-//    }
-//
-//    fun requestNotificationPermission(context: Context) {
-//        ActivityCompat.requestPermissions(context as Activity, arrayOf(notificationPermission), notificationRequestCode)
-//    }
 }

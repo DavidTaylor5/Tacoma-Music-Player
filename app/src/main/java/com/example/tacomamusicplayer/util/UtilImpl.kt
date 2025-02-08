@@ -74,7 +74,8 @@ class UtilImpl {
         }
 
         /**
-         *  A function to grab the current songs in a media controller.
+         *  Function to return all current mediaItems inside of the MediaController.
+         *  @return List of songs currently in the MediaController.
          */
         fun getSongListFromMediaController(controller: MediaController): MutableList<MediaItem> {
             val controllerSongLength = controller.mediaItemCount

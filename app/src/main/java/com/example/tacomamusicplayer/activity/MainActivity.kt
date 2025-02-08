@@ -1,16 +1,12 @@
 package com.example.tacomamusicplayer.activity
 
-import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GestureDetectorCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -29,28 +25,18 @@ import timber.log.Timber
 
 //TODO I need to make smart goals...
 
-//TODO I should be able to add a list of songs, rather than one song with the live data
-
-//TODO HIGHEST PRIORITY
-//TODO FIX FOR ADDING MUTIPLE SONGS into the current queue, this is breaking by adding previous selected songs again...
-//TODO FIX for Playlists / Creation, should already be mostly setup...
-//TODO Add feature to start playing an entire album from specific point in an album
-//TODO Add feature to mix songs in a playlist without repeating old songs before queue is up. [shuffle songs literally?]
+//TODO ULTRA PRIORITY
 
 //TODO HIGH PRIORITY TASKS
+//TODO Add feature to start playing an entire album from specific point in an album
 // Click to Play from Song List : I want the song to start playing off the rip if item clicked
-// Playlist Capability : I need to use data store to implment the playlist functionality [Can I store mediaItems in database?]
-// Current Queue Fragment : I want another fragment to swipe up from the bottom which will have the current queue [whats on deck...]
 
 //TODO MEDIUM PRIORITY TASKS
 
 //TODO LOW PRIORITY TASKS
 // UI CHANGES ...
-// Small Current Player Floating : When I start playing, I want a small screen on the bottom of the screen to show currently playing music [this might be difficult]
-// Orientation Change: Stay on Music Chooser Fragment, currently I'm being sent back to must player fragment
 
-//TODO I want to animate sliding up and down from library to player, I also want to implement gesture detector for this...
-
+//TODO BUG
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -58,23 +44,20 @@ class MainActivity : AppCompatActivity() {
     private val permissionManager = AppPermissionUtil()
     private lateinit var navController: NavController
 
-    val TAG = MainActivity::class.java.simpleName
-
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             Timber.d("handleOnBackPressed: BACK PRESSED!")
-
             if(!navController.popBackStack()) {
                 finish()
             }
         }
     }
 
-    lateinit var gesture: GestureDetector
+    private lateinit var gesture: GestureDetector
 
-    val detector = object : GestureDetector.SimpleOnGestureListener() {
+    private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            Log.d(TAG, "onDoubleTap: ")
+            Timber.d("onDoubleTap: ")
             return super.onDoubleTap(e)
         }
 
@@ -84,21 +67,10 @@ class MainActivity : AppCompatActivity() {
             velocityX: Float,
             velocityY: Float
         ): Boolean {
-            Log.d(TAG,"onFling: ")
-
+            Timber.d("onFling: ")
             return super.onFling(e1, e2, velocityX, velocityY)
         }
     }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        //Log.d(TAG, "onTouchEvent: ")
-//        event?.let {
-//            gesture.onTouchEvent(event)
-//        }
-        return super.onTouchEvent(event)
-    }
-
-
 
     @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,16 +103,13 @@ class MainActivity : AppCompatActivity() {
         viewModel.isRootAvailable.observe(this) {isAvailable ->
             //The root is available, I can now check albums and stuff
             if(isAvailable) {
-                //TODO what should I do here?
                 //query available albums
                 viewModel.queryAvailableAlbums()
-                //TODO query available playlists...
             }
         }
 
         viewModel.screenState.observe(this) {data ->
             Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
-
             navController.navigate(data.currentScreen.route())
         }
 

@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderPlaylistPromptBinding
 import timber.log.Timber
-import kotlin.math.log
 
 /**
  * A recyclerview adapter that is able to take a list of Playlist Items and displays them.
@@ -49,8 +48,6 @@ class PlaylistPromptAdapter(
         viewHolder.binding.addCheckbox.setOnCheckedChangeListener { compoundButton, b ->
             onPlaylistChecked(playlists[position].title ?: "UNKNOWN", b)
         }
-
-        //What should the checkbox signify? How do I work with checkboxes in android?
     }
 
     override fun onBindViewHolder(
@@ -61,13 +58,6 @@ class PlaylistPromptAdapter(
         super.onBindViewHolder(holder, position, payloads)
         
         Timber.d("onBindViewHolder: ")
-        
-        
-        
-    }
-
-    override fun registerAdapterDataObserver(observer: RecyclerView.AdapterDataObserver) {
-        super.registerAdapterDataObserver(observer)
     }
     
     // Return the size of your dataset (invoked by the layout manager)

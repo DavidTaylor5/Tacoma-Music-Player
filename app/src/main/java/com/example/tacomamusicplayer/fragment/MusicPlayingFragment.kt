@@ -204,23 +204,10 @@ class MusicPlayingFragment: Fragment() {
             }
         }
 
-        //TODO Add this back later when I want to clear media items, then add a playlist, or album in totality
-//        parentViewModel.songQueue.observe(this) { songs ->
-//            controller?.addMediaItems(songs)
-//        }
-
-        //Moved, let the music chooser fragment add the song to controller
-
-//        parentViewModel.addSongToEndOfQueue.observe(this) { song ->
-//            controller?.addMediaItem(song)
-//        }
-
         binding.prevButton?.setOnClickListener {
             Timber.d("prevButton_onClick: ")
             controller?.seekToPrevious()
         }
-
-        //TODO I need to move the setting backgorund resource to an observable livedata in mainviewmodel
 
         binding.playButton?.setOnClickListener { button ->
             Timber.d("playButton_onClick: ")
@@ -230,8 +217,6 @@ class MusicPlayingFragment: Fragment() {
                     button.setBackgroundResource(R.drawable.baseline_pause_24)
                     it.play()
                 } else {
-                    //change icon
-                    //pause
                     button.setBackgroundResource(R.drawable.baseline_play_arrow_24)
                     it.pause()
                 }
