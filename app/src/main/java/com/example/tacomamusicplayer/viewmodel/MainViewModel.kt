@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -15,6 +17,7 @@ import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.database.PlaylistDatabase
 import com.example.tacomamusicplayer.data.ScreenData
+import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.data.SongGroup
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.ScreenType
@@ -88,6 +91,27 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val currentPage: LiveData<PageType>
         get() = _currentPage
     private val _currentPage: MutableLiveData<PageType> = MutableLiveData()
+
+    val currentPlayingSongInfo: LiveData<SongData>
+        get() = _currentPlayingSongInfo
+    private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
+
+    private val playerListener = object: Player.Listener {
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
+            _currentPlayingSongInfo.postValue(
+                SongData(
+                    songUri = "UNKNOWN",
+                    songTitle = mediaMetadata.title.toString(),
+                    albumTitle = mediaMetadata.albumTitle.toString(),
+                    artist = mediaMetadata.artist.toString(),
+                    artworkUri = mediaMetadata.artworkUri.toString(),
+                    duration = mediaMetadata.description.toString()
+                )
+            )
+            super.onMediaMetadataChanged(mediaMetadata)
+        }
+    }
 
     /**
      * Experimental code, which page for music chooser fragment?
@@ -181,6 +205,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         Timber.d("onCleared: ")
+
+        mediaController.value?.let { controller ->
+            controller.removeListener(playerListener)
+        }
     }
 
     /**
@@ -252,7 +280,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("setupMediaController: session=$session")
         val controllerFuture = MediaController.Builder(getApplication<Application>().applicationContext, session).buildAsync()
         controllerFuture.addListener({
-            _mediaController.value = controllerFuture.get()
+            val controller = controllerFuture.get()
+            _mediaController.value = controller
+
+            controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())
     }
 
