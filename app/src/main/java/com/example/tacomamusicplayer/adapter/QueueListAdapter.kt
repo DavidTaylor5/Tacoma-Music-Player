@@ -1,6 +1,7 @@
 package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.net.Uri
 import android.util.Size
@@ -29,10 +30,13 @@ class QueueListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
-    val onRemoveSong: (Int) -> Unit
+    val onRemoveSong: (Int) -> Unit,
+    val playSongAtPosition: (Int) -> Unit,
 ): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
+
+    //TODO listen to mediacontroller changes just like ... so that I can determine which viewholder to paint green
 
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
@@ -98,7 +102,15 @@ class QueueListAdapter(
             }
 
             //TODO what to do when a song is clicked?
-            //viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+            viewHolder.binding.songContainer.setOnClickListener {
+                //clear the coloring on the other views.
+                viewHolder.binding.songContainer.strokeColor = Color.GREEN
+
+                playSongAtPosition(viewHolder.absoluteAdapterPosition)
+
+                //When I click a song, I want to highlight the song,
+                //I also want to immediately start playing the song at that position....
+            }
 
             UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,

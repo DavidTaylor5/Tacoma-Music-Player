@@ -119,7 +119,8 @@ class CurrentQueueFragment: Fragment() {
                 songs,
                 this::handleSongSetting,
                 this::handleViewHolderHandleDrag,
-                this::handleRemoveSong
+                this::handleRemoveSong,
+                this::playSongAtPosition
             )
             determineIfShowingEmptyPlaylistScreen(songs)
         }
@@ -162,6 +163,12 @@ class CurrentQueueFragment: Fragment() {
             binding.noMusicAddedText.visibility = View.VISIBLE
         } else {
             binding.noMusicAddedText.visibility = View.GONE
+        }
+    }
+
+    private fun playSongAtPosition(position: Int) {
+        parentViewModel.mediaController.value?.let {controller ->
+            controller.seekTo(position, 0L)
         }
     }
 

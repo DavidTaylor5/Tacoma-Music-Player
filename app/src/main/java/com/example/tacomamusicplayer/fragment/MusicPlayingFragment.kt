@@ -13,17 +13,15 @@ import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.navigation.fragment.findNavController
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.example.tacomamusicplayer.enum.ScreenType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
-
 
 class MusicPlayingFragment: Fragment() {
 
@@ -32,24 +30,7 @@ class MusicPlayingFragment: Fragment() {
     private lateinit var binding: FragmentMusicPlayingBinding
 
     private var controller: MediaController? = null
-    private var currentSongInfo: Triple<String, String, String>? = null
-
-    private val playerListener = object: Player.Listener {
-        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            val artist = mediaMetadata.artist.toString()
-            val title = mediaMetadata.title.toString()
-            val albumTitle = mediaMetadata.albumTitle.toString()
-            Timber.d("onMediaMetadataChanged: artist=$artist, title=$title, albumTitle=$albumTitle")
-
-            val songInfo = Triple(artist, title, albumTitle)
-
-            if(currentSongInfo != songInfo) {
-                currentSongInfo = songInfo
-                updateUIForCurrentSong()
-            }
-            super.onMediaMetadataChanged(mediaMetadata)
-        }
-    }
+    private var currentSongInfo: SongData? = null
 
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -125,20 +106,6 @@ class MusicPlayingFragment: Fragment() {
         return binding.root
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        //Start listening to changes in player
-        parentViewModel.mediaController.value?.addListener(playerListener)
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        //I no longer need to listen to changes in the player
-        parentViewModel.mediaController.value?.removeListener(playerListener)
-    }
-
     private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
         binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
         val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
@@ -201,6 +168,13 @@ class MusicPlayingFragment: Fragment() {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
             } else {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
+            }
+        }
+
+        parentViewModel.currentPlayingSongInfo.observe(this) { currentSong ->
+            if(currentSong != currentSongInfo) {
+                currentSongInfo = currentSong
+                updateUIForCurrentSong()
             }
         }
 

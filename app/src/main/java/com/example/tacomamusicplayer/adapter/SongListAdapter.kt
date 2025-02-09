@@ -85,14 +85,14 @@ class SongListAdapter(
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
 
-            val songData = dataSet[position].mediaMetadata
-            Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songData.title},  songArtist=${songData.artist}, albumTitle=${songData.albumTitle}, albumArtUri=${songData.artworkUri}")
+            val songMetadata = dataSet[position].mediaMetadata
+            Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songMetadata.title},  songArtist=${songMetadata.artist}, albumTitle=${songMetadata.albumTitle}, albumArtUri=${songMetadata.artworkUri}")
 
-            songTitle = songData.title.toString()
-            songArtist = songData.artist.toString()
-            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
-            artworkUri = dataSet[position].mediaMetadata.artworkUri
-            songDuration = dataSet[position].mediaMetadata.description.toString()
+            songTitle = songMetadata.title.toString()
+            songArtist = songMetadata.artist.toString()
+            albumTitle = songMetadata.albumTitle.toString()
+            artworkUri = songMetadata.artworkUri
+            songDuration = songMetadata.description.toString()
 
             val songDurationInLong = songDuration.toLongOrNull()
             songDurationInLong?.let {
