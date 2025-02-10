@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.QueueListAdapter
+import com.example.tacomamusicplayer.data.DisplaySong
 import com.example.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
@@ -114,15 +115,33 @@ class CurrentQueueFragment: Fragment() {
         //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
         parentViewModel.mediaController.value?.let { controller ->
             val songs = UtilImpl.getSongListFromMediaController(controller)
+            val displaySongs = songs.map {song ->
+                if(song == controller.currentMediaItem) {
+                    DisplaySong(
+                        song,
+                        true
+                    )
+                } else {
+                    DisplaySong(
+                        song,
+                        false
+                    )
+                }
+            }
 
             binding.displayRecyclerview.adapter = QueueListAdapter( //TODO I need a different adapter and viewholder for queue fragment
-                songs,
+                displaySongs,
                 this::handleSongSetting,
                 this::handleViewHolderHandleDrag,
                 this::handleRemoveSong,
                 this::playSongAtPosition
             )
             determineIfShowingEmptyPlaylistScreen(songs)
+        }
+
+        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) {currSong ->
+            (binding.displayRecyclerview.adapter as QueueListAdapter)
+                .updateCurrentSongIndicator(currSong)
         }
 
         binding.songGroupInfo.setOnMenuIconPressed {

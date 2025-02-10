@@ -14,6 +14,8 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
+import com.example.tacomamusicplayer.data.DisplaySong
+import com.example.tacomamusicplayer.data.SongData
 import com.example.tacomamusicplayer.databinding.ViewholderQueueSongBinding
 import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
@@ -27,7 +29,7 @@ import timber.log.Timber
 //TODO I ALSO WANT TO SAVE MY POSITION IN THE QUEUE
 
 class QueueListAdapter(
-    private var dataSet:  List<MediaItem>,
+    private var dataSet:  List<DisplaySong>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
     val onRemoveSong: (Int) -> Unit,
@@ -35,8 +37,6 @@ class QueueListAdapter(
 ): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
-
-    //TODO listen to mediacontroller changes just like ... so that I can determine which viewholder to paint green
 
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
@@ -73,6 +73,45 @@ class QueueListAdapter(
         return viewHolder
     }
 
+    private fun clearPreviousSongIndicator() {
+        val currSongPos = dataSet.indexOfFirst {song ->
+            song.showPlayIndicator
+        }
+
+        if(currSongPos >= 0) {
+            Timber.d("clearPreviousSongIndicator: currSongPos=$currSongPos")
+
+            dataSet[currSongPos].showPlayIndicator = false
+
+            this.notifyItemChanged(currSongPos)
+        }
+    }
+
+    fun updateCurrentSongIndicator(updatedSong: SongData) {
+        try {
+            val currSong = dataSet.first {  song ->
+                song.showPlayIndicator
+            }
+
+            if(currSong.mediaItem.mediaMetadata.title == updatedSong.songTitle ) {
+                return
+            }
+
+        } catch(e: Exception) {
+            Timber.d("updateCurrentSongIndicator: No currSong found!")
+        }
+
+        clearPreviousSongIndicator()
+
+        val indicatorPosition = dataSet.indexOfFirst {
+            it.mediaItem.mediaMetadata.title == updatedSong.songTitle
+        }
+        Timber.d("updateCurrentSongIndicator: indicatorPosition$indicatorPosition")
+
+        dataSet[indicatorPosition].showPlayIndicator = true
+        this.notifyItemChanged(indicatorPosition)
+    }
+
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: QueueSongViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
@@ -87,29 +126,30 @@ class QueueListAdapter(
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
 
-            val songData = dataSet[position].mediaMetadata
+            val songData = dataSet[position].mediaItem.mediaMetadata
             Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songData.title},  songArtist=${songData.artist}, albumTitle=${songData.albumTitle}, albumArtUri=${songData.artworkUri}")
 
             songTitle = songData.title.toString()
             songArtist = songData.artist.toString()
-            albumTitle = dataSet[position].mediaMetadata.albumTitle.toString()
-            artworkUri = dataSet[position].mediaMetadata.artworkUri
-            songDuration = dataSet[position].mediaMetadata.description.toString()
+            albumTitle = dataSet[position].mediaItem.mediaMetadata.albumTitle.toString()
+            artworkUri = dataSet[position].mediaItem.mediaMetadata.artworkUri
+            songDuration = dataSet[position].mediaItem.mediaMetadata.description.toString()
 
             val songDurationInLong = songDuration.toLongOrNull()
             songDurationInLong?.let {
                 songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
             }
 
-            //TODO what to do when a song is clicked?
-            viewHolder.binding.songContainer.setOnClickListener {
-                //clear the coloring on the other views.
+            if(dataSet[position].showPlayIndicator) {
+                Timber.d("onBindViewHolder: songTitle=$songTitle, is showing play indicator!")
+
                 viewHolder.binding.songContainer.strokeColor = Color.GREEN
+            } else {
+                viewHolder.binding.songContainer.strokeColor = Color.WHITE
+            }
 
+            viewHolder.binding.songContainer.setOnClickListener {
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
-
-                //When I click a song, I want to highlight the song,
-                //I also want to immediately start playing the song at that position....
             }
 
             UtilImpl.drawUriOntoImageView(
@@ -183,7 +223,7 @@ class QueueListAdapter(
     }
 
     private fun handleAddToPlaylist(position: Int) {
-        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position]))
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position].mediaItem))
     }
 
     private fun handleRemoveFromQueue(position: Int) {
