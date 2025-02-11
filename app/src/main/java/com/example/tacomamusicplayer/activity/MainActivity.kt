@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
             if(playlists.isNotEmpty()) {
                 for(playlist in playlists) {
-                    Timber.d("AllPlaylistLiveData: playlist.id=${playlist.uid} playlist.title=${playlist.title}, songs=${playlist.songs}")
+                    Timber.d("AllPlaylistLiveData: playlist.title=${playlist.title}, songs=${playlist.songs}")
                 }
             }
         }
@@ -149,6 +149,11 @@ class MainActivity : AppCompatActivity() {
         UtilImpl.hideNavigationUI(window)
 
         viewModel.checkPermissionsIfOnPermissionDeniedScreen()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.saveQueue()
     }
 
     override fun onRequestPermissionsResult(

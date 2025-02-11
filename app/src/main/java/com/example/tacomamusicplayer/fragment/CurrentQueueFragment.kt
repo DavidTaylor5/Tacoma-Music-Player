@@ -188,6 +188,7 @@ class CurrentQueueFragment: Fragment() {
     private fun playSongAtPosition(position: Int) {
         parentViewModel.mediaController.value?.let {controller ->
             controller.seekTo(position, 0L)
+            controller.play()
         }
     }
 
