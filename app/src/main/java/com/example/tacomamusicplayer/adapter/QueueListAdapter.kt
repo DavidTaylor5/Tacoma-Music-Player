@@ -87,6 +87,14 @@ class QueueListAdapter(
         }
     }
 
+    /**
+     * Clear all songs out of recyclerview.
+     */
+    fun clearQueue() {
+        dataSet = listOf()
+        this.notifyDataSetChanged()
+    }
+
     fun updateCurrentSongIndicator(updatedSong: SongData) {
         try {
             val currSong = dataSet.first {  song ->
@@ -106,10 +114,12 @@ class QueueListAdapter(
         val indicatorPosition = dataSet.indexOfFirst {
             it.mediaItem.mediaMetadata.title == updatedSong.songTitle
         }
-        Timber.d("updateCurrentSongIndicator: indicatorPosition$indicatorPosition")
 
-        dataSet[indicatorPosition].showPlayIndicator = true
-        this.notifyItemChanged(indicatorPosition)
+        Timber.d("updateCurrentSongIndicator: indicatorPosition$indicatorPosition")
+        if(indicatorPosition > 0) {
+            dataSet[indicatorPosition].showPlayIndicator = true
+            this.notifyItemChanged(indicatorPosition)
+        }
     }
 
     // Replace the contents of a view (invoked by the layout manager)

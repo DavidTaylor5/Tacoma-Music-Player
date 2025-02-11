@@ -200,7 +200,8 @@ class CurrentQueueFragment: Fragment() {
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem> = listOf()) {
         when (menuOption) {
             MenuOptionUtil.MenuOption.CLEAR_QUEUE -> {
-                //TODO clear queue code
+                parentViewModel.clearQueue()
+                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
             }
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
                 //TODO ADD to playlist code

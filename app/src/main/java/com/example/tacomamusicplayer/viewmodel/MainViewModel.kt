@@ -214,13 +214,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     //Or add it later...
     //TODO make the queue playlist not show up
     //OR have a constant for the playlist ID that no one will think to use as a title....
-    fun restoreQueue() {
+    private fun restoreQueue() {
         viewModelScope.launch(Dispatchers.IO) {
             val oldQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
                 .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
 
             //TODO I need a function to turn a Playlist into a list<mediaItems>
+
+            //oldQueue can be null if this is a fresh install or if there is no previous queue
+            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
+                Timber.d("restoreQueue: No queue to restore!")
+                return@launch
+            }
 
             //TODO I can't call mediaController from inside this thread?
             withContext(Dispatchers.Main) {
@@ -310,7 +316,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         mediaController.value?.addMediaItems(songs)
     }
 
-    private fun clearQueue() {
+    /**
+     * Clear all songs out of Player.
+     */
+    fun clearQueue() {
         mediaController.value?.clearMediaItems()
     }
 
