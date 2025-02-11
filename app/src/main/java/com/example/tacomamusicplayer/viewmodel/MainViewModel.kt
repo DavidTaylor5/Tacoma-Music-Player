@@ -13,6 +13,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.example.tacomamusicplayer.constants.Const
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.data.PlaylistData
 import com.example.tacomamusicplayer.database.PlaylistDatabase
@@ -25,9 +26,11 @@ import com.example.tacomamusicplayer.enum.SongGroupType
 import com.example.tacomamusicplayer.service.MusicService
 import com.example.tacomamusicplayer.util.AppPermissionUtil
 import com.example.tacomamusicplayer.util.MediaItemUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -141,19 +144,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
 
-        getCurrentPlaylists().find { playlist ->
-            playlist.title == playlistName
-        }
-
-        val isExistingTitle = getCurrentPlaylists().any { playlist ->
-            playlist.title == playlistName
-        }
-
-        if(isExistingTitle) {
-            //TODO Use this in the code...
-            _isPlaylistNameDuplicate.postValue(true)
-            return
-        }
+//        getCurrentPlaylists().find { playlist ->
+//            playlist.title == playlistName
+//        }
+//
+//        val isExistingTitle = getCurrentPlaylists().any { playlist ->
+//            playlist.title == playlistName
+//        }
+//
+//        if(isExistingTitle) {
+//            //TODO Use this in the code...
+//            _isPlaylistNameDuplicate.postValue(true)
+//            return
+//        }
 
         val playlist = Playlist(
             title = playlistName,
@@ -176,6 +179,71 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     * Saves the current songs playing in the queue, to be loaded when the app opens next.
+     * TODO I also want to save the position of the last song I was in.
+     */
+    fun saveQueue() {
+
+        //TODO function to save position of current song
+
+        mediaController.value?.let { controller ->
+            val songs = UtilImpl.getSongListFromMediaController(controller)
+            if(!songs.isNullOrEmpty()) {
+                //Playlist()
+
+                val playlistData = PlaylistData(
+                    mediaItemUtil.createSongDataFromListOfMediaItem(songs)
+                )
+
+                val playlist = Playlist(
+                    title = Const.PLAYLIST_QUEUE_TITLE,
+                    artUri = "",
+                    songs = playlistData
+                )
+
+                viewModelScope.launch(Dispatchers.IO) {
+                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                        .playlistDao()
+                        .insertPlaylists(playlist)
+                }
+            }
+        }
+    }
+
+    //TODO the empty playingmusicfragment shows briefly, I might have to remove the dog image.
+    //Or add it later...
+    //TODO make the queue playlist not show up
+    //OR have a constant for the playlist ID that no one will think to use as a title....
+    fun restoreQueue() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val oldQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
+
+            //TODO I need a function to turn a Playlist into a list<mediaItems>
+
+            //TODO I can't call mediaController from inside this thread?
+            withContext(Dispatchers.Main) {
+                mediaController.value?.let { controller ->
+                    controller.setMediaItems(
+                        mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
+                            oldQueue.songs.songs
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+//    private fun doesPlaylistExist(playlistName: String): Boolean {
+//        PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+//            .playlistDao()
+//            .findPlaylistByName(playlistName)
+//    }
+
+    //TODO I should move all of the database function to a new util class.
+
+    /**
      * Ability to add a list of songs to a list of playlists.
      */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
@@ -192,8 +260,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
 
+            //If playlist is null I should create one?
+            if(playlist == null) {
+                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
+                return@launch
+            }
+            
+            
             val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
 
+//TODO crash
             val modifiedSongList = playlist.songs.songs.toMutableList()
             modifiedSongList.addAll(storableSongs)
 
@@ -214,7 +290,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Returns a list of playlists saved on the device.
      */
-    fun getCurrentPlaylists(): List<Playlist> {
+    private fun getCurrentPlaylists(): List<Playlist> {
         return availablePlaylists.value ?: listOf()
     }
 
@@ -282,6 +358,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         controllerFuture.addListener({
             val controller = controllerFuture.get()
             _mediaController.value = controller
+
+            //Add old queue to the mediaController
+            restoreQueue()
 
             controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())

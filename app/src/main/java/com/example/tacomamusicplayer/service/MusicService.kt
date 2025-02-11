@@ -151,6 +151,7 @@ class MusicService : MediaLibraryService() {
     private fun initializeMediaSession(): Boolean {
         Timber.d("initializeMediaSession: ")
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
+            .setId("xxx") //TODO what should I set the Id to?
             .build()
         addSession(session!!)
 
