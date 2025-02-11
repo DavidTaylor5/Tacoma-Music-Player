@@ -221,6 +221,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
 
             //TODO I need a function to turn a Playlist into a list<mediaItems>
+            
+            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
+                Timber.d("restoreQueue: No queue to restore!")
+                return@launch
+            }
 
             //TODO I can't call mediaController from inside this thread?
             withContext(Dispatchers.Main) {
