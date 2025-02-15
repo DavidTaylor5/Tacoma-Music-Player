@@ -3,5 +3,20 @@ package com.example.tacomamusicplayer.constants
 class Const {
     companion object {
         const val PLAYLIST_QUEUE_TITLE: String = "03_NOV_2025_F22_0906_LN7"
+
+        //PLAYLIST OPTIONS
+        const val ADD_TO_PLAYLIST: String = "Add to Playlist"
+        const val REMOVE_FROM_PLAYLIST: String = "Remove from Playlist"
+        const val RENAME_PLAYLIST: String = "Rename Playlist"
+        const val ADD_PLAYLIST_IMAGE: String = "Rename Playlist"
+        const val REMOVE_PLAYLIST: String = "Remove Playlist"
+
+        //QUEUE OPTIONS
+        const val CLEAR_QUEUE: String = "Clear Queue"
+        const val ADD_TO_QUEUE: String = "Add to Queue"
+        const val REMOVE_FROM_QUEUE: String = "Remove from Queue"
+
+        const val CHECK_STATS: String = "Check Stats"
+        const val UNKNOWN: String = "UNKNOWN"
     }
 }

@@ -2,10 +2,15 @@ package com.example.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.ViewholderPlaylistBinding
+import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -47,6 +52,29 @@ class PlaylistAdapter(
 
         val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
         viewHolder.binding.durationTime.text = playlistDurationReadable
+
+        viewHolder.binding.menuIcon.setOnClickListener {
+
+            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+
+            menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleMenuItem(it, position)
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
+        }
+    }
+
+    private fun handleMenuItem(item: MenuItem, position: Int) {
+        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> { /* TODO */}
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> { /* TODO */}
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> { /* TODO */}
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> { /* TODO */}
+            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+        }
     }
 
     override fun getItemCount(): Int {

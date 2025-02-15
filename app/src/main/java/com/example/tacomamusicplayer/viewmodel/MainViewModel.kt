@@ -467,6 +467,27 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     * Function that can remove a playlist from the database.
+     */
+    fun removePlaylist(playlistTitle: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .deletePlaylists(Playlist(
+                    title = playlistTitle,
+                    artUri = "",
+                    PlaylistData()
+                ))
+        }
+    }
+
+    //TODO function to remove a playlist
+
+    //TODO function to rename a playlist
+
+    //TODO function to change image for playlist
+
+    /**
      * Check if necessary permissions are granted.
      */
     private fun checkPermissions() {

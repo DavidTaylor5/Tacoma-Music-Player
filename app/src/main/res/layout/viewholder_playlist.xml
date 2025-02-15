@@ -61,6 +61,14 @@
 
         </LinearLayout>
 
+        <View
+            android:id="@+id/menu_icon"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@drawable/menu_icon"
+            android:layout_gravity="center"
+            />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
