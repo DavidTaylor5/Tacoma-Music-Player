@@ -68,12 +68,13 @@ class PlaylistAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-//        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-//            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
-//            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(position)
-//            MenuOptionUtil.MenuOption.CHECK_STATS -> handleCheckStatus()
-//            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
-//        }
+        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> { /* TODO */}
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> { /* TODO */}
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> { /* TODO */}
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> { /* TODO */}
+            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+        }
     }
 
     override fun getItemCount(): Int {
