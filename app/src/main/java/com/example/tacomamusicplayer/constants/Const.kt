@@ -18,5 +18,13 @@ class Const {
 
         const val CHECK_STATS: String = "Check Stats"
         const val UNKNOWN: String = "UNKNOWN"
+
+        //BUTTON TEXT
+        const val ADD: String = "Add"
+        const val CANCEL: String = "Cancel"
+        const val UPDATE: String = "Update"
+
+        //HINT
+        const val PLAYLIST_HINT = "New Playlist Title"
     }
 }

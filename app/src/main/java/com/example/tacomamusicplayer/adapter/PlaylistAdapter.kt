@@ -69,12 +69,31 @@ class PlaylistAdapter(
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> { /* TODO */}
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> { /* TODO */}
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> { /* TODO */}
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> { /* TODO */}
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylist()
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
+    }
+
+    private fun addPlaylistToQueue() {
+        //todo parentViewModel.addPlaylistToQueue(playlistTitle?)
+    }
+
+    private fun renamePlaylist() {
+        //TODO should bring up the renaming prompt
+    }
+
+    private fun addPlaylistImage() {
+        //TODO logic for grabbing an image
+        //TODO logic for saving that image in the database
+        //TODO Can I save an app to local app data?
+    }
+
+    private fun removePlaylist() {
+        //TODO parentViewModel.removePlaylist()
+        //TODO update adapter
     }
 
     override fun getItemCount(): Int {

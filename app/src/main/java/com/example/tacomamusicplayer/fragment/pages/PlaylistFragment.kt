@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.PlaylistAdapter
+import com.example.tacomamusicplayer.constants.Const
 import com.example.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
@@ -32,24 +33,34 @@ class PlaylistFragment(
 
         binding.fab.setOnClickListener {
             binding.fab.visibility = View.GONE
-            binding.createPlaylistPrompt.resetCurrentPlaylistTitle()
+            binding.createPlaylistPrompt.resetUserInput()
             binding.createPlaylistPrompt.visibility = View.VISIBLE
         }
 
-        binding.createPlaylistPrompt.setAddButtonFunctionality {
-            binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistPrompt.visibility = View.GONE
-            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getCurrentPlaylistTitle())
-        }
-
-        binding.createPlaylistPrompt.setCancelButtonFunctionality {
-            binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistPrompt.visibility = View.GONE
-        }
-
+        setupCreatePlaylistPrompt()
         setupPage()
 
         return binding.root
+    }
+
+    private fun setupCreatePlaylistPrompt() {
+        //set playlist prompt hint
+        binding.createPlaylistPrompt.setTextInputHint(Const.PLAYLIST_HINT)
+
+        // Option 1 will be to cancel
+        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.createPlaylistPrompt.setOption1ButtonOnClick {
+            binding.fab.visibility = View.VISIBLE
+            binding.createPlaylistPrompt.visibility = View.GONE
+        }
+
+        // Option 2 will be to create a new playlist with given name
+        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
+        binding.createPlaylistPrompt.setOption2ButtonOnClick {
+            binding.fab.visibility = View.VISIBLE
+            binding.createPlaylistPrompt.visibility = View.GONE
+            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
+        }
     }
 
     private fun onPlaylistClick(playlistTitle: String) {

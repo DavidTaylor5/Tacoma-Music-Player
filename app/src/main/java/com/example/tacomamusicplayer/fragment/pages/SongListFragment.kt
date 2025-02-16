@@ -14,6 +14,7 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
+import com.example.tacomamusicplayer.constants.Const
 import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
@@ -124,12 +125,20 @@ class SongListFragment(
     }
 
     private fun setupCreatePlaylistPrompt() {
-        binding.createPlaylistPrompt.setAddButtonFunctionality {
-            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getCurrentPlaylistTitle())
-        }
-        binding.createPlaylistPrompt.setCancelButtonFunctionality {
+        //set playlist prompt hint
+        binding.createPlaylistPrompt.setTextInputHint(Const.PLAYLIST_HINT)
+
+        //Option 1 Button will be Cancel the prompt
+        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
             viewModel.clearPreparedSongsForPlaylists()
+        }
+
+        //Option 2 Button will be add a new playlist
+        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
+        binding.createPlaylistPrompt.setOption2ButtonOnClick {
+            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
         }
     }
 

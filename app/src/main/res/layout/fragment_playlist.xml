@@ -31,7 +31,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             />
 
-        <com.example.tacomamusicplayer.view.CustomCreatePlaylistPrompt
+        <com.example.tacomamusicplayer.view.CustomInputTextPrompt
             android:id="@+id/create_playlist_prompt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
