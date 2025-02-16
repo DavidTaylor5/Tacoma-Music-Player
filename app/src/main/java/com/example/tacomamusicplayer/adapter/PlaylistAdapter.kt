@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
@@ -17,6 +18,7 @@ import timber.log.Timber
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
     private val onAlbumClick: (String) -> Unit,
+    val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**
@@ -72,7 +74,12 @@ class PlaylistAdapter(
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
             MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
             MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylist()
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
+                handlePlaylistSetting(
+                    MenuOptionUtil.MenuOption.REMOVE_PLAYLIST,
+                    listOf(playlists[position].title)
+                )
+            }
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
@@ -89,11 +96,6 @@ class PlaylistAdapter(
         //TODO logic for grabbing an image
         //TODO logic for saving that image in the database
         //TODO Can I save an app to local app data?
-    }
-
-    private fun removePlaylist() {
-        //TODO parentViewModel.removePlaylist()
-        //TODO update adapter
     }
 
     override fun getItemCount(): Int {

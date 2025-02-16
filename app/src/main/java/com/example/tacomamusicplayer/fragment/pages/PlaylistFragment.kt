@@ -9,9 +9,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.adapter.PlaylistAdapter
 import com.example.tacomamusicplayer.constants.Const
+import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.example.tacomamusicplayer.enum.PageType
+import com.example.tacomamusicplayer.util.MenuOptionUtil
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
+import timber.log.Timber
 
 class PlaylistFragment(
 
@@ -28,7 +31,11 @@ class PlaylistFragment(
         binding = FragmentPlaylistBinding.inflate(inflater)
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-            binding.displayRecyclerview.adapter = PlaylistAdapter(playlists, this::onPlaylistClick)
+            binding.displayRecyclerview.adapter = PlaylistAdapter(
+                playlists,
+                this::onPlaylistClick,
+                this::handlePlaylistSetting
+            )
         }
 
         binding.fab.setOnClickListener {
@@ -37,15 +44,63 @@ class PlaylistFragment(
             binding.createPlaylistPrompt.visibility = View.VISIBLE
         }
 
+        setupRenamePlaylistPrompt()
         setupCreatePlaylistPrompt()
         setupPage()
 
         return binding.root
     }
 
+    private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
+        when (option) {
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylists(playlists)
+            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+        }
+    }
+
+    private fun addPlaylistToQueue() {
+
+    }
+
+    private fun renamePlaylist() {
+
+    }
+
+    private fun addPlaylistImage() {
+
+    }
+
+    private fun removePlaylists(playlists: List<String>) {
+        Timber.d("removePlaylists: playlists=${playlists}")
+        parentViewModel.removePlaylists(playlists)
+    }
+
+    private fun setupRenamePlaylistPrompt() {
+        //set playlist prompt hint
+        binding.renamePlaylistPrompt.setTextInputHint(Const.RENAME_PLAYLIST_HINT)
+
+        // Option 1 will be to cancel
+        binding.renamePlaylistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.renamePlaylistPrompt.setOption1ButtonOnClick {
+            binding.fab.visibility = View.VISIBLE
+            binding.renamePlaylistPrompt.visibility = View.GONE
+        }
+
+        // Option 2 will be to create a new playlist with given name
+        binding.renamePlaylistPrompt.setOption2ButtonText(Const.UPDATE)
+        binding.renamePlaylistPrompt.setOption2ButtonOnClick {
+            binding.fab.visibility = View.VISIBLE
+            binding.renamePlaylistPrompt.visibility = View.GONE
+            //TODO UPDATE -> parentViewModel.createNamedPlaylist(binding.renamePlaylistPrompt.getUserInputtedText())
+        }
+    }
+
     private fun setupCreatePlaylistPrompt() {
         //set playlist prompt hint
-        binding.createPlaylistPrompt.setTextInputHint(Const.PLAYLIST_HINT)
+        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
 
         // Option 1 will be to cancel
         binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)

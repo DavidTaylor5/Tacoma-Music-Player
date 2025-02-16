@@ -69,7 +69,6 @@ class MenuOptionUtil {
     }
 
     companion object {
-
         /**
          * UI Menu options return a string, which I use to determine specific actions
          * within the app. I use MenuOption enum for simplicity.
@@ -77,11 +76,16 @@ class MenuOptionUtil {
         fun determineMenuOptionFromTitle(title: String): MenuOption {
             return when(title) {
                 Const.ADD_TO_PLAYLIST ->  MenuOption.ADD_TO_PLAYLIST
+                Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
+                Const.RENAME_PLAYLIST -> MenuOption.RENAME_PLAYLIST
+                Const.ADD_PLAYLIST_IMAGE -> MenuOption.ADD_PLAYLIST_IMAGE
+                Const.REMOVE_PLAYLIST -> MenuOption.REMOVE_PLAYLIST
+
                 Const.CLEAR_QUEUE -> MenuOption.CLEAR_QUEUE
                 Const.ADD_TO_QUEUE -> MenuOption.ADD_TO_QUEUE
-                Const.CHECK_STATS -> MenuOption.CHECK_STATS
                 Const.REMOVE_FROM_QUEUE -> MenuOption.REMOVE_FROM_QUEUE
-                Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
+
+                Const.CHECK_STATS -> MenuOption.CHECK_STATS
                 else -> MenuOption.UNKNOWN
             }
         }

@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
 import com.example.tacomamusicplayer.constants.Const
-import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.SongGroupType
@@ -126,7 +125,7 @@ class SongListFragment(
 
     private fun setupCreatePlaylistPrompt() {
         //set playlist prompt hint
-        binding.createPlaylistPrompt.setTextInputHint(Const.PLAYLIST_HINT)
+        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
 
         //Option 1 Button will be Cancel the prompt
         binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)

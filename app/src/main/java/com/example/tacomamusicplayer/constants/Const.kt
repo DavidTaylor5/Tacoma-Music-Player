@@ -25,6 +25,7 @@ class Const {
         const val UPDATE: String = "Update"
 
         //HINT
-        const val PLAYLIST_HINT = "New Playlist Title"
+        const val NEW_PLAYLIST_HINT = "New Playlist"
+        const val RENAME_PLAYLIST_HINT = "New Title"
     }
 }

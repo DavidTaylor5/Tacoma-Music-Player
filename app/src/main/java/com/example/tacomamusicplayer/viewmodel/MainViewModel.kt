@@ -467,6 +467,28 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     * Remove a variable amount of playlists
+     */
+    fun removePlaylists(playlists: List<String>) {
+
+        val allPlaylistsForDeletion = playlists.map { title ->
+            Playlist(
+                title = title,
+                artUri = "",
+                PlaylistData()
+            )
+        }.toTypedArray()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .deletePlaylists(
+                    *allPlaylistsForDeletion
+                )
+        }
+    }
+
+    /**
      * Function that can remove a playlist from the database.
      */
     fun removePlaylist(playlistTitle: String) {
