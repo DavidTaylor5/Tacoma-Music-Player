@@ -28,5 +28,5 @@ interface PlaylistDao {
     fun insertPlaylists(vararg playlists: Playlist)
 
     @Delete
-    fun deletePlaylists(playlist: Playlist)
+    fun deletePlaylists(vararg playlist: Playlist)
 }

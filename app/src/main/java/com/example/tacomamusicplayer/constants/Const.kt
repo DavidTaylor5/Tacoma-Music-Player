@@ -10,6 +10,7 @@ class Const {
         const val RENAME_PLAYLIST: String = "Rename Playlist"
         const val ADD_PLAYLIST_IMAGE: String = "Rename Playlist"
         const val REMOVE_PLAYLIST: String = "Remove Playlist"
+        const val PLAY_PLAYLIST_ONLY: String = "Play Playlist"
 
         //QUEUE OPTIONS
         const val CLEAR_QUEUE: String = "Clear Queue"
@@ -18,5 +19,14 @@ class Const {
 
         const val CHECK_STATS: String = "Check Stats"
         const val UNKNOWN: String = "UNKNOWN"
+
+        //BUTTON TEXT
+        const val ADD: String = "Add"
+        const val CANCEL: String = "Cancel"
+        const val UPDATE: String = "Update"
+
+        //HINT
+        const val NEW_PLAYLIST_HINT = "New Playlist"
+        const val RENAME_PLAYLIST_HINT = "New Title"
     }
 }

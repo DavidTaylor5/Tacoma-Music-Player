@@ -14,7 +14,7 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.adapter.SongListAdapter
-import com.example.tacomamusicplayer.data.Playlist
+import com.example.tacomamusicplayer.constants.Const
 import com.example.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.enum.SongGroupType
@@ -80,21 +80,6 @@ class SongListFragment(
             }
         }
 
-        //TODO Give the user the ability to set an image for a playlist
-        //TODO I probably also want to save a copy of the image, to app data and reference it later.
-        // Sets up the callback
-//        val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-//            // Handle the returned Uri
-//            val what = uri
-//            val huh = "huh"
-//        }
-
-        // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
-        //getPicture.launch("image/*")
-
-        //I want an extra option on menu that will differentiate adding all to the end of the queue
-        //adding all to the empty queue...
-
         binding.songGroupInfo.setOnMenuIconPressed {
             val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
 
@@ -124,12 +109,20 @@ class SongListFragment(
     }
 
     private fun setupCreatePlaylistPrompt() {
-        binding.createPlaylistPrompt.setAddButtonFunctionality {
-            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getCurrentPlaylistTitle())
-        }
-        binding.createPlaylistPrompt.setCancelButtonFunctionality {
+        //set playlist prompt hint
+        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
+
+        //Option 1 Button will be Cancel the prompt
+        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
             viewModel.clearPreparedSongsForPlaylists()
+        }
+
+        //Option 2 Button will be add a new playlist
+        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
+        binding.createPlaylistPrompt.setOption2ButtonOnClick {
+            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
         }
     }
 

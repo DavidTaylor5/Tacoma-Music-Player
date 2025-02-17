@@ -33,6 +33,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+//TODO make a util class called PlaylistUtils, with specific playlist functionality
+//TODO make a util class called AlbumUtils, with specific album functionality
+//This should be more organized, there are way to many functions in this one class.
+
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
  * permissions, and will provide the UI with media related information.
@@ -310,6 +314,39 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     *
+     */
+    fun playAlbum() {
+        //Remove current songs in the queue
+        mediaController.value?.clearMediaItems()
+
+        //TODO grab the media items based on the albumTitle
+
+        //TODO set the mediaController to play those media items
+    }
+
+    //TODO add a play button the playlists and the albums, so that the user can quickly play just those albums or playlists
+
+    /**
+     * Clear queue and play the specified album.
+     */
+    fun playPlaylist(playlistTitle: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            //Grab the media items based on the playlistTitle
+            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val songs = playlist.songs.songs
+            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+
+            withContext(Dispatchers.Main) {
+                //Remove current songs in the queue
+                mediaController.value?.clearMediaItems()
+
+                mediaController.value?.addMediaItems(playlistMediaItems)
+            }
+        }
+    }
+
+    /**
      * Adds multiple songs to the end of the controller in the queue
      */
     fun addSongsToEndOfQueue(songs: List<MediaItem>) {
@@ -463,6 +500,28 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val title = "PLAYLIST: $playlistId"
 
             _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
+        }
+    }
+
+    /**
+     * Remove a variable amount of playlists
+     */
+    fun removePlaylists(playlists: List<String>) {
+
+        val allPlaylistsForDeletion = playlists.map { title ->
+            Playlist(
+                title = title,
+                artUri = "",
+                PlaylistData()
+            )
+        }.toTypedArray()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .deletePlaylists(
+                    *allPlaylistsForDeletion
+                )
         }
     }
 

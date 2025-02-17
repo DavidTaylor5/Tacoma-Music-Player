@@ -35,6 +35,11 @@ class MenuOptionUtil {
                 return Const.REMOVE_PLAYLIST
             }
         },
+        PLAY_PLAYLIST_ONLY {
+            override fun type(): String {
+                return Const.PLAY_PLAYLIST_ONLY
+            }
+        },
 
         //QUEUE OPTIONS
         REMOVE_FROM_QUEUE {
@@ -69,19 +74,24 @@ class MenuOptionUtil {
     }
 
     companion object {
-
         /**
          * UI Menu options return a string, which I use to determine specific actions
          * within the app. I use MenuOption enum for simplicity.
          */
         fun determineMenuOptionFromTitle(title: String): MenuOption {
             return when(title) {
+                Const.PLAY_PLAYLIST_ONLY -> MenuOption.PLAY_PLAYLIST_ONLY
                 Const.ADD_TO_PLAYLIST ->  MenuOption.ADD_TO_PLAYLIST
+                Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
+                Const.RENAME_PLAYLIST -> MenuOption.RENAME_PLAYLIST
+                Const.ADD_PLAYLIST_IMAGE -> MenuOption.ADD_PLAYLIST_IMAGE
+                Const.REMOVE_PLAYLIST -> MenuOption.REMOVE_PLAYLIST
+
                 Const.CLEAR_QUEUE -> MenuOption.CLEAR_QUEUE
                 Const.ADD_TO_QUEUE -> MenuOption.ADD_TO_QUEUE
-                Const.CHECK_STATS -> MenuOption.CHECK_STATS
                 Const.REMOVE_FROM_QUEUE -> MenuOption.REMOVE_FROM_QUEUE
-                Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
+
+                Const.CHECK_STATS -> MenuOption.CHECK_STATS
                 else -> MenuOption.UNKNOWN
             }
         }

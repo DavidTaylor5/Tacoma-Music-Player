@@ -6,10 +6,9 @@
     android:layout_height="match_parent">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/create_playlist_view"
+        android:id="@+id/text_prompt_layout"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:hint="Add Playlist text?...."
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -18,7 +17,7 @@
         android:visibility="visible">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/create_playlist_title_input_text"
+            android:id="@+id/prompt_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -30,19 +29,17 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/cancel_button"
+                android:id="@+id/option_1_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cancel"
                 android:textColor="@color/black"
                 android:layout_marginRight="10dp"
                 />
 
             <Button
-                android:id="@+id/add_button"
+                android:id="@+id/option_2_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add"
                 android:textColor="@color/black"
                 />
         </LinearLayout>

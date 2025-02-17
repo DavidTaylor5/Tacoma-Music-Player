@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tacomamusicplayer.R
 import com.example.tacomamusicplayer.data.Playlist
@@ -17,6 +18,7 @@ import timber.log.Timber
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
     private val onAlbumClick: (String) -> Unit,
+    val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**
@@ -69,12 +71,37 @@ class PlaylistAdapter(
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> { /* TODO */}
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> { /* TODO */}
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> { /* TODO */}
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> { /* TODO */}
+            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> {
+                handlePlaylistSetting(
+                    MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY,
+                    listOf(playlists[position].title)
+                )
+            }
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylists(listOf(), listOf())
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
+            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
+                handlePlaylistSetting(
+                    MenuOptionUtil.MenuOption.REMOVE_PLAYLIST,
+                    listOf(playlists[position].title)
+                )
+            }
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
+    }
+
+    private fun addPlaylistToQueue() {
+        //todo parentViewModel.addPlaylistToQueue(playlistTitle?)
+    }
+
+    private fun renamePlaylists(oldNames: List<String>, newNames: List<String>) {
+        //TODO should bring up the renaming prompt
+    }
+
+    private fun addPlaylistImage() {
+        //TODO logic for grabbing an image
+        //TODO logic for saving that image in the database
+        //TODO Can I save an app to local app data?
     }
 
     override fun getItemCount(): Int {
