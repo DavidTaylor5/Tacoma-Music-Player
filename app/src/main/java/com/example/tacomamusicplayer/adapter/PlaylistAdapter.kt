@@ -71,8 +71,14 @@ class PlaylistAdapter(
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> {
+                handlePlaylistSetting(
+                    MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY,
+                    listOf(playlists[position].title)
+                )
+            }
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylists(listOf(), listOf())
             MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
             MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
                 handlePlaylistSetting(
@@ -88,7 +94,7 @@ class PlaylistAdapter(
         //todo parentViewModel.addPlaylistToQueue(playlistTitle?)
     }
 
-    private fun renamePlaylist() {
+    private fun renamePlaylists(oldNames: List<String>, newNames: List<String>) {
         //TODO should bring up the renaming prompt
     }
 

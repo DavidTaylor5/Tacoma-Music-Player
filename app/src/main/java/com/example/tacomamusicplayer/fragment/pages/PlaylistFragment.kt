@@ -53,11 +53,22 @@ class PlaylistFragment(
 
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
         when (option) {
+            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> playPlaylistOnly(playlists)
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
             MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
             MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
             MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylists(playlists)
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
+        }
+    }
+
+    /**
+     * @param playlists Should be a list with only 1 playlist.
+     */
+    private fun playPlaylistOnly(playlists: List<String>) {
+        Timber.d("playPlaylistOnly: ")
+        if(playlists.isNotEmpty()) {
+            parentViewModel.playPlaylist(playlists[0])
         }
     }
 

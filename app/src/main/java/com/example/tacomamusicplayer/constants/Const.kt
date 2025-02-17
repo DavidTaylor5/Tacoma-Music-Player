@@ -10,6 +10,7 @@ class Const {
         const val RENAME_PLAYLIST: String = "Rename Playlist"
         const val ADD_PLAYLIST_IMAGE: String = "Rename Playlist"
         const val REMOVE_PLAYLIST: String = "Remove Playlist"
+        const val PLAY_PLAYLIST_ONLY: String = "Play Playlist"
 
         //QUEUE OPTIONS
         const val CLEAR_QUEUE: String = "Clear Queue"

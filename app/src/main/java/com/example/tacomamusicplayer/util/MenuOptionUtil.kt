@@ -35,6 +35,11 @@ class MenuOptionUtil {
                 return Const.REMOVE_PLAYLIST
             }
         },
+        PLAY_PLAYLIST_ONLY {
+            override fun type(): String {
+                return Const.PLAY_PLAYLIST_ONLY
+            }
+        },
 
         //QUEUE OPTIONS
         REMOVE_FROM_QUEUE {
@@ -75,6 +80,7 @@ class MenuOptionUtil {
          */
         fun determineMenuOptionFromTitle(title: String): MenuOption {
             return when(title) {
+                Const.PLAY_PLAYLIST_ONLY -> MenuOption.PLAY_PLAYLIST_ONLY
                 Const.ADD_TO_PLAYLIST ->  MenuOption.ADD_TO_PLAYLIST
                 Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
                 Const.RENAME_PLAYLIST -> MenuOption.RENAME_PLAYLIST

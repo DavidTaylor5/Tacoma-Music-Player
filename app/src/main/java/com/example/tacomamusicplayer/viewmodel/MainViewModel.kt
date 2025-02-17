@@ -33,6 +33,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+//TODO make a util class called PlaylistUtils, with specific playlist functionality
+//TODO make a util class called AlbumUtils, with specific album functionality
+//This should be more organized, there are way to many functions in this one class.
+
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
  * permissions, and will provide the UI with media related information.
@@ -306,6 +310,37 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         screenState.value?.let { data ->
             if(data.currentScreen == ScreenType.PERMISSION_DENIED_SCREEN)
                 checkPermissions()
+        }
+    }
+
+    /**
+     *
+     */
+    fun playAlbum() {
+        //Remove current songs in the queue
+        mediaController.value?.clearMediaItems()
+
+        //TODO grab the media items based on the albumTitle
+
+        //TODO set the mediaController to play those media items
+    }
+
+    /**
+     * Clear queue and play the specified album.
+     */
+    fun playPlaylist(playlistTitle: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            //Grab the media items based on the playlistTitle
+            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val songs = playlist.songs.songs
+            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+
+            withContext(Dispatchers.Main) {
+                //Remove current songs in the queue
+                mediaController.value?.clearMediaItems()
+
+                mediaController.value?.addMediaItems(playlistMediaItems)
+            }
         }
     }
 
