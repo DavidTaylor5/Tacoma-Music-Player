@@ -80,21 +80,6 @@ class SongListFragment(
             }
         }
 
-        //TODO Give the user the ability to set an image for a playlist
-        //TODO I probably also want to save a copy of the image, to app data and reference it later.
-        // Sets up the callback
-//        val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-//            // Handle the returned Uri
-//            val what = uri
-//            val huh = "huh"
-//        }
-
-        // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
-        //getPicture.launch("image/*")
-
-        //I want an extra option on menu that will differentiate adding all to the end of the queue
-        //adding all to the empty queue...
-
         binding.songGroupInfo.setOnMenuIconPressed {
             val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
 

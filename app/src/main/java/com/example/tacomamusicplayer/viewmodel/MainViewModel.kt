@@ -325,6 +325,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         //TODO set the mediaController to play those media items
     }
 
+    //TODO add a play button the playlists and the albums, so that the user can quickly play just those albums or playlists
+
     /**
      * Clear queue and play the specified album.
      */

@@ -73,15 +73,27 @@ class PlaylistFragment(
     }
 
     private fun addPlaylistToQueue() {
-
+        //TODO Finish this...
     }
 
     private fun renamePlaylist() {
-
+        //TODO Finish this...
     }
 
     private fun addPlaylistImage() {
+        //TODO Finish this...
 
+        //TODO Give the user the ability to set an image for a playlist
+        //TODO I probably also want to save a copy of the image, to app data and reference it later.
+        // Sets up the callback
+//        val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+//            // Handle the returned Uri
+//            val what = uri
+//            val huh = "huh"
+//        }
+
+        // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
+        //getPicture.launch("image/*")
     }
 
     private fun removePlaylists(playlists: List<String>) {
