@@ -148,23 +148,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
 
-//        getCurrentPlaylists().find { playlist ->
-//            playlist.title == playlistName
-//        }
-//
-//        val isExistingTitle = getCurrentPlaylists().any { playlist ->
-//            playlist.title == playlistName
-//        }
-//
-//        if(isExistingTitle) {
-//            //TODO Use this in the code...
-//            _isPlaylistNameDuplicate.postValue(true)
-//            return
-//        }
-
         val playlist = Playlist(
             title = playlistName,
-            artUri = "",
+            artFile = "",
             songs = PlaylistData(listOf())
         )
 
@@ -201,7 +187,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                 val playlist = Playlist(
                     title = Const.PLAYLIST_QUEUE_TITLE,
-                    artUri = "",
+                    artFile = "",
                     songs = playlistData
                 )
 
@@ -259,6 +245,29 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
         playlistTitles.forEach { playlist ->
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
+        }
+    }
+
+    /**
+     * Update the playlist image.
+     */
+    fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+
+            //If playlist is null I should create one?
+            if(playlist == null) {
+                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
+                return@launch
+            }
+
+            val updatedPlaylist = Playlist(
+                title = playlist.title,
+                artFile = artFileName,
+                songs = playlist.songs
+            )
+
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
         }
     }
 
@@ -511,7 +520,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         val allPlaylistsForDeletion = playlists.map { title ->
             Playlist(
                 title = title,
-                artUri = "",
+                artFile = "",
                 PlaylistData()
             )
         }.toTypedArray()
@@ -534,7 +543,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 .playlistDao()
                 .deletePlaylists(Playlist(
                     title = playlistTitle,
-                    artUri = "",
+                    artFile = "",
                     PlaylistData()
                 ))
         }

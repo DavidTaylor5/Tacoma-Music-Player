@@ -1,6 +1,9 @@
 package com.andaagii.tacomamusicplayer.adapter
 
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -13,6 +16,7 @@ import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
+import java.io.File
 
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
@@ -53,6 +57,21 @@ class PlaylistAdapter(
 
         val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
         viewHolder.binding.durationTime.text = playlistDurationReadable
+
+        //Logic for showing custom playist image
+        val artFile = playlists[position].artFile
+        if(!artFile.isNullOrEmpty()) {
+            val appDir = viewHolder.itemView.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val playlistImageFile = File(appDir, artFile)
+            if(playlistImageFile.exists()) {
+                try {
+                    val artUri = Uri.fromFile(playlistImageFile)
+                    viewHolder.binding.playlistArt.setImageURI(artUri)
+                } catch(e: Exception) {
+                    Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
+                }
+            }
+        }
 
         viewHolder.binding.menuIcon.setOnClickListener {
 
