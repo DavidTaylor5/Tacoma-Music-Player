@@ -25,7 +25,7 @@ class PlaylistFragment(
     private val parentViewModel: MainViewModel by activityViewModels()
 
     //The name of the most recent playlist that I want to update the image for
-    private var modPlaylistImage = "empty"
+    private var playlistThatNeedsNewImage = "empty"
 
 
     //TODO Give the user the ability to set an image for a playlist
@@ -42,9 +42,9 @@ class PlaylistFragment(
         pictureUri?.let { uri ->
             this.context?.let { fragmentContext ->
                 //Save picture to local data
-                UtilImpl.saveImageToFile(fragmentContext, uri, modPlaylistImage)
+                UtilImpl.saveImageToFile(fragmentContext, uri, playlistThatNeedsNewImage)
 
-                //TODO associate picture with playlist
+                parentViewModel.updatePlaylistImage(playlistThatNeedsNewImage, "$playlistThatNeedsNewImage.jpg")
             }
         }
     }
@@ -115,7 +115,7 @@ class PlaylistFragment(
 
     private fun addPlaylistImage(playlistTitle: String) {
         //Playlist that I should update the image for
-        modPlaylistImage = playlistTitle
+        playlistThatNeedsNewImage = playlistTitle
 
         // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
         getPicture.launch("image/*")
