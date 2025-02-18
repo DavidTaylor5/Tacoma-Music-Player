@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.tacomamusicplayer"
+    namespace = "com.andaagii.tacomamusicplayer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.tacomamusicplayer"
+        applicationId = "com.andaagii.tacomamusicplayer"
         minSdk = 29
         targetSdk = 34
         versionCode = 1

@@ -35,7 +35,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.example.tacomamusicplayer.view.CustomSongGroupInfoView
+    <com.andaagii.tacomamusicplayer.view.CustomSongGroupInfoView
         android:id="@+id/song_group_info"
         android:layout_width="match_parent"
         android:layout_height="100dp"/>
