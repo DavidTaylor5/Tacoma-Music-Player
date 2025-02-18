@@ -1,8 +1,10 @@
 package com.example.tacomamusicplayer.util
 
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.util.Size
 import android.view.View
 import android.view.Window
@@ -11,6 +13,9 @@ import android.widget.ImageView
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
 import timber.log.Timber
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -84,6 +89,30 @@ class UtilImpl {
                 songList.add(controller.getMediaItemAt(i))
             }
             return songList
+        }
+
+        /**
+         * Save Image to File in app specific storage, taken from Phind.
+         */
+        fun saveImageToFile(context: Context, sourceUri: Uri) {
+            try {
+                // Get app-specific directory
+                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+                appDir?.let { directory ->
+                    val fileName = "${System.currentTimeMillis()}.jpg"
+                    val destination = File(directory, fileName)
+
+                    // Copy file
+                    context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                        FileOutputStream(destination).use { outputStream ->
+                            inputStream.copyTo(outputStream, bufferSize = 8192)
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                Timber.d("saveImageToFile: Error copying file")
+            }
         }
     }
 }

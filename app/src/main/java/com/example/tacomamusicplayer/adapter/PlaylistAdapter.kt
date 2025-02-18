@@ -79,7 +79,12 @@ class PlaylistAdapter(
             }
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
             MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylists(listOf(), listOf())
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage()
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
+                handlePlaylistSetting(
+                    MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE,
+                    listOf()
+                )
+            }
             MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
                 handlePlaylistSetting(
                     MenuOptionUtil.MenuOption.REMOVE_PLAYLIST,

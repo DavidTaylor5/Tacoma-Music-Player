@@ -8,7 +8,7 @@ class Const {
         const val ADD_TO_PLAYLIST: String = "Add to Playlist"
         const val REMOVE_FROM_PLAYLIST: String = "Remove from Playlist"
         const val RENAME_PLAYLIST: String = "Rename Playlist"
-        const val ADD_PLAYLIST_IMAGE: String = "Rename Playlist"
+        const val ADD_PLAYLIST_IMAGE: String = "Add Playlist Image"
         const val REMOVE_PLAYLIST: String = "Remove Playlist"
         const val PLAY_PLAYLIST_ONLY: String = "Play Playlist"
 

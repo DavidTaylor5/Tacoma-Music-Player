@@ -1,9 +1,12 @@
 package com.example.tacomamusicplayer.fragment.pages
 
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,14 +16,45 @@ import com.example.tacomamusicplayer.data.Playlist
 import com.example.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.example.tacomamusicplayer.enum.PageType
 import com.example.tacomamusicplayer.util.MenuOptionUtil
+import com.example.tacomamusicplayer.util.UtilImpl
 import com.example.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
+import java.io.File
 
 class PlaylistFragment(
 
 ): Fragment() {
     private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+
+
+    //TODO Give the user the ability to set an image for a playlist
+    //TODO I probably also want to save a copy of the image, to app data and reference it later.
+    // Sets up the callback
+    private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        // Handle the returned Uri
+        val pictureUri = uri
+
+        if(pictureUri == null) {
+            Timber.d("getPicture: The picture is null!")
+        }
+
+        pictureUri?.let { uri ->
+            this.context?.let { fragmentContext ->
+                UtilImpl.saveImageToFile(fragmentContext, uri)
+            }
+        }
+
+//        val IMAGE_DIRECTOY_NAME = "images"
+//        val imagesFolder: File = File(Environment.getExternalStorageDirectory(), IMAGE_DIRECTOY_NAME)
+//        imagesFolder.mkdir()
+//
+//        val image = File(imagesFolder, "image.jpg")
+
+
+        //TODO save picture to local data
+        //TODO associate picture with playlist
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,19 +115,8 @@ class PlaylistFragment(
     }
 
     private fun addPlaylistImage() {
-        //TODO Finish this...
-
-        //TODO Give the user the ability to set an image for a playlist
-        //TODO I probably also want to save a copy of the image, to app data and reference it later.
-        // Sets up the callback
-//        val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-//            // Handle the returned Uri
-//            val what = uri
-//            val huh = "huh"
-//        }
-
         // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
-        //getPicture.launch("image/*")
+        getPicture.launch("image/*")
     }
 
     private fun removePlaylists(playlists: List<String>) {
