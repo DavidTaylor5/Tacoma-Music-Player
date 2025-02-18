@@ -22,7 +22,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
-    <com.example.tacomamusicplayer.view.CustomNavigationControl
+    <com.andaagii.tacomamusicplayer.view.CustomNavigationControl
         android:id="@+id/navigation_control"
         android:layout_width="match_parent"
         android:layout_height="100dp"
