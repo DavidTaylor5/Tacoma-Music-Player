@@ -95,8 +95,14 @@ class PlaylistAdapter(
                     listOf(playlists[position].title)
                 )
             }
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylists(listOf(), listOf())
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
+                addPlaylistToQueue(playlists[position].title)
+            }
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> {
+                renamePlaylists(
+                    playlists[position].title
+                )
+            }
             MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
                 handlePlaylistSetting(
                     MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE,
@@ -113,18 +119,18 @@ class PlaylistAdapter(
         }
     }
 
-    private fun addPlaylistToQueue() {
-        //todo parentViewModel.addPlaylistToQueue(playlistTitle?)
+    private fun addPlaylistToQueue(playlistTitle: String) {
+        handlePlaylistSetting(
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE,
+            listOf(playlistTitle)
+        )
     }
 
-    private fun renamePlaylists(oldNames: List<String>, newNames: List<String>) {
-        //TODO should bring up the renaming prompt
-    }
-
-    private fun addPlaylistImage() {
-        //TODO logic for grabbing an image
-        //TODO logic for saving that image in the database
-        //TODO Can I save an app to local app data?
+    private fun renamePlaylists(playlistTitle: String) {
+        handlePlaylistSetting(
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST,
+            listOf(playlistTitle)
+        )
     }
 
     override fun getItemCount(): Int {

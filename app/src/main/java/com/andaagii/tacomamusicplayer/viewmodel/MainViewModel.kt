@@ -179,7 +179,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         mediaController.value?.let { controller ->
             val songs = UtilImpl.getSongListFromMediaController(controller)
             if(!songs.isNullOrEmpty()) {
-                //Playlist()
 
                 val playlistData = PlaylistData(
                     mediaItemUtil.createSongDataFromListOfMediaItem(songs)
@@ -248,6 +247,28 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+  //I need to add back that playlist id...
+    fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
+
+            //If playlist is null I should create one?
+            if(playlist == null) {
+                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$currentTitle")
+                return@launch
+            }
+
+            val updatedPlaylist = Playlist(
+                id = playlist.id,
+                title = newTitle,
+                artFile = playlist.artFile,
+                songs = playlist.songs
+            )
+
+            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+        }
+    }
+
     /**
      * Update the playlist image.
      */
@@ -262,6 +283,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
 
             val updatedPlaylist = Playlist(
+                id = playlist.id,
                 title = playlist.title,
                 artFile = artFileName,
                 songs = playlist.songs
@@ -350,6 +372,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 //Remove current songs in the queue
                 mediaController.value?.clearMediaItems()
 
+                mediaController.value?.addMediaItems(playlistMediaItems)
+            }
+        }
+    }
+
+    fun addPlaylistToBackOfQueue(playlistTitle: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            //Grab the media items based on the playlistTitle
+            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val songs = playlist.songs.songs
+            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+
+            withContext(Dispatchers.Main) {
                 mediaController.value?.addMediaItems(playlistMediaItems)
             }
         }
@@ -513,47 +548,32 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
-     * Remove a variable amount of playlists
+     * Remove a list of of playlists
+     * @param playlists A list of the playlist titles to be removed.
      */
     fun removePlaylists(playlists: List<String>) {
 
-        val allPlaylistsForDeletion = playlists.map { title ->
-            Playlist(
-                title = title,
-                artFile = "",
-                PlaylistData()
-            )
-        }.toTypedArray()
-
-        viewModelScope.launch(Dispatchers.IO) {
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .deletePlaylists(
-                    *allPlaylistsForDeletion
-                )
+        playlists.forEach { playlistTitle ->
+            removePlaylist(playlistTitle)
         }
     }
 
     /**
-     * Function that can remove a playlist from the database.
+     * Removes a single playlist based on its title.
      */
-    fun removePlaylist(playlistTitle: String) {
+    private fun removePlaylist(playlistTitle: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
-                .deletePlaylists(Playlist(
-                    title = playlistTitle,
-                    artFile = "",
-                    PlaylistData()
-                ))
+                .findPlaylistByName(playlistTitle)
+
+            if(playlist != null) {
+                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .deletePlaylists(playlist)
+            }
         }
     }
-
-    //TODO function to remove a playlist
-
-    //TODO function to rename a playlist
-
-    //TODO function to change image for playlist
 
     /**
      * Check if necessary permissions are granted.

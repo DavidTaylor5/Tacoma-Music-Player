@@ -27,10 +27,7 @@ class PlaylistFragment(
     //The name of the most recent playlist that I want to update the image for
     private var playlistThatNeedsNewImage = "empty"
 
-
-    //TODO Give the user the ability to set an image for a playlist
-    //TODO I probably also want to save a copy of the image, to app data and reference it later.
-    // Sets up the callback
+    //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         // Handle the returned Uri
         val pictureUri = uri
@@ -67,11 +64,10 @@ class PlaylistFragment(
 
         binding.fab.setOnClickListener {
             binding.fab.visibility = View.GONE
-            binding.createPlaylistPrompt.resetUserInput()
-            binding.createPlaylistPrompt.visibility = View.VISIBLE
+            binding.playlistPrompt.resetUserInput()
+            binding.playlistPrompt.visibility = View.VISIBLE
         }
 
-        setupRenamePlaylistPrompt()
         setupCreatePlaylistPrompt()
         setupPage()
 
@@ -81,8 +77,22 @@ class PlaylistFragment(
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
         when (option) {
             MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> playPlaylistOnly(playlists)
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue()
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist()
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
+                if(playlists.isNotEmpty()) {
+                    addPlaylistToQueue(
+                        listOf(playlists[0])
+                    )
+                } else {
+                    Timber.d("handlePlaylistSetting: Tried setting playlist image, but given playlists is empty!")
+                }
+            }
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> {
+                if(playlists.isNotEmpty()) {
+                    renamePlaylist(playlists[0])
+                } else {
+                    Timber.d("handlePlaylistSetting: Tried renaming playlist, but given playlists is empty!")
+                }
+            }
             MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
                 if(playlists.isNotEmpty()) {
                     addPlaylistImage(playlists[0])
@@ -105,12 +115,18 @@ class PlaylistFragment(
         }
     }
 
-    private fun addPlaylistToQueue() {
-        //TODO Finish this...
+    private fun addPlaylistToQueue(playlists: List<String>) {
+        Timber.d("addPlaylistToQueue: ")
+        if(playlists.isNotEmpty()) {
+            parentViewModel.addPlaylistToBackOfQueue(playlists[0])
+        }
     }
 
-    private fun renamePlaylist() {
-        //TODO Finish this...
+    private fun renamePlaylist(playlistTitle: String) {
+        setupRenamePlaylistPrompt(playlistTitle)
+
+        binding.playlistPrompt.resetUserInput()
+        binding.playlistPrompt.visibility = View.VISIBLE
     }
 
     private fun addPlaylistImage(playlistTitle: String) {
@@ -126,43 +142,46 @@ class PlaylistFragment(
         parentViewModel.removePlaylists(playlists)
     }
 
-    private fun setupRenamePlaylistPrompt() {
+    private fun setupRenamePlaylistPrompt(playlistTitle: String) {
         //set playlist prompt hint
-        binding.renamePlaylistPrompt.setTextInputHint(Const.RENAME_PLAYLIST_HINT)
+        binding.playlistPrompt.setTextInputHint(Const.RENAME_PLAYLIST_HINT)
 
         // Option 1 will be to cancel
-        binding.renamePlaylistPrompt.setOption1ButtonText(Const.CANCEL)
-        binding.renamePlaylistPrompt.setOption1ButtonOnClick {
+        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.playlistPrompt.setOption1ButtonOnClick {
             binding.fab.visibility = View.VISIBLE
-            binding.renamePlaylistPrompt.visibility = View.GONE
+            binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
-        binding.renamePlaylistPrompt.setOption2ButtonText(Const.UPDATE)
-        binding.renamePlaylistPrompt.setOption2ButtonOnClick {
+        binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
+        binding.playlistPrompt.setOption2ButtonOnClick {
             binding.fab.visibility = View.VISIBLE
-            binding.renamePlaylistPrompt.visibility = View.GONE
-            //TODO UPDATE -> parentViewModel.createNamedPlaylist(binding.renamePlaylistPrompt.getUserInputtedText())
+            binding.playlistPrompt.visibility = View.GONE
+            parentViewModel.updatePlaylistTitle(playlistTitle, binding.playlistPrompt.getUserInputtedText())
+
+            //set it back to the create playlist prompt
+            setupCreatePlaylistPrompt()
         }
     }
 
     private fun setupCreatePlaylistPrompt() {
         //set playlist prompt hint
-        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
+        binding.playlistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
 
         // Option 1 will be to cancel
-        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
-        binding.createPlaylistPrompt.setOption1ButtonOnClick {
+        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.playlistPrompt.setOption1ButtonOnClick {
             binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistPrompt.visibility = View.GONE
+            binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
-        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
-        binding.createPlaylistPrompt.setOption2ButtonOnClick {
+        binding.playlistPrompt.setOption2ButtonText(Const.ADD)
+        binding.playlistPrompt.setOption2ButtonOnClick {
             binding.fab.visibility = View.VISIBLE
-            binding.createPlaylistPrompt.visibility = View.GONE
-            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
+            binding.playlistPrompt.visibility = View.GONE
+            parentViewModel.createNamedPlaylist(binding.playlistPrompt.getUserInputtedText())
         }
     }
 
