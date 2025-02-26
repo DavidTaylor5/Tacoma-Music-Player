@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
@@ -34,6 +35,8 @@ class SongListFragment(
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: SongListViewModel by viewModels()
 
+    private var currentSongGroup:  SongGroup? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,9 +46,13 @@ class SongListFragment(
 
         parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroup ->
             Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
+
+            currentSongGroup = songGroup
+
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songGroup.songs,
                 this::handleSongSetting,
+                this::handleSongClicked,
                 songGroup.type,
                 {  } //TODO update playlist order if this is a playlist...
             )
@@ -170,6 +177,16 @@ class SongListFragment(
             ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             CHECK_STATS -> handleCheckStats()
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+        }
+    }
+
+    /**
+     * When a song is clicked, I should clear the queue and start playing the current song group
+     * at the position specified.
+     */
+    private fun handleSongClicked(position: Int) {
+        currentSongGroup?.let { songGroup ->
+            parentViewModel.playSongGroupAtPosition(songGroup, position)
         }
     }
 

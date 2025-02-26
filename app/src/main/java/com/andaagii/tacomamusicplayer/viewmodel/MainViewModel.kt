@@ -349,21 +349,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
-     *
+     *  Clear queue and play the song group at a certain position.
      */
-    fun playAlbum() {
-        //Remove current songs in the queue
-        mediaController.value?.clearMediaItems()
+    fun playSongGroupAtPosition(songGroup: SongGroup, position: Int) {
 
-        //TODO grab the media items based on the albumTitle
+        mediaController.value?.let { controller ->
+            controller.clearMediaItems()
+            controller.pause()
 
-        //TODO set the mediaController to play those media items
+            controller.addMediaItems(songGroup.songs)
+
+            controller.seekTo(position, 0L)
+            controller.play()
+        }
     }
 
     //TODO add a play button the playlists and the albums, so that the user can quickly play just those albums or playlists
 
     /**
-     * Clear queue and play the specified album.
+     * Clear queue and play the specified playlist.
      */
     fun playPlaylist(playlistTitle: String) {
         viewModelScope.launch(Dispatchers.IO) {
