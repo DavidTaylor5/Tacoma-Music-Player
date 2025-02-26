@@ -64,7 +64,7 @@ class SongListFragment(
                 }
 
             } else { // Playlist icon
-
+                UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
             }
         }
 
