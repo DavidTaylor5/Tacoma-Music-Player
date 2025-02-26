@@ -23,6 +23,7 @@ import timber.log.Timber
 class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
+    val handleSongClick: (position:Int) -> Unit,
     val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
@@ -99,8 +100,10 @@ class SongListAdapter(
                 songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
             }
 
-            //TODO what to do when a song is clicked?
-            //viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+            //When I click the text of a song, it should add songgroup to the queue and start playing at that song.
+            viewHolder.binding.textVerticalContainer.setOnClickListener {
+                handleSongClick(viewHolder.absoluteAdapterPosition)
+            }
 
             UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,

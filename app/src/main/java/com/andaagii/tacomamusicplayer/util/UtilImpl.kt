@@ -2,6 +2,7 @@ package com.andaagii.tacomamusicplayer.util
 
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -112,6 +113,50 @@ class UtilImpl {
                 }
             } catch (e: IOException) {
                 Timber.d("saveImageToFile: Error copying file")
+            }
+        }
+
+
+        /**
+         * I store images in the app-specific storaage, this function will take a f
+         */
+        fun setPlaylistImageFromAppStorage(view: ImageView, playlistTitle: String) {
+            Timber.d("setPlaylistImageFromAppStorage: playlistTitle=$playlistTitle")
+            val playlistFile = "$playlistTitle.jpg"
+
+            if(playlistFile.isNotEmpty()) {
+                val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val imageFile = File(appDir, playlistFile)
+                if(imageFile.exists()) {
+                    try {
+                        val artUri = Uri.fromFile(imageFile)
+                        view.setImageURI(artUri)
+                    } catch(e: Exception) {
+                        Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
+                    }
+                }
+            }
+        }
+
+        /**
+         * Renames the playlistImage associated with the playlist.
+         * @param oldPlaylistName The oldPlaylistName associated with playlist image
+         * @param newPlaylistName The new name for the playlist image
+         */
+        fun renamePlaylistImageFile(context: Context, oldPlaylistName: String, newPlaylistName: String) {
+            Timber.d("renamePlaylistImageFile: ")
+            val playlistFileName = "$oldPlaylistName.jpg"
+            val newPlaylistFileName = "$newPlaylistName.jpg"
+
+            if(playlistFileName.isNotEmpty()) {
+                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+                val currentImageFile = File(appDir, playlistFileName)
+                val updatedNameFile = File(appDir, newPlaylistFileName)
+
+                if(currentImageFile.exists()) {
+                    currentImageFile.renameTo(updatedNameFile)
+                }
             }
         }
     }

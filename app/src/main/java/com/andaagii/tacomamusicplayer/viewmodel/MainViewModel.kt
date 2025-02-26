@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.internal.Util
 import timber.log.Timber
 
 //TODO make a util class called PlaylistUtils, with specific playlist functionality
@@ -261,9 +262,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val updatedPlaylist = Playlist(
                 id = playlist.id,
                 title = newTitle,
-                artFile = playlist.artFile,
+                artFile = "$newTitle.jpg",
                 songs = playlist.songs
             )
+
+            //The playlistImage is saved using playlistTitle, update playlist image file name
+           UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
 
             PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
         }
@@ -345,21 +349,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
-     *
+     *  Clear queue and play the song group at a certain position.
      */
-    fun playAlbum() {
-        //Remove current songs in the queue
-        mediaController.value?.clearMediaItems()
+    fun playSongGroupAtPosition(songGroup: SongGroup, position: Int) {
 
-        //TODO grab the media items based on the albumTitle
+        mediaController.value?.let { controller ->
+            controller.clearMediaItems()
+            controller.pause()
 
-        //TODO set the mediaController to play those media items
+            controller.addMediaItems(songGroup.songs)
+
+            controller.seekTo(position, 0L)
+            controller.play()
+        }
     }
 
     //TODO add a play button the playlists and the albums, so that the user can quickly play just those albums or playlists
 
     /**
-     * Clear queue and play the specified album.
+     * Clear queue and play the specified playlist.
      */
     fun playPlaylist(playlistTitle: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -519,7 +527,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
                 childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                     val songs = childrenFuture.get().value?.toList() ?: listOf()
-                    val title = "ALBUM: $albumId"
+                    val title = albumId
                     val songGroupType = SongGroupType.ALBUM
                     _currentSongList.value = SongGroup(songGroupType, songs, title)
                 }, MoreExecutors.directExecutor())
@@ -541,7 +549,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
             val songGroupType = SongGroupType.PLAYLIST
-            val title = "PLAYLIST: $playlistId"
+            val title = playlistId
 
             _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
         }
