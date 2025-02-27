@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
@@ -63,8 +65,8 @@ class PlaylistFragment(
             )
         }
 
-        binding.fab.setOnClickListener {
-            binding.fab.visibility = View.GONE
+        binding.createPlaylistButton.setOnClickListener{
+            deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
             binding.playlistPrompt.visibility = View.VISIBLE
         }
@@ -73,6 +75,16 @@ class PlaylistFragment(
         setupPage()
 
         return binding.root
+    }
+
+    private fun activatePlaylistButton() {
+        binding.createPlaylistButton.isClickable = true
+        binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#4CAF50"))
+    }
+
+    private fun deactivatePlaylistButton() {
+        binding.createPlaylistButton.isClickable = false
+        binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#000000"))
     }
 
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
@@ -150,14 +162,14 @@ class PlaylistFragment(
         // Option 1 will be to cancel
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
-            binding.fab.visibility = View.VISIBLE
+            activatePlaylistButton()
             binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
         binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
         binding.playlistPrompt.setOption2ButtonOnClick {
-            binding.fab.visibility = View.VISIBLE
+            activatePlaylistButton()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.updatePlaylistTitle(playlistTitle, binding.playlistPrompt.getUserInputtedText())
 
@@ -173,14 +185,14 @@ class PlaylistFragment(
         // Option 1 will be to cancel
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
-            binding.fab.visibility = View.VISIBLE
+            activatePlaylistButton()
             binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
         binding.playlistPrompt.setOption2ButtonText(Const.ADD)
         binding.playlistPrompt.setOption2ButtonOnClick {
-            binding.fab.visibility = View.VISIBLE
+            activatePlaylistButton()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.createNamedPlaylist(binding.playlistPrompt.getUserInputtedText())
         }
