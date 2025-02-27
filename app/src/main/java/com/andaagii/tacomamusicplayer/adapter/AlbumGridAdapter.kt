@@ -18,29 +18,29 @@ import timber.log.Timber
 /**
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
-class AlbumListAdapter(
+class AlbumGridAdapter(
     private val albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
-): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() {
+): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
-    class AlbumViewHolder(val binding : ViewholderAlbumBinding): RecyclerView.ViewHolder(binding.root)
+    class AlbumGridViewHolder(val binding : ViewholderAlbumGridLayoutBinding): RecyclerView.ViewHolder(binding.root)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumGridViewHolder {
         Timber.d("onCreateViewHolder: ")
 
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
         //TODO I will also need an if statement if I want to switch between bindings
-        val binding = ViewholderAlbumBinding.inflate(inflater, parent, false)
+        val binding = ViewholderAlbumGridLayoutBinding.inflate(inflater, parent, false)
 
-        return AlbumViewHolder(binding)
+        return AlbumGridViewHolder(binding)
     }
 
     // Replace the contents of a view (invoked by the layout manager)
-    @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: AlbumViewHolder, position: Int) {
+    @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: AlbumGridViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
         var albumTitle = "Default ALBUM"

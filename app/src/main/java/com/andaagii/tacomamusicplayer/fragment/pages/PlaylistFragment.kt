@@ -13,8 +13,11 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
+import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
+import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
@@ -29,6 +32,9 @@ class PlaylistFragment(
 
     //The name of the most recent playlist that I want to update the image for
     private var playlistThatNeedsNewImage = "empty"
+
+    private var currentLayout = LayoutType.LINEAR_LAYOUT
+    private var currentPlaylists: List<Playlist> = listOf()
 
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -49,6 +55,24 @@ class PlaylistFragment(
         }
     }
 
+    private fun updatePlaylistLayout(layout: LayoutType) {
+
+        //TODO Dangerous, what if I only update one adapter... this is not efficient?
+        if(layout == LayoutType.LINEAR_LAYOUT) {
+            binding.displayRecyclerview.adapter = PlaylistAdapter(
+                currentPlaylists,
+                this::onPlaylistClick,
+                this::handlePlaylistSetting
+            )
+        } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
+            binding.displayRecyclerview.adapter = PlaylistGridAdapter(
+                currentPlaylists,
+                this::onPlaylistClick,
+                this::handlePlaylistSetting
+            )
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -58,6 +82,9 @@ class PlaylistFragment(
         binding = FragmentPlaylistBinding.inflate(inflater)
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
+
+            currentPlaylists = playlists
+
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 playlists,
                 this::onPlaylistClick,
@@ -69,6 +96,22 @@ class PlaylistFragment(
             deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
             binding.playlistPrompt.visibility = View.VISIBLE
+        }
+
+        binding.layoutButton.setOnClickListener {
+            //update the current layout...
+            //If I'm on gridlayout, switch to linear layout and vice versa.
+            if(currentLayout == LayoutType.LINEAR_LAYOUT) {
+                currentLayout = LayoutType.TWO_GRID_LAYOUT
+                binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
+                updatePlaylistLayout(LayoutType.TWO_GRID_LAYOUT)
+                binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
+            } else {
+                currentLayout = LayoutType.LINEAR_LAYOUT
+                binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
+                updatePlaylistLayout(LayoutType.LINEAR_LAYOUT)
+                binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            }
         }
 
         setupCreatePlaylistPrompt()
