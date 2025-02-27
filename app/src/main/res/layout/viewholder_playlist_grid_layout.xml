@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/item_container"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:elevation="4dp"
+    app:cardCornerRadius="10dp"
+    android:layout_margin="5dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_weight="1"
+            >
+
+            <ImageView
+                android:id="@+id/playlist_art"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:src="@drawable/wu_tang_placeholder"
+                android:scaleType="centerCrop"
+                android:layout_weight="1"
+                />
+
+            <TextView
+                android:id="@+id/playlist_name"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:text="DEFAULT Text"
+                android:textColor="@color/text_icons"
+                android:background="#9C27B0"
+                android:textAlignment="center"
+                android:textSize="10dp"
+                android:maxLines="2"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/duration_tracks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="2dp"
+                    />
+
+                <TextView
+                    android:id="@+id/duration_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="2dp"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="35dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="#FF9800"
+            android:gravity="center_vertical">
+
+            <View
+                android:id="@+id/menu_icon"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/menu_icon"
+                android:layout_gravity="top"
+                android:layout_marginBottom="30dp"
+                />
+
+            <View
+                android:id="@+id/play_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/white_play_arrow"
+                android:layout_gravity="bottom"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
+
