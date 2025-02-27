@@ -185,16 +185,30 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     mediaItemUtil.createSongDataFromListOfMediaItem(songs)
                 )
 
-                val playlist = Playlist(
-                    title = Const.PLAYLIST_QUEUE_TITLE,
-                    artFile = "",
-                    songs = playlistData
-                )
-
                 viewModelScope.launch(Dispatchers.IO) {
+                    val savedQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                        .playlistDao()
+                        .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
+
+                    //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
+                    val updateStoredQueue = if(savedQueue != null) {
+                        Playlist(
+                            savedQueue.id,
+                            savedQueue.title,
+                            savedQueue.artFile,
+                            playlistData
+                        )
+                    } else {
+                        Playlist(
+                            title = Const.PLAYLIST_QUEUE_TITLE,
+                            artFile = "",
+                            songs = playlistData
+                        )
+                    }
+
                     PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                         .playlistDao()
-                        .insertPlaylists(playlist)
+                        .insertPlaylists(updateStoredQueue)
                 }
             }
         }

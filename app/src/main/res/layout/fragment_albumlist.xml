@@ -37,6 +37,8 @@
             android:text="2x2 Grid"
             android:clickable="true"
             android:layout_weight="1"
+            android:textColor="@color/white"
+            android:backgroundTint="#4CAF50"
             />
 
         <TextView
