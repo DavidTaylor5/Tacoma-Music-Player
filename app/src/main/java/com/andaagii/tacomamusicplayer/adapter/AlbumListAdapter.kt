@@ -10,6 +10,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
+import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
+import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -24,13 +26,15 @@ class AlbumListAdapter(
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
-    class AlbumViewHolder(val binding : ViewholderAlbumBinding): RecyclerView.ViewHolder(binding.root)
+    class AlbumViewHolder(val binding : ViewholderAlbumGridLayoutBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumViewHolder {
         Timber.d("onCreateViewHolder: ")
 
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val binding = ViewholderAlbumBinding.inflate(inflater, parent, false)
+
+        //TODO I will also need an if statement if I want to switch between bindings
+        val binding = ViewholderAlbumGridLayoutBinding.inflate(inflater, parent, false)
 
         return AlbumViewHolder(binding)
     }
@@ -58,7 +62,7 @@ class AlbumListAdapter(
             UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 albumUri,
-                Size(100, 100)
+                Size(400, 400)
             )
         }
 

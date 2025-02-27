@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -192,6 +193,9 @@ class PlaylistFragment(
 
     private fun setupPage() {
         binding.sectionTitle.text = "PLAYLISTS"
+
+        //TODO allow the user to choose between linear playlists and grid playlists
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        //binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
     }
 }

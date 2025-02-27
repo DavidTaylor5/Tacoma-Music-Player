@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
@@ -51,6 +52,9 @@ class AlbumListFragment(
 
     private fun setupPage() {
         binding.sectionTitle.text = "ALBUMS"
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+
+        //TODO allow the user to choose between linear playlists and grid playlists
+        //binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
     }
 }
