@@ -25,6 +25,14 @@
         android:text="Queue DESCRIPTION ..."/>
 
     <View
+        android:id="@+id/play_button"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/white_play_arrow"
+        android:layout_gravity="center"
+        />
+
+    <View
         android:id="@+id/menu_icon"
         android:layout_width="35dp"
         android:layout_height="35dp"

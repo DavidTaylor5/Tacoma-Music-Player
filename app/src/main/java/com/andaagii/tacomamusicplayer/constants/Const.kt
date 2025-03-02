@@ -4,6 +4,9 @@ class Const {
     companion object {
         const val PLAYLIST_QUEUE_TITLE: String = "03_NOV_2025_F22_0906_LN7"
 
+        //SongGroup Options
+        const val PLAY_SONG_GROUP: String = "Play Song Group"
+
         //PLAYLIST OPTIONS
         const val ADD_TO_PLAYLIST: String = "Add to Playlist"
         const val REMOVE_FROM_PLAYLIST: String = "Remove from Playlist"

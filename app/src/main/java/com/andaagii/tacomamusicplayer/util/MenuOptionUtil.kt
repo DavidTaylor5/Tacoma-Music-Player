@@ -9,6 +9,13 @@ class MenuOptionUtil {
      */
     enum class MenuOption {
 
+        //Song Group Options
+        PLAY_SONG_GROUP {
+            override fun type(): String {
+                return Const.PLAY_SONG_GROUP
+            }
+        },
+
         //PLAYLIST OPTIONS
         ADD_TO_PLAYLIST {
             override fun type(): String {
@@ -80,6 +87,8 @@ class MenuOptionUtil {
          */
         fun determineMenuOptionFromTitle(title: String): MenuOption {
             return when(title) {
+                Const.PLAY_SONG_GROUP -> MenuOption.PLAY_SONG_GROUP
+
                 Const.PLAY_PLAYLIST_ONLY -> MenuOption.PLAY_PLAYLIST_ONLY
                 Const.ADD_TO_PLAYLIST ->  MenuOption.ADD_TO_PLAYLIST
                 Const.REMOVE_FROM_PLAYLIST -> MenuOption.REMOVE_FROM_PLAYLIST
