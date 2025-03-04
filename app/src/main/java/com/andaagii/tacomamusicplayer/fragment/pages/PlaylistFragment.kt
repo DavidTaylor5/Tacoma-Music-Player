@@ -83,10 +83,15 @@ class PlaylistFragment(
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            currentPlaylists = playlists
+            //Queue is saved as a playlist in database, user doesn't need to access it.
+            val playlistsWithoutQueue = playlists.filter { playlist ->
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+            }
+
+            currentPlaylists = playlistsWithoutQueue
 
             binding.displayRecyclerview.adapter = PlaylistAdapter(
-                playlists,
+                playlistsWithoutQueue,
                 this::onPlaylistClick,
                 this::handlePlaylistSetting
             )
