@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.activity
 
+import android.content.Context
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -7,6 +8,9 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -22,6 +26,9 @@ import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
+
+//Preferences DataStore, for storing settings in my app
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 //TODO I need to make smart goals...
 

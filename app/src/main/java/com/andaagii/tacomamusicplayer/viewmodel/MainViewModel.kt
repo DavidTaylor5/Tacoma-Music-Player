@@ -2,6 +2,7 @@ package com.andaagii.tacomamusicplayer.viewmodel
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -13,6 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.andaagii.tacomamusicplayer.activity.dataStore
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.PlaylistData
@@ -20,15 +22,19 @@ import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
+import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
+import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.internal.Util
@@ -104,6 +110,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
 
+    val layoutForPlaylistTab: LiveData<LayoutType>
+        get() = _layoutForPlaylistTab
+    private val _layoutForPlaylistTab: MutableLiveData<LayoutType> = MutableLiveData(LayoutType.LINEAR_LAYOUT)
+
+    val layoutForAlbumTab: LiveData<LayoutType>
+        get() = _layoutForAlbumTab
+    private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData(LayoutType.LINEAR_LAYOUT)
+
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
@@ -118,6 +132,27 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 )
             )
             super.onMediaMetadataChanged(mediaMetadata)
+        }
+    }
+
+    fun setTabLayoutsFromUserSettings(context: Context) {
+        determinePlaylistTabLayout(context)
+        determineAlbumTabLayout(context)
+    }
+
+    private fun determinePlaylistTabLayout(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val layoutString = DataStoreUtil.getPlaylistLayoutPreference(context).single()
+            val layout = LayoutType.determineLayoutFromString(layoutString)
+            _layoutForPlaylistTab.postValue(layout)
+        }
+    }
+
+    private fun determineAlbumTabLayout(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val layoutString = DataStoreUtil.getAlbumLayoutPreference(context).single()
+            val layout = LayoutType.determineLayoutFromString(layoutString)
+            _layoutForAlbumTab.postValue(layout)
         }
     }
 

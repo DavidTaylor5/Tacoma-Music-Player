@@ -56,15 +56,21 @@ class PlaylistFragment(
     }
 
     private fun updatePlaylistLayout(layout: LayoutType) {
+        Timber.d("updatePlaylistLayout: layout=$layout")
+        currentLayout = layout
 
         //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
+            binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
                 this::handlePlaylistSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
+            binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
             binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
@@ -83,13 +89,22 @@ class PlaylistFragment(
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            currentPlaylists = playlists
+            //Queue is saved as a playlist in database, user doesn't need to access it.
+            val playlistsWithoutQueue = playlists.filter { playlist ->
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+            }
+
+            currentPlaylists = playlistsWithoutQueue
 
             binding.displayRecyclerview.adapter = PlaylistAdapter(
-                playlists,
+                playlistsWithoutQueue,
                 this::onPlaylistClick,
                 this::handlePlaylistSetting
             )
+        }
+
+        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
+            updatePlaylistLayout(layout)
         }
 
         binding.createPlaylistButton.setOnClickListener{
@@ -98,6 +113,7 @@ class PlaylistFragment(
             binding.playlistPrompt.visibility = View.VISIBLE
         }
 
+        //TODO replace with logic for setting new layout
         binding.layoutButton.setOnClickListener {
             //update the current layout...
             //If I'm on gridlayout, switch to linear layout and vice versa.
