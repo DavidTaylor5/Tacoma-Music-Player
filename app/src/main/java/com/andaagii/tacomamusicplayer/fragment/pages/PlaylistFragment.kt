@@ -56,15 +56,21 @@ class PlaylistFragment(
     }
 
     private fun updatePlaylistLayout(layout: LayoutType) {
+        Timber.d("updatePlaylistLayout: layout=$layout")
+        currentLayout = layout
 
         //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
+            binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
                 this::handlePlaylistSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
+            binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
             binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
@@ -97,12 +103,17 @@ class PlaylistFragment(
             )
         }
 
+        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
+            updatePlaylistLayout(layout)
+        }
+
         binding.createPlaylistButton.setOnClickListener{
             deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
             binding.playlistPrompt.visibility = View.VISIBLE
         }
 
+        //TODO replace with logic for setting new layout
         binding.layoutButton.setOnClickListener {
             //update the current layout...
             //If I'm on gridlayout, switch to linear layout and vice versa.

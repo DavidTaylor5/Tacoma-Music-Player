@@ -47,6 +47,10 @@ android {
 dependencies {
 //    kapt("groupId:artifactId:version")
 
+
+    // Preferences DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.3")
+
     //ROOM
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")

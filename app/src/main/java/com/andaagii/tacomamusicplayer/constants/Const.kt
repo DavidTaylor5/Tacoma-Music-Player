@@ -28,5 +28,9 @@ class Const {
         //HINT
         const val NEW_PLAYLIST_HINT = "New Playlist"
         const val RENAME_PLAYLIST_HINT = "New Title"
+
+        //DATASTORE SETTINGS
+        const val SETTING_PLAYLIST_LAYOUT = "SETTING_PLAYLIST_LAYOUT"
+        const val SETTING_ALBUM_LAYOUT = "SETTING_ALBUM_LAYOUT"
     }
 }
