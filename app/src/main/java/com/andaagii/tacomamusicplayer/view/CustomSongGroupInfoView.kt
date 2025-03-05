@@ -17,6 +17,7 @@ class CustomSongGroupInfoView @JvmOverloads constructor(
     private lateinit var binding: CustomSongGroupInfoViewBinding
 
     private var onMenuIconPressed : () -> Unit = {}
+    private var onPlayIconPressed : () -> Unit = {}
 
 
     init {
@@ -24,6 +25,10 @@ class CustomSongGroupInfoView @JvmOverloads constructor(
             val inflater =
                 context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             binding = CustomSongGroupInfoViewBinding.inflate(inflater, this, true)
+
+            binding.playButton.setOnClickListener {
+                onPlayIconPressed()
+            }
 
             binding.menuIcon.setOnClickListener {
                 onMenuIconPressed()
@@ -33,6 +38,10 @@ class CustomSongGroupInfoView @JvmOverloads constructor(
 
     fun setOnMenuIconPressed(onPress: () -> Unit) {
         onMenuIconPressed = onPress
+    }
+
+    fun setOnPlayIconPressed(onPress: () -> Unit) {
+        onPlayIconPressed = onPress
     }
 
     fun setSongGroupTitleText(title: String) {

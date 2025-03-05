@@ -430,6 +430,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 mediaController.value?.clearMediaItems()
 
                 mediaController.value?.addMediaItems(playlistMediaItems)
+
+                mediaController.value?.play()
             }
         }
     }

@@ -20,6 +20,7 @@ import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
@@ -85,6 +86,10 @@ class SongListFragment(
             } else {
                 binding.playlistPrompt.visibility = View.GONE
             }
+        }
+
+        binding.songGroupInfo.setOnPlayIconPressed {
+            handlePlaySongGroup()
         }
 
         binding.songGroupInfo.setOnMenuIconPressed {
@@ -173,10 +178,17 @@ class SongListFragment(
         viewModel.prepareSongForPlaylists(mediaItem)
 
         when (menuOption) {
+            PLAY_SONG_GROUP -> handlePlaySongGroup()
             ADD_TO_PLAYLIST -> handleAddToPlaylist()
             ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             CHECK_STATS -> handleCheckStats()
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
+        }
+    }
+
+    private fun handlePlaySongGroup() {
+        currentSongGroup?.let { songGroup ->
+            parentViewModel.playSongGroupAtPosition(songGroup, 0)
         }
     }
 

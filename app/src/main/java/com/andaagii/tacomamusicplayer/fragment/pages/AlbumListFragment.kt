@@ -12,8 +12,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
 import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
-import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
-import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
