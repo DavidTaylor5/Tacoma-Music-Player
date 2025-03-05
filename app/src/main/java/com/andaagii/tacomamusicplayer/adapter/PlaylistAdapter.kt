@@ -20,6 +20,7 @@ import java.io.File
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
     private val onAlbumClick: (String) -> Unit,
+    private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
@@ -70,6 +71,10 @@ class PlaylistAdapter(
                     Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
                 }
             }
+        }
+
+        viewHolder.binding.playButton.setOnClickListener {
+            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {

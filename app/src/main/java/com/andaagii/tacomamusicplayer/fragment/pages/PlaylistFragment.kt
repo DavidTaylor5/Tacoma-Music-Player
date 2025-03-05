@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -66,6 +65,7 @@ class PlaylistFragment(
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
+                parentViewModel::playPlaylist,
                 this::handlePlaylistSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
@@ -74,6 +74,7 @@ class PlaylistFragment(
             binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,
+                parentViewModel::playPlaylist,
                 this::handlePlaylistSetting
             )
         }
@@ -99,6 +100,7 @@ class PlaylistFragment(
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 playlistsWithoutQueue,
                 this::onPlaylistClick,
+                parentViewModel::playPlaylist,
                 this::handlePlaylistSetting
             )
         }
