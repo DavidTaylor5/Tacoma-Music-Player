@@ -21,6 +21,7 @@ import timber.log.Timber
 class AlbumGridAdapter(
     private val albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
+    private val onPlayIconClick: (String) -> Unit,
 ): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
 
     /**
@@ -56,6 +57,10 @@ class AlbumGridAdapter(
             albumTitle = albums[position].mediaMetadata.albumTitle.toString()
             albumArtist = albums[position].mediaMetadata.albumArtist.toString()
             albumUri = albums[position].mediaMetadata.artworkUri
+
+            viewHolder.binding.playButton.setOnClickListener {
+                onPlayIconClick(albumTitle)
+            }
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 

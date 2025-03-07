@@ -19,7 +19,7 @@ import java.io.File
 
 class PlaylistAdapter(
     private val playlists:  List<Playlist>,
-    private val onAlbumClick: (String) -> Unit,
+    private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
@@ -43,7 +43,7 @@ class PlaylistAdapter(
         viewHolder.binding.playlistName.text = playlists[position].title
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onAlbumClick(playlists[position].title ?: "Unknown title?")
+            onPlaylistClick(playlists[position].title ?: "Unknown title?")
         }
 
         //Determine Playlist Duration Information

@@ -569,7 +569,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * High level function that will attempt to set a list of songs (MediaItems) based on album title.
      * @param albumId The title of an album to be queried.
      */
-    fun querySongsFromAlbum(albumId: String) {
+    fun querySongsFromAlbum(albumId: String, shouldPlayAlbum: Boolean = false) {
         Timber.d("querySongsFromAlbum: ")
         if(mediaBrowser != null) {
 
@@ -581,11 +581,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     val title = albumId
                     val songGroupType = SongGroupType.ALBUM
                     _currentSongList.value = SongGroup(songGroupType, songs, title)
+
+                    if(shouldPlayAlbum) {
+                        _mediaController.value?.clearMediaItems()
+                        _mediaController.value?.addMediaItems(songs)
+                        _mediaController.value?.play()
+                    }
                 }, MoreExecutors.directExecutor())
             }
         } else {
             Timber.d("querySongsFromAlbum: mediaBrowser isn't ready...")
         }
+    }
+
+    fun playAlbum(albumTitle: String) {
+        Timber.d("playAlbum: ")
+        querySongsFromAlbum(
+            albumTitle,
+            shouldPlayAlbum = true
+        )
     }
 
     /**

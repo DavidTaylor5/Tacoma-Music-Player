@@ -42,7 +42,11 @@ class AlbumListFragment(
                 currentAlbumList = mediaList
 
                 Timber.d("onCreateView: found albumList.size=${mediaList.size}")
-                binding.displayRecyclerview.adapter = AlbumListAdapter(mediaList, this::onAlbumClick)
+                binding.displayRecyclerview.adapter = AlbumListAdapter(
+                    mediaList,
+                    this::onAlbumClick,
+                    parentViewModel::playAlbum
+                )
             }
 
         //Now I just need to create different fragments for each type?
@@ -75,12 +79,14 @@ class AlbumListFragment(
         if(layout == LayoutType.LINEAR_LAYOUT) {
             binding.displayRecyclerview.adapter = AlbumListAdapter(
                 currentAlbumList,
-                this::onAlbumClick
+                this::onAlbumClick,
+                parentViewModel::playAlbum
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
             binding.displayRecyclerview.adapter = AlbumGridAdapter(
                 currentAlbumList,
-                this::onAlbumClick
+                this::onAlbumClick,
+                parentViewModel::playAlbum
             )
         }
     }
