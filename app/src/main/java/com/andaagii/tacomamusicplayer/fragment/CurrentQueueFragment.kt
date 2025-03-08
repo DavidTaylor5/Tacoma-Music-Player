@@ -146,17 +146,20 @@ class CurrentQueueFragment: Fragment() {
                 .updateCurrentSongIndicator(currSong)
         }
 
-        //TODO Control button should listen to the current play state of the application to determine
-        //what icon to show
-        //parentViewModel.playState.observe(this) { playState -> [can be either playing or paused]
+        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
+            if(isPlaying) {
+                binding.controlButton.setBackgroundResource(R.drawable.baseline_pause_24)
+            } else {
+                binding.controlButton.setBackgroundResource(R.drawable.white_play_arrow)
+            }
+        }
 
         binding.returnToPlayerButton.setOnClickListener {
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
         }
 
         binding.controlButton.setOnClickListener {
-            //TODO
-            //parentViewModel. // or setOppositePlayState(controller)....
+            parentViewModel.flipPlayingState()
         }
 
         binding.menuIcon.setOnClickListener {
