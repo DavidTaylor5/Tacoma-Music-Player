@@ -106,6 +106,11 @@ class MusicChooserFragment: Fragment() {
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
         }
 
+        //TODO If there are more options to add later on I will replace popupmenu with MenuView...
+//        binding.sortingButton?.setOnClickListener {
+//            binding.sortingPrompt?.visibility = View.VISIBLE
+//        }
+
         binding.sortingButton?.setOnClickListener {
             val menu = PopupMenu(this.context, binding.sortingButton)
 
@@ -127,14 +132,17 @@ class MusicChooserFragment: Fragment() {
                 when (position) {
                     PageType.PLAYLIST_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
+                        adjustForPlaylistPage()
                     }
 
                     PageType.ALBUM_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
+                        adjustForAlbumPage()
                     }
 
                     PageType.SONG_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
+                        adjustForSongPage()
                     }
                 }
             }
@@ -158,4 +166,18 @@ class MusicChooserFragment: Fragment() {
 
         return binding.root
     }
+
+    private fun adjustForSongPage() {
+        binding.sortingButton?.visibility = View.INVISIBLE
+    }
+
+    private fun adjustForPlaylistPage() {
+        binding.sortingButton?.visibility = View.VISIBLE
+    }
+
+    private fun adjustForAlbumPage() {
+        binding.sortingButton?.visibility = View.VISIBLE
+    }
+
+
 }
