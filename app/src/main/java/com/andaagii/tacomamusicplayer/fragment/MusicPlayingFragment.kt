@@ -208,13 +208,14 @@ class MusicPlayingFragment: Fragment() {
                 binding.alternateSongArt?.startAnimation(animation)
             }
 
-            Handler(Looper.getMainLooper()).postDelayed({
-                //TODO at the end I want the images switched...
-//                binding.songArt.setImageDrawable()
-//                binding.alternateSongArt.setImageDrawable()
-//                binding.songArt?.visibility = View.GONE
-//                binding.alternateSongArt?.visibility = View.VISIBLE
-            }, 2000)
+            //TODO If I want to add advanced Animations I will further investigate this code...
+//            Handler(Looper.getMainLooper()).postDelayed({
+//                //TODO at the end I want the images switched...
+////                binding.songArt.setImageDrawable()
+////                binding.alternateSongArt.setImageDrawable()
+////                binding.songArt?.visibility = View.GONE
+////                binding.alternateSongArt?.visibility = View.VISIBLE
+//            }, 2000)
         }
 
         binding.seekBack?.setOnClickListener {
