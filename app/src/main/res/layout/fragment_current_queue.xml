@@ -35,8 +35,51 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.andaagii.tacomamusicplayer.view.CustomSongGroupInfoView
-        android:id="@+id/song_group_info"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item_container"
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="100dp"/>
+        android:layout_height="60dp"
+        android:elevation="4dp"
+        app:cardCornerRadius="10dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:backgroundTint="@color/black"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            >
+
+            <Button
+                android:id="@+id/return_to_player_button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Return To Player"
+                />
+
+            <View
+                android:id="@+id/control_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/white_play_arrow"
+                android:layout_gravity="center"
+                />
+
+            <View
+                android:id="@+id/menu_icon"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/menu_icon"
+                android:layout_gravity="center"
+                />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+
 </LinearLayout>
