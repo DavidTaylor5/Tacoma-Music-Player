@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
@@ -22,6 +23,7 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
+import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
@@ -144,8 +146,24 @@ class CurrentQueueFragment: Fragment() {
                 .updateCurrentSongIndicator(currSong)
         }
 
-        binding.songGroupInfo.setOnMenuIconPressed {
-            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
+        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
+            if(isPlaying) {
+                binding.controlButton.setBackgroundResource(R.drawable.baseline_pause_24)
+            } else {
+                binding.controlButton.setBackgroundResource(R.drawable.white_play_arrow)
+            }
+        }
+
+        binding.returnToPlayerButton.setOnClickListener {
+            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
+        }
+
+        binding.controlButton.setOnClickListener {
+            parentViewModel.flipPlayingState()
+        }
+
+        binding.menuIcon.setOnClickListener {
+            val menu = PopupMenu(binding.root.context, binding.menuIcon)
 
             menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
             menu.setOnMenuItemClickListener {
@@ -158,6 +176,21 @@ class CurrentQueueFragment: Fragment() {
             }
             menu.show()
         }
+
+//        binding.songGroupInfo.setOnMenuIconPressed {
+//            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
+//
+//            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//                handleSongSetting(
+//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+//                    parentViewModel.currentSongList.value?.songs ?: listOf()
+//                )
+//                return@setOnMenuItemClickListener true
+//            }
+//            menu.show()
+//        }
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 

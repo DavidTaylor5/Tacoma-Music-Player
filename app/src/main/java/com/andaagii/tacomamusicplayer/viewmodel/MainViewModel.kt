@@ -118,6 +118,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _layoutForAlbumTab
     private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData(LayoutType.LINEAR_LAYOUT)
 
+    val isPlaying: LiveData<Boolean>
+        get() = _isPlaying
+    private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
+
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
@@ -132,6 +136,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 )
             )
             super.onMediaMetadataChanged(mediaMetadata)
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            super.onIsPlayingChanged(isPlaying)
+            _isPlaying.postValue(isPlaying)
+        }
+    }
+
+    fun flipPlayingState() {
+        if(_isPlaying.value == true) {
+            _mediaController.value?.pause()
+        } else {
+            _mediaController.value?.play()
         }
     }
 

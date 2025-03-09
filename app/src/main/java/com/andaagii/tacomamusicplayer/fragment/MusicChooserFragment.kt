@@ -8,6 +8,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -76,11 +78,13 @@ class MusicChooserFragment: Fragment() {
         //TODO add code to add to controller new music...
     }
 
-    private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
-        binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
-        val frameAnimation = binding.playingAnimation.background as AnimationDrawable
-        frameAnimation.start()
-    }
+
+
+//    private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
+//        binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
+//        val frameAnimation = binding.playingAnimation.background as AnimationDrawable
+//        frameAnimation.start()
+//    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -91,10 +95,32 @@ class MusicChooserFragment: Fragment() {
 
         val gesture = GestureDetector(container!!.context, detector)
 
-        setupPlayingAnimation(binding)
+        //setupPlayingAnimation(binding)
 
-        binding.playingAnimation!!.setOnTouchListener { v, event ->
-            gesture.onTouchEvent(event)
+//        binding.playingAnimation!!.setOnTouchListener { v, event ->
+//            gesture.onTouchEvent(event)
+//        }
+
+        binding.musicPlayerButton?.setOnClickListener {
+            //navigate to the music chooser fragment...
+            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
+        }
+
+        //TODO If there are more options to add later on I will replace popupmenu with MenuView...
+//        binding.sortingButton?.setOnClickListener {
+//            binding.sortingPrompt?.visibility = View.VISIBLE
+//        }
+
+        binding.sortingButton?.setOnClickListener {
+            val menu = PopupMenu(this.context, binding.sortingButton)
+
+            menu.menuInflater.inflate(R.menu.sorting_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                //TODO Handle sorting logic here.... sortBy()...
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
         }
 
         binding.pager.adapter = pagerAdapter
@@ -106,14 +132,17 @@ class MusicChooserFragment: Fragment() {
                 when (position) {
                     PageType.PLAYLIST_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
+                        adjustForPlaylistPage()
                     }
 
                     PageType.ALBUM_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
+                        adjustForAlbumPage()
                     }
 
                     PageType.SONG_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
+                        adjustForSongPage()
                     }
                 }
             }
@@ -137,4 +166,18 @@ class MusicChooserFragment: Fragment() {
 
         return binding.root
     }
+
+    private fun adjustForSongPage() {
+        binding.sortingButton?.visibility = View.INVISIBLE
+    }
+
+    private fun adjustForPlaylistPage() {
+        binding.sortingButton?.visibility = View.VISIBLE
+    }
+
+    private fun adjustForAlbumPage() {
+        binding.sortingButton?.visibility = View.VISIBLE
+    }
+
+
 }

@@ -1,8 +1,9 @@
 package com.andaagii.tacomamusicplayer.fragment
 
-import android.graphics.drawable.AnimationDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.transition.TransitionInflater
 import android.util.Size
 import android.view.GestureDetector
@@ -10,7 +11,9 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import androidx.annotation.OptIn
+import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.util.UnstableApi
@@ -83,7 +86,7 @@ class MusicPlayingFragment: Fragment() {
         Timber.d("onCreateView: ")
         binding = FragmentMusicPlayingBinding.inflate(inflater)
 
-        setupLibraryButtonAnimation(binding)
+//        setupLibraryButtonAnimation(binding)
 
         val gesture = GestureDetector(container!!.context, detector)
 
@@ -95,7 +98,7 @@ class MusicPlayingFragment: Fragment() {
 
         //TODO save the currently playing queue for when I exit and start the app again...
 
-        binding.libraryAnimation!!.setOnTouchListener{ v, event ->
+        binding.librarySection?.setOnTouchListener { v, event ->
             gesture.onTouchEvent(event)
         }
 
@@ -106,11 +109,11 @@ class MusicPlayingFragment: Fragment() {
         return binding.root
     }
 
-    private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
-        binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
-        val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
-        frameAnimation.start()
-    }
+//    private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
+//        binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
+//        val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
+//        frameAnimation.start()
+//    }
 
     private fun updateUIForCurrentSong() {
         updateCurrentSongArt()
@@ -194,6 +197,36 @@ class MusicPlayingFragment: Fragment() {
                     button.setBackgroundResource(R.drawable.baseline_play_arrow_24)
                     it.pause()
                 }
+            }
+        }
+
+        binding.songArt?.setOnClickListener {
+            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_out).also { animation ->
+                binding.songArt?.startAnimation(animation)
+            }
+            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_in).also { animation ->
+                binding.alternateSongArt?.startAnimation(animation)
+            }
+
+            //TODO If I want to add advanced Animations I will further investigate this code...
+//            Handler(Looper.getMainLooper()).postDelayed({
+//                //TODO at the end I want the images switched...
+////                binding.songArt.setImageDrawable()
+////                binding.alternateSongArt.setImageDrawable()
+////                binding.songArt?.visibility = View.GONE
+////                binding.alternateSongArt?.visibility = View.VISIBLE
+//            }, 2000)
+        }
+
+        binding.seekBack?.setOnClickListener {
+            controller?.let {
+                it.seekBack()
+            }
+        }
+
+        binding.seekForward?.setOnClickListener {
+            controller?.let {
+                it.seekForward()
             }
         }
 
