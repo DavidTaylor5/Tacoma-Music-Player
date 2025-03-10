@@ -105,6 +105,8 @@ class SongListAdapter(
                 handleSongClick(viewHolder.absoluteAdapterPosition)
             }
 
+
+
             UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 artworkUri,

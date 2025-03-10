@@ -9,6 +9,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
@@ -64,11 +65,15 @@ class AlbumListAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
-            UtilImpl.drawUriOntoImageView(
+            val ableToDraw = UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400)
             )
+
+            if(!ableToDraw) {
+                viewHolder.binding.albumArt.setImageResource(R.drawable.music_note_icon)
+            }
         }
 
         viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
