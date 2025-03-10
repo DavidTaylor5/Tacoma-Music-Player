@@ -38,6 +38,7 @@ class SongListViewModel: ViewModel() {
 
         updatePlaylistPromptAddClickability(resetCheckedPlaylists)
 
+        //TODO I need to move this out of the function? How can I modify currently selected songs for individual songs?
         _currentlySelectedSongs.value?.let { songs ->
             val modList = songs.toMutableList()
             modList.addAll(newSongs)
@@ -66,7 +67,6 @@ class SongListViewModel: ViewModel() {
     }
 
     fun clearPreparedSongsForPlaylists() {
-        _currentlySelectedSongs.postValue(listOf())
         _currentlySelectedSongs.postValue(listOf())
         _isShowingMultiSelectPrompt.postValue(false)
     }
