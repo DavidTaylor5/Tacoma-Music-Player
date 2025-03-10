@@ -54,6 +54,7 @@ class SongListFragment(
                 songGroup.songs,
                 this::handleSongSetting,
                 this::handleSongClicked,
+                this::handleSongSelected,
                 songGroup.type,
                 {  } //TODO update playlist order if this is a playlist...
             )
@@ -107,6 +108,22 @@ class SongListFragment(
             menu.show()
         }
 
+        viewModel.currentlySelectedSongs.observe(viewLifecycleOwner) { currentlySelectedSongs ->
+            binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
+        }
+
+        binding.multiSelectPrompt.setOnMenuIconClick {
+            val menu = PopupMenu(this.context, binding.multiSelectPrompt)
+
+            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()), viewModel.currentlySelectedSongs.value ?: listOf())
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
+        }
+
         binding.songGroupInfo.setOnClickListener {
             //CLEAR THE QUEUE
             //START PLAYING THE ALBUM FROM THE START
@@ -145,7 +162,7 @@ class SongListFragment(
         //When add button is clicked, I should add songs into playlists
         binding.playlistPrompt.onAddButtonClick {
             val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value ?: listOf()
-            val playlistAddSongs: List<MediaItem> = viewModel.playlistAddSongs.value ?: listOf()
+            val playlistAddSongs: List<MediaItem> = viewModel.currentlySelectedSongs.value ?: listOf()
 
             parentViewModel.addSongsToAPlaylist(
                 checkedPlaylists,
@@ -168,6 +185,14 @@ class SongListFragment(
             viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
         }
 
+        viewModel.isShowingMultiSelectPrompt.observe(viewLifecycleOwner) { isShowing ->
+            if(isShowing) {
+                binding.multiSelectPrompt.visibility = View.VISIBLE
+            } else {
+                binding.multiSelectPrompt.visibility = View.GONE
+            }
+        }
+
         viewModel.isPlaylistPromptAddClickable.observe(viewLifecycleOwner) { isClickable ->
             binding.playlistPrompt.updateAddButtonClickability(isClickable)
         }
@@ -175,7 +200,7 @@ class SongListFragment(
 
     //TODO move this logic ?
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItem: List<MediaItem>) {
-        viewModel.prepareSongForPlaylists(mediaItem)
+        viewModel.prepareSongsForPlaylists(mediaItem)
 
         when (menuOption) {
             PLAY_SONG_GROUP -> handlePlaySongGroup()
@@ -199,6 +224,14 @@ class SongListFragment(
     private fun handleSongClicked(position: Int) {
         currentSongGroup?.let { songGroup ->
             parentViewModel.playSongGroupAtPosition(songGroup, position)
+        }
+    }
+
+    private fun handleSongSelected(mediaItem: MediaItem, isSelected:Boolean) {
+        if(isSelected) {
+            viewModel.selectSong(mediaItem)
+        } else {
+            viewModel.unselectSong(mediaItem)
         }
     }
 

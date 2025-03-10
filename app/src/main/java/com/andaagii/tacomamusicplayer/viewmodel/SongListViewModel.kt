@@ -11,13 +11,17 @@ class SongListViewModel: ViewModel() {
         get() = _isShowingPlaylistPrompt
     private val _isShowingPlaylistPrompt: MutableLiveData<Boolean> = MutableLiveData(false)
 
+    val isShowingMultiSelectPrompt: LiveData<Boolean>
+        get() = _isShowingMultiSelectPrompt
+    private val _isShowingMultiSelectPrompt: MutableLiveData<Boolean> = MutableLiveData(false)
+
     val checkedPlaylists: LiveData<List<String>>
         get() = _checkedPlaylists
     private val _checkedPlaylists: MutableLiveData<List<String>> = MutableLiveData(listOf())
 
-    val playlistAddSongs: LiveData<List<MediaItem>>
-        get() = _playlistAddSongs
-    private val _playlistAddSongs: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
+    val currentlySelectedSongs: LiveData<List<MediaItem>>
+        get() = _currentlySelectedSongs
+    private val _currentlySelectedSongs: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
 
     val isPlaylistPromptAddClickable: LiveData<Boolean>
         get() = _isPlaylistPromptAddClickable
@@ -26,7 +30,7 @@ class SongListViewModel: ViewModel() {
     /**
      * @param newSongs List of songs that can be potentially added to a playlist.
      */
-    fun prepareSongForPlaylists(newSongs: List<MediaItem>) {
+    fun prepareSongsForPlaylists(newSongs: List<MediaItem>) {
         val resetCheckedPlaylists = mutableListOf<String>()
 
         //As I prepare a song for playlists, I don't yet know which playlist I'm going to add it to
@@ -34,15 +38,37 @@ class SongListViewModel: ViewModel() {
 
         updatePlaylistPromptAddClickability(resetCheckedPlaylists)
 
-        _playlistAddSongs.value?.let { songs ->
+        //TODO I need to move this out of the function? How can I modify currently selected songs for individual songs?
+        _currentlySelectedSongs.value?.let { songs ->
             val modList = songs.toMutableList()
             modList.addAll(newSongs)
-            _playlistAddSongs.postValue(modList)
+            _currentlySelectedSongs.postValue(modList)
         }
     }
 
+    fun selectSong(song: MediaItem) {
+        val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
+        currentSongs.add(song)
+        if(currentSongs.isNotEmpty()) {
+            _isShowingMultiSelectPrompt.postValue(true)
+        }
+        _currentlySelectedSongs.postValue(currentSongs)
+    }
+
+    fun unselectSong(song: MediaItem) {
+        val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
+        currentSongs.removeAll {
+            it.mediaId == song.mediaId
+        }
+        if(currentSongs.isEmpty()) {
+            _isShowingMultiSelectPrompt.postValue(false)
+        }
+        _currentlySelectedSongs.postValue(currentSongs)
+    }
+
     fun clearPreparedSongsForPlaylists() {
-        _playlistAddSongs.postValue(listOf())
+        _currentlySelectedSongs.postValue(listOf())
+        _isShowingMultiSelectPrompt.postValue(false)
     }
 
     /**
