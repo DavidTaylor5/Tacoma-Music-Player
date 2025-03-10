@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.fragment
 
 import android.graphics.drawable.BitmapDrawable
+import android.media.MediaMetadataRetriever
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
