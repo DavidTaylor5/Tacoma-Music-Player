@@ -24,6 +24,7 @@ class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
+    val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit, //Should this be a position or a MediaItem
     val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
@@ -137,10 +138,18 @@ class SongListAdapter(
                     viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
                     viewHolder.isFavorited = false
                     favoriteList[position] = false
+                    handleSongSelected(
+                        dataSet[position],
+                        false
+                    )
                 } else { //currently un favorited, turn to favorited...
                     viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
                     viewHolder.isFavorited = true
                     favoriteList[position] = true
+                    handleSongSelected(
+                        dataSet[position],
+                        true
+                    )
                 }
                 val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
                 frameAnimation.start()

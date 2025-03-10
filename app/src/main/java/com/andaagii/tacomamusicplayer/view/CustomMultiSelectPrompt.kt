@@ -14,8 +14,22 @@ class CustomMultiSelectPrompt @JvmOverloads constructor(
 
     private lateinit var binding: ViewCustomMultiSelectPromptBinding
 
+    private var menuIconOnClick : () -> Unit = {}
+
     init {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         binding = ViewCustomMultiSelectPromptBinding.inflate(inflater, this, true)
+
+        binding.menuIcon.setOnClickListener {
+            menuIconOnClick()
+        }
+    }
+
+    fun setPromptText(text: String) {
+        binding.descriptionText.text = text
+    }
+
+    fun setOnMenuIconClick(onClick: () -> Unit) {
+        menuIconOnClick = onClick
     }
 }
