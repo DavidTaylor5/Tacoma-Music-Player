@@ -44,6 +44,8 @@ import timber.log.Timber
 //TODO make a util class called AlbumUtils, with specific album functionality
 //This should be more organized, there are way to many functions in this one class.
 
+//TODO only oneplus12 R was unable to read the coverart jpg in music folder? Working on s25 ultra.
+
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
  * permissions, and will provide the UI with media related information.
