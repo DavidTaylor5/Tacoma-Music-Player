@@ -172,7 +172,7 @@ class SongListAdapter(
             menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it, position)
+                handleMenuItem(it, dataSet[position])
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -180,21 +180,21 @@ class SongListAdapter(
     }
 
     //TODO move out of adapters?
-    private fun handleMenuItem(item: MenuItem, position: Int) {
+    private fun handleMenuItem(item: MenuItem, mediaItem: MediaItem) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(position)
+            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(mediaItem)
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             MenuOptionUtil.MenuOption.CHECK_STATS -> handleCheckStatus()
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }
     }
 
-    private fun handleAddToPlaylist(position: Int) {
-        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position]))
+    private fun handleAddToPlaylist(mediaItem: MediaItem) {
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(mediaItem))
     }
 
-    private fun handleAddToQueue(position: Int) {
-        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
+    private fun handleAddToQueue(mediaItem: MediaItem) {
+        handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(mediaItem))
     }
 
     private fun handleCheckStatus() {

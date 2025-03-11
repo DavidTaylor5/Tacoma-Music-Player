@@ -118,7 +118,8 @@ class SongListFragment(
             menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()), viewModel.currentlySelectedSongs.value ?: listOf())
+                //I don't need to add any more songs here, already added when selected.
+                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()), listOf())
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -199,13 +200,14 @@ class SongListFragment(
     }
 
     //TODO move this logic ?
-    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItem: List<MediaItem>) {
-        viewModel.prepareSongsForPlaylists(mediaItem)
-
+    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>) {
         when (menuOption) {
             PLAY_SONG_GROUP -> handlePlaySongGroup()
-            ADD_TO_PLAYLIST -> handleAddToPlaylist()
-            ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
+            ADD_TO_PLAYLIST -> {
+                viewModel.prepareSongsForPlaylists()
+                handleAddToPlaylist(mediaItems)
+            }
+            ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
             CHECK_STATS -> handleCheckStats()
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
@@ -229,20 +231,19 @@ class SongListFragment(
 
     private fun handleSongSelected(mediaItem: MediaItem, isSelected:Boolean) {
         if(isSelected) {
-            viewModel.selectSong(mediaItem)
+            viewModel.selectSongs(listOf(mediaItem), showPrompt = true)
         } else {
             viewModel.unselectSong(mediaItem)
         }
     }
 
-    private fun handleAddToPlaylist() {
+    private fun handleAddToPlaylist(mediaItems: List<MediaItem>) {
+        viewModel.selectSongs(mediaItems, showPrompt = false)
         binding.playlistPrompt.showPrompt()
     }
 
-    private fun handleAddToQueue(songs: List<MediaItem>?) {
-        songs?.let {
-            parentViewModel.addSongsToEndOfQueue(it)
-        }
+    private fun handleAddToQueue(mediaItems: List<MediaItem>) {
+        parentViewModel.addSongsToEndOfQueue(mediaItems)
     }
 
     private fun handleCheckStats() {
