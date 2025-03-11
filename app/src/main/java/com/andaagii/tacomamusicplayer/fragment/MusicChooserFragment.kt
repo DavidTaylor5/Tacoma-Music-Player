@@ -68,9 +68,6 @@ class MusicChooserFragment: Fragment() {
 
         val inflater = TransitionInflater.from(requireContext())
         enterTransition = inflater.inflateTransition(R.transition.slide_up)
-
-        //Determine the layout of tabs
-        parentViewModel.setTabLayoutsFromUserSettings(requireContext())
     }
 
     override fun onStart() {

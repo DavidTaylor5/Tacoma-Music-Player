@@ -18,6 +18,7 @@ import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
@@ -97,12 +98,21 @@ class PlaylistFragment(
 
             currentPlaylists = playlistsWithoutQueue
 
-            binding.displayRecyclerview.adapter = PlaylistAdapter(
-                playlistsWithoutQueue,
-                this::onPlaylistClick,
-                parentViewModel::playPlaylist,
-                this::handlePlaylistSetting
-            )
+            if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
+                binding.displayRecyclerview.adapter = PlaylistGridAdapter(
+                    playlistsWithoutQueue,
+                    this::onPlaylistClick,
+                    parentViewModel::playPlaylist,
+                    this::handlePlaylistSetting
+                )
+            } else {
+                binding.displayRecyclerview.adapter = PlaylistAdapter(
+                    playlistsWithoutQueue,
+                    this::onPlaylistClick,
+                    parentViewModel::playPlaylist,
+                    this::handlePlaylistSetting
+                )
+            }
         }
 
         parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
@@ -120,15 +130,11 @@ class PlaylistFragment(
             //update the current layout...
             //If I'm on gridlayout, switch to linear layout and vice versa.
             if(currentLayout == LayoutType.LINEAR_LAYOUT) {
-                currentLayout = LayoutType.TWO_GRID_LAYOUT
-                binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
-                updatePlaylistLayout(LayoutType.TWO_GRID_LAYOUT)
-                binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
+                //Update Layout State / Save to datastore
+                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
             } else {
-                currentLayout = LayoutType.LINEAR_LAYOUT
-                binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
-                updatePlaylistLayout(LayoutType.LINEAR_LAYOUT)
-                binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+                //Update Layout State / Save to datastore
+                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
             }
         }
 
