@@ -13,14 +13,19 @@
         android:background="#8BC34A"
         android:layout_gravity="center"
         android:src="@drawable/wu_tang_placeholder"
+        android:scaleType="centerCrop"
+        android:layout_marginStart="5dp"
         />
 
     <TextView
         android:id="@+id/song_group_title"
         android:layout_width="0dp"
-        android:layout_height="40dp"
+        android:layout_height="match_parent"
         android:background="#FF9800"
+        android:textAlignment="gravity"
+        android:gravity="center"
         android:layout_gravity="center"
+        android:textSize="20dp"
         android:layout_weight="1"
         android:text="Queue DESCRIPTION ..."/>
 

@@ -258,8 +258,10 @@ class SongListFragment(
         //Only show user information screen on app startup [?]
         if( songGroupType != SongGroupType.PLAYLIST && songs.isEmpty()) {
             binding.songListInformationScreen.visibility = View.VISIBLE
+            binding.songGroupInfo.visibility = View.GONE
         } else {
             binding.songListInformationScreen.visibility = View.GONE
+            binding.songGroupInfo.visibility = View.VISIBLE
         }
     }
 

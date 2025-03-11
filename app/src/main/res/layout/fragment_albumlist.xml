@@ -34,7 +34,7 @@
             android:id="@+id/layout_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="2x2 Grid"
+            android:text="Linear"
             android:clickable="true"
             android:layout_weight="1"
             android:textColor="@color/white"

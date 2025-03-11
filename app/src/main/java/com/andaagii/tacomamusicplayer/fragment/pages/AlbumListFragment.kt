@@ -25,7 +25,6 @@ class AlbumListFragment(
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
-    private var currentLayout = LayoutType.LINEAR_LAYOUT
     private var currentAlbumList: List<MediaItem> = listOf()
 
     override fun onCreateView(
@@ -55,17 +54,17 @@ class AlbumListFragment(
         binding.layoutButton.setOnClickListener {
             //update the current layout...
             //If I'm on gridlayout, switch to linear layout and vice versa.
-            if(currentLayout == LayoutType.LINEAR_LAYOUT) {
-                currentLayout = LayoutType.TWO_GRID_LAYOUT
-                binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
-                updatePlaylistLayout(LayoutType.TWO_GRID_LAYOUT)
-                binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
+            if(parentViewModel.layoutForAlbumTab.value == LayoutType.LINEAR_LAYOUT) {
+                //Update Layout State / Save to datastore
+                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
             } else {
-                currentLayout = LayoutType.LINEAR_LAYOUT
-                binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
-                updatePlaylistLayout(LayoutType.LINEAR_LAYOUT)
-                binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+                //Update Layout State / Save to datastore
+                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
             }
+        }
+
+        parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
+            updateAlbumLayout(layout)
         }
 
         setupPage()
@@ -73,16 +72,21 @@ class AlbumListFragment(
         return binding.root
     }
 
-    private fun updatePlaylistLayout(layout: LayoutType) {
+    private fun updateAlbumLayout(layout: LayoutType) {
+        Timber.d("updateAlbumLayout: ")
 
         //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
+            binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             binding.displayRecyclerview.adapter = AlbumListAdapter(
                 currentAlbumList,
                 this::onAlbumClick,
                 parentViewModel::playAlbum
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
+            binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
+            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
             binding.displayRecyclerview.adapter = AlbumGridAdapter(
                 currentAlbumList,
                 this::onAlbumClick,

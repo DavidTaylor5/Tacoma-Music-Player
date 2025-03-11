@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.text.Layout
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -33,6 +34,9 @@ import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
@@ -114,11 +118,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     val layoutForPlaylistTab: LiveData<LayoutType>
         get() = _layoutForPlaylistTab
-    private val _layoutForPlaylistTab: MutableLiveData<LayoutType> = MutableLiveData(LayoutType.LINEAR_LAYOUT)
+    private val _layoutForPlaylistTab: MutableLiveData<LayoutType> = MutableLiveData()
 
     val layoutForAlbumTab: LiveData<LayoutType>
         get() = _layoutForAlbumTab
-    private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData(LayoutType.LINEAR_LAYOUT)
+    private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData()
 
     val isPlaying: LiveData<Boolean>
         get() = _isPlaying
@@ -160,19 +164,35 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun determinePlaylistTabLayout(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val layoutString = DataStoreUtil.getPlaylistLayoutPreference(context).single()
-            val layout = LayoutType.determineLayoutFromString(layoutString)
-            _layoutForPlaylistTab.postValue(layout)
+        viewModelScope.launch {
+            DataStoreUtil.getPlaylistLayoutPreference(context).collect { savedLayoutString ->
+                val layout = LayoutType.determineLayoutFromString(savedLayoutString)
+                _layoutForPlaylistTab.postValue(layout)
+            }
         }
     }
 
     private fun determineAlbumTabLayout(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val layoutString = DataStoreUtil.getAlbumLayoutPreference(context).single()
-            val layout = LayoutType.determineLayoutFromString(layoutString)
-            _layoutForAlbumTab.postValue(layout)
+        viewModelScope.launch {
+            DataStoreUtil.getAlbumLayoutPreference(context).collect { savedLayoutString ->
+                val layout = LayoutType.determineLayoutFromString(savedLayoutString)
+                _layoutForAlbumTab.postValue(layout)
+            }
         }
+    }
+
+    fun savePlaylistLayout(context: Context, layout: LayoutType) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setPlaylistLayoutPreference(context, layout)
+        }
+        _layoutForPlaylistTab.postValue(layout)
+    }
+
+    fun saveAlbumLayout(context: Context, layout: LayoutType) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setAlbumLayoutPreference(context, layout)
+        }
+        _layoutForAlbumTab.postValue(layout)
     }
 
     /**
@@ -192,8 +212,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("init: ")
         checkPermissions()
 
+        //ex. the layout of the albums / playlist fragments
+        checkUserPreferences()
+
         //TODO this should be moved into dependency injection...
         availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
+    }
+
+    private fun checkUserPreferences() {
+        setTabLayoutsFromUserSettings(getApplication<Application>().applicationContext)
     }
 
     /**
