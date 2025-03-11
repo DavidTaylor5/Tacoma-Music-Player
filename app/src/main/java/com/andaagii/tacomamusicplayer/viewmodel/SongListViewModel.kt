@@ -30,26 +30,19 @@ class SongListViewModel: ViewModel() {
     /**
      * @param newSongs List of songs that can be potentially added to a playlist.
      */
-    fun prepareSongsForPlaylists(newSongs: List<MediaItem>) {
+    fun prepareSongsForPlaylists() {
         val resetCheckedPlaylists = mutableListOf<String>()
 
         //As I prepare a song for playlists, I don't yet know which playlist I'm going to add it to
         _checkedPlaylists.postValue(resetCheckedPlaylists)
 
         updatePlaylistPromptAddClickability(resetCheckedPlaylists)
-
-        //TODO I need to move this out of the function? How can I modify currently selected songs for individual songs?
-        _currentlySelectedSongs.value?.let { songs ->
-            val modList = songs.toMutableList()
-            modList.addAll(newSongs)
-            _currentlySelectedSongs.postValue(modList)
-        }
     }
 
-    fun selectSong(song: MediaItem) {
+    fun selectSongs(songs: List<MediaItem>, showPrompt: Boolean) {
         val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
-        currentSongs.add(song)
-        if(currentSongs.isNotEmpty()) {
+        currentSongs.addAll(songs)
+        if(currentSongs.isNotEmpty() && showPrompt) {
             _isShowingMultiSelectPrompt.postValue(true)
         }
         _currentlySelectedSongs.postValue(currentSongs)
