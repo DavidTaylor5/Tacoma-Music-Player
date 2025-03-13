@@ -17,6 +17,7 @@ import androidx.annotation.OptIn
 import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.navigation.fragment.findNavController
@@ -182,6 +183,24 @@ class MusicPlayingFragment: Fragment() {
             }
         }
 
+        parentViewModel.repeatMode.observe(this) { repeatMode ->
+            Timber.d("onStart: repeatMode=$repeatMode")
+            when(repeatMode) {
+                Player.REPEAT_MODE_OFF -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.one_x) }
+                Player.REPEAT_MODE_ONE -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat_one) }
+                Player.REPEAT_MODE_ALL -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat) }
+            }
+        }
+
+        parentViewModel.isPlaying.observe(this) { isPlaying ->
+            Timber.d("onStart: isPlaying=$isPlaying")
+            if(isPlaying) {
+                binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+            } else {
+                binding.playButton?.setBackgroundResource(R.drawable.white_play_arrow)
+            }
+        }
+
         binding.prevButton?.setOnClickListener {
             Timber.d("prevButton_onClick: ")
             controller?.seekToPrevious()
@@ -217,6 +236,14 @@ class MusicPlayingFragment: Fragment() {
 ////                binding.songArt?.visibility = View.GONE
 ////                binding.alternateSongArt?.visibility = View.VISIBLE
 //            }, 2000)
+        }
+
+        binding.repeatToggle?.setOnClickListener {
+            parentViewModel.flipRepeatMode()
+        }
+
+        binding.shuffleToggle?.setOnClickListener {
+            parentViewModel.flipShuffleState()
         }
 
         binding.seekBack?.setOnClickListener {

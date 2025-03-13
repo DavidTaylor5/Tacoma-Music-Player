@@ -132,6 +132,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isShuffled
     private val _isShuffled: MutableLiveData<Boolean> = MutableLiveData()
 
+    val repeatMode: LiveData<Int>
+        get() = _repeatMode
+    private val _repeatMode: MutableLiveData<Int> = MutableLiveData()
+
     val originalSongOrder: LiveData<List<MediaItem>>
         get() = _originalSongOrder
     private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
@@ -163,23 +167,31 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 //        }
 
         override fun onRepeatModeChanged(repeatMode: Int) {
+            Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
-            //TODO Set loop modes based on this logic...
-            val a = Player.REPEAT_MODE_ALL
-            val b = Player.REPEAT_MODE_OFF
-            val c = Player.REPEAT_MODE_ONE
+            _repeatMode.postValue(repeatMode)
         }
     }
 
     fun flipShuffleState() {
+        Timber.d("flipShuffleState: ")
+        _isShuffled.value = !(_isShuffled.value ?: false)
+        //TODO Also save current shuffle state value
         if(_isShuffled.value == true) {
-            //TODO removeShuffle...
-            //_mediaController.value?.shuffleModeEnabled = false
-            //REORDER ALL OF THE MEDIA ITEMS IN THEIR SPECIFIC ORDER [THE HARD PART]
+            shuffleSongsInMediaController()
         } else {
-            //TODO addShuffle
-            //_mediaController.value?.shuffleModeEnabled = true
-            //SHUFFLE ALL OF THE MEDIA ITEMS IN THE CONTROLLER AND SET IT AGAIN
+            restoreOriginalSongOrder()
+        }
+    }
+
+    fun flipRepeatMode() {
+        Timber.d("flipRepeatMode: ")
+        if(_repeatMode.value == Player.REPEAT_MODE_OFF) {
+            _mediaController.value?.repeatMode = Player.REPEAT_MODE_ONE
+        } else if(_repeatMode.value == Player.REPEAT_MODE_ONE) {
+            _mediaController.value?.repeatMode = Player.REPEAT_MODE_ALL
+        } else {
+            _mediaController.value?.repeatMode = Player.REPEAT_MODE_OFF
         }
     }
 
@@ -582,6 +594,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             //Add old queue to the mediaController
             restoreQueue()
 
+            //TODO set all live data in initalizeControllerLiveData()...
+            _repeatMode.postValue(controller.repeatMode)
             controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())
     }
