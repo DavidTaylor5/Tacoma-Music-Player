@@ -128,6 +128,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isPlaying
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
 
+    val isShuffled: LiveData<Boolean>
+        get() = _isShuffled
+    private val _isShuffled: MutableLiveData<Boolean> = MutableLiveData()
+
+    val originalSongOrder: LiveData<List<MediaItem>>
+        get() = _originalSongOrder
+    private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
+
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
@@ -147,6 +155,31 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             _isPlaying.postValue(isPlaying)
+        }
+
+//        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+//            super.onShuffleModeEnabledChanged(shuffleModeEnabled)
+//            _isShuffled.postValue(shuffleModeEnabled)
+//        }
+
+        override fun onRepeatModeChanged(repeatMode: Int) {
+            super.onRepeatModeChanged(repeatMode)
+            //TODO Set loop modes based on this logic...
+            val a = Player.REPEAT_MODE_ALL
+            val b = Player.REPEAT_MODE_OFF
+            val c = Player.REPEAT_MODE_ONE
+        }
+    }
+
+    fun flipShuffleState() {
+        if(_isShuffled.value == true) {
+            //TODO removeShuffle...
+            //_mediaController.value?.shuffleModeEnabled = false
+            //REORDER ALL OF THE MEDIA ITEMS IN THEIR SPECIFIC ORDER [THE HARD PART]
+        } else {
+            //TODO addShuffle
+            //_mediaController.value?.shuffleModeEnabled = true
+            //SHUFFLE ALL OF THE MEDIA ITEMS IN THE CONTROLLER AND SET IT AGAIN
         }
     }
 
@@ -325,14 +358,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
         }
     }
-
-//    private fun doesPlaylistExist(playlistName: String): Boolean {
-//        PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-//            .playlistDao()
-//            .findPlaylistByName(playlistName)
-//    }
-
-    //TODO I should move all of the database function to a new util class.
 
     /**
      * Ability to add a list of songs to a list of playlists.
@@ -630,13 +655,58 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                     if(shouldPlayAlbum) {
                         _mediaController.value?.clearMediaItems()
-                        _mediaController.value?.addMediaItems(songs)
+                        _mediaController.value?.addMediaItems(songs) //TODO When I add mediaItems I also want to track the songs in order.
                         _mediaController.value?.play()
                     }
                 }, MoreExecutors.directExecutor())
             }
         } else {
             Timber.d("querySongsFromAlbum: mediaBrowser isn't ready...")
+        }
+    }
+
+    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>) {
+        Timber.d("addTracksSaveTrackOrder: ")
+
+        //save songs to the original song order
+        val songOrder = originalSongOrder.value?.toMutableList()
+        songOrder?.addAll(mediaItems)
+
+        _originalSongOrder.postValue( songOrder ?: mediaItems  )
+
+        if(_isShuffled.value == true) {
+            val shuffledSongs = shuffleSongs(mediaItems)
+            _mediaController.value?.addMediaItems(shuffledSongs)
+        } else {
+            _mediaController.value?.addMediaItems(mediaItems)
+        }
+
+    _mediaController.value?.addMediaItems(mediaItems)
+    }
+
+    private fun shuffleSongs(mediaItems: List<MediaItem>): List<MediaItem> {
+        return mediaItems.shuffled()
+    }
+
+    private fun shuffleSongsInMediaController() {
+        _mediaController.value?.let { controller ->
+            val currentSongs = UtilImpl.getSongListFromMediaController(controller)
+
+            val shuffledSongs = shuffleSongs(currentSongs)
+
+            controller.clearMediaItems()
+
+            controller.addMediaItems(shuffledSongs)
+        }
+    }
+
+    private fun restoreOriginalSongOrder() {
+        _mediaController.value?.let { controller ->
+            _originalSongOrder.value?.let { originalSongs ->
+                controller.clearMediaItems()
+
+                controller.addMediaItems(originalSongs)
+            }
         }
     }
 
