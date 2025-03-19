@@ -489,7 +489,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             controller.clearMediaItems()
             controller.pause()
 
-            controller.addMediaItems(songGroup.songs)
+            addTracksSaveTrackOrder(songGroup.songs)
 
             controller.seekTo(position, 0L)
             controller.play()
@@ -512,7 +512,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 //Remove current songs in the queue
                 mediaController.value?.clearMediaItems()
 
-                mediaController.value?.addMediaItems(playlistMediaItems)
+                addTracksSaveTrackOrder(playlistMediaItems)
 
                 mediaController.value?.play()
             }
@@ -527,7 +527,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
             withContext(Dispatchers.Main) {
-                mediaController.value?.addMediaItems(playlistMediaItems)
+                addTracksSaveTrackOrder(playlistMediaItems)
             }
         }
     }
@@ -536,7 +536,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Adds multiple songs to the end of the controller in the queue
      */
     fun addSongsToEndOfQueue(songs: List<MediaItem>) {
-        mediaController.value?.addMediaItems(songs)
+        addTracksSaveTrackOrder(songs)
     }
 
     /**
@@ -669,7 +669,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                     if(shouldPlayAlbum) {
                         _mediaController.value?.clearMediaItems()
-                        _mediaController.value?.addMediaItems(songs) //TODO When I add mediaItems I also want to track the songs in order.
+                        addTracksSaveTrackOrder(songs) //TODO When I add mediaItems I also want to track the songs in order.
                         _mediaController.value?.play()
                     }
                 }, MoreExecutors.directExecutor())
@@ -679,6 +679,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Instead of adding songs directly to the mediaController instead, I can track when songs are added
+     * allowing for shuffle and restore functionality.
+     */
     private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>) {
         Timber.d("addTracksSaveTrackOrder: ")
 
@@ -710,7 +714,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             controller.clearMediaItems()
 
-            controller.addMediaItems(shuffledSongs)
+            _mediaController.value?.addMediaItems(shuffledSongs)
         }
     }
 

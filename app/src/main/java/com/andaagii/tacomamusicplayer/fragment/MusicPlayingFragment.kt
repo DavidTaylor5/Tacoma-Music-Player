@@ -192,6 +192,15 @@ class MusicPlayingFragment: Fragment() {
             }
         }
 
+        parentViewModel.isShuffled.observe(this) { isShuffled ->
+            Timber.d("onStart: isShuffled=$isShuffled")
+            if(isShuffled) {
+                binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
+            } else {
+                binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
+            }
+        }
+
         parentViewModel.isPlaying.observe(this) { isPlaying ->
             Timber.d("onStart: isPlaying=$isPlaying")
             if(isPlaying) {
