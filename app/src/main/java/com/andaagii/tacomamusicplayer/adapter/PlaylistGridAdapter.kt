@@ -1,15 +1,13 @@
 package com.andaagii.tacomamusicplayer.adapter
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
-import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
@@ -39,6 +37,7 @@ class PlaylistGridAdapter(
     }
 
     // Replace the contents of a view (invoked by the layout manager)
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(viewHolder: PlaylistGridViewHolder, position: Int) {
         viewHolder.binding.playlistName.text = playlists[position].title
 
@@ -48,7 +47,6 @@ class PlaylistGridAdapter(
 
         //Determine Playlist Duration Information
         val numberOfSongs = playlists[position].songs.songs.size
-        viewHolder.binding.durationTracks.text = if(numberOfSongs == 1) "1 track" else {"$numberOfSongs tracks"}
 
         val playlistDuration = playlists[position].songs.songs.fold(0L) { acc, songData ->
             val songDuration = songData.duration.toLongOrNull() ?: 0
@@ -56,7 +54,10 @@ class PlaylistGridAdapter(
         }
 
         val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
-        viewHolder.binding.durationTime.text = playlistDurationReadable
+
+        val durationTracks = if(numberOfSongs == 1) "1 track" else {"$numberOfSongs tracks"}
+
+        viewHolder.binding.descriptionText.text = "$durationTracks | $playlistDurationReadable"
 
         //Logic for showing custom playist image
         val artFile = playlists[position].artFile
@@ -73,22 +74,22 @@ class PlaylistGridAdapter(
             }
         }
 
-        viewHolder.binding.playButton.setOnClickListener {
-            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
-        }
-
-        viewHolder.binding.menuIcon.setOnClickListener {
-
-            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
-
-            menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it, position)
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
-        }
+//        viewHolder.binding.playButton.setOnClickListener {
+//            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
+//        }
+//
+//        viewHolder.binding.menuIcon.setOnClickListener {
+//
+//            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+//
+//            menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//                handleMenuItem(it, position)
+//                return@setOnMenuItemClickListener true
+//            }
+//            menu.show()
+//        }
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
