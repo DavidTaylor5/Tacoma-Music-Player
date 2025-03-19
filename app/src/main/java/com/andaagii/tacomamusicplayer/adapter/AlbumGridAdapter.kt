@@ -58,9 +58,9 @@ class AlbumGridAdapter(
             albumArtist = albums[position].mediaMetadata.albumArtist.toString()
             albumUri = albums[position].mediaMetadata.artworkUri
 
-            viewHolder.binding.playButton.setOnClickListener {
-                onPlayIconClick(albumTitle)
-            }
+//            viewHolder.binding.playButton.setOnClickListener {
+//                onPlayIconClick(albumTitle)
+//            }
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
@@ -71,11 +71,11 @@ class AlbumGridAdapter(
             )
         }
 
-        viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
+        viewHolder.binding.albumName.text = "$albumTitle"
 
         albums[position].mediaMetadata.releaseYear?.let { year ->
             if(year > 0) {
-                viewHolder.binding.releaseYear.text = year.toString()
+                viewHolder.binding.descriptionText.text = "$year | $albumArtist"
             }
         }
     }
