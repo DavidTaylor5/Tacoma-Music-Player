@@ -7,7 +7,10 @@ import android.os.Environment
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
@@ -42,7 +45,7 @@ class PlaylistGridAdapter(
         viewHolder.binding.playlistName.text = playlists[position].title
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position].title ?: "Unknown title?")
+            onPlaylistClick(playlists[position].title)
         }
 
         //Determine Playlist Duration Information
@@ -77,7 +80,25 @@ class PlaylistGridAdapter(
 //        viewHolder.binding.playButton.setOnClickListener {
 //            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
 //        }
-//
+
+        viewHolder.binding.itemContainer.setOnLongClickListener {
+
+            Toast.makeText(viewHolder.itemView.context, "Long Click on Playlist!", Toast.LENGTH_SHORT).show()
+
+            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.playlistName)
+
+            menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleMenuItem(it, position)
+                return@setOnMenuItemClickListener true
+            }
+
+            menu.show()
+
+            return@setOnLongClickListener true
+        }
+
 //        viewHolder.binding.menuIcon.setOnClickListener {
 //
 //            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
