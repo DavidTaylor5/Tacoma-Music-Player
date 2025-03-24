@@ -1,6 +1,8 @@
 package com.andaagii.tacomamusicplayer.util
 
+import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.Playlist
 import timber.log.Timber
 
 class SortingUtil {
@@ -64,6 +66,66 @@ class SortingUtil {
                 else -> {
                     Timber.d("determineSortingOptionFromTitle: Unknown Sorting String, defaulting to newest release first.")
                     SortingOption.SORTING_NEWEST_RELEASE
+                }
+            }
+        }
+
+        fun sortPlaylists(playlists: List<Playlist>, sorting: SortingOption) {
+            when(sorting) {
+                SortingOption.SORTING_TITLE_ALPHABETICAL -> {
+                    playlists.sortedBy { playlist ->
+                        playlist.title
+                    }
+                }
+                SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
+                    playlists.sortedBy { playlist ->
+                        playlist.title
+                    }
+                }
+                SortingOption.SORTING_BY_CREATION_DATE -> {
+                    playlists.sortedBy { playlist ->
+                        playlist.title
+                    }
+                }
+                SortingOption.SORTING_BY_MODIFICATION_DATE -> {
+                    playlists.sortedBy { playlist ->
+                        playlist.title
+                    }
+                }
+                else -> { //Default to most recently created.
+                    playlists.sortedBy { playlist ->
+                        playlist.title
+                    }
+                }
+            }
+        }
+
+        fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption) {
+            when(sorting) {
+                SortingOption.SORTING_TITLE_ALPHABETICAL -> {
+                    albums.sortedBy { album ->
+                        album.mediaMetadata.title.toString()
+                    }
+                }
+                SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
+                    albums.sortedBy { album ->
+                        album.mediaMetadata.artist.toString()
+                    }
+                }
+                SortingOption.SORTING_NEWEST_RELEASE -> {
+                    albums.sortedBy { album ->
+                        album.mediaMetadata.releaseYear
+                    }
+                }
+                SortingOption.SORTING_OLDEST_RELEASE -> {
+                    albums.sortedByDescending { album ->
+                        album.mediaMetadata.releaseYear
+                    }
+                }
+                else -> { //Default to most recent release year.
+                    albums.sortedBy { album ->
+                        album.mediaMetadata.releaseYear
+                    }
                 }
             }
         }
