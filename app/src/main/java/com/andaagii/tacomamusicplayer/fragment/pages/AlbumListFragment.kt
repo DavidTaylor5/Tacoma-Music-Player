@@ -67,9 +67,17 @@ class AlbumListFragment(
             updateAlbumLayout(layout)
         }
 
+        parentViewModel.sortingForAlbumTab.observe(viewLifecycleOwner) { sortingOption ->
+            //updateAlbumSorting?
+        }
+
         setupPage()
 
         return binding.root
+    }
+
+    private fun updateAlbumSorting() {
+        //Update the currentAlbums...
     }
 
     private fun updateAlbumLayout(layout: LayoutType) {
