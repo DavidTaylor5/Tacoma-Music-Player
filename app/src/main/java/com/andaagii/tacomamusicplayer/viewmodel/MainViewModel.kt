@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.time.LocalDateTime
 
 //TODO make a util class called PlaylistUtils, with specific playlist functionality
 //TODO make a util class called AlbumUtils, with specific album functionality
@@ -287,7 +288,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         val playlist = Playlist(
             title = playlistName,
             artFile = "",
-            songs = PlaylistData(listOf())
+            songs = PlaylistData(listOf()),
+            creationTimestamp = LocalDateTime.now().toString(),
+            lastModificationTimestamp = LocalDateTime.now().toString()
         )
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -328,16 +331,20 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
                     val updateStoredQueue = if(savedQueue != null) {
                         Playlist(
-                            savedQueue.id,
-                            savedQueue.title,
-                            savedQueue.artFile,
-                            playlistData
+                            id = savedQueue.id,
+                            title = savedQueue.title,
+                            artFile = savedQueue.artFile,
+                            songs = playlistData,
+                            creationTimestamp = savedQueue.creationTimestamp,
+                            lastModificationTimestamp = LocalDateTime.now().toString()
                         )
                     } else {
                         Playlist(
                             title = Const.PLAYLIST_QUEUE_TITLE,
                             artFile = "",
-                            songs = playlistData
+                            songs = playlistData,
+                            creationTimestamp = LocalDateTime.now().toString(),
+                            lastModificationTimestamp = LocalDateTime.now().toString()
                         )
                     }
 
@@ -404,7 +411,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 id = playlist.id,
                 title = newTitle,
                 artFile = "$newTitle.jpg",
-                songs = playlist.songs
+                songs = playlist.songs,
+                creationTimestamp = playlist.creationTimestamp,
+                lastModificationTimestamp = LocalDateTime.now().toString()
             )
 
             //The playlistImage is saved using playlistTitle, update playlist image file name
@@ -431,7 +440,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 id = playlist.id,
                 title = playlist.title,
                 artFile = artFileName,
-                songs = playlist.songs
+                songs = playlist.songs,
+                creationTimestamp = playlist.creationTimestamp,
+                lastModificationTimestamp = LocalDateTime.now().toString()
             )
 
             PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
