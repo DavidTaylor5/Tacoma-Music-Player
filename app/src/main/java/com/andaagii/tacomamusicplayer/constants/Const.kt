@@ -35,5 +35,13 @@ class Const {
         //DATASTORE SETTINGS
         const val SETTING_PLAYLIST_LAYOUT = "SETTING_PLAYLIST_LAYOUT"
         const val SETTING_ALBUM_LAYOUT = "SETTING_ALBUM_LAYOUT"
+
+        //SORTING OPTIONS
+        const val SORTING_TITLE_ALPHABETICAL = "Order by Title Alphabetical"
+        const val SORTING_ARTIST_ALPHABETICAL = "Order by Artist Alphabetical"
+        const val SORTING_NEWEST_RELEASE = "Order by Newest Release"
+        const val SORTING_OLDEST_RELEASE = "Order by Oldest Release"
+        const val SORTING_CREATION_DATE = "Order by Creation Date"
+        const val SORTING_MODIFICATION_DATE = "Order by Recently Modified"
     }
 }

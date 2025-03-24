@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import android.text.Layout
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,14 +14,13 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.andaagii.tacomamusicplayer.activity.dataStore
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.PlaylistData
-import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
+import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
@@ -31,17 +29,12 @@ import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.internal.Util
 import timber.log.Timber
 
 //TODO make a util class called PlaylistUtils, with specific playlist functionality
@@ -120,9 +113,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _layoutForPlaylistTab
     private val _layoutForPlaylistTab: MutableLiveData<LayoutType> = MutableLiveData()
 
+    val sortingForPlaylistTab: LiveData<SortingUtil.SortingOption>
+        get() = _sortingForPlaylistTab
+    private val _sortingForPlaylistTab: MutableLiveData<SortingUtil.SortingOption> = MutableLiveData()
+
     val layoutForAlbumTab: LiveData<LayoutType>
         get() = _layoutForAlbumTab
     private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData()
+
+    val sortingForAlbumTab: LiveData<SortingUtil.SortingOption>
+        get() = _sortingForAlbumTab
+    private val _sortingForAlbumTab: MutableLiveData<SortingUtil.SortingOption> = MutableLiveData()
 
     val isPlaying: LiveData<Boolean>
         get() = _isPlaying
@@ -245,6 +246,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      */
     fun setPage(page: PageType) {
         _currentPage.value = page
+    }
+
+    fun updateSortingForPage(option: SortingUtil.SortingOption) {
+        if(currentPage.value == PageType.PLAYLIST_PAGE) {
+            _sortingForPlaylistTab.postValue(option)
+        } else if(currentPage.value == PageType.ALBUM_PAGE) {
+            _sortingForAlbumTab.postValue(option)
+        }
     }
 
     private var mediaBrowser: MediaBrowser? = null

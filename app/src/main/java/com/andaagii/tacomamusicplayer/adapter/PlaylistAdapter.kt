@@ -13,6 +13,7 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 import java.io.File
@@ -21,7 +22,7 @@ class PlaylistAdapter(
     private val playlists:  List<Playlist>,
     private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
-    val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
+    val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
 
     /**
@@ -36,6 +37,10 @@ class PlaylistAdapter(
         val binding = ViewholderPlaylistBinding.inflate(inflater, parent, false)
 
         return PlaylistViewHolder(binding)
+    }
+
+    fun updateDataBySortingOption(option: SortingUtil.SortingOption) {
+        //... MODIFY THE DATA HERE
     }
 
     // Replace the contents of a view (invoked by the layout manager)
