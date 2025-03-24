@@ -19,6 +19,7 @@ import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicChooserBinding
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -114,7 +115,10 @@ class MusicChooserFragment: Fragment() {
             menu.menuInflater.inflate(R.menu.sorting_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                //TODO Handle sorting logic here.... sortBy()...
+
+                //Update the Sorting for the tab.
+                parentViewModel.updateSortingForPage(SortingUtil.determineSortingOptionFromTitle(it.title.toString()))
+
                 return@setOnMenuItemClickListener true
             }
             menu.show()

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    <!-- Remove this and use sorting_options_album and sorting_options_playlist instead. -->
 
     <item
         android:id="@+id/order_by_alphabetical"

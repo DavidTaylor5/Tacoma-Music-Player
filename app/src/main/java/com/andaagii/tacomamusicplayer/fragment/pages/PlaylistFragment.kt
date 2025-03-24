@@ -20,9 +20,11 @@ import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
+import java.time.LocalDateTime
 
 class PlaylistFragment(
 
@@ -58,6 +60,8 @@ class PlaylistFragment(
     private fun updatePlaylistLayout(layout: LayoutType) {
         Timber.d("updatePlaylistLayout: layout=$layout")
         currentLayout = layout
+
+        //TODO update the currentPlaylists to be ordered by SortingOption
 
         //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
@@ -119,6 +123,10 @@ class PlaylistFragment(
             updatePlaylistLayout(layout)
         }
 
+        parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
+            updateTabBySorting(sorting)
+        }
+
         binding.createPlaylistButton.setOnClickListener{
             deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
@@ -144,9 +152,42 @@ class PlaylistFragment(
         return binding.root
     }
 
+    private fun updateTabBySorting(option: SortingUtil.SortingOption) {
+        //take the current data, sort it, display it
+        val modifiedPlaylistOrder = currentPlaylists
+
+    }
+
+//    private fun sortPlaylistsBySortingOption(playlists: List<Playlist>, option: SortingUtil.SortingOption): List<Playlist> {
+//        when(option) {
+//            SortingUtil.SortingOption.SORTING_TITLE_ALPHABETICAL -> {
+//                return playlists.sortedBy {
+//                    it.title
+//                }
+//            }
+//            //TODO store the date/time of creation
+//            SortingUtil.SortingOption.SORTING_NEWEST_RELEASE -> {
+//
+//            }
+//
+//            //TODO store the date/time of last modification
+//            SortingUtil.SortingOption.SORTING_OLDEST_RELEASE -> {
+//
+//            }
+//            else ->  {
+//                //TODO Default shuffle...
+//            }
+//        }
+//    }
+
     private fun activatePlaylistButton() {
         binding.createPlaylistButton.isClickable = true
         binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#4CAF50"))
+
+
+        //TODO use this for the LocalDateTime storing data for the playlist...
+        //val a = LocalDateTime.now().toString()
+        //val b = LocalDateTime.parse()
     }
 
     private fun deactivatePlaylistButton() {

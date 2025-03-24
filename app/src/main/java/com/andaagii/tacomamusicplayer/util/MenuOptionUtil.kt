@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.util
 
 import com.andaagii.tacomamusicplayer.constants.Const
+import timber.log.Timber
 
 class MenuOptionUtil {
 
@@ -86,6 +87,7 @@ class MenuOptionUtil {
          * within the app. I use MenuOption enum for simplicity.
          */
         fun determineMenuOptionFromTitle(title: String): MenuOption {
+            Timber.d("determineMenuOptionFromTitle: title=$title")
             return when(title) {
                 Const.PLAY_SONG_GROUP -> MenuOption.PLAY_SONG_GROUP
 
