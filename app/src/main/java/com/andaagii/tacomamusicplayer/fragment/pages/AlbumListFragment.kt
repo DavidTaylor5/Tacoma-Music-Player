@@ -15,6 +15,7 @@ import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -76,8 +77,23 @@ class AlbumListFragment(
         return binding.root
     }
 
-    private fun updateAlbumSorting() {
-        //Update the currentAlbums...
+    private fun updateAlbumSorting(sorting: SortingUtil.SortingOption) {
+        Timber.d("updateAlbumSorting: ")
+
+        //TODO SORT currentAlbumList, then set to currentAlbumList
+
+        binding.displayRecyclerview.adapter.let { adapter ->
+            when(adapter) {
+                is AlbumListAdapter -> {
+                    //TODO call adapter.updateData(currentAlbumList)
+                    (adapter as AlbumListAdapter).updateData(currentAlbumList)
+                }
+                is AlbumGridAdapter -> {
+                    //TODO call adapter. updateData(currentAlbumList)
+                    (adapter as AlbumGridAdapter).updateData(currentAlbumList)
+                }
+            }
+        }
     }
 
     private fun updateAlbumLayout(layout: LayoutType) {
