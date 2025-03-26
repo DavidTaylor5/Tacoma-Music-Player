@@ -40,6 +40,11 @@ class AlbumGridAdapter(
         return AlbumGridViewHolder(binding)
     }
 
+    fun updateData(albums: List<MediaItem>) {
+        //TODO updateData with new albums...
+        //TODO refresh the adapter.
+    }
+
     // Replace the contents of a view (invoked by the layout manager)
     @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: AlbumGridViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")

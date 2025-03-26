@@ -183,11 +183,6 @@ class PlaylistFragment(
     private fun activatePlaylistButton() {
         binding.createPlaylistButton.isClickable = true
         binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#4CAF50"))
-
-
-        //TODO use this for the LocalDateTime storing data for the playlist...
-        //val a = LocalDateTime.now().toString()
-        //val b = LocalDateTime.parse()
     }
 
     private fun deactivatePlaylistButton() {
