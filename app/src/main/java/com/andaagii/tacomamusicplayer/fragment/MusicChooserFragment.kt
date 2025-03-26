@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.fragment
 
+import android.graphics.pdf.PdfDocument.Page
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.view.GestureDetector
@@ -125,7 +126,16 @@ class MusicChooserFragment: Fragment() {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Update the Sorting for the tab.
-                parentViewModel.updateSortingForPage(SortingUtil.determineSortingOptionFromTitle(it.title.toString()))
+                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+                parentViewModel.updateSortingForPage(chosenSortingOption)
+
+                parentViewModel.getCurrentPage()?.let { page ->
+                    if(page == PageType.PLAYLIST_PAGE) {
+                        parentViewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
+                    } else if(page == PageType.ALBUM_PAGE) {
+                        parentViewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
+                    }
+                }
 
                 return@setOnMenuItemClickListener true
             }

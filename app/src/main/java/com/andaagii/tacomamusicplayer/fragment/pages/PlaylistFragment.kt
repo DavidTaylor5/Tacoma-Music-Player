@@ -11,8 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
-import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -26,9 +24,8 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-class PlaylistFragment(
+class PlaylistFragment: Fragment() {
 
-): Fragment() {
     private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -100,18 +97,22 @@ class PlaylistFragment(
                 playlist.title != Const.PLAYLIST_QUEUE_TITLE
             }
 
-            currentPlaylists = playlistsWithoutQueue
+            currentPlaylists = SortingUtil.sortPlaylists(
+                playlistsWithoutQueue,
+                parentViewModel.sortingForPlaylistTab.value
+                    ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
+            )
 
             if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
                 binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-                    playlistsWithoutQueue,
+                    currentPlaylists,
                     this::onPlaylistClick,
                     parentViewModel::playPlaylist,
                     this::handlePlaylistSetting
                 )
             } else {
                 binding.displayRecyclerview.adapter = PlaylistAdapter(
-                    playlistsWithoutQueue,
+                    currentPlaylists,
                     this::onPlaylistClick,
                     parentViewModel::playPlaylist,
                     this::handlePlaylistSetting
@@ -298,9 +299,6 @@ class PlaylistFragment(
 
     private fun setupPage() {
         binding.sectionTitle.text = "PLAYLISTS"
-
-        //TODO allow the user to choose between linear playlists and grid playlists
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        //binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
     }
 }
