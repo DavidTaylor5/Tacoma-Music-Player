@@ -76,24 +76,19 @@ class SortingUtil {
                         playlist.title
                     }
                 }
-                SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
-                    playlists.sortedBy { playlist ->
-                        playlist.title
-                    }
-                }
                 SortingOption.SORTING_BY_CREATION_DATE -> {
-                    playlists.sortedBy { playlist ->
-                        playlist.title
+                    playlists.sortedByDescending { playlist ->
+                        playlist.creationTimestamp
                     }
                 }
                 SortingOption.SORTING_BY_MODIFICATION_DATE -> {
-                    playlists.sortedBy { playlist ->
-                        playlist.title
+                    playlists.sortedByDescending { playlist ->
+                        playlist.lastModificationTimestamp
                     }
                 }
                 else -> { //Default to most recently created.
-                    playlists.sortedBy { playlist ->
-                        playlist.title
+                    playlists.sortedByDescending { playlist ->
+                        playlist.lastModificationTimestamp
                     }
                 }
             }

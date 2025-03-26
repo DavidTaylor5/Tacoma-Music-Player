@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
@@ -19,7 +20,7 @@ import timber.log.Timber
 import java.io.File
 
 class PlaylistGridAdapter(
-    private val playlists:  List<Playlist>,
+    private var playlists:  List<Playlist>,
     private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
@@ -37,6 +38,11 @@ class PlaylistGridAdapter(
         val binding = ViewholderPlaylistGridLayoutBinding.inflate(inflater, parent, false)
 
         return PlaylistGridViewHolder(binding)
+    }
+
+    fun updateData(playlists: List<Playlist>) {
+        this.playlists = playlists
+        this.notifyDataSetChanged()
     }
 
     // Replace the contents of a view (invoked by the layout manager)

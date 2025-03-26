@@ -485,6 +485,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             modifiedSongList.addAll(storableSongs)
 
             playlist.songs = PlaylistData(modifiedSongList)
+            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
             PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
         }
     }
