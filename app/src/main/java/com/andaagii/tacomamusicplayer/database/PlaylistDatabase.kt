@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.andaagii.tacomamusicplayer.data.Playlist
 
-@Database(entities = [Playlist::class], version = 7, exportSchema = false)
+@Database(entities = [Playlist::class], version = 8, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class PlaylistDatabase : RoomDatabase() {
 
