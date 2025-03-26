@@ -21,4 +21,15 @@ enum class PageType {
     };
 
     abstract fun type(): Int
+
+    companion object {
+        fun determinePageFromPosition(position: Int): PageType {
+            return when(position) {
+                0 -> PLAYLIST_PAGE
+                1 -> ALBUM_PAGE
+                2 -> SONG_PAGE
+                else -> PLAYLIST_PAGE
+            }
+        }
+    }
 }

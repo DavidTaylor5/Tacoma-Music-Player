@@ -9,7 +9,6 @@ class SortingUtil {
 
     enum class SortingOption {
 
-
         //Song Group Options
         SORTING_TITLE_ALPHABETICAL {
             override fun type(): String {
@@ -70,8 +69,8 @@ class SortingUtil {
             }
         }
 
-        fun sortPlaylists(playlists: List<Playlist>, sorting: SortingOption) {
-            when(sorting) {
+        fun sortPlaylists(playlists: List<Playlist>, sorting: SortingOption): List<Playlist> {
+            return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     playlists.sortedBy { playlist ->
                         playlist.title
@@ -100,25 +99,25 @@ class SortingUtil {
             }
         }
 
-        fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption) {
-            when(sorting) {
+        fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption): List<MediaItem> {
+            return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.mediaMetadata.title.toString()
+                        album.mediaMetadata.albumTitle.toString()
                     }
                 }
                 SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.mediaMetadata.artist.toString()
+                        album.mediaMetadata.albumArtist.toString()
                     }
                 }
                 SortingOption.SORTING_NEWEST_RELEASE -> {
-                    albums.sortedBy { album ->
+                    albums.sortedByDescending { album ->
                         album.mediaMetadata.releaseYear
                     }
                 }
                 SortingOption.SORTING_OLDEST_RELEASE -> {
-                    albums.sortedByDescending { album ->
+                    albums.sortedBy { album ->
                         album.mediaMetadata.releaseYear
                     }
                 }
