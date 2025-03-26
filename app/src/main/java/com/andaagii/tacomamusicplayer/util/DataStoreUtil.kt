@@ -16,11 +16,11 @@ class DataStoreUtil {
 
     companion object {
 
-        val SETTING_PLAYLIST_LAYOUT = stringPreferencesKey(Const.SETTING_PLAYLIST_LAYOUT)
-        val SETTING_ALBUM_LAYOUT = stringPreferencesKey(Const.SETTING_ALBUM_LAYOUT)
+        private val SETTING_PLAYLIST_LAYOUT = stringPreferencesKey(Const.SETTING_PLAYLIST_LAYOUT)
+        private val SETTING_ALBUM_LAYOUT = stringPreferencesKey(Const.SETTING_ALBUM_LAYOUT)
 
-        val SETTING_PLAYLIST_SORTING = stringPreferencesKey(Const.SETTING_PLAYLIST_SORTING)
-        val SETTING_ALBUM_SORTING = stringPreferencesKey(Const.SETTING_ALBUM_SORTING)
+        private val SETTING_PLAYLIST_SORTING = stringPreferencesKey(Const.SETTING_PLAYLIST_SORTING)
+        private val SETTING_ALBUM_SORTING = stringPreferencesKey(Const.SETTING_ALBUM_SORTING)
 
 
         suspend fun setPlaylistLayoutPreference(context: Context, layout: LayoutType) {

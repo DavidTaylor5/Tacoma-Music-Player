@@ -211,9 +211,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    fun setTabLayoutsFromUserSettings(context: Context) {
+    private fun setTabLayoutsFromPrefs(context: Context) {
         determinePlaylistTabLayout(context)
         determineAlbumTabLayout(context)
+    }
+
+    private fun setTabSortingOptionFromPrefs(context: Context) {
+        determinePlaylistTabSorting(context)
+        determineAlbumTabSorting(context)
     }
 
     private fun determinePlaylistTabLayout(context: Context) {
@@ -234,6 +239,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    private fun determinePlaylistTabSorting(context: Context) {
+        viewModelScope.launch {
+            DataStoreUtil.getPlaylistSortingPreference(context).collect { savedSortingString ->
+                val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
+                _sortingForPlaylistTab.postValue(sorting)
+            }
+        }
+    }
+
+    private fun determineAlbumTabSorting(context: Context) {
+        viewModelScope.launch {
+            DataStoreUtil.getAlbumSortingPreference(context).collect { savedSortingString ->
+                val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
+                _sortingForAlbumTab.postValue(sorting)
+            }
+        }
+    }
+
     fun savePlaylistLayout(context: Context, layout: LayoutType) {
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setPlaylistLayoutPreference(context, layout)
@@ -246,6 +269,20 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             DataStoreUtil.setAlbumLayoutPreference(context, layout)
         }
         _layoutForAlbumTab.postValue(layout)
+    }
+
+    fun savePlaylistSorting(context: Context, sorting: SortingUtil.SortingOption) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setPlaylistSortingPreference(context, sorting)
+        }
+        _sortingForPlaylistTab.postValue(sorting)
+    }
+
+    fun saveAlbumSorting(context: Context, sorting: SortingUtil.SortingOption) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setAlbumSortingPreference(context, sorting)
+        }
+        _sortingForAlbumTab.postValue(sorting)
     }
 
     /**
@@ -289,7 +326,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun checkUserPreferences() {
-        setTabLayoutsFromUserSettings(getApplication<Application>().applicationContext)
+        setTabLayoutsFromPrefs(getApplication<Application>().applicationContext)
+        setTabSortingOptionFromPrefs(getApplication<Application>().applicationContext)
     }
 
     /**

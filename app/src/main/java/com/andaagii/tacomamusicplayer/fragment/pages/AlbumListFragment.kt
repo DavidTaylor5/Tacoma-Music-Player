@@ -39,7 +39,11 @@ class AlbumListFragment(
         val observer: Observer<List<MediaItem>> =
             Observer { mediaList ->
 
-                currentAlbumList = mediaList
+                currentAlbumList = SortingUtil.sortAlbums(
+                    mediaList,
+                    parentViewModel.sortingForAlbumTab.value
+                        ?: SortingUtil.SortingOption.SORTING_NEWEST_RELEASE
+                )
 
                 Timber.d("onCreateView: found albumList.size=${mediaList.size}")
                 binding.displayRecyclerview.adapter = AlbumListAdapter(

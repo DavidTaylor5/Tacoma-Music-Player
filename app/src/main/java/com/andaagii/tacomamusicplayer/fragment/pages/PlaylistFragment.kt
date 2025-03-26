@@ -100,18 +100,22 @@ class PlaylistFragment(
                 playlist.title != Const.PLAYLIST_QUEUE_TITLE
             }
 
-            currentPlaylists = playlistsWithoutQueue
+            val currentPlaylists = SortingUtil.sortPlaylists(
+                playlistsWithoutQueue,
+                parentViewModel.sortingForPlaylistTab.value
+                    ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
+            )
 
             if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
                 binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-                    playlistsWithoutQueue,
+                    currentPlaylists,
                     this::onPlaylistClick,
                     parentViewModel::playPlaylist,
                     this::handlePlaylistSetting
                 )
             } else {
                 binding.displayRecyclerview.adapter = PlaylistAdapter(
-                    playlistsWithoutQueue,
+                    currentPlaylists,
                     this::onPlaylistClick,
                     parentViewModel::playPlaylist,
                     this::handlePlaylistSetting
