@@ -102,9 +102,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isRootAvailable
     private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
 
-    val currentPage: LiveData<PageType>
-        get() = _currentPage
-    private val _currentPage: MutableLiveData<PageType> = MutableLiveData()
+    val navigateToPage: LiveData<PageType>
+        get() = _navigateToPage
+    private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
+
+//    val navigateToPage: LiveData<PageType>
+//        get() = _navigateToPage
+//    private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
+
+    private var currentPage: PageType? = null
 
     val currentPlayingSongInfo: LiveData<SongData>
         get() = _currentPlayingSongInfo
@@ -246,15 +252,23 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Experimental code, which page for music chooser fragment?
      */
     fun setPage(page: PageType) {
-        _currentPage.value = page
+        _navigateToPage.value = page
+    }
+
+    fun observeCurrentPage(page: PageType) {
+        currentPage = page
     }
 
     fun updateSortingForPage(option: SortingUtil.SortingOption) {
-        if(currentPage.value == PageType.PLAYLIST_PAGE) {
+        if(currentPage == PageType.PLAYLIST_PAGE) {
             _sortingForPlaylistTab.postValue(option)
-        } else if(currentPage.value == PageType.ALBUM_PAGE) {
+        } else if(currentPage == PageType.ALBUM_PAGE) {
             _sortingForAlbumTab.postValue(option)
         }
+    }
+
+    fun getCurrentPage(): PageType? {
+        return currentPage
     }
 
     private var mediaBrowser: MediaBrowser? = null
@@ -471,6 +485,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             modifiedSongList.addAll(storableSongs)
 
             playlist.songs = PlaylistData(modifiedSongList)
+            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
             PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
         }
     }

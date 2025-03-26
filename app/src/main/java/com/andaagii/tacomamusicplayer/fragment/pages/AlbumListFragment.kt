@@ -69,7 +69,7 @@ class AlbumListFragment(
         }
 
         parentViewModel.sortingForAlbumTab.observe(viewLifecycleOwner) { sortingOption ->
-            //updateAlbumSorting?
+            updateAlbumSorting(sortingOption)
         }
 
         setupPage()
@@ -78,19 +78,19 @@ class AlbumListFragment(
     }
 
     private fun updateAlbumSorting(sorting: SortingUtil.SortingOption) {
-        Timber.d("updateAlbumSorting: ")
+        Timber.d("updateAlbumSorting: sorting=$sorting")
 
-        //TODO SORT currentAlbumList, then set to currentAlbumList
+        //Update the currentAlbumList
+        currentAlbumList = SortingUtil.sortAlbums(currentAlbumList, sorting)
 
+        //Set the current album list to be shown
         binding.displayRecyclerview.adapter.let { adapter ->
             when(adapter) {
                 is AlbumListAdapter -> {
-                    //TODO call adapter.updateData(currentAlbumList)
-                    (adapter as AlbumListAdapter).updateData(currentAlbumList)
+                    adapter.updateData(currentAlbumList)
                 }
                 is AlbumGridAdapter -> {
-                    //TODO call adapter. updateData(currentAlbumList)
-                    (adapter as AlbumGridAdapter).updateData(currentAlbumList)
+                    adapter.updateData(currentAlbumList)
                 }
             }
         }

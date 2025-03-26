@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <item
-        android:id="@+id/order_by_alphabetical"
-        android:title="Order by Title Alphabetical" />
-
-    <item
-        android:id="@+id/order_by_artist_alphabetical"
-        android:title="Order by Artist Alphabetical" />
-
     <item
         android:id="@+id/order_by_newest_release"
         android:title="Order by Newest Release" />
@@ -17,4 +8,11 @@
         android:id="@+id/order_by_oldest_release"
         android:title="Order by Oldest Release" />
 
+    <item
+        android:id="@+id/order_by_alphabetical"
+        android:title="Order by Title Alphabetical" />
+
+    <item
+        android:id="@+id/order_by_artist_alphabetical"
+        android:title="Order by Artist Alphabetical" />
 </menu>

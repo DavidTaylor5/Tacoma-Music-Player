@@ -11,6 +11,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
+import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -18,13 +20,11 @@ import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
-import java.time.LocalDateTime
 
 class PlaylistFragment(
 
@@ -124,7 +124,7 @@ class PlaylistFragment(
         }
 
         parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
-            updateTabBySorting(sorting)
+            updatePlaylistSorting(sorting)
         }
 
         binding.createPlaylistButton.setOnClickListener{
@@ -152,33 +152,23 @@ class PlaylistFragment(
         return binding.root
     }
 
-    private fun updateTabBySorting(option: SortingUtil.SortingOption) {
-        //take the current data, sort it, display it
-        val modifiedPlaylistOrder = currentPlaylists
+    private fun updatePlaylistSorting(sorting: SortingUtil.SortingOption) {
+        Timber.d("updatePlaylistSorting: sorting=$sorting")
 
+        currentPlaylists = SortingUtil.sortPlaylists(currentPlaylists, sorting)
+
+        //Set the current album list to be shown
+        binding.displayRecyclerview.adapter.let { adapter ->
+            when(adapter) {
+                is PlaylistAdapter -> {
+                    adapter.updateData(currentPlaylists)
+                }
+                is PlaylistGridAdapter -> {
+                    adapter.updateData(currentPlaylists)
+                }
+            }
+        }
     }
-
-//    private fun sortPlaylistsBySortingOption(playlists: List<Playlist>, option: SortingUtil.SortingOption): List<Playlist> {
-//        when(option) {
-//            SortingUtil.SortingOption.SORTING_TITLE_ALPHABETICAL -> {
-//                return playlists.sortedBy {
-//                    it.title
-//                }
-//            }
-//            //TODO store the date/time of creation
-//            SortingUtil.SortingOption.SORTING_NEWEST_RELEASE -> {
-//
-//            }
-//
-//            //TODO store the date/time of last modification
-//            SortingUtil.SortingOption.SORTING_OLDEST_RELEASE -> {
-//
-//            }
-//            else ->  {
-//                //TODO Default shuffle...
-//            }
-//        }
-//    }
 
     private fun activatePlaylistButton() {
         binding.createPlaylistButton.isClickable = true

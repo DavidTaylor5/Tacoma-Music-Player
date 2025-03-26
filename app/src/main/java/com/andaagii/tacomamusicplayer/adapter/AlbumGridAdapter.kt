@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
+import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -19,7 +20,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
 class AlbumGridAdapter(
-    private val albums: List<MediaItem>,
+    private var albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
 ): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
@@ -41,8 +42,8 @@ class AlbumGridAdapter(
     }
 
     fun updateData(albums: List<MediaItem>) {
-        //TODO updateData with new albums...
-        //TODO refresh the adapter.
+        this.albums = albums
+        this.notifyDataSetChanged()
     }
 
     // Replace the contents of a view (invoked by the layout manager)

@@ -19,7 +19,7 @@ import timber.log.Timber
 import java.io.File
 
 class PlaylistAdapter(
-    private val playlists:  List<Playlist>,
+    private var playlists:  List<Playlist>,
     private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
@@ -39,8 +39,9 @@ class PlaylistAdapter(
         return PlaylistViewHolder(binding)
     }
 
-    fun updateDataBySortingOption(option: SortingUtil.SortingOption) {
-        //... MODIFY THE DATA HERE
+    fun updateData(playlists: List<Playlist>) {
+        this.playlists = playlists
+        this.notifyDataSetChanged()
     }
 
     // Replace the contents of a view (invoked by the layout manager)

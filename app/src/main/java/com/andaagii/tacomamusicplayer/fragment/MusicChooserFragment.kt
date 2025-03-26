@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.fragment
 
-import android.graphics.drawable.AnimationDrawable
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.view.GestureDetector
@@ -112,7 +111,16 @@ class MusicChooserFragment: Fragment() {
         binding.sortingButton?.setOnClickListener {
             val menu = PopupMenu(this.context, binding.sortingButton)
 
-            menu.menuInflater.inflate(R.menu.sorting_options, menu.menu)
+            parentViewModel.getCurrentPage()?.let {page ->
+                if(page == PageType.PLAYLIST_PAGE) {
+                    menu.menuInflater.inflate(R.menu.sorting_options_playlist, menu.menu)
+                } else if (page == PageType.ALBUM_PAGE) {
+                    menu.menuInflater.inflate(R.menu.sorting_options_album, menu.menu)
+                } else {
+                    Timber.d("onCreateView: not setting sortingButton, currentPage unknown")
+                }
+            }
+
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
@@ -129,6 +137,9 @@ class MusicChooserFragment: Fragment() {
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
+
+                //observe the current page
+                parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
 
                 when (position) {
                     PageType.PLAYLIST_PAGE.type() -> {
@@ -160,8 +171,7 @@ class MusicChooserFragment: Fragment() {
         binding.navigationControl.setAlbumButtonOnClick {
             parentViewModel.setPage(PageType.SONG_PAGE)
         }
-
-        parentViewModel.currentPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
+        parentViewModel.navigateToPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
             binding.pager.currentItem = page.type()
         }
 
