@@ -5,6 +5,8 @@ import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -32,10 +34,7 @@ class AlbumListAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumViewHolder {
         Timber.d("onCreateViewHolder: ")
-
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-        //TODO I will also need an if statement if I want to switch between bindings
         val binding = ViewholderAlbumBinding.inflate(inflater, parent, false)
 
         return AlbumViewHolder(binding)
@@ -78,6 +77,18 @@ class AlbumListAdapter(
 
             if(!ableToDraw) {
                 viewHolder.binding.albumArt.setImageResource(R.drawable.music_note_icon)
+            }
+
+            viewHolder.binding.menuIcon.setOnClickListener {
+                val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+
+                menu.menuInflater.inflate(R.menu.album_options, menu.menu)
+                menu.setOnMenuItemClickListener {
+                    Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                    //handleMenuItem(it, position) TODO Set a handler for setting option
+                    return@setOnMenuItemClickListener true
+                }
+                menu.show()
             }
         }
 

@@ -5,10 +5,13 @@ import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
@@ -75,6 +78,20 @@ class AlbumGridAdapter(
                 albumUri,
                 Size(400, 400)
             )
+        }
+
+        viewHolder.binding.itemContainer.setOnLongClickListener {
+            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.itemContainer)
+
+            menu.menuInflater.inflate(R.menu.album_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                //handleMenuItem(it, position) TODO Set a handler for setting option
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
+
+            return@setOnLongClickListener true
         }
 
         viewHolder.binding.albumName.text = "$albumTitle"
