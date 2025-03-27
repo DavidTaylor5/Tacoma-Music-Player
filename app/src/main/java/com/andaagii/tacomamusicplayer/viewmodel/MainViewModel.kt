@@ -25,6 +25,7 @@ import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.QueueAddType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enum.ShuffleType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -137,9 +138,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isPlaying
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
 
-    val isShuffled: LiveData<Boolean>
+    val isShuffled: LiveData<ShuffleType>
         get() = _isShuffled
-    private val _isShuffled: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isShuffled: MutableLiveData<ShuffleType> = MutableLiveData()
 
     val repeatMode: LiveData<Int>
         get() = _repeatMode
@@ -182,14 +183,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Changes between songs being shuffled and songs being in original order.
+     */
     fun flipShuffleState() {
         Timber.d("flipShuffleState: ")
-        _isShuffled.value = !(_isShuffled.value ?: false)
-        //TODO Also save current shuffle state value
-        if(_isShuffled.value == true) {
-            shuffleSongsInMediaController()
-        } else {
+        if(_isShuffled.value == ShuffleType.SHUFFLED) {
+            //Set to be original order
+            _isShuffled.postValue(ShuffleType.NOT_SHUFFLED)
             restoreOriginalSongOrder()
+        } else {
+            //Set to be shuffled
+            _isShuffled.postValue(ShuffleType.SHUFFLED)
+            shuffleSongsInMediaController()
         }
     }
 
@@ -770,7 +776,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         _originalSongOrder.postValue( songOrder ?: mediaItems  )
 
-        if(_isShuffled.value == true) {
+        if(_isShuffled.value == ShuffleType.SHUFFLED) {
             val shuffledSongs = shuffleSongs(mediaItems)
             _mediaController.value?.addMediaItems(shuffledSongs)
         } else {

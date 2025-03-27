@@ -40,6 +40,8 @@ class Const {
         const val SETTING_PLAYLIST_SORTING = "SETTING_PLAYLIST_SORTING"
         const val SETTING_ALBUM_LAYOUT = "SETTING_ALBUM_LAYOUT"
         const val SETTING_ALBUM_SORTING = "SETTING_ALBUM_SORTING"
+        const val SETTING_LOOPING = "SETTING_LOOPING"
+        const val SETTING_SHUFFLE = "SETTING_SHUFFLE"
 
         //SORTING OPTIONS
         const val SORTING_TITLE_ALPHABETICAL = "Order by Title Alphabetical"
@@ -48,5 +50,9 @@ class Const {
         const val SORTING_OLDEST_RELEASE = "Order by Oldest Release"
         const val SORTING_CREATION_DATE = "Order by Creation Date"
         const val SORTING_MODIFICATION_DATE = "Order by Recently Modified"
+
+        //SHUFFLE TYPES
+        const val NOT_SHUFFLED = "NOT_SHUFFLED"
+        const val SHUFFLED = "SHUFFLED"
     }
 }
