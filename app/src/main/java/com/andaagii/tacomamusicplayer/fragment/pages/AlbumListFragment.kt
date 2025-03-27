@@ -50,7 +50,8 @@ class AlbumListFragment(
                 binding.displayRecyclerview.adapter = AlbumListAdapter(
                     mediaList,
                     this::onAlbumClick,
-                    parentViewModel::playAlbum
+                    parentViewModel::playAlbum,
+                    this::handleAlbumSetting
                 )
             }
 
@@ -111,7 +112,8 @@ class AlbumListFragment(
             binding.displayRecyclerview.adapter = AlbumListAdapter(
                 currentAlbumList,
                 this::onAlbumClick,
-                parentViewModel::playAlbum
+                parentViewModel::playAlbum,
+                this::handleAlbumSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
             binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
