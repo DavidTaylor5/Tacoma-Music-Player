@@ -111,7 +111,7 @@ class SongListAdapter(
             UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 artworkUri,
-                Size(100, 100)
+                Size(200, 200)
             )
 
             //TEST CODE FOR LIKE ANIMATION...

@@ -15,6 +15,9 @@ class Const {
         const val REMOVE_PLAYLIST: String = "Remove Playlist"
         const val PLAY_PLAYLIST_ONLY: String = "Play Playlist"
 
+        //ALBUM OPTIONS
+        const val PLAY_ALBUM: String = "Play Album"
+
         //QUEUE OPTIONS
         const val CLEAR_QUEUE: String = "Clear Queue"
         const val ADD_TO_QUEUE: String = "Add to Queue"

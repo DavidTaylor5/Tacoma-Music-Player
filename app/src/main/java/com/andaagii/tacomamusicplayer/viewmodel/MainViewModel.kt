@@ -23,6 +23,7 @@ import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enum.QueueAddType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
 import com.andaagii.tacomamusicplayer.service.MusicService
@@ -727,7 +728,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * High level function that will attempt to set a list of songs (MediaItems) based on album title.
      * @param albumId The title of an album to be queried.
      */
-    fun querySongsFromAlbum(albumId: String, shouldPlayAlbum: Boolean = false) {
+    fun querySongsFromAlbum(albumId: String, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
         Timber.d("querySongsFromAlbum: ")
         if(mediaBrowser != null) {
 
@@ -740,11 +741,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     val songGroupType = SongGroupType.ALBUM
                     _currentSongList.value = SongGroup(songGroupType, songs, title)
 
-                    if(shouldPlayAlbum) {
+                    //When I query the album, determine if/how album should be played
+                    if(queueAddType == QueueAddType.QUEUE_END_ADD) {
+                        addTracksSaveTrackOrder(songs)
+                    } else if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
                         _mediaController.value?.clearMediaItems()
-                        addTracksSaveTrackOrder(songs) //TODO When I add mediaItems I also want to track the songs in order.
+                        addTracksSaveTrackOrder(songs)
                         _mediaController.value?.play()
                     }
+
                 }, MoreExecutors.directExecutor())
             }
         } else {
@@ -771,8 +776,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         } else {
             _mediaController.value?.addMediaItems(mediaItems)
         }
-
-    _mediaController.value?.addMediaItems(mediaItems)
     }
 
     private fun shuffleSongs(mediaItems: List<MediaItem>): List<MediaItem> {
@@ -801,11 +804,25 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Clears the current queue and starts playing the chosen album.
+     */
     fun playAlbum(albumTitle: String) {
         Timber.d("playAlbum: ")
         querySongsFromAlbum(
             albumTitle,
-            shouldPlayAlbum = true
+            queueAddType = QueueAddType.QUEUE_CLEAR_ADD
+        )
+    }
+
+    /**
+     * Adds to album to the back of the current queue.
+     */
+    fun addAlbumToBackOfQueue(albumTitle: String) {
+        Timber.d("addAlbumToBackOfQueue: ")
+        querySongsFromAlbum(
+            albumTitle,
+            queueAddType = QueueAddType.QUEUE_END_ADD
         )
     }
 

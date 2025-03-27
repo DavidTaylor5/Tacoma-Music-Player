@@ -6,7 +6,7 @@
         android:title="Clear Queue"
         android:titleCondensed=""/>
 
-    <item
-        android:id="@+id/playlist_add"
-        android:title="Add to Playlist" />
+<!--    <item-->
+<!--        android:id="@+id/playlist_add"-->
+<!--        android:title="Add to Playlist" />-->
 </menu>
