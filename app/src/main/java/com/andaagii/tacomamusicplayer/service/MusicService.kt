@@ -17,6 +17,7 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import timber.log.Timber
+import kotlin.random.Random
 
 /**
  * MusicService serves up a way to query albums and songs for the UI.
@@ -151,11 +152,19 @@ class MusicService : MediaLibraryService() {
     private fun initializeMediaSession(): Boolean {
         Timber.d("initializeMediaSession: ")
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
-            .setId("xxx") //TODO what should I set the Id to?
+            .setId(generateRandomStringId())
             .build()
         addSession(session!!)
 
         return true
+    }
+
+    /**
+     * Create a random string for the session id, previously I'm getting a crash because the service
+     * doesn't have a unique id.
+     */
+    private fun generateRandomStringId(): String {
+        return "Tacoma Music Player: ${Random.nextDouble()}"
     }
 
 

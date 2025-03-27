@@ -179,16 +179,16 @@ class MusicPlayingFragment: Fragment() {
             }
         }
 
-        parentViewModel.repeatMode.observe(this) { repeatMode ->
+        parentViewModel.loopMode.observe(this) { repeatMode ->
             Timber.d("onStart: repeatMode=$repeatMode")
             when(repeatMode) {
-                Player.REPEAT_MODE_OFF -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.one_x) }
-                Player.REPEAT_MODE_ONE -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat_one) }
-                Player.REPEAT_MODE_ALL -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat) }
+                Player.REPEAT_MODE_OFF -> {  binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
+                Player.REPEAT_MODE_ONE -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
+                Player.REPEAT_MODE_ALL -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
             }
         }
 
-        parentViewModel.isShuffled.observe(this) { isShuffled ->
+        parentViewModel.shuffleMode.observe(this) { isShuffled ->
             Timber.d("onStart: isShuffled=$isShuffled")
             if(isShuffled == ShuffleType.SHUFFLED) {
                 binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
@@ -243,8 +243,8 @@ class MusicPlayingFragment: Fragment() {
 //            }, 2000)
         }
 
-        binding.repeatToggle?.setOnClickListener {
-            parentViewModel.flipRepeatMode()
+        binding.loopToggle?.setOnClickListener {
+            parentViewModel.flipLoopMode()
         }
 
         binding.shuffleToggle?.setOnClickListener {
