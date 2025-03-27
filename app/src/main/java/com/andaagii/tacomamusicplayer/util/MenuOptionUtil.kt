@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.util
 
+import android.view.Menu
 import com.andaagii.tacomamusicplayer.constants.Const
 import timber.log.Timber
 
@@ -66,6 +67,12 @@ class MenuOptionUtil {
             }
         },
 
+        PLAY_ALBUM {
+            override fun type(): String {
+                return Const.PLAY_ALBUM
+            }
+        },
+
 
         CHECK_STATS {
             override fun type(): String {
@@ -97,6 +104,8 @@ class MenuOptionUtil {
                 Const.RENAME_PLAYLIST -> MenuOption.RENAME_PLAYLIST
                 Const.ADD_PLAYLIST_IMAGE -> MenuOption.ADD_PLAYLIST_IMAGE
                 Const.REMOVE_PLAYLIST -> MenuOption.REMOVE_PLAYLIST
+
+                Const.PLAY_ALBUM -> MenuOption.PLAY_ALBUM
 
                 Const.CLEAR_QUEUE -> MenuOption.CLEAR_QUEUE
                 Const.ADD_TO_QUEUE -> MenuOption.ADD_TO_QUEUE

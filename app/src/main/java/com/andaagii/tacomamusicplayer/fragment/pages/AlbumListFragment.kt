@@ -15,6 +15,7 @@ import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
@@ -118,8 +119,23 @@ class AlbumListFragment(
             binding.displayRecyclerview.adapter = AlbumGridAdapter(
                 currentAlbumList,
                 this::onAlbumClick,
-                parentViewModel::playAlbum
+                parentViewModel::playAlbum,
+                this::handleAlbumSetting
             )
+        }
+    }
+
+    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: String) {
+        when (option) {
+            MenuOptionUtil.MenuOption.PLAY_ALBUM ->  {
+                parentViewModel.playAlbum(album)
+            }
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
+                parentViewModel.addAlbumToBackOfQueue(album)
+            }
+            else -> {
+                Timber.d("handleAlbumSetting: unhandled album menu option")
+            }
         }
     }
 

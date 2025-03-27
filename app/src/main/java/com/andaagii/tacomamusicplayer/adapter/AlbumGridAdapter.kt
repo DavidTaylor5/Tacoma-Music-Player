@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -15,6 +16,7 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -26,6 +28,7 @@ class AlbumGridAdapter(
     private var albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
+    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String) -> Unit,
 ): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
 
     /**
@@ -86,7 +89,9 @@ class AlbumGridAdapter(
             menu.menuInflater.inflate(R.menu.album_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                //handleMenuItem(it, position) TODO Set a handler for setting option
+
+                handleMenuOption(it.title.toString(), position)
+
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -99,6 +104,27 @@ class AlbumGridAdapter(
         albums[position].mediaMetadata.releaseYear?.let { year ->
             if(year > 0) {
                 viewHolder.binding.descriptionText.text = "$year | $albumArtist"
+            }
+        }
+    }
+
+    private fun handleMenuOption(menuOptionTitle: String, position: Int) {
+        Timber.d("handleMenuOption: menuOptionTitle=$menuOptionTitle, position=$position")
+        when(MenuOptionUtil.determineMenuOptionFromTitle(menuOptionTitle)) {
+            MenuOptionUtil.MenuOption.PLAY_ALBUM -> {
+                handleAlbumOption(
+                    MenuOptionUtil.MenuOption.PLAY_ALBUM,
+                    albums[position].mediaId
+                    )
+            }
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
+                handleAlbumOption(
+                    MenuOptionUtil.MenuOption.ADD_TO_QUEUE,
+                    albums[position].mediaId
+                )
+            }
+            else -> {
+                Timber.d("handleMenuOption: Album Menu Option not recognized.")
             }
         }
     }
