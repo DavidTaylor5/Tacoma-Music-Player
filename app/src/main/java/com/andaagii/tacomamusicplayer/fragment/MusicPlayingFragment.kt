@@ -1,10 +1,7 @@
 package com.andaagii.tacomamusicplayer.fragment
 
 import android.graphics.drawable.BitmapDrawable
-import android.media.MediaMetadataRetriever
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.transition.TransitionInflater
 import android.util.Size
 import android.view.GestureDetector
@@ -12,9 +9,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationUtils
 import androidx.annotation.OptIn
-import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.Player
@@ -25,6 +20,7 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enum.ShuffleType
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -183,18 +179,18 @@ class MusicPlayingFragment: Fragment() {
             }
         }
 
-        parentViewModel.repeatMode.observe(this) { repeatMode ->
+        parentViewModel.loopMode.observe(this) { repeatMode ->
             Timber.d("onStart: repeatMode=$repeatMode")
             when(repeatMode) {
-                Player.REPEAT_MODE_OFF -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.one_x) }
-                Player.REPEAT_MODE_ONE -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat_one) }
-                Player.REPEAT_MODE_ALL -> {  binding.repeatToggle?.setBackgroundResource(R.drawable.repeat) }
+                Player.REPEAT_MODE_OFF -> {  binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
+                Player.REPEAT_MODE_ONE -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
+                Player.REPEAT_MODE_ALL -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
             }
         }
 
-        parentViewModel.isShuffled.observe(this) { isShuffled ->
+        parentViewModel.shuffleMode.observe(this) { isShuffled ->
             Timber.d("onStart: isShuffled=$isShuffled")
-            if(isShuffled) {
+            if(isShuffled == ShuffleType.SHUFFLED) {
                 binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
             } else {
                 binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
@@ -230,12 +226,12 @@ class MusicPlayingFragment: Fragment() {
         }
 
         binding.songArt?.setOnClickListener {
-            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_out).also { animation ->
-                binding.songArt?.startAnimation(animation)
-            }
-            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_in).also { animation ->
-                binding.alternateSongArt?.startAnimation(animation)
-            }
+//            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_out).also { animation ->
+//                binding.songArt?.startAnimation(animation)
+//            }
+//            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_in).also { animation ->
+//                binding.alternateSongArt?.startAnimation(animation)
+//            }
 
             //TODO If I want to add advanced Animations I will further investigate this code...
 //            Handler(Looper.getMainLooper()).postDelayed({
@@ -247,8 +243,8 @@ class MusicPlayingFragment: Fragment() {
 //            }, 2000)
         }
 
-        binding.repeatToggle?.setOnClickListener {
-            parentViewModel.flipRepeatMode()
+        binding.loopToggle?.setOnClickListener {
+            parentViewModel.flipLoopMode()
         }
 
         binding.shuffleToggle?.setOnClickListener {

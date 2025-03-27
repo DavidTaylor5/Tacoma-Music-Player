@@ -25,6 +25,7 @@ import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.QueueAddType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enum.ShuffleType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -137,13 +138,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isPlaying
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
 
-    val isShuffled: LiveData<Boolean>
-        get() = _isShuffled
-    private val _isShuffled: MutableLiveData<Boolean> = MutableLiveData()
+    val shuffleMode: LiveData<ShuffleType>
+        get() = _shuffleMode
+    private val _shuffleMode: MutableLiveData<ShuffleType> = MutableLiveData()
 
-    val repeatMode: LiveData<Int>
-        get() = _repeatMode
-    private val _repeatMode: MutableLiveData<Int> = MutableLiveData()
+    val loopMode: LiveData<Int>
+        get() = _loopMode
+    private val _loopMode: MutableLiveData<Int> = MutableLiveData()
 
     val originalSongOrder: LiveData<List<MediaItem>>
         get() = _originalSongOrder
@@ -170,38 +171,42 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             _isPlaying.postValue(isPlaying)
         }
 
-//        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-//            super.onShuffleModeEnabledChanged(shuffleModeEnabled)
-//            _isShuffled.postValue(shuffleModeEnabled)
-//        }
-
         override fun onRepeatModeChanged(repeatMode: Int) {
             Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
-            _repeatMode.postValue(repeatMode)
+            _loopMode.postValue(repeatMode)
         }
     }
 
+    /**
+     * Changes between songs being shuffled and songs being in original order.
+     */
     fun flipShuffleState() {
         Timber.d("flipShuffleState: ")
-        _isShuffled.value = !(_isShuffled.value ?: false)
-        //TODO Also save current shuffle state value
-        if(_isShuffled.value == true) {
-            shuffleSongsInMediaController()
-        } else {
+        if(_shuffleMode.value == ShuffleType.SHUFFLED) {
+            //Set to be original order
+            _shuffleMode.postValue(ShuffleType.NOT_SHUFFLED)
             restoreOriginalSongOrder()
+            saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.NOT_SHUFFLED)
+        } else {
+            //Set to be shuffled
+            _shuffleMode.postValue(ShuffleType.SHUFFLED)
+            shuffleSongsInMediaController()
+            saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.SHUFFLED)
         }
     }
 
-    fun flipRepeatMode() {
+    fun flipLoopMode() {
         Timber.d("flipRepeatMode: ")
-        if(_repeatMode.value == Player.REPEAT_MODE_OFF) {
+        if(_loopMode.value == Player.REPEAT_MODE_OFF) {
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ONE
-        } else if(_repeatMode.value == Player.REPEAT_MODE_ONE) {
+        } else if(_loopMode.value == Player.REPEAT_MODE_ONE) {
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ALL
         } else {
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_OFF
         }
+
+        saveLoopingPref(getApplication<Application>().applicationContext, _mediaController.value?.repeatMode ?: Player.REPEAT_MODE_ONE)
     }
 
     fun flipPlayingState() {
@@ -220,6 +225,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun setTabSortingOptionFromPrefs(context: Context) {
         determinePlaylistTabSorting(context)
         determineAlbumTabSorting(context)
+    }
+
+    private fun setMusicPlayingPrefs(context: Context) {
+        //determineLoopingPref(context)
+        determineShufflePref(context)
     }
 
     private fun determinePlaylistTabLayout(context: Context) {
@@ -258,6 +268,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    private fun determineLoopingPref(context: Context) {
+        Timber.d("determineLoopingPref: ")
+        viewModelScope.launch {
+            DataStoreUtil.getLoopingPreference(context).collect { loopingPref ->
+                _mediaController.value?.repeatMode = loopingPref
+            }
+        }
+    }
+
+    private fun determineShufflePref(context: Context) {
+        viewModelScope.launch {
+            DataStoreUtil.getShufflePreference(context).collect { shufflePref ->
+                val shuffleType = ShuffleType.determineShuffleTypeFromString(shufflePref)
+                _shuffleMode.postValue(shuffleType)
+            }
+        }
+    }
+
     fun savePlaylistLayout(context: Context, layout: LayoutType) {
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setPlaylistLayoutPreference(context, layout)
@@ -284,6 +312,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             DataStoreUtil.setAlbumSortingPreference(context, sorting)
         }
         _sortingForAlbumTab.postValue(sorting)
+    }
+
+    fun saveLoopingPref(context: Context, loopInt: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setLoopingPreference(context, loopInt)
+        }
+    }
+
+    fun saveShufflePref(context: Context, shuffleType: ShuffleType) {
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setShufflePreference(context, shuffleType)
+        }
     }
 
     /**
@@ -326,9 +366,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
     }
 
+    /**
+     * Determine all saved user preferences, loopMode, shuffleMode, layout, sorting.
+     */
     private fun checkUserPreferences() {
         setTabLayoutsFromPrefs(getApplication<Application>().applicationContext)
         setTabSortingOptionFromPrefs(getApplication<Application>().applicationContext)
+        setMusicPlayingPrefs(getApplication<Application>().applicationContext)
     }
 
     /**
@@ -663,13 +707,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         val controllerFuture = MediaController.Builder(getApplication<Application>().applicationContext, session).buildAsync()
         controllerFuture.addListener({
             val controller = controllerFuture.get()
+
             _mediaController.value = controller
+
+            determineLoopingPref(getApplication<Application>().applicationContext)
 
             //Add old queue to the mediaController
             restoreQueue()
+            //TODO restore song position, song in the mediaController resumePlayerState()...
 
-            //TODO set all live data in initalizeControllerLiveData()...
-            _repeatMode.postValue(controller.repeatMode)
+            _loopMode.postValue(controller.repeatMode)
             controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())
     }
@@ -770,7 +817,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         _originalSongOrder.postValue( songOrder ?: mediaItems  )
 
-        if(_isShuffled.value == true) {
+        if(_shuffleMode.value == ShuffleType.SHUFFLED) {
             val shuffledSongs = shuffleSongs(mediaItems)
             _mediaController.value?.addMediaItems(shuffledSongs)
         } else {
