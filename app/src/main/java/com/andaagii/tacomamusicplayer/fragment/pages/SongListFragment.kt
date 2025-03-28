@@ -21,7 +21,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter
 import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongGroup
@@ -118,12 +117,17 @@ class SongListFragment(
         currentSongGroup?.let { songGroup ->
 
             val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
-            songGroup.songs = finalSongOrder
 
-            if(songGroup.type == SongGroupType.PLAYLIST) {
+            if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)
+                && songGroup.type == SongGroupType.PLAYLIST) {
+                songGroup.songs = finalSongOrder
                 parentViewModel.updatePlaylistOrder(songGroup)
             }
         }
+    }
+
+    private fun determineIfPlaylistSongsHaveChanged(originalSongOrder: List<MediaItem>, finalSongOrder: List<MediaItem>): Boolean {
+        return originalSongOrder != finalSongOrder
     }
 
     override fun onCreateView(
@@ -190,7 +194,7 @@ class SongListFragment(
         binding.songGroupInfo.setOnMenuIconPressed {
             val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
 
-            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
@@ -209,7 +213,7 @@ class SongListFragment(
         binding.multiSelectPrompt.setOnMenuIconClick {
             val menu = PopupMenu(this.context, binding.multiSelectPrompt)
 
-            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
+            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 //I don't need to add any more songs here, already added when selected.
@@ -304,6 +308,13 @@ class SongListFragment(
             ADD_TO_PLAYLIST -> {
                 viewModel.prepareSongsForPlaylists()
                 handleAddToPlaylist(mediaItems)
+            }
+            MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
+               // parentViewModel.removeSongsFromPlaylist(currentSongGroup?.title ?: "Unknown Playlist", mediaItems)
+                if(mediaItems.isNotEmpty()) {
+                    val posOfDeletedSong = (binding.displayRecyclerview.adapter as SongListAdapter).removeSong(mediaItems[0].mediaId)
+                    (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(posOfDeletedSong)
+                }
             }
             ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
             CHECK_STATS -> handleCheckStats()

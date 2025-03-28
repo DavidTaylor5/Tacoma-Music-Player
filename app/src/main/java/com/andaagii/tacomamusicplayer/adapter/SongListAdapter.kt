@@ -46,6 +46,17 @@ class SongListAdapter(
         dataSet = modData
     }
 
+    fun removeSong(songTitle: String): Int {
+        val posOfRemovedItem = dataSet.indexOfFirst { song ->
+            song.mediaId == songTitle
+        }
+
+        val modDataSet = dataSet.toMutableList()
+        modDataSet.removeAt(posOfRemovedItem)
+        dataSet = modDataSet
+        return posOfRemovedItem
+    }
+
     fun getSongOrder(): List<MediaItem> {
         return dataSet
     }
@@ -173,10 +184,15 @@ class SongListAdapter(
 
             val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
 
-            menu.menuInflater.inflate(R.menu.songlist_song_options, menu.menu)
+            if(songGroupType == SongGroupType.PLAYLIST) {
+                menu.menuInflater.inflate(R.menu.songlist_playlist_options, menu.menu)
+            } else {
+                menu.menuInflater.inflate(R.menu.songlist_album_options, menu.menu)
+            }
+
             menu.setOnMenuItemClickListener {
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it, dataSet[position])
+                handleMenuItem(it, dataSet[viewHolder.absoluteAdapterPosition])
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -186,6 +202,9 @@ class SongListAdapter(
     //TODO move out of adapters?
     private fun handleMenuItem(item: MenuItem, mediaItem: MediaItem) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
+            MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
+                handleSongSetting(MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST, listOf(mediaItem))
+            }
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(mediaItem)
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(mediaItem)
             MenuOptionUtil.MenuOption.CHECK_STATS -> handleCheckStatus()
