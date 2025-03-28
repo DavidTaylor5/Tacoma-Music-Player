@@ -33,6 +33,7 @@ import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -915,6 +916,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .deletePlaylists(playlist)
+
+                //remove associated image
+                deletePicture(getApplication<Application>().applicationContext, "$playlistTitle.jpg")
             }
         }
     }
