@@ -398,6 +398,45 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>) {
+        Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
+        viewModelScope.launch(Dispatchers.IO) {
+
+            try {
+                val currentPlaylist =
+                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                        .playlistDao()
+                        .findPlaylistByName(playlistTitle)
+
+                val removeSongTitles = MediaItemUtil().createSongDataFromListOfMediaItem(songs).map { removeSong ->
+                    removeSong.songTitle
+                }
+
+                val modSongList = currentPlaylist.songs.songs.toMutableList()
+                modSongList.removeAll { song ->
+                        removeSongTitles.contains(song.songTitle)
+                    }
+
+                val updatePlaylist = Playlist(
+                    id = currentPlaylist.id,
+                    title = currentPlaylist.title,
+                    artFile = currentPlaylist.artFile,
+                    songs = PlaylistData(modSongList),
+                    creationTimestamp = currentPlaylist.creationTimestamp,
+                    lastModificationTimestamp = LocalDateTime.now().toString()
+                )
+
+                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .updatePlaylists(
+                        updatePlaylist
+                    )
+            } catch (e: Exception) {
+                Timber.d("removeSongsFromPlaylist: Error removing song from playlist, e=$e")
+            }
+        }
+    }
+
     /**
      * @param albumSongGroup A song group associated with a playlist.
      */
