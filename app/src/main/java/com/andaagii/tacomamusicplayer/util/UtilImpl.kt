@@ -92,6 +92,21 @@ class UtilImpl {
             return songList
         }
 
+        fun deletePicture(context: Context, fileName: String): Boolean {
+            return try {
+                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val file = File(appDir, fileName)
+                if(file.exists()) {
+                    file.delete()
+                } else {
+                    false
+                }
+            } catch(e: Exception) {
+                Timber.d("deleteFile: e=$e")
+                return false
+            }
+        }
+
         /**
          * Save Image to File in app specific storage, taken from Phind.
          */

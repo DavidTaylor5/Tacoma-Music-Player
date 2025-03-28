@@ -33,6 +33,7 @@ import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -394,6 +395,40 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
                 playlist
             )
+        }
+    }
+
+    /**
+     * @param albumSongGroup A song group associated with a playlist.
+     */
+    fun updatePlaylistOrder(albumSongGroup: SongGroup) {
+        if(albumSongGroup.type == SongGroupType.PLAYLIST) {
+
+            viewModelScope.launch(Dispatchers.IO) {
+                val currentPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .findPlaylistByName(albumSongGroup.title)
+
+                //Turn the media items into a list of SongData
+                val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
+
+                //Modify the original playlist
+                val modifyPlaylist = Playlist(
+                    id = currentPlaylist.id,
+                    title = currentPlaylist.title,
+                    artFile = currentPlaylist.artFile,
+                    songs = PlaylistData(modifySongData),
+                    creationTimestamp = currentPlaylist.creationTimestamp,
+                    lastModificationTimestamp = LocalDateTime.now().toString()
+                )
+
+                //Update the database with the updated playlist
+                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .updatePlaylists(
+                        modifyPlaylist
+                    )
+            }
         }
     }
 
@@ -915,6 +950,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .deletePlaylists(playlist)
+
+                //remove associated image
+                deletePicture(getApplication<Application>().applicationContext, "$playlistTitle.jpg")
             }
         }
     }

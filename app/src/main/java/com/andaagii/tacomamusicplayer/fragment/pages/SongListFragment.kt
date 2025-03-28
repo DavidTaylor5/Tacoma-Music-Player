@@ -111,6 +111,21 @@ class SongListFragment(
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        //If it's a playlist, save the order to the database [it could have changed.]
+        currentSongGroup?.let { songGroup ->
+
+            val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
+            songGroup.songs = finalSongOrder
+
+            if(songGroup.type == SongGroupType.PLAYLIST) {
+                parentViewModel.updatePlaylistOrder(songGroup)
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
