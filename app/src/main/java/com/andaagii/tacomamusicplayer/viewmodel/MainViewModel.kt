@@ -399,6 +399,40 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
+     * @param albumSongGroup A song group associated with a playlist.
+     */
+    fun updatePlaylistOrder(albumSongGroup: SongGroup) {
+        if(albumSongGroup.type == SongGroupType.PLAYLIST) {
+
+            viewModelScope.launch(Dispatchers.IO) {
+                val currentPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .findPlaylistByName(albumSongGroup.title)
+
+                //Turn the media items into a list of SongData
+                val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
+
+                //Modify the original playlist
+                val modifyPlaylist = Playlist(
+                    id = currentPlaylist.id,
+                    title = currentPlaylist.title,
+                    artFile = currentPlaylist.artFile,
+                    songs = PlaylistData(modifySongData),
+                    creationTimestamp = currentPlaylist.creationTimestamp,
+                    lastModificationTimestamp = LocalDateTime.now().toString()
+                )
+
+                //Update the database with the updated playlist
+                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .updatePlaylists(
+                        modifyPlaylist
+                    )
+            }
+        }
+    }
+
+    /**
      * Call when playlistNameDuplicate has occurred and has been handled.
      */
     fun handledPlaylistNameDuplicate() {
