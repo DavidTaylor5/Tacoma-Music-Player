@@ -7,14 +7,12 @@
     android:elevation="4dp"
     app:cardCornerRadius="10dp"
     app:strokeWidth="2dp"
-    app:strokeColor="#673AB7"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginTop="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="@color/songlist_button_focused"
         android:orientation="horizontal"
         >
 
@@ -46,7 +44,7 @@
                 android:layout_height="50dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:src="@drawable/music_note_icon"
+                android:src="@drawable/white_note"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="5dp"
                 />
@@ -62,7 +60,6 @@
             android:orientation="vertical"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
-            android:background="@color/albumlist_button_focused"
             android:layout_weight="10"
             >
 

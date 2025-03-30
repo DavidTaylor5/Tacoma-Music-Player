@@ -78,7 +78,7 @@ class AlbumListAdapter(
             )
 
             if(!ableToDraw) {
-                viewHolder.binding.albumArt.setImageResource(R.drawable.music_note_icon)
+                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
             }
 
             viewHolder.binding.menuIcon.setOnClickListener {
