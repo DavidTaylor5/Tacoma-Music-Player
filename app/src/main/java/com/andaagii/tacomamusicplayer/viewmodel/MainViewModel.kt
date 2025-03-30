@@ -36,7 +36,11 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -551,7 +555,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 .playlistDao()
                 .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
 
-            //TODO I need a function to turn a Playlist into a list<mediaItems>
+            val playbackPosition = DataStoreUtil.getPlaybackPosition(getApplication<Application>().applicationContext).firstOrNull()
+            val songPosition = DataStoreUtil.getSongPosition(getApplication<Application>().applicationContext).firstOrNull()
 
             //oldQueue can be null if this is a fresh install or if there is no previous queue
             if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
@@ -559,7 +564,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 return@launch
             }
 
-            //TODO I can't call mediaController from inside this thread?
             withContext(Dispatchers.Main) {
                 mediaController.value?.let { controller ->
                     controller.setMediaItems(
@@ -567,6 +571,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                             oldQueue.songs.songs
                         )
                     )
+
+                    // Restore Playback State
+                    if(songPosition != null && songPosition < controller.mediaItemCount) {
+                        if(playbackPosition != null) {
+                            controller.seekTo(songPosition, playbackPosition)
+                        } else {
+                            controller.seekTo(songPosition, 0)
+                        }
+                    }
                 }
             }
         }
