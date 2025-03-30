@@ -44,7 +44,7 @@
                 android:layout_height="50dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:src="@drawable/music_note_icon"
+                android:src="@drawable/white_note"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="5dp"
                 />
