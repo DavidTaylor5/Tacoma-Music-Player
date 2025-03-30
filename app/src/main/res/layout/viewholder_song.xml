@@ -7,14 +7,12 @@
     android:layout_height="60dp"
     android:elevation="4dp"
     app:cardCornerRadius="10dp"
-    android:backgroundTint="@color/black"
     >
 
     <LinearLayout
         android:id="@+id/song_container"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="@color/primary"
         android:orientation="horizontal"
         >
 
