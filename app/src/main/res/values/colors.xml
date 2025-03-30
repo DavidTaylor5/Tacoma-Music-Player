@@ -5,6 +5,9 @@
     <color name="dark_primary">#303F9F</color>
     <color name="light_primary">#C5CAE9</color>
     <color name="primary">#FF000000</color>
+
+    <color name="light_green">#8BC34A</color>
+
 <!--    <color name="primary">#3F51B5</color>-->
     <color name="text_icons">#FFFFFF</color>
     <color name="accent">#FF5722</color>

@@ -3,5 +3,14 @@
     <style name="Base.Theme.TacomaMusicPlayer" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">#6CBCE0</item>
+        <item name="colorPrimaryVariant">#326273</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#E39774</item>
+        <item name="colorSecondaryVariant">#E39774</item>
+        <item name="colorOnSecondary">#EEEEEE</item>
+
+        <item name="android:navigationBarColor">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary</item>
     </style>
 </resources>

@@ -33,7 +33,6 @@
             android:text="DEFAULT Text"
             android:textColor="@color/text_icons"
             android:layout_weight="3"
-            android:background="#9C27B0"
             android:textAlignment="center"
             android:maxLines="2"
             />
@@ -43,7 +42,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/albumlist_button_focused"
             android:orientation="vertical"
             android:gravity="center"
             >
