@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.util
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.Player
 import com.andaagii.tacomamusicplayer.activity.dataStore
@@ -27,6 +28,35 @@ class DataStoreUtil {
 
         private val SETTING_LOOPING = intPreferencesKey(Const.SETTING_LOOPING)
         private val SETTING_SHUFFLE = stringPreferencesKey(Const.SETTING_SHUFFLE)
+
+        private val PLAYBACK_POSITION = longPreferencesKey(Const.PLAYBACK_POSITION)
+        private val SONG_POSITION = intPreferencesKey(Const.SONG_POSITION)
+
+        suspend fun setPlaybackPosition(context: Context, position: Long) {
+            context.dataStore.edit { preferences ->
+                preferences[PLAYBACK_POSITION] = position
+            }
+        }
+
+        fun getPlaybackPosition(context: Context): Flow<Long> {
+            val latestPlaybackPosition = context.dataStore.data.map { preferences ->
+                preferences[PLAYBACK_POSITION] ?: 0
+            }
+            return latestPlaybackPosition
+        }
+
+        suspend fun setSongPosition(context: Context, position: Int) {
+            context.dataStore.edit { preferences ->
+                preferences[SONG_POSITION] = position
+            }
+        }
+
+        fun getSongPosition(context: Context): Flow<Int> {
+            val latestSongPosition = context.dataStore.data.map { preferences ->
+               preferences[SONG_POSITION] ?: 0
+            }
+            return latestSongPosition
+        }
 
         suspend fun setLoopingPreference(context: Context, loopInt: Int) {
             context.dataStore.edit { preferences ->
