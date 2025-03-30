@@ -484,10 +484,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      */
     fun saveQueue() {
 
-        //TODO function to save position of current song
-
         mediaController.value?.let { controller ->
+
+            //Save current Player state
+            savePlayerState(controller)
+
             val songs = UtilImpl.getSongListFromMediaController(controller)
+
             if(!songs.isNullOrEmpty()) {
 
                 val playlistData = PlaylistData(
@@ -525,6 +528,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    private fun savePlayerState(controller: MediaController) {
+        val playbackPosition = controller.currentPosition
+        val songPosition = controller.currentMediaItemIndex
+
+        viewModelScope.launch(Dispatchers.IO) {
+            DataStoreUtil.setPlaybackPosition(getApplication<Application>().applicationContext, playbackPosition)
+            DataStoreUtil.setSongPosition(getApplication<Application>().applicationContext, songPosition)
+        }
+
     }
 
     //TODO the empty playingmusicfragment shows briefly, I might have to remove the dog image.

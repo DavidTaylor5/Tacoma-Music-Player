@@ -43,6 +43,10 @@ class Const {
         const val SETTING_LOOPING = "SETTING_LOOPING"
         const val SETTING_SHUFFLE = "SETTING_SHUFFLE"
 
+        //Queue State
+        const val PLAYBACK_POSITION = "PLAYBACK_POSITION"
+        const val SONG_POSITION = "SONG_POSITION"
+
         //SORTING OPTIONS
         const val SORTING_TITLE_ALPHABETICAL = "Order by Title Alphabetical"
         const val SORTING_ARTIST_ALPHABETICAL = "Order by Artist Alphabetical"
