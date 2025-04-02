@@ -15,18 +15,10 @@ class ScreenSlidePagerAdapter(
     override fun getItemCount(): Int  = NUM_PAGES
     override fun createFragment(position: Int): Fragment{
         return when(position) {
-            PageType.PLAYLIST_PAGE.type() -> {
-                PlaylistFragment()
-            }
-            PageType.ALBUM_PAGE.type() -> {
-                AlbumListFragment()
-            }
-            PageType.SONG_PAGE.type() -> {
-                SongListFragment()
-            }
-            else -> {
-                SongListFragment()
-            }
+            PageType.PLAYLIST_PAGE.type() -> PlaylistFragment()
+            PageType.ALBUM_PAGE.type() -> AlbumListFragment()
+            PageType.SONG_PAGE.type() -> SongListFragment()
+            else -> SongListFragment()
         }
     }
 }

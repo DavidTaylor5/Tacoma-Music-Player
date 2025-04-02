@@ -14,7 +14,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Playlist Items and displays them.
  */
 class PlaylistPromptAdapter(
-    private val playlists: List<Playlist>, //TODO I also need to setup what this class needs....
+    private val playlists: List<Playlist>,
     private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
@@ -33,15 +33,12 @@ class PlaylistPromptAdapter(
         return PlaylistPromptViewHolder(binding)
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: PlaylistPromptViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
-        //TODO what should the text be -> Playlist Name
         viewHolder.binding.playlistName.text = playlists[position].title
 
         viewHolder.binding.root.setOnClickListener {
-            //TODO test to see if clicking anywhere on the recyclerview will cause the check mark to appear?
             viewHolder.binding.addCheckbox.isChecked = !viewHolder.binding.addCheckbox.isChecked
         }
 
@@ -59,8 +56,7 @@ class PlaylistPromptAdapter(
         
         Timber.d("onBindViewHolder: ")
     }
-    
-    // Return the size of your dataset (invoked by the layout manager)
+
     override fun getItemCount(): Int {
         return playlists.size
     }

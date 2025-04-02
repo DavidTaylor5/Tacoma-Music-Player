@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Size
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -13,11 +12,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
-import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
@@ -58,21 +54,15 @@ class AlbumGridAdapter(
 
         var albumTitle = "Default ALBUM"
         var albumArtist = ""
-        var albumDuration = ""
         var albumUri = Uri.EMPTY
 
         //First check that dataSet has a value for position
         if(position < albums.size) {
-
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albums[0].mediaMetadata.albumTitle}, albumArtist=${albums[0].mediaMetadata.albumArtist}, albumArtUri=${albums[0].mediaMetadata.artworkUri}")
 
             albumTitle = albums[position].mediaMetadata.albumTitle.toString()
             albumArtist = albums[position].mediaMetadata.albumArtist.toString()
             albumUri = albums[position].mediaMetadata.artworkUri
-
-//            viewHolder.binding.playButton.setOnClickListener {
-//                onPlayIconClick(albumTitle)
-//            }
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 

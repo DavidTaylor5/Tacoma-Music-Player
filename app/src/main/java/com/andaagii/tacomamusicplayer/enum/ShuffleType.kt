@@ -20,11 +20,11 @@ enum class ShuffleType {
     companion object {
         fun determineShuffleTypeFromString(shuffleTypeStr: String): ShuffleType {
             return when(shuffleTypeStr) {
-                Const.NOT_SHUFFLED -> ShuffleType.NOT_SHUFFLED
+                Const.NOT_SHUFFLED -> NOT_SHUFFLED
                 Const.SHUFFLED -> SHUFFLED
                 else -> {
                     Timber.d("determineShuffleTypeFromString: unknown shuffleTypeStr, setting as default NOT_SHUFFLED")
-                    ShuffleType.NOT_SHUFFLED
+                    NOT_SHUFFLED
                 }
             }
         }
