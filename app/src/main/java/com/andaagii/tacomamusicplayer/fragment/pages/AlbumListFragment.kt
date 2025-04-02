@@ -20,10 +20,7 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-class AlbumListFragment(
-
-): Fragment() {
-
+class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -34,9 +31,7 @@ class AlbumListFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentAlbumlistBinding.inflate(inflater)
-
         val observer: Observer<List<MediaItem>> =
             Observer { mediaList ->
 
@@ -55,12 +50,9 @@ class AlbumListFragment(
                 )
             }
 
-        //Now I just need to create different fragments for each type?
         parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
 
         binding.layoutButton.setOnClickListener {
-            //update the current layout...
-            //If I'm on gridlayout, switch to linear layout and vice versa.
             if(parentViewModel.layoutForAlbumTab.value == LayoutType.LINEAR_LAYOUT) {
                 //Update Layout State / Save to datastore
                 parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
@@ -148,9 +140,6 @@ class AlbumListFragment(
 
     private fun setupPage() {
         binding.sectionTitle.text = "ALBUMS"
-
-        //TODO allow the user to choose between linear playlists and grid playlists
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-//        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
     }
 }

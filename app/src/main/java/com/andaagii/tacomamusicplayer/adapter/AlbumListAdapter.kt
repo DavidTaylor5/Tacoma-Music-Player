@@ -13,8 +13,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
-import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
-import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -38,7 +36,6 @@ class AlbumListAdapter(
         Timber.d("onCreateViewHolder: ")
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val binding = ViewholderAlbumBinding.inflate(inflater, parent, false)
-
         return AlbumViewHolder(binding)
     }
 
@@ -53,7 +50,6 @@ class AlbumListAdapter(
 
         var albumTitle = "Default ALBUM"
         var albumArtist = ""
-        var albumDuration = ""
         var albumUri = Uri.EMPTY
 
         //First check that dataSet has a value for position

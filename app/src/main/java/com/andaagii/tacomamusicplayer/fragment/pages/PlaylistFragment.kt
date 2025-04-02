@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +48,6 @@ class PlaylistFragment: Fragment() {
             this.context?.let { fragmentContext ->
                 //Save picture to local data
                 UtilImpl.saveImageToFile(fragmentContext, uri, playlistThatNeedsNewImage)
-
                 parentViewModel.updatePlaylistImage(playlistThatNeedsNewImage, "$playlistThatNeedsNewImage.jpg")
             }
         }
@@ -58,10 +56,6 @@ class PlaylistFragment: Fragment() {
     private fun updatePlaylistLayout(layout: LayoutType) {
         Timber.d("updatePlaylistLayout: layout=$layout")
         currentLayout = layout
-
-        //TODO update the currentPlaylists to be ordered by SortingOption
-
-        //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
             binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
             binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
@@ -88,9 +82,7 @@ class PlaylistFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentPlaylistBinding.inflate(inflater)
-
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
             //Queue is saved as a playlist in database, user doesn't need to access it.
@@ -103,7 +95,6 @@ class PlaylistFragment: Fragment() {
                 parentViewModel.sortingForPlaylistTab.value
                     ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
             )
-
             if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
                 binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                     currentPlaylists,
@@ -120,25 +111,18 @@ class PlaylistFragment: Fragment() {
                 )
             }
         }
-
         parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
             updatePlaylistLayout(layout)
         }
-
         parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
             updatePlaylistSorting(sorting)
         }
-
         binding.createPlaylistButton.setOnClickListener{
             deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
             binding.playlistPrompt.visibility = View.VISIBLE
         }
-
-        //TODO replace with logic for setting new layout
         binding.layoutButton.setOnClickListener {
-            //update the current layout...
-            //If I'm on gridlayout, switch to linear layout and vice versa.
             if(currentLayout == LayoutType.LINEAR_LAYOUT) {
                 //Update Layout State / Save to datastore
                 parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
@@ -147,16 +131,13 @@ class PlaylistFragment: Fragment() {
                 parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
             }
         }
-
         setupCreatePlaylistPrompt()
         setupPage()
-
         return binding.root
     }
 
     private fun updatePlaylistSorting(sorting: SortingUtil.SortingOption) {
         Timber.d("updatePlaylistSorting: sorting=$sorting")
-
         currentPlaylists = SortingUtil.sortPlaylists(currentPlaylists, sorting)
 
         //Set the current album list to be shown
@@ -183,31 +164,16 @@ class PlaylistFragment: Fragment() {
     }
 
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
+        Timber.d("handlePlaylistSetting: option=$option, playlists=$playlists")
+        if(playlists.isEmpty()) {
+            Timber.d("handlePlaylistSetting: Playlists are empty, cannot handle setting.")
+            return
+        }
         when (option) {
             MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> playPlaylistOnly(playlists)
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
-                if(playlists.isNotEmpty()) {
-                    addPlaylistToQueue(
-                        listOf(playlists[0])
-                    )
-                } else {
-                    Timber.d("handlePlaylistSetting: Tried setting playlist image, but given playlists is empty!")
-                }
-            }
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> {
-                if(playlists.isNotEmpty()) {
-                    renamePlaylist(playlists[0])
-                } else {
-                    Timber.d("handlePlaylistSetting: Tried renaming playlist, but given playlists is empty!")
-                }
-            }
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
-                if(playlists.isNotEmpty()) {
-                    addPlaylistImage(playlists[0])
-                } else {
-                    Timber.d("handlePlaylistSetting: Tried setting playlist image, but given playlists is empty!")
-                }
-            }
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue(listOf(playlists[0]))
+            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist(playlists[0])
+            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage(playlists[0])
             MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylists(playlists)
             else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
         }

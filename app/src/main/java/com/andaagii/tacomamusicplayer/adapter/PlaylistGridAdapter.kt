@@ -9,7 +9,6 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
@@ -45,7 +44,6 @@ class PlaylistGridAdapter(
         this.notifyDataSetChanged()
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(viewHolder: PlaylistGridViewHolder, position: Int) {
         viewHolder.binding.playlistName.text = playlists[position].title
@@ -83,10 +81,6 @@ class PlaylistGridAdapter(
             }
         }
 
-//        viewHolder.binding.playButton.setOnClickListener {
-//            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
-//        }
-
         viewHolder.binding.itemContainer.setOnLongClickListener {
 
             Toast.makeText(viewHolder.itemView.context, "Long Click on Playlist!", Toast.LENGTH_SHORT).show()
@@ -104,63 +98,14 @@ class PlaylistGridAdapter(
 
             return@setOnLongClickListener true
         }
-
-//        viewHolder.binding.menuIcon.setOnClickListener {
-//
-//            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
-//
-//            menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
-//            menu.setOnMenuItemClickListener {
-//                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-//                handleMenuItem(it, position)
-//                return@setOnMenuItemClickListener true
-//            }
-//            menu.show()
-//        }
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY,
-                    listOf(playlists[position].title)
-                )
-            }
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
-                addPlaylistToQueue(playlists[position].title)
-            }
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> {
-                renamePlaylists(
-                    playlists[position].title
-                )
-            }
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE,
-                    listOf(playlists[position].title)
-                )
-            }
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.REMOVE_PLAYLIST,
-                    listOf(playlists[position].title)
-                )
-            }
-            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
-        }
-    }
-
-    private fun addPlaylistToQueue(playlistTitle: String) {
+        val playlistTitle = playlists[position].title
+        val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
+        Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE,
-            listOf(playlistTitle)
-        )
-    }
-
-    private fun renamePlaylists(playlistTitle: String) {
-        handlePlaylistSetting(
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST,
+            menuOption,
             listOf(playlistTitle)
         )
     }

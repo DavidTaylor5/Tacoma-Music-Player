@@ -21,13 +21,6 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
-/*TODO I want to use my new MediaItemUtil.createSongDataFromMediaItem
-*  to add individual songs into specific playlists next!
-* */
-
-//TODO SAVE THE SONG QUEUE AS A HIDDEN PLAYLIST, I CAN KEEP IT IN THE DATABASE when I leave the app?
-//TODO I ALSO WANT TO SAVE MY POSITION IN THE QUEUE
-
 class QueueListAdapter(
     private var dataSet:  List<DisplaySong>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
@@ -36,7 +29,7 @@ class QueueListAdapter(
     val playSongAtPosition: (Int) -> Unit,
 ): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
 
-    private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
+    private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
 
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
@@ -80,9 +73,7 @@ class QueueListAdapter(
 
         if(currSongPos >= 0) {
             Timber.d("clearPreviousSongIndicator: currSongPos=$currSongPos")
-
             dataSet[currSongPos].showPlayIndicator = false
-
             this.notifyItemChanged(currSongPos)
         }
     }
@@ -122,14 +113,13 @@ class QueueListAdapter(
         }
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: QueueSongViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
         var songTitle = "DEFAULT SONG TITLE"
         var songArtist = "DEFAULT SONG ARTIST"
         var albumTitle = "DEFAULT ALBUM TITLE"
-        var songDuration = "DEFUALT SONG DURATION"
+        var songDuration = "DEFAULT SONG DURATION"
         var artworkUri = Uri.EMPTY
         var songDurationReadable = "Unknown Duration"
 
@@ -168,8 +158,6 @@ class QueueListAdapter(
                 Size(100, 100)
             )
 
-            //TEST CODE FOR LIKE ANIMATION...
-            //ISSUE -> It shouldn't be the viewholder but the data which determines what should be shown...
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
 //                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
             viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
@@ -200,9 +188,6 @@ class QueueListAdapter(
                 val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
                 frameAnimation.start()
             }
-//                val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
-//                frameAnimation.start()
-
         }
 
         viewHolder.binding.songTitleTextView.text = songTitle
@@ -248,14 +233,6 @@ class QueueListAdapter(
         //TODO Add statistics logic...
     }
 
-    private fun openAddToPlaylistPrompt() {
-        //TODO I should have a floating prompt that I can scroll to many playlists with...
-        //I need to add a recyclerview with all of the avilable playlists...
-        //TODO I should flag the above fragment that I want to show the playlist settings option...
-        //should also have an option to create a new playlist? [add later...]
-    }
-
-    // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount(): Int {
         return dataSet.size
     }

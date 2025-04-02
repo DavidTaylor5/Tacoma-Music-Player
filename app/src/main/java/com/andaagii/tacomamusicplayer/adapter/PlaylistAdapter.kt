@@ -13,7 +13,6 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 import java.io.File
@@ -35,7 +34,6 @@ class PlaylistAdapter(
 
         val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val binding = ViewholderPlaylistBinding.inflate(inflater, parent, false)
-
         return PlaylistViewHolder(binding)
     }
 
@@ -98,47 +96,11 @@ class PlaylistAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
-            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY,
-                    listOf(playlists[position].title)
-                )
-            }
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
-                addPlaylistToQueue(playlists[position].title)
-            }
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> {
-                renamePlaylists(
-                    playlists[position].title
-                )
-            }
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE,
-                    listOf(playlists[position].title)
-                )
-            }
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> {
-                handlePlaylistSetting(
-                    MenuOptionUtil.MenuOption.REMOVE_PLAYLIST,
-                    listOf(playlists[position].title)
-                )
-            }
-            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
-        }
-    }
-
-    private fun addPlaylistToQueue(playlistTitle: String) {
+        val playlistTitle = playlists[position].title
+        val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
+        Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE,
-            listOf(playlistTitle)
-        )
-    }
-
-    private fun renamePlaylists(playlistTitle: String) {
-        handlePlaylistSetting(
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST,
+            menuOption,
             listOf(playlistTitle)
         )
     }

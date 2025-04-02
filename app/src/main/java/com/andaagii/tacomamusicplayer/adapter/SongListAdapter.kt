@@ -24,12 +24,12 @@ class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
-    val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit, //Should this be a position or a MediaItem
+    val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     val songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
-    private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList() //TODO I just need to make this persistent pass this data in as well...
+    private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
 
     class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 

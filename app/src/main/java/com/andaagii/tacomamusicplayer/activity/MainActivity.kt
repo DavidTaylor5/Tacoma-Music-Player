@@ -30,21 +30,6 @@ import timber.log.Timber
 //Preferences DataStore, for storing settings in my app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-//TODO I need to make smart goals...
-
-//TODO ULTRA PRIORITY
-
-//TODO HIGH PRIORITY TASKS
-//TODO Add feature to start playing an entire album from specific point in an album
-// Click to Play from Song List : I want the song to start playing off the rip if item clicked
-
-//TODO MEDIUM PRIORITY TASKS
-
-//TODO LOW PRIORITY TASKS
-// UI CHANGES ...
-
-//TODO BUG
-
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
