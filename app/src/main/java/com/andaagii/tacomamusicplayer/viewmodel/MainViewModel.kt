@@ -788,7 +788,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
-        setScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
     }
 
     /**

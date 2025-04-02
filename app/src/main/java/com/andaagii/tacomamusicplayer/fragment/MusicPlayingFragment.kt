@@ -107,6 +107,10 @@ class MusicPlayingFragment: Fragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+    }
+
 //    private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
 //        binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
 //        val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
