@@ -30,9 +30,6 @@ import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
 class CurrentQueueFragment: Fragment() {
-
-    //TODO what to do if the current song list is empty?
-
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -78,7 +75,6 @@ class CurrentQueueFragment: Fragment() {
                 implement reordering of the backing model inside the method.
                  */
                 adapter.moveItem(from, to)
-                //parentViewModel.swapAdjacentSongsInQueue(from, to) //TODO this code is somewhat redundant...
 
                 // Update the mediaController playlist
                 parentViewModel.mediaController.value?.moveMediaItem(from, to)
@@ -99,9 +95,6 @@ class CurrentQueueFragment: Fragment() {
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
-    //TODO when I leave this queue I should
-    //TODO MAYBE I SHOULD REMOVE SONGQUEUE ALTOGETHER AND JUST USE THE MEDIACONTROLLER?
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -110,11 +103,6 @@ class CurrentQueueFragment: Fragment() {
 
         binding = FragmentCurrentQueueBinding.inflate(inflater)
 
-        //TODO I need to also update mediaController when the queue items are moved around.
-        //TODO I need to also update the UI for song handle so it doesn't look terrible...
-        //TODO I shouldn't have the handle on albums but I can have the handle on playlists...
-
-        //TODO I'll instead query the current mediaItem list -> this can be a playlist or an album of songs
         parentViewModel.mediaController.value?.let { controller ->
             val songs = UtilImpl.getSongListFromMediaController(controller)
             val displaySongs = songs.map {song ->
@@ -131,7 +119,7 @@ class CurrentQueueFragment: Fragment() {
                 }
             }
 
-            binding.displayRecyclerview.adapter = QueueListAdapter( //TODO I need a different adapter and viewholder for queue fragment
+            binding.displayRecyclerview.adapter = QueueListAdapter(
                 displaySongs,
                 this::handleSongSetting,
                 this::handleViewHolderHandleDrag,
@@ -176,21 +164,6 @@ class CurrentQueueFragment: Fragment() {
             }
             menu.show()
         }
-
-//        binding.songGroupInfo.setOnMenuIconPressed {
-//            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
-//
-//            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
-//            menu.setOnMenuItemClickListener {
-//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-//                handleSongSetting(
-//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-//                    parentViewModel.currentSongList.value?.songs ?: listOf()
-//                )
-//                return@setOnMenuItemClickListener true
-//            }
-//            menu.show()
-//        }
 
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 

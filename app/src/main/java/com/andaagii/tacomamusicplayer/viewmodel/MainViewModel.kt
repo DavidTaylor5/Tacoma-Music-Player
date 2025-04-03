@@ -18,9 +18,11 @@ import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
+import com.andaagii.tacomamusicplayer.database.SearchDatabase
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.QueueAddType
@@ -37,19 +39,11 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.lastOrNull
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
-
-//TODO make a util class called PlaylistUtils, with specific playlist functionality
-//TODO make a util class called AlbumUtils, with specific album functionality
-//This should be more organized, there are way to many functions in this one class.
-
-//TODO only oneplus12 R was unable to read the coverart jpg in music folder? Working on s25 ultra.
+import java.util.concurrent.Executors
 
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
@@ -181,6 +175,57 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             super.onRepeatModeChanged(repeatMode)
             _loopMode.postValue(repeatMode)
         }
+    }
+
+    /**
+     * I need to catalog the music library so that I can add search functionality.
+     */
+    private fun catalogMusicLibrary() {
+
+        val executor = Executors.newFixedThreadPool(4)
+
+        albumMediaItemList.value?.let { albums ->
+            val updatedSearchData: MutableList<SearchData> = mutableListOf()
+
+            for(album in albums) {
+
+                val albumSearchData = SearchData(
+                    description = album.mediaMetadata.artist.toString(),
+                    title = album.mediaId,
+                    artUri = album.mediaMetadata.artworkUri.toString(),
+                    isAlbum = true
+                )
+
+                updatedSearchData.add(albumSearchData)
+
+                mediaBrowser?.let { browser ->
+                    val childrenFuture =
+                        browser.getChildren(album.mediaId, 0, Int.MAX_VALUE, null)
+                    childrenFuture.addListener({
+
+                        val songs = childrenFuture.get().value?.toList() ?: listOf()
+
+                        for(song in songs) {
+                            updatedSearchData.add(
+                                SearchData(
+                                    description = "${song.mediaMetadata.artist.toString()} - ${song.mediaMetadata.albumTitle}",
+                                    title = song.mediaId,
+                                    artUri = song.mediaMetadata.artworkUri.toString(),
+                                    isAlbum = false
+                            ))
+                        }
+                    }, executor)
+                }
+            }
+
+            viewModelScope.launch(Dispatchers.IO) {
+                SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .insertItems(*updatedSearchData.toTypedArray())
+            }
+        }
+
+        //TODO should this code recursively run?
     }
 
     /**
@@ -788,7 +833,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
-        setScreenData(ScreenType.MUSIC_PLAYING_SCREEN)
     }
 
     /**
@@ -864,6 +908,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         browser.getChildren(rootItem.mediaId, 0, Int.MAX_VALUE, null)
                     childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
                         _albumMediaItemList.value =  childrenFuture.get().value?.toList() ?: listOf()
+
+                        //Start Cataloging the Songs found in the music library
+                        catalogMusicLibrary()
                     }, MoreExecutors.directExecutor())
                 }
             }
