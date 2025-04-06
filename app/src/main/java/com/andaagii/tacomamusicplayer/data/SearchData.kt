@@ -10,5 +10,6 @@ data class SearchData(
     @ColumnInfo(name = "description") val description: String = "",
     @ColumnInfo(name = "title") val title: String = "",
     @ColumnInfo(name = "is_album") val isAlbum: Boolean = false,
+    @ColumnInfo(name = "song_uri") val songUri: String = "",
     @ColumnInfo(name = "art_uri") val artUri: String = ""
 )

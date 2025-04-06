@@ -188,11 +188,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val updatedSearchData: MutableList<SearchData> = mutableListOf()
 
             for(album in albums) {
-
                 val albumSearchData = SearchData(
-                    description = album.mediaMetadata.artist.toString(),
+                    description = "${album.mediaId} ${album.mediaMetadata.albumArtist}",
                     title = album.mediaId,
                     artUri = album.mediaMetadata.artworkUri.toString(),
+                    songUri = "",
                     isAlbum = true
                 )
 
@@ -208,9 +208,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         for(song in songs) {
                             updatedSearchData.add(
                                 SearchData(
-                                    description = "${song.mediaMetadata.artist.toString()} - ${song.mediaMetadata.albumTitle}",
-                                    title = song.mediaId,
+                                    description = "${song.mediaMetadata.artist} - ${song.mediaMetadata.albumTitle}",
+                                    title = song.mediaMetadata.title.toString(),
                                     artUri = song.mediaMetadata.artworkUri.toString(),
+                                    songUri = song.mediaId,
                                     isAlbum = false
                             ))
                         }
