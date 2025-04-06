@@ -142,6 +142,11 @@ class MusicChooserFragment: Fragment() {
             menu.show()
         }
 
+        binding.searchButton?.setOnClickListener {
+            Toast.makeText(this.context, "Search Icon Pressed!", Toast.LENGTH_SHORT).show()
+            //TODO add the search screen functionality...
+        }
+
         binding.pager.adapter = pagerAdapter
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
@@ -188,16 +193,19 @@ class MusicChooserFragment: Fragment() {
         return binding.root
     }
 
-    private fun adjustForSongPage() {
-        binding.sortingButton?.visibility = View.INVISIBLE
-    }
-
     private fun adjustForPlaylistPage() {
         binding.sortingButton?.visibility = View.VISIBLE
+        binding.searchButton?.visibility = View.GONE
     }
 
     private fun adjustForAlbumPage() {
         binding.sortingButton?.visibility = View.VISIBLE
+        binding.searchButton?.visibility = View.GONE
+    }
+
+    private fun adjustForSongPage() {
+        binding.sortingButton?.visibility = View.INVISIBLE
+        binding.searchButton?.visibility = View.VISIBLE
     }
 
 

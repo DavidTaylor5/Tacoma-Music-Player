@@ -39,9 +39,6 @@ class MainActivity : AppCompatActivity() {
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             Timber.d("handleOnBackPressed: BACK PRESSED!")
-
-            val a = navController.currentBackStack
-
             if(!navController.popBackStack()) {
                 finish()
             }
