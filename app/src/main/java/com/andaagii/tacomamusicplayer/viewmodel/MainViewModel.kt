@@ -107,10 +107,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _navigateToPage
     private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
 
-//    val navigateToPage: LiveData<PageType>
-//        get() = _navigateToPage
-//    private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
-
     private var currentPage: PageType? = null
 
     val currentPlayingSongInfo: LiveData<SongData>
@@ -148,6 +144,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val originalSongOrder: LiveData<List<MediaItem>>
         get() = _originalSongOrder
     private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
+
+    val isShowingSearchMode: LiveData<Boolean>
+        get() = _isShowingSearchMode
+    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData()
 
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -189,10 +189,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             for(album in albums) {
                 val albumSearchData = SearchData(
-                    description = "${album.mediaId} ${album.mediaMetadata.albumArtist}",
-                    title = album.mediaId,
-                    artUri = album.mediaMetadata.artworkUri.toString(),
-                    songUri = "",
+                    description = "${album.mediaId} - ${album.mediaMetadata.albumArtist}",
+                    albumTitle = album.mediaId,
+                    artworkUri = album.mediaMetadata.artworkUri.toString(),
                     isAlbum = true
                 )
 
@@ -208,9 +207,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         for(song in songs) {
                             updatedSearchData.add(
                                 SearchData(
-                                    description = "${song.mediaMetadata.artist} - ${song.mediaMetadata.albumTitle}",
-                                    title = song.mediaMetadata.title.toString(),
-                                    artUri = song.mediaMetadata.artworkUri.toString(),
+                                    description = "${song.mediaMetadata.title.toString()} - ${song.mediaMetadata.albumTitle}",
+                                    songTitle = song.mediaMetadata.title.toString(),
+                                    artworkUri = song.mediaMetadata.artworkUri.toString(),
+                                    albumTitle = song.mediaMetadata.albumTitle.toString(),
+                                    artist = song.mediaMetadata.artist.toString(),
                                     songUri = song.mediaId,
                                     isAlbum = false
                             ))

@@ -180,6 +180,14 @@ class SongListFragment(
             }
         }
 
+        parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
+            if(isShowing) {
+                activateSearchMode()
+            } else {
+                deactivateSearchMode()
+            }
+        }
+
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
             binding.playlistPrompt.setPlaylistData(playlists)
         }
@@ -239,6 +247,16 @@ class SongListFragment(
         setupPage()
 
         return binding.root
+    }
+
+    private fun activateSearchMode() {
+        //TODO setup a search mode in my app
+        // Update the song group to display song search info
+        // Update the adapter to use the searchListAdapter
+    }
+
+    private fun deactivateSearchMode() {
+        //Essentially set this back to a clean slate...
     }
 
     private fun handleViewHolderHandleDrag(viewHolder: ViewHolder) {

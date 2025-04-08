@@ -15,8 +15,14 @@ interface SearchDao {
     @Query("SELECT * FROM searchdata")
     fun getAllPlaylists(): LiveData<List<SearchData>>
 
-    @Query("SELECT * FROM searchdata WHERE title LIKE :title LIMIT 1")
-    fun findItemFromTitle(title: String): SearchData
+//    @Query("SELECT * FROM searchdata WHERE title LIKE :title LIMIT 1")
+//    fun findItemFromTitle(title: String): SearchData
+//
+//    fun findItemFromSongTitle(): SearchData
+//
+//    fun findItemFromAlbumTitle(): SearchData
+//
+//    fun findItemFromArtist(): SearchData
 
     @Update
     fun updateItems(vararg item: SearchData)

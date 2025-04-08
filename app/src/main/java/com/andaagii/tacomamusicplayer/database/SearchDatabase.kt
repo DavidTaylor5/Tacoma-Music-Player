@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.andaagii.tacomamusicplayer.data.SearchData
 
-@Database(entities = [SearchData::class], version = 9, exportSchema = false)
+@Database(entities = [SearchData::class], version = 10, exportSchema = false)
 abstract class SearchDatabase : RoomDatabase() {
 
     abstract fun playlistDao(): SearchDao

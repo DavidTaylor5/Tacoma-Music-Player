@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.fragment
 
 import android.os.Bundle
+import android.transition.TransitionInflater
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -95,6 +96,15 @@ class CurrentQueueFragment: Fragment() {
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        Timber.d("onCreate: ")
+
+        super.onCreate(savedInstanceState)
+
+        val inflater = TransitionInflater.from(requireContext())
+        enterTransition = inflater.inflateTransition(R.transition.slide_down)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -142,7 +152,7 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
-        binding.returnToPlayerButton.setOnClickListener {
+        binding.playerSection.setOnClickListener {
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
         }
 

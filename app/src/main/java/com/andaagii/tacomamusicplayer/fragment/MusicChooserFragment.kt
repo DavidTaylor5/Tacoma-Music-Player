@@ -99,7 +99,7 @@ class MusicChooserFragment: Fragment() {
 //            gesture.onTouchEvent(event)
 //        }
 
-        binding.musicPlayerButton?.setOnClickListener {
+        binding.playerSection?.setOnClickListener {
             //navigate to the music chooser fragment...
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
         }
@@ -188,6 +188,10 @@ class MusicChooserFragment: Fragment() {
         }
         parentViewModel.navigateToPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
             binding.pager.currentItem = page.type()
+        }
+
+        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
+            //TODO I need to show the cancel_search_button here to deactivate search mode.
         }
 
         return binding.root
