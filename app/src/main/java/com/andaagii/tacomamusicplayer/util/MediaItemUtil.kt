@@ -54,14 +54,37 @@ class MediaItemUtil {
     fun createMediaItemFromSearchData(
         searchItem: SearchData
     ): MediaItem {
-
-        return if(searchItem.isAlbum) {
-            //TODO FINISH THIS
+        if(searchItem.isAlbum) {
             return MediaItem.Builder()
+                .setMediaId(searchItem.albumTitle)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .setTitle("")
+                        .setAlbumTitle(searchItem.albumTitle)
+                        .setArtist(searchItem.artist)
+                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+                        .setDescription(searchItem.description)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
+                        .build()
+                )
                 .build()
         } else {
-            //TODO FINISH THIS
             return MediaItem.Builder()
+                .setMediaId(searchItem.songUri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .setTitle(searchItem.songTitle)
+                        .setAlbumTitle(searchItem.albumTitle)
+                        .setArtist(searchItem.artist)
+                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+                        .setDescription(searchItem.description)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                        .build()
+                )
                 .build()
         }
     }
