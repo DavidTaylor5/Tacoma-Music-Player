@@ -190,6 +190,10 @@ class MusicChooserFragment: Fragment() {
             binding.pager.currentItem = page.type()
         }
 
+        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
+            //TODO I need to show the cancel_search_button here to deactivate search mode.
+        }
+
         return binding.root
     }
 
