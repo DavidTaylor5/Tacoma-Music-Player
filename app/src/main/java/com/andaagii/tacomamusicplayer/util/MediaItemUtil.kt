@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.util
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 
 class MediaItemUtil {
@@ -40,6 +41,29 @@ class MediaItemUtil {
                     .build()
                 )
             .build()
+    }
+
+    fun convertListOfSearchDataIntoListOfMediaItem(
+        searchItems: List<SearchData>
+    ): List<MediaItem> {
+        return searchItems.map { searchItem ->
+            createMediaItemFromSearchData(searchItem)
+        }
+    }
+
+    fun createMediaItemFromSearchData(
+        searchItem: SearchData
+    ): MediaItem {
+
+        return if(searchItem.isAlbum) {
+            //TODO FINISH THIS
+            return MediaItem.Builder()
+                .build()
+        } else {
+            //TODO FINISH THIS
+            return MediaItem.Builder()
+                .build()
+        }
     }
 
     /**
