@@ -33,39 +33,39 @@ class MusicPlayingFragment: Fragment() {
     private var controller: MediaController? = null
     private var currentSongInfo: SongData? = null
 
-    private val detector = object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: navigate to the music chooser screen!")
-
-            //navigate to the music chooser fragment...
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-
-            return super.onDoubleTap(e)
-        }
-
-        override fun onDown(e: MotionEvent): Boolean {
-            Timber.d("onDown: ")
-            return true
-        }
-
-        override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent,
-            velocityX: Float,
-            velocityY: Float
-        ): Boolean {
-            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
-
-            if(velocityY < -500) {
-                Timber.d("onFling: navigate to the music chooser screen!")
-
-                //navigate to the music chooser fragment...
-                findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-            }
-
-            return super.onFling(e1, e2, velocityX, velocityY)
-        }
-    }
+//    private val detector = object : GestureDetector.SimpleOnGestureListener() {
+//        override fun onDoubleTap(e: MotionEvent): Boolean {
+//            Timber.d("onDoubleTap: navigate to the music chooser screen!")
+//
+//            //navigate to the music chooser fragment...
+//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+//
+//            return super.onDoubleTap(e)
+//        }
+//
+//        override fun onDown(e: MotionEvent): Boolean {
+//            Timber.d("onDown: ")
+//            return true
+//        }
+//
+//        override fun onFling(
+//            e1: MotionEvent?,
+//            e2: MotionEvent,
+//            velocityX: Float,
+//            velocityY: Float
+//        ): Boolean {
+//            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
+//
+//            if(velocityY < -500) {
+//                Timber.d("onFling: navigate to the music chooser screen!")
+//
+//                //navigate to the music chooser fragment...
+//                findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+//            }
+//
+//            return super.onFling(e1, e2, velocityX, velocityY)
+//        }
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -73,7 +73,12 @@ class MusicPlayingFragment: Fragment() {
         super.onCreate(savedInstanceState)
 
         val inflater = TransitionInflater.from(requireContext())
-        enterTransition = inflater.inflateTransition(R.transition.slide_down)
+
+        enterTransition = if(findNavController().previousBackStackEntry?.destination?.route == ScreenType.MUSIC_QUEUE_SCREEN.route() ) {
+            inflater.inflateTransition(R.transition.slide_up)
+        } else {
+            inflater.inflateTransition(R.transition.slide_down)
+        }
     }
 
     override fun onCreateView(
@@ -84,23 +89,18 @@ class MusicPlayingFragment: Fragment() {
         Timber.d("onCreateView: ")
         binding = FragmentMusicPlayingBinding.inflate(inflater)
 
-//        setupLibraryButtonAnimation(binding)
+//        GESTURE DETECTOR CODE
+//        val gesture = GestureDetector(container!!.context, detector)
+//
+//        binding.librarySection?.setOnTouchListener { v, event ->
+//            gesture.onTouchEvent(event)
+//        }
 
-        val gesture = GestureDetector(container!!.context, detector)
-
-        //TODO clean up this code
-
-        //TODO rename library button -> library section /  its actually an image view
-
-        //TODO Animation changes work but I will need to fix the horizontal layouts for the APP [WILL CRASH on orientation change!]
-
-        //TODO save the currently playing queue for when I exit and start the app again...
-
-        binding.librarySection?.setOnTouchListener { v, event ->
-            gesture.onTouchEvent(event)
+        binding.librarySection?.setOnClickListener {
+            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
         }
 
-        binding.queueButton?.setOnClickListener {
+        binding.queueSection?.setOnClickListener {
             findNavController().navigate(ScreenType.MUSIC_QUEUE_SCREEN.route())
         }
 

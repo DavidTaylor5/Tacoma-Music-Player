@@ -99,7 +99,7 @@ class MusicChooserFragment: Fragment() {
 //            gesture.onTouchEvent(event)
 //        }
 
-        binding.musicPlayerButton?.setOnClickListener {
+        binding.playerSection?.setOnClickListener {
             //navigate to the music chooser fragment...
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
         }
