@@ -107,10 +107,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _navigateToPage
     private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
 
-    val previousPage: LiveData<PageType>
-        get() = _previousPage
-    private val _previousPage: MutableLiveData<PageType> = MutableLiveData()
-
     private var currentPage: PageType? = null
 
     val currentPlayingSongInfo: LiveData<SongData>
@@ -381,7 +377,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Experimental code, which page for music chooser fragment?
      */
     fun setPage(page: PageType) {
-        _previousPage.value = _navigateToPage.value
         _navigateToPage.value = page
     }
 
