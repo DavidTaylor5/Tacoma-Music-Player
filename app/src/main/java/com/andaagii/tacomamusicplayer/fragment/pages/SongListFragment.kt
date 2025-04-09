@@ -236,11 +236,6 @@ class SongListFragment(
             menu.show()
         }
 
-        binding.songGroupInfo.setOnClickListener {
-            //CLEAR THE QUEUE
-            //START PLAYING THE ALBUM FROM THE START
-        }
-
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 

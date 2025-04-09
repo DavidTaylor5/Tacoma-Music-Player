@@ -144,7 +144,12 @@ class MusicChooserFragment: Fragment() {
 
         binding.searchButton?.setOnClickListener {
             Toast.makeText(this.context, "Search Icon Pressed!", Toast.LENGTH_SHORT).show()
-            //TODO add the search screen functionality...
+            parentViewModel.handleSearchButtonClick()
+        }
+
+        binding.cancelSearchButton?.setOnClickListener {
+            Toast.makeText(this.context, "Cancel Search Pressed!", Toast.LENGTH_SHORT).show()
+            parentViewModel.handleCancelSearchButtonClick()
         }
 
         binding.pager.adapter = pagerAdapter
@@ -190,26 +195,49 @@ class MusicChooserFragment: Fragment() {
             binding.pager.currentItem = page.type()
         }
 
+
+
         parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
-            //TODO I need to show the cancel_search_button here to deactivate search mode.
+            if(isShowing) {
+                binding.cancelSearchButton?.visibility = View.VISIBLE
+                binding.searchButton?.visibility = View.GONE
+            } else {
+                binding.searchButton?.visibility = View.VISIBLE
+                binding.cancelSearchButton?.visibility = View.GONE
+            }
         }
 
         return binding.root
     }
 
+    private fun determineWhichSearchIconToShow() {
+        if(parentViewModel.isShowingSearchMode.value == true) {
+            binding.cancelSearchButton?.visibility = View.VISIBLE
+            binding.searchButton?.visibility = View.GONE
+        } else {
+            binding.searchButton?.visibility = View.VISIBLE
+            binding.cancelSearchButton?.visibility = View.GONE
+        }
+    }
+
+    private fun removeSearchIcons() {
+        binding.searchButton?.visibility = View.GONE
+        binding.cancelSearchButton?.visibility = View.GONE
+    }
+
     private fun adjustForPlaylistPage() {
         binding.sortingButton?.visibility = View.VISIBLE
-        binding.searchButton?.visibility = View.GONE
+        removeSearchIcons()
     }
 
     private fun adjustForAlbumPage() {
         binding.sortingButton?.visibility = View.VISIBLE
-        binding.searchButton?.visibility = View.GONE
+        removeSearchIcons()
     }
 
     private fun adjustForSongPage() {
         binding.sortingButton?.visibility = View.INVISIBLE
-        binding.searchButton?.visibility = View.VISIBLE
+        determineWhichSearchIconToShow()
     }
 
 

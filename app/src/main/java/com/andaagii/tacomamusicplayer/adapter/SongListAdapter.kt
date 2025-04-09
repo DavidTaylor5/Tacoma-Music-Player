@@ -18,6 +18,7 @@ import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -48,11 +49,9 @@ class SongListAdapter(
         dataSet = modData
     }
 
-    private fun setSearchData(songItems: List<SearchData>) {
-
-        //TODO convert SearchData into MediaItems
-        //this.dataSet = songItems
-        //this.notifyDataSetChanged()
+    private fun setSearchData(searchItems: List<SearchData>) {
+        this.dataSet = MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(searchItems)
+        this.notifyDataSetChanged()
     }
 
     fun removeSong(songTitle: String): Int {
