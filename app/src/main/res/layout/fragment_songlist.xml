@@ -17,9 +17,11 @@
             android:visibility="gone"/>
 
         <LinearLayout
+            android:id="@+id/search_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <EditText
                 android:layout_width="0dp"
