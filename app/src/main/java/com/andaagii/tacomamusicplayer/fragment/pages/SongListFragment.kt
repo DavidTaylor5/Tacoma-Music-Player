@@ -236,11 +236,6 @@ class SongListFragment(
             menu.show()
         }
 
-        binding.songGroupInfo.setOnClickListener {
-            //CLEAR THE QUEUE
-            //START PLAYING THE ALBUM FROM THE START
-        }
-
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 
@@ -250,12 +245,20 @@ class SongListFragment(
     }
 
     private fun activateSearchMode() {
+
+        binding.songGroupInfo.visibility = View.GONE
+        binding.searchContainer.visibility = View.VISIBLE
+
         //TODO setup a search mode in my app
         // Update the song group to display song search info
         // Update the adapter to use the searchListAdapter
     }
 
     private fun deactivateSearchMode() {
+
+        binding.songGroupInfo.visibility = View.VISIBLE
+        binding.searchContainer.visibility = View.GONE
+
         //Essentially set this back to a clean slate...
     }
 

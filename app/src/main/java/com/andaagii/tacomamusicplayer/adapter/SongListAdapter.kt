@@ -14,8 +14,11 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -44,6 +47,11 @@ class SongListAdapter(
         modData[from] = temp
 
         dataSet = modData
+    }
+
+    private fun setSearchData(searchItems: List<SearchData>) {
+        this.dataSet = MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(searchItems)
+        this.notifyDataSetChanged()
     }
 
     fun removeSong(songTitle: String): Int {

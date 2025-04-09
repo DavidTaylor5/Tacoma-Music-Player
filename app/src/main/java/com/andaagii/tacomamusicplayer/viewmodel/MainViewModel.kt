@@ -177,6 +177,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    fun handleSearchButtonClick() {
+        _isShowingSearchMode.postValue(true)
+    }
+
+    fun handleCancelSearchButtonClick() {
+        _isShowingSearchMode.postValue(false)
+    }
+
     /**
      * I need to catalog the music library so that I can add search functionality.
      */

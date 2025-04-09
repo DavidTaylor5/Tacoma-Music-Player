@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.util
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 
 class MediaItemUtil {
@@ -40,6 +41,52 @@ class MediaItemUtil {
                     .build()
                 )
             .build()
+    }
+
+    fun convertListOfSearchDataIntoListOfMediaItem(
+        searchItems: List<SearchData>
+    ): List<MediaItem> {
+        return searchItems.map { searchItem ->
+            createMediaItemFromSearchData(searchItem)
+        }
+    }
+
+    fun createMediaItemFromSearchData(
+        searchItem: SearchData
+    ): MediaItem {
+        if(searchItem.isAlbum) {
+            return MediaItem.Builder()
+                .setMediaId(searchItem.albumTitle)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .setTitle("")
+                        .setAlbumTitle(searchItem.albumTitle)
+                        .setArtist(searchItem.artist)
+                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+                        .setDescription(searchItem.description)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
+                        .build()
+                )
+                .build()
+        } else {
+            return MediaItem.Builder()
+                .setMediaId(searchItem.songUri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setIsBrowsable(true)
+                        .setIsPlayable(false)
+                        .setTitle(searchItem.songTitle)
+                        .setAlbumTitle(searchItem.albumTitle)
+                        .setArtist(searchItem.artist)
+                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+                        .setDescription(searchItem.description)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                        .build()
+                )
+                .build()
+        }
     }
 
     /**
