@@ -2,9 +2,11 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.os.Bundle
 import android.util.Size
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -236,6 +238,22 @@ class SongListFragment(
             menu.show()
         }
 
+        binding.searchEditText.setOnEditorActionListener { v, actionId, event ->
+            if(actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN )) {
+
+                parentViewModel.removeVirtualKeyboard()
+                binding.searchEditText.clearFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.clearSearchButton.setOnClickListener {
+            binding.searchEditText.text.clear()
+        }
+
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 
@@ -274,13 +292,16 @@ class SongListFragment(
         binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
+            parentViewModel.removeVirtualKeyboard()
             viewModel.clearPreparedSongsForPlaylists()
         }
 
         //Option 2 Button will be add a new playlist
         binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
         binding.createPlaylistPrompt.setOption2ButtonOnClick {
+            parentViewModel.removeVirtualKeyboard()
             parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
+            binding.createPlaylistPrompt.visibility = View.GONE
         }
     }
 
