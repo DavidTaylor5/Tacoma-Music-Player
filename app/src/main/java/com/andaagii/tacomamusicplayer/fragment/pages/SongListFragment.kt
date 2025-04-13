@@ -1,15 +1,20 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Size
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -180,6 +185,11 @@ class SongListFragment(
             }
         }
 
+        parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
+            //TODO update the rv adapter to show the search list?
+            //TODO similar to the above logic for currentSongList...
+        }
+
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {
                 activateSearchMode()
@@ -236,6 +246,37 @@ class SongListFragment(
             menu.show()
         }
 
+        binding.searchEditText.setOnEditorActionListener { v, actionId, event ->
+            if(actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN )) {
+
+                parentViewModel.removeVirtualKeyboard()
+                binding.searchEditText.clearFocus()
+                true
+            } else {
+                false
+            }
+        }
+        
+        binding.searchEditText.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                Timber.d("onTextChanged: User is typing: $s")
+                parentViewModel.querySearchDatabase(s.toString())
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+
+            }
+        })
+
+        binding.clearSearchButton.setOnClickListener {
+            binding.searchEditText.text.clear()
+        }
+
         setupCreatePlaylistPrompt()
         setupPlaylistPrompt()
 
@@ -274,13 +315,16 @@ class SongListFragment(
         binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
+            parentViewModel.removeVirtualKeyboard()
             viewModel.clearPreparedSongsForPlaylists()
         }
 
         //Option 2 Button will be add a new playlist
         binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
         binding.createPlaylistPrompt.setOption2ButtonOnClick {
+            parentViewModel.removeVirtualKeyboard()
             parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
+            binding.createPlaylistPrompt.visibility = View.GONE
         }
     }
 

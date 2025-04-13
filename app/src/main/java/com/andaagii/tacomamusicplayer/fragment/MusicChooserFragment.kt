@@ -147,6 +147,8 @@ class MusicChooserFragment: Fragment() {
             parentViewModel.handleSearchButtonClick()
         }
 
+
+
         binding.cancelSearchButton?.setOnClickListener {
             Toast.makeText(this.context, "Cancel Search Pressed!", Toast.LENGTH_SHORT).show()
             parentViewModel.handleCancelSearchButtonClick()

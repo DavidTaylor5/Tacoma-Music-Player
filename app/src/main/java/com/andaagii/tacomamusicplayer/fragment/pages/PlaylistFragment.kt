@@ -224,6 +224,7 @@ class PlaylistFragment: Fragment() {
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
             activatePlaylistButton()
+            parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
 
@@ -231,6 +232,7 @@ class PlaylistFragment: Fragment() {
         binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
         binding.playlistPrompt.setOption2ButtonOnClick {
             activatePlaylistButton()
+            parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.updatePlaylistTitle(playlistTitle, binding.playlistPrompt.getUserInputtedText())
 
@@ -247,6 +249,7 @@ class PlaylistFragment: Fragment() {
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
             activatePlaylistButton()
+            parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
 
@@ -254,6 +257,7 @@ class PlaylistFragment: Fragment() {
         binding.playlistPrompt.setOption2ButtonText(Const.ADD)
         binding.playlistPrompt.setOption2ButtonOnClick {
             activatePlaylistButton()
+            parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.createNamedPlaylist(binding.playlistPrompt.getUserInputtedText())
         }

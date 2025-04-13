@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
@@ -73,6 +74,10 @@ class MainActivity : AppCompatActivity() {
         // Setup view binding in the project
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        viewModel.notifyHideKeyboard.observe(this) { _ ->
+            removeVirtualKeyboard()
+        }
 
         viewModel.isAudioPermissionGranted.observe(this) { isGranted ->
             if(!isGranted) {
@@ -146,6 +151,11 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         viewModel.saveQueue()
+    }
+
+    private fun removeVirtualKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(window.decorView.rootView.windowToken, 0)
     }
 
     override fun onRequestPermissionsResult(

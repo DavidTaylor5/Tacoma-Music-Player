@@ -75,6 +75,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _currentSongList
     private val _currentSongList: MutableLiveData<SongGroup> = MutableLiveData()
 
+    val currentSearchList: LiveData<List<SearchData>>
+        get() = _currentSearchList
+    private val _currentSearchList: MutableLiveData<List<SearchData>> = MutableLiveData()
+
     /**
      * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
      */
@@ -149,6 +153,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isShowingSearchMode
     private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData()
 
+    val notifyHideKeyboard: LiveData<Int>
+        get() = _notifyHideKeyboard
+    private val _notifyHideKeyboard: MutableLiveData<Int> = MutableLiveData()
+
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
@@ -183,6 +191,19 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun handleCancelSearchButtonClick() {
         _isShowingSearchMode.postValue(false)
+    }
+
+    fun removeVirtualKeyboard() {
+        _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
+    }
+
+    fun querySearchDatabase(search: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val searchResults = SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .findDescriptionFromSearchStr(search)
+            _currentSearchList.postValue(searchResults)
+        }
     }
 
     /**
