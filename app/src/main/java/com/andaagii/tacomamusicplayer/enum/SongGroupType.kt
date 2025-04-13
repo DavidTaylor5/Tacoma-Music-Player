@@ -5,5 +5,6 @@ package com.andaagii.tacomamusicplayer.enum
  */
 enum class SongGroupType {
     PLAYLIST,
-    ALBUM
+    ALBUM,
+    SEARCH_LIST
 }

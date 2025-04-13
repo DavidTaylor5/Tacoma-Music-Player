@@ -15,7 +15,13 @@ interface SearchDao {
     @Query("SELECT * FROM searchdata")
     fun getAllPlaylists(): LiveData<List<SearchData>>
 
-//    @Query("SELECT * FROM searchdata WHERE title LIKE :title LIMIT 1")
+    /**
+     * Search through search data descriptions to determine return results, case insensitive.
+     */
+    @Query("SELECT * FROM searchdata WHERE LOWER(description) LIKE '%' || LOWER(:search) || '%'")
+    fun findDescriptionFromSearchStr(search: String): List<SearchData>
+
+//    @Query("SELECT * FROM searchdata WHERE description LIKE :title LIMIT 1")
 //    fun findItemFromTitle(title: String): SearchData
 //
 //    fun findItemFromSongTitle(): SearchData
