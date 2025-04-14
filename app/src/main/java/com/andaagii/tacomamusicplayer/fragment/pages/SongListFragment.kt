@@ -186,8 +186,8 @@ class SongListFragment(
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-            //TODO update the rv adapter to show the search list?
-            //TODO similar to the above logic for currentSongList...
+            val topTen = searchItems.subList(0, 10)
+            (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTen)
         }
 
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
