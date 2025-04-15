@@ -152,11 +152,15 @@ class QueueListAdapter(
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
             }
 
-            UtilImpl.drawUriOntoImageView(
+            val ableToDraw = UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 artworkUri,
-                Size(100, 100)
+                Size(200, 200)
             )
+
+            if(!ableToDraw) {
+                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
+            }
 
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
 //                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()

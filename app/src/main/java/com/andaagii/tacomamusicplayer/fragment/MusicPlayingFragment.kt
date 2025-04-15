@@ -134,6 +134,8 @@ class MusicPlayingFragment: Fragment() {
                         binding.songArt?.setImageDrawable(songDrawable)
                     } catch(e: Exception) {
                         Timber.d("onStart: Couldn't load song art, e=$e")
+
+                        binding.songArt?.setImageResource(R.drawable.white_note)
                     }
                 }
             }
