@@ -131,11 +131,15 @@ class SongListAdapter(
 
 
 
-            UtilImpl.drawUriOntoImageView(
+            val ableToDraw = UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 artworkUri,
                 Size(200, 200)
             )
+
+            if(!ableToDraw) {
+                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
+            }
 
             //TEST CODE FOR LIKE ANIMATION...
             //ISSUE -> It shouldn't be the viewholder but the data which determines what should be shown...
