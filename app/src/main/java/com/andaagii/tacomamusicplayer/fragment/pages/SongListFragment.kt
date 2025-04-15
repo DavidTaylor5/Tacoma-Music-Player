@@ -182,7 +182,12 @@ class SongListFragment(
                 itemTouchHelper.attachToRecyclerView(null)
 
             } else { // Playlist icon
-                UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
+                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
+
+                if(!ableToDraw) {
+                    binding.songGroupInfo.getSongGroupImage()
+                        .setImageResource(R.drawable.white_note)
+                }
 
                 //Adds drag ability to songs in a playlist.
                 itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
