@@ -148,6 +148,9 @@ class SongListFragment(
 
             currentSongGroup = songGroup
 
+            //new currentSongList means that the search is over, remove search stuff
+           parentViewModel.handleCancelSearchButtonClick()
+
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songGroup.songs,
                 this::handleSongSetting,
@@ -192,7 +195,7 @@ class SongListFragment(
             } else if(searchItems.size > 10) {
                 searchItems.subList(0, 10)
             } else {
-                searchItems.subList(0, searchItems.size -1)
+                searchItems.subList(0, searchItems.size)
             }
 
             val topTenSongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
