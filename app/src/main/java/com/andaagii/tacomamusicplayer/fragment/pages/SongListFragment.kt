@@ -32,6 +32,7 @@ import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
@@ -186,8 +187,38 @@ class SongListFragment(
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-            val topTen = searchItems.subList(0, 10)
-            (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTen)
+            val topSearchData = if(searchItems.isEmpty()) {
+                listOf()
+            } else if(searchItems.size > 10) {
+                searchItems.subList(0, 10)
+            } else {
+                searchItems.subList(0, searchItems.size -1)
+            }
+
+            val topTenSongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
+
+            //if(binding.displayRecyclerview.adapter)
+            currentSongGroup = SongGroup(
+                SongGroupType.SEARCH_LIST,
+                topTenSongs,
+                "Search Results"
+            )
+
+            if(binding.displayRecyclerview.adapter == null) {
+                currentSongGroup?.let { songGroup ->
+                    binding.displayRecyclerview.adapter = SongListAdapter(
+                        songGroup.songs,
+                        this::handleSongSetting,
+                        this::handleSongClicked,
+                        this::handleSongSelected,
+                        songGroup.type,
+                        this::handleViewHolderHandleDrag
+                    )
+                    determineIfShowingInformationScreen(songGroup.songs, songGroup.type)
+                }
+            } else {
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTenSongs)
+            }
         }
 
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
@@ -434,8 +465,9 @@ class SongListFragment(
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
     private fun determineIfShowingInformationScreen(songs: List<MediaItem>, songGroupType: SongGroupType) {
-        //Only show user information screen on app startup [?]
-        if( songGroupType != SongGroupType.PLAYLIST && songs.isEmpty()) {
+        if( songGroupType == SongGroupType.SEARCH_LIST) {
+            binding.songListInformationScreen.visibility = View.GONE
+        } else if( songGroupType != SongGroupType.PLAYLIST && songs.isEmpty()) {
             binding.songListInformationScreen.visibility = View.VISIBLE
             binding.songGroupInfo.visibility = View.GONE
         } else {

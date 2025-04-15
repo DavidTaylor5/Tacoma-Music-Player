@@ -49,8 +49,8 @@ class SongListAdapter(
         dataSet = modData
     }
 
-    fun setSearchData(searchItems: List<SearchData>) {
-        this.dataSet = MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(searchItems)
+    fun setSearchData(searchItems: List<MediaItem>) {
+        this.dataSet = searchItems
         this.notifyDataSetChanged()
     }
 
