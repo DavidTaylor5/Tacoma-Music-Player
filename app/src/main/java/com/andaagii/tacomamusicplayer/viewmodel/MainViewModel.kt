@@ -220,6 +220,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 val albumSearchData = SearchData(
                     description = "${album.mediaId} - ${album.mediaMetadata.albumArtist}",
                     albumTitle = album.mediaId,
+                    artist = album.mediaMetadata.albumArtist.toString(),
                     artworkUri = album.mediaMetadata.artworkUri.toString(),
                     isAlbum = true
                 )

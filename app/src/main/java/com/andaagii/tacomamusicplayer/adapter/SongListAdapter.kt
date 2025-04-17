@@ -28,7 +28,7 @@ class SongListAdapter(
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
-    val songGroupType: SongGroupType,
+    var songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
@@ -49,8 +49,9 @@ class SongListAdapter(
         dataSet = modData
     }
 
-    fun setSearchData(searchItems: List<MediaItem>) {
+    fun setSearchData(searchItems: List<MediaItem>, songGroupType: SongGroupType) {
         this.dataSet = searchItems
+        this.songGroupType = songGroupType
         this.notifyDataSetChanged()
     }
 
@@ -96,6 +97,52 @@ class SongListAdapter(
         return viewHolder
     }
 
+    /**
+     * Certain expectations for songs displayed for albums and playlists.
+     */
+    private fun bindSongHolder(viewHolder: SongViewHolder, position: Int) {
+        val songMetadata = dataSet[position].mediaMetadata
+
+        val songTitle = songMetadata.title.toString()
+        val songArtist = songMetadata.artist.toString()
+        val albumTitle = songMetadata.albumTitle.toString()
+        var songDurationReadable = ""
+
+        val songDuration = songMetadata.description.toString()
+
+        val songDurationInLong = songDuration.toLongOrNull()
+        songDurationInLong?.let {
+            songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
+        }
+
+        //When I click the text of a song, it should add songgroup to the queue and start playing at that song.
+        viewHolder.binding.textVerticalContainer.setOnClickListener {
+            handleSongClick(viewHolder.absoluteAdapterPosition)
+        }
+
+        viewHolder.binding.songTitleTextView.text = songTitle
+        viewHolder.binding.artistTextView.text = songArtist
+        viewHolder.binding.durationTextView.text = songDurationReadable
+    }
+
+    /**
+     * Certain expectations for songs displayed as search data.
+     */
+    private fun bindSearchHolder(viewHolder: SongViewHolder, position: Int) {
+        val searchMetadata = dataSet[position].mediaMetadata
+
+        val songTitle = searchMetadata.title.toString()
+        val songArtist = searchMetadata.artist.toString()
+        val albumTitle = searchMetadata.albumTitle.toString()
+
+        val searchDescription = searchMetadata.description.toString()
+        val searchType = if(searchMetadata.isPlayable == true) "SONG" else "ALBUM"
+
+        viewHolder.binding.songTitleTextView.text = searchDescription
+        viewHolder.binding.artistTextView.text = songArtist
+        viewHolder.binding.durationTextView.text = searchType
+    }
+
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: SongViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
@@ -107,30 +154,13 @@ class SongListAdapter(
         var artworkUri = Uri.EMPTY
         var songDurationReadable = "Unknown Duration"
 
-        //First check that dataSet has a value for position
+        //Common additions to both search results and album/playlist display
         if(position < dataSet.size) {
 
             val songMetadata = dataSet[position].mediaMetadata
-            Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songMetadata.title},  songArtist=${songMetadata.artist}, albumTitle=${songMetadata.albumTitle}, albumArtUri=${songMetadata.artworkUri}")
-
-            songTitle = songMetadata.title.toString()
-            songArtist = songMetadata.artist.toString()
-            albumTitle = songMetadata.albumTitle.toString()
             artworkUri = songMetadata.artworkUri
-            songDuration = songMetadata.description.toString()
 
-            val songDurationInLong = songDuration.toLongOrNull()
-            songDurationInLong?.let {
-                songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
-            }
-
-            //When I click the text of a song, it should add songgroup to the queue and start playing at that song.
-            viewHolder.binding.textVerticalContainer.setOnClickListener {
-                handleSongClick(viewHolder.absoluteAdapterPosition)
-            }
-
-
-
+            //Set Album Art
             val ableToDraw = UtilImpl.drawUriOntoImageView(
                 viewHolder.binding.albumArt,
                 artworkUri,
@@ -141,12 +171,9 @@ class SongListAdapter(
                 viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
             }
 
-            //TEST CODE FOR LIKE ANIMATION...
-            //ISSUE -> It shouldn't be the viewholder but the data which determines what should be shown...
+            //Setup multi select...
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
-//                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
             viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-//                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
             viewHolder.isFavorited = false
 
             if(favoriteList[position]) {
@@ -181,33 +208,44 @@ class SongListAdapter(
                 val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
                 frameAnimation.start()
             }
-        }
 
-        viewHolder.binding.songTitleTextView.text = songTitle
-        viewHolder.binding.artistTextView.text = songArtist
-        viewHolder.binding.durationTextView.text = songDurationReadable
+            viewHolder.binding.menuIcon.setOnClickListener {
 
-        viewHolder.binding.addIcon.setOnClickListener {
-            Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
-            handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
-        }
+                val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
 
-        viewHolder.binding.menuIcon.setOnClickListener {
+                if (songGroupType == SongGroupType.PLAYLIST) {
+                    menu.menuInflater.inflate(R.menu.songlist_playlist_options, menu.menu)
+                } else {
+                    menu.menuInflater.inflate(R.menu.songlist_album_options, menu.menu)
+                }
 
-            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+                menu.setOnMenuItemClickListener {
+                    Toast.makeText(
+                        viewHolder.itemView.context,
+                        "You Clicked " + it.title,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    handleMenuItem(it, dataSet[viewHolder.absoluteAdapterPosition])
+                    return@setOnMenuItemClickListener true
+                }
+                menu.show()
+            }
 
-            if(songGroupType == SongGroupType.PLAYLIST) {
-                menu.menuInflater.inflate(R.menu.songlist_playlist_options, menu.menu)
+            viewHolder.binding.addIcon.setOnClickListener {
+                Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
+                handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
+            }
+
+
+            //HANDLE SPECIFICS RELATED TO DISPLAY SONG VERSUS DISPLAY SEARCH RESULT
+
+            if(songGroupType == SongGroupType.SEARCH_LIST) {
+                Timber.d("onBindViewHolder: bind search holder!")
+                bindSearchHolder(viewHolder, position)
             } else {
-                menu.menuInflater.inflate(R.menu.songlist_album_options, menu.menu)
+                Timber.d("onBindViewHolder: bind song holder!")
+                bindSongHolder(viewHolder, position)
             }
-
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleMenuItem(it, dataSet[viewHolder.absoluteAdapterPosition])
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
         }
     }
 
