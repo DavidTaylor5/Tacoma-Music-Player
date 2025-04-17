@@ -178,20 +178,21 @@ class QueueListAdapter(
             (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).selectDrawable(0)
             (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).invalidateSelf()
 
-            viewHolder.binding.albumArt.setOnClickListener {
-
-                if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
-                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
-                    viewHolder.isFavorited = false
-                    favoriteList[position] = false
-                } else { //currently un favorited, turn to favorited...
-                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-                    viewHolder.isFavorited = true
-                    favoriteList[position] = true
-                }
-                val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
-                frameAnimation.start()
-            }
+            //TODO Add back song selection in the queue, currently disabled.
+//            viewHolder.binding.albumArt.setOnClickListener {
+//
+//                if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
+//                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
+//                    viewHolder.isFavorited = false
+//                    favoriteList[position] = false
+//                } else { //currently un favorited, turn to favorited...
+//                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
+//                    viewHolder.isFavorited = true
+//                    favoriteList[position] = true
+//                }
+//                val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
+//                frameAnimation.start()
+//            }
         }
 
         viewHolder.binding.songTitleTextView.text = songTitle
