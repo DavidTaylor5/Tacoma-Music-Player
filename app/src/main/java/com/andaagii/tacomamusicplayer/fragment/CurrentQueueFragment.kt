@@ -175,6 +175,9 @@ class CurrentQueueFragment: Fragment() {
             menu.show()
         }
 
+        //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
+        //TODO Remove this code when I implement coil or glide....
+        binding.displayRecyclerview.setItemViewCacheSize(30)
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 
         setupPage()

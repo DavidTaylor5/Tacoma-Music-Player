@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.data.SongData
 import timber.log.Timber
+import java.io.File
 
 /**
  * This class handles logic related to the android class MediaStore. MediaStore is an abstraction of
@@ -88,6 +89,11 @@ class MediaStoreUtil {
                 )
 
                 val url = cursor.getString(0)
+
+                //Some song uris include a "#" or "!" which will error out on exoplayer
+                val fixUrl = Uri.fromFile(File(url))
+
+
                 val title = cursor.getString(1)
                 val album = cursor.getString(2)
                 val artist = cursor.getString(3)
@@ -109,7 +115,7 @@ class MediaStoreUtil {
 
                 val songMediaItem = mediaItemUtil.createMediaItemFromSongData(
                     SongData(
-                        songUri = url,
+                        songUri = fixUrl.toString(),
                         songTitle = title,
                         albumTitle = album,
                         artist = artist,
