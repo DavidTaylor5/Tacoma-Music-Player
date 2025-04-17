@@ -75,8 +75,8 @@ class MediaItemUtil {
                 .setMediaId(searchItem.songUri)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
-                        .setIsBrowsable(true)
-                        .setIsPlayable(false)
+                        .setIsBrowsable(false)
+                        .setIsPlayable(true)
                         .setTitle(searchItem.songTitle)
                         .setAlbumTitle(searchItem.albumTitle)
                         .setArtist(searchItem.artist)

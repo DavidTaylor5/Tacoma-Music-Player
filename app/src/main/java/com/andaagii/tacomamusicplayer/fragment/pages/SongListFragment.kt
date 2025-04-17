@@ -225,7 +225,7 @@ class SongListFragment(
                     determineIfShowingInformationScreen(songGroup.songs, songGroup.type)
                 }
             } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTenSongs)
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTenSongs, SongGroupType.SEARCH_LIST)
             }
         }
 
@@ -328,10 +328,6 @@ class SongListFragment(
 
         binding.songGroupInfo.visibility = View.GONE
         binding.searchContainer.visibility = View.VISIBLE
-
-        //TODO setup a search mode in my app
-        // Update the song group to display song search info
-        // Update the adapter to use the searchListAdapter
     }
 
     private fun deactivateSearchMode() {
