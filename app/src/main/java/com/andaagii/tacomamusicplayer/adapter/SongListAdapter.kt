@@ -27,6 +27,7 @@ class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
+    val handleAlbumClick: (albumTitle: String) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     var songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
@@ -141,6 +142,17 @@ class SongListAdapter(
         viewHolder.binding.songTitleTextView.text = searchDescription
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = searchType
+
+        if(searchMetadata.isPlayable == true) {
+            viewHolder.binding.textVerticalContainer.setOnClickListener {
+                handleSongClick(viewHolder.absoluteAdapterPosition)
+            }
+        } else {
+            viewHolder.binding.textVerticalContainer.setOnClickListener {
+                Timber.d("bindSearchHolder: handleAlbumClick -> ${albumTitle}")
+                handleAlbumClick(albumTitle)
+            }
+        }
     }
 
     // Replace the contents of a view (invoked by the layout manager)

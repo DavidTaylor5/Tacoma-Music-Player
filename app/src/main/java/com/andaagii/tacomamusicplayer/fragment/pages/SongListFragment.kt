@@ -155,6 +155,7 @@ class SongListFragment(
                 songGroup.songs,
                 this::handleSongSetting,
                 this::handleSongClicked,
+                this::handleAlbumClicked,
                 this::handleSongSelected,
                 songGroup.type,
                 this::handleViewHolderHandleDrag
@@ -218,6 +219,7 @@ class SongListFragment(
                         songGroup.songs,
                         this::handleSongSetting,
                         this::handleSongClicked,
+                        this::handleAlbumClicked,
                         this::handleSongSelected,
                         songGroup.type,
                         this::handleViewHolderHandleDrag
@@ -441,6 +443,12 @@ class SongListFragment(
         currentSongGroup?.let { songGroup ->
             parentViewModel.playSongGroupAtPosition(songGroup, position)
         }
+    }
+
+    private fun handleAlbumClicked(albumTitle: String) {
+        parentViewModel.querySongsFromAlbum(albumTitle)
+        parentViewModel.removeVirtualKeyboard()
+        parentViewModel.handleCancelSearchButtonClick()
     }
 
     private fun handleSongSelected(mediaItem: MediaItem, isSelected:Boolean) {
