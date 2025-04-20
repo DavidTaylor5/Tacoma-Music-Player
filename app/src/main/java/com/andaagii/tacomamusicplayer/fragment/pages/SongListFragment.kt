@@ -14,7 +14,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -51,6 +50,7 @@ class SongListFragment(
     private val viewModel: SongListViewModel by viewModels()
 
     private var currentSongGroup:  SongGroup? = null
+    private var lastDisplaySongGroup: SongGroup? =  null
 
     //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
@@ -147,9 +147,9 @@ class SongListFragment(
             Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
 
             currentSongGroup = songGroup
+            lastDisplaySongGroup = songGroup
 
-            //new currentSongList means that the search is over, remove search stuff
-           parentViewModel.handleCancelSearchButtonClick()
+            parentViewModel.handleCancelSearchButtonClick()
 
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songGroup.songs,
@@ -160,39 +160,9 @@ class SongListFragment(
                 songGroup.type,
                 this::handleViewHolderHandleDrag
             )
-            determineIfShowingInformationScreen(songGroup.songs, songGroup.type)
+            determineIfShowingInformationScreen(songGroup)
 
-            binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
-
-            // Determine what icon to display for song group
-            if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
-                songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
-                    val ableToDraw = UtilImpl.drawUriOntoImageView(
-                        binding.songGroupInfo.getSongGroupImage(),
-                        songArt,
-                        Size(200, 200)
-                    )
-
-                    if(!ableToDraw) {
-                        binding.songGroupInfo.getSongGroupImage()
-                            .setImageResource(R.drawable.white_note)
-                    }
-                }
-
-                //Remove drag ability from songs in an album.
-                itemTouchHelper.attachToRecyclerView(null)
-
-            } else { // Playlist icon
-                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
-
-                if(!ableToDraw) {
-                    binding.songGroupInfo.getSongGroupImage()
-                        .setImageResource(R.drawable.white_note)
-                }
-
-                //Adds drag ability to songs in a playlist.
-                itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
-            }
+            initializeSongGroupInfo()
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
@@ -205,6 +175,17 @@ class SongListFragment(
             }
 
             val topTenSongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
+
+            //Save last songgroup that wasn't a search so that I can return to it
+            
+//            Timber.d("onCreateView: currentSearchList updated -> songroup.type=${currentSongGroup?.type}")
+
+//            currentSongGroup?.let { songGroup ->
+//                if(songGroup.type != SongGroupType.SEARCH_LIST) {
+//                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
+//                    lastDisplaySongGroup = songGroup
+//                }
+//            }
 
             //if(binding.displayRecyclerview.adapter)
             currentSongGroup = SongGroup(
@@ -224,18 +205,20 @@ class SongListFragment(
                         songGroup.type,
                         this::handleViewHolderHandleDrag
                     )
-                    determineIfShowingInformationScreen(songGroup.songs, songGroup.type)
+                    determineIfShowingInformationScreen(songGroup)
                 }
             } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSearchData(topTenSongs, SongGroupType.SEARCH_LIST)
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTenSongs, SongGroupType.SEARCH_LIST)
             }
         }
 
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {
                 activateSearchMode()
+                deactivateDisplayMode()
             } else {
                 deactivateSearchMode()
+                activateDisplayMode()
             }
         }
 
@@ -306,7 +289,9 @@ class SongListFragment(
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 Timber.d("onTextChanged: User is typing: $s")
-                parentViewModel.querySearchDatabase(s.toString())
+                if(parentViewModel.isShowingSearchMode.value == true) {
+                    parentViewModel.querySearchDatabase(s.toString())
+                }
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -326,18 +311,112 @@ class SongListFragment(
         return binding.root
     }
 
-    private fun activateSearchMode() {
+    private fun initializeSongGroupInfo() {
+        Timber.d("initializeSongGroupInfo: ")
+        currentSongGroup?.let { songGroup ->
+            binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
 
-        binding.songGroupInfo.visibility = View.GONE
+            // Determine what icon to display for song group
+            if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
+                songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
+                    val ableToDraw = UtilImpl.drawUriOntoImageView(
+                        binding.songGroupInfo.getSongGroupImage(),
+                        songArt,
+                        Size(200, 200)
+                    )
+
+                    if(!ableToDraw) {
+                        binding.songGroupInfo.getSongGroupImage()
+                            .setImageResource(R.drawable.white_note)
+                    }
+                }
+
+                //Remove drag ability from songs in an album.
+                itemTouchHelper.attachToRecyclerView(null)
+
+            } else { // Playlist icon
+                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
+
+                if(!ableToDraw) {
+                    binding.songGroupInfo.getSongGroupImage()
+                        .setImageResource(R.drawable.white_note)
+                }
+
+                //Adds drag ability to songs in a playlist.
+                itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
+            }
+        }
+    }
+
+    private fun clearCurrentSongs() {
+        Timber.d("clearCurrentSongs: ")
+        binding.displayRecyclerview.adapter?.let { adapter ->
+            (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(listOf(), SongGroupType.SEARCH_LIST)
+        }
+    }
+
+    private fun restoreLastDisplaySongs() {
+        Timber.d("restoreLastDisplaySongs: ")
+
+        if(currentSongGroup?.type != SongGroupType.SEARCH_LIST) {
+            Timber.d("restoreLastDisplaySongs: currentSongGroup.type != Search_list")
+            return
+        } else {
+            Timber.d("restoreLastDisplaySongs: $currentSongGroup, lastDisplaySongGroup=$lastDisplaySongGroup")
+            currentSongGroup = lastDisplaySongGroup
+        }
+
+        currentSongGroup?.let { songGroup ->
+            if(binding.displayRecyclerview.adapter == null) {
+                binding.displayRecyclerview.adapter = SongListAdapter(
+                    songGroup.songs,
+                    this::handleSongSetting,
+                    this::handleSongClicked,
+                    this::handleAlbumClicked,
+                    this::handleSongSelected,
+                    songGroup.type,
+                    this::handleViewHolderHandleDrag
+                )
+                determineIfShowingInformationScreen(songGroup)
+            } else {
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(songGroup.songs, songGroup.type)
+            }
+        }
+    }
+
+    private fun activateSearchMode() {
+        Timber.d("activateSearchMode: ")
         binding.searchContainer.visibility = View.VISIBLE
+        currentSongGroup = SongGroup(
+            type = SongGroupType.SEARCH_LIST,
+            songs = listOf(),
+            title = "search..."
+        )
     }
 
     private fun deactivateSearchMode() {
-
-        binding.songGroupInfo.visibility = View.VISIBLE
+        Timber.d("deactivateSearchMode: ")
+        binding.searchEditText.setText("")
         binding.searchContainer.visibility = View.GONE
+    }
 
-        //Essentially set this back to a clean slate...
+    private fun activateDisplayMode() {
+        Timber.d("activateDisplayMode: ")
+        restoreLastDisplaySongs()
+
+        currentSongGroup?.let { songGroup ->
+            if(currentSongGroup?.songs?.isNotEmpty() == true) {
+                initializeSongGroupInfo()
+
+                binding.songGroupInfo.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun deactivateDisplayMode() {
+        Timber.d("deactivateDisplayMode: ")
+        binding.songGroupInfo.visibility = View.GONE
+        clearCurrentSongs()
     }
 
     private fun handleViewHolderHandleDrag(viewHolder: ViewHolder) {
@@ -417,7 +496,6 @@ class SongListFragment(
                 handleAddToPlaylist(mediaItems)
             }
             MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
-               // parentViewModel.removeSongsFromPlaylist(currentSongGroup?.title ?: "Unknown Playlist", mediaItems)
                 if(mediaItems.isNotEmpty()) {
                     val posOfDeletedSong = (binding.displayRecyclerview.adapter as SongListAdapter).removeSong(mediaItems[0].mediaId)
                     (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(posOfDeletedSong)
@@ -476,15 +554,18 @@ class SongListFragment(
      * Shows a prompt for the user to choose a playlist or album.
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
-    private fun determineIfShowingInformationScreen(songs: List<MediaItem>, songGroupType: SongGroupType) {
-        if( songGroupType == SongGroupType.SEARCH_LIST) {
-            binding.songListInformationScreen.visibility = View.GONE
-        } else if( songGroupType != SongGroupType.PLAYLIST && songs.isEmpty()) {
-            binding.songListInformationScreen.visibility = View.VISIBLE
-            binding.songGroupInfo.visibility = View.GONE
-        } else {
-            binding.songListInformationScreen.visibility = View.GONE
-            binding.songGroupInfo.visibility = View.VISIBLE
+    private fun determineIfShowingInformationScreen(songGroup: SongGroup?) {
+
+        songGroup?.let { it ->
+            if( it.type == SongGroupType.SEARCH_LIST) {
+                binding.songListInformationScreen.visibility = View.GONE
+            } else if( it.type != SongGroupType.PLAYLIST && it.songs.isEmpty()) {
+                binding.songListInformationScreen.visibility = View.VISIBLE
+                binding.songGroupInfo.visibility = View.GONE
+            } else {
+                binding.songListInformationScreen.visibility = View.GONE
+                binding.songGroupInfo.visibility = View.VISIBLE
+            }
         }
     }
 

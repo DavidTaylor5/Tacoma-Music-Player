@@ -14,11 +14,8 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.andaagii.tacomamusicplayer.enum.SongGroupType
-import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -50,7 +47,8 @@ class SongListAdapter(
         dataSet = modData
     }
 
-    fun setSearchData(searchItems: List<MediaItem>, songGroupType: SongGroupType) {
+    fun setSongs(searchItems: List<MediaItem>, songGroupType: SongGroupType) {
+        Timber.d("setSongs: searchItems=$searchItems, songGroupType=$songGroupType")
         this.dataSet = searchItems
         this.songGroupType = songGroupType
         this.notifyDataSetChanged()
@@ -102,6 +100,7 @@ class SongListAdapter(
      * Certain expectations for songs displayed for albums and playlists.
      */
     private fun bindSongHolder(viewHolder: SongViewHolder, position: Int) {
+        Timber.d("bindSongHolder: ")
         val songMetadata = dataSet[position].mediaMetadata
 
         val songTitle = songMetadata.title.toString()
@@ -130,6 +129,7 @@ class SongListAdapter(
      * Certain expectations for songs displayed as search data.
      */
     private fun bindSearchHolder(viewHolder: SongViewHolder, position: Int) {
+        Timber.d("bindSearchHolder: ")
         val searchMetadata = dataSet[position].mediaMetadata
 
         val songTitle = searchMetadata.title.toString()
@@ -157,7 +157,7 @@ class SongListAdapter(
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: SongViewHolder, position: Int) {
-        Timber.d("onBindViewHolder: ")
+        //Timber.d("onBindViewHolder: ")
 
         var songTitle = "DEFAULT SONG TITLE"
         var songArtist = "DEFAULT SONG ARTIST"
@@ -252,10 +252,10 @@ class SongListAdapter(
             //HANDLE SPECIFICS RELATED TO DISPLAY SONG VERSUS DISPLAY SEARCH RESULT
 
             if(songGroupType == SongGroupType.SEARCH_LIST) {
-                Timber.d("onBindViewHolder: bind search holder!")
+                //Timber.d("onBindViewHolder: bind search holder!")
                 bindSearchHolder(viewHolder, position)
             } else {
-                Timber.d("onBindViewHolder: bind song holder!")
+                //Timber.d("onBindViewHolder: bind song holder!")
                 bindSongHolder(viewHolder, position)
             }
         }
