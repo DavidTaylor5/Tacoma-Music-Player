@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:elevation="4dp"
         app:cardCornerRadius="10dp"
-        android:backgroundTint="#00BCD4"
+        android:backgroundTint="#4CAF50"
         >
 
         <LinearLayout
@@ -25,6 +25,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:text="0 Songs Selected"
+                android:textColor="@color/white"
                 android:layout_weight="1"
                 android:textAlignment="gravity"
                 android:gravity="center"
