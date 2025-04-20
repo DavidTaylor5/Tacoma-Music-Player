@@ -47,6 +47,11 @@ class SongListAdapter(
         dataSet = modData
     }
 
+    fun clearAllSelected() {
+        favoriteList = dataSet.map { false }.toMutableList()
+        this.notifyDataSetChanged()
+    }
+
     fun setSongs(searchItems: List<MediaItem>, songGroupType: SongGroupType) {
         Timber.d("setSongs: searchItems=$searchItems, songGroupType=$songGroupType")
         this.dataSet = searchItems

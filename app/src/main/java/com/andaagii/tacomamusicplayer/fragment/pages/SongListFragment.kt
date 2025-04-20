@@ -119,6 +119,9 @@ class SongListFragment(
     override fun onPause() {
         super.onPause()
 
+        //Remove multi select when I leave this fragment
+        viewModel.clearPreparedSongsForPlaylists()
+
         //If it's a playlist, save the order to the database [it could have changed.]
         currentSongGroup?.let { songGroup ->
 
@@ -255,6 +258,12 @@ class SongListFragment(
 
         viewModel.currentlySelectedSongs.observe(viewLifecycleOwner) { currentlySelectedSongs ->
             binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
+
+            binding.displayRecyclerview.adapter?.let { adapter ->
+                if(currentlySelectedSongs.isEmpty()) {
+                    (adapter as SongListAdapter).clearAllSelected()
+                }
+            }
         }
 
         binding.multiSelectPrompt.setOnMenuIconClick {
