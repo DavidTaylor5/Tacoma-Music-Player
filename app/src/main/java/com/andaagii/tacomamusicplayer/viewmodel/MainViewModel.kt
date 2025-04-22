@@ -157,6 +157,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _notifyHideKeyboard
     private val _notifyHideKeyboard: MutableLiveData<Int> = MutableLiveData()
 
+    val showLoadingScreen: LiveData<Boolean>
+        get() = _showLoadingScreen
+    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
@@ -638,6 +642,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             //oldQueue can be null if this is a fresh install or if there is no previous queue
             if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
                 Timber.d("restoreQueue: No queue to restore!")
+
+                //Remove Loading Screen
+                _showLoadingScreen.postValue(false)
                 return@launch
             }
 
@@ -657,6 +664,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                             controller.seekTo(songPosition, 0)
                         }
                     }
+
+                    //Remove Loading Screen
+                    _showLoadingScreen.postValue(false)
                 }
             }
         }
@@ -891,7 +901,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             //Add old queue to the mediaController
             restoreQueue()
-            //TODO restore song position, song in the mediaController resumePlayerState()...
 
             _loopMode.postValue(controller.repeatMode)
             controller.addListener(playerListener)

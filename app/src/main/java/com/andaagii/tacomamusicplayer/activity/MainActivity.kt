@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
@@ -97,11 +98,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.isRootAvailable.observe(this) {isAvailable ->
+        viewModel.isRootAvailable.observe(this) { isAvailable ->
             //The root is available, I can now check albums and stuff
             if(isAvailable) {
                 //query available albums
                 viewModel.queryAvailableAlbums()
+            }
+        }
+
+        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
+            if(showLoadingScreen) {
+                binding.loadingScreen.visibility = View.VISIBLE
+            } else {
+                binding.loadingScreen.visibility = View.INVISIBLE
             }
         }
 
