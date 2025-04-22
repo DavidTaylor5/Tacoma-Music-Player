@@ -79,6 +79,7 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 
     fun closePrompt() {
         this.visibility = View.GONE
+        (binding.displayRecyclerview.adapter as PlaylistPromptAdapter).removeAllChecks()
     }
 
     fun showPrompt() {

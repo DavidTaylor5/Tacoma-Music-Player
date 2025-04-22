@@ -120,7 +120,7 @@ class SongListFragment(
         super.onPause()
 
         //Remove multi select when I leave this fragment
-        viewModel.clearPreparedSongsForPlaylists()
+        viewModel.clearMultiSelectSongs()
 
         //If it's a playlist, save the order to the database [it could have changed.]
         currentSongGroup?.let { songGroup ->
@@ -227,7 +227,10 @@ class SongListFragment(
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-            binding.playlistPrompt.setPlaylistData(playlists)
+            val playlistsWithoutQueue = playlists.filter { playlist ->
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+            }
+            binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
         }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
@@ -263,6 +266,7 @@ class SongListFragment(
             binding.displayRecyclerview.adapter?.let { adapter ->
                 if(currentlySelectedSongs.isEmpty()) {
                     (adapter as SongListAdapter).clearAllSelected()
+                    binding.multiSelectPrompt.visibility = View.GONE
                 }
             }
         }
@@ -278,6 +282,15 @@ class SongListFragment(
                 return@setOnMenuItemClickListener true
             }
             menu.show()
+        }
+
+        binding.multiSelectPrompt.setOnCloseIconClick {
+            binding.displayRecyclerview.adapter?.let { adapter ->
+                (adapter as SongListAdapter).clearAllSelected()
+                viewModel.clearMultiSelectSongs()
+                binding.createPlaylistPrompt.closePrompt()
+                binding.playlistPrompt.closePrompt()
+            }
         }
 
         binding.searchEditText.setOnEditorActionListener { v, actionId, event ->
@@ -444,7 +457,7 @@ class SongListFragment(
         binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
             parentViewModel.removeVirtualKeyboard()
-            viewModel.clearPreparedSongsForPlaylists()
+            viewModel.clearMultiSelectSongs()
         }
 
         //Option 2 Button will be add a new playlist
@@ -470,7 +483,7 @@ class SongListFragment(
                 playlistAddSongs
             )
 
-            viewModel.clearPreparedSongsForPlaylists()
+            viewModel.clearMultiSelectSongs()
             binding.playlistPrompt.closePrompt()
         }
 
