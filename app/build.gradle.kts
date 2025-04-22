@@ -1,3 +1,7 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Date
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,11 +22,39 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    applicationVariants.all {
+        outputs.all {
+            // Cast to ApkVariantOutputImpl to access outputFileName
+            val output = this as com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
+            val appName = "tacoma_music_player"
+            val version = versionName
+            val buildType = buildType.name
+
+            val currentDate = LocalDate.now()
+            val formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd")
+            val formattedDate = currentDate.format(formatter)
+
+            output.outputFileName = "${appName}_${version}_${buildType}_${formattedDate}.apk"
+        }
+    }
+
+    //TODO add back
+//    signingConfigs {
+//        create("release") {
+//            storeFile = file("keystore/my-release-key.jks") //TODO update this...
+//            storePassword = "your-store-password"
+//            keyAlias = "my-key-alias"
+//            keyPassword = "your-key-password"
+//        }
+//    }
+
     buildTypes {
         debug {
 
         }
         release {
+//            signingConfig = signingConfigs.getByName("release") //TODO add back....
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
