@@ -219,6 +219,7 @@ class SongListFragment(
             if(isShowing) {
                 activateSearchMode()
                 deactivateDisplayMode()
+                removeInformationScreen()
             } else {
                 deactivateSearchMode()
                 activateDisplayMode()
@@ -374,6 +375,8 @@ class SongListFragment(
             Timber.d("restoreLastDisplaySongs: $currentSongGroup, lastDisplaySongGroup=$lastDisplaySongGroup")
             currentSongGroup = lastDisplaySongGroup
         }
+
+        determineIfShowingInformationScreen(currentSongGroup)
 
         currentSongGroup?.let { songGroup ->
             if(binding.displayRecyclerview.adapter == null) {
@@ -564,6 +567,12 @@ class SongListFragment(
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
     private fun determineIfShowingInformationScreen(songGroup: SongGroup?) {
+        
+        Timber.d("determineIfShowingInformationScreen: songGroup.type=${songGroup?.type}, songGroup.songs=${songGroup?.songs}")
+
+        if(songGroup == null) {
+            binding.songListInformationScreen.visibility = View.VISIBLE
+        }
 
         songGroup?.let { it ->
             if( it.type == SongGroupType.SEARCH_LIST) {
@@ -576,6 +585,10 @@ class SongListFragment(
                 binding.songGroupInfo.visibility = View.VISIBLE
             }
         }
+    }
+
+    private fun removeInformationScreen() {
+        binding.songListInformationScreen.visibility = View.GONE
     }
 
     private fun setupPage() {
