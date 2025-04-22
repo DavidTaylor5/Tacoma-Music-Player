@@ -19,6 +19,12 @@
             android:layout_height="match_parent"
             android:gravity="center">
 
+            <View
+                android:id="@+id/close_icon"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/baseline_clear_24"
+                />
 
             <TextView
                 android:id="@+id/description_text"

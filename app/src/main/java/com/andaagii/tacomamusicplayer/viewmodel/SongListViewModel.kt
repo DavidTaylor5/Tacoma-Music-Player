@@ -59,7 +59,7 @@ class SongListViewModel: ViewModel() {
         _currentlySelectedSongs.postValue(currentSongs)
     }
 
-    fun clearPreparedSongsForPlaylists() {
+    fun clearMultiSelectSongs() {
         _currentlySelectedSongs.postValue(listOf())
         _isShowingMultiSelectPrompt.postValue(false)
     }

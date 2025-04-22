@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -160,6 +162,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    private val loadingHandler = Handler(Looper.getMainLooper())
 
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -643,8 +647,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
                 Timber.d("restoreQueue: No queue to restore!")
 
-                //Remove Loading Screen
-                _showLoadingScreen.postValue(false)
+                //Remove Loading Screen [100ms added to cover image switch]
+                loadingHandler.postDelayed({
+                    _showLoadingScreen.postValue(false)
+                }, 100)
                 return@launch
             }
 
@@ -665,8 +671,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         }
                     }
 
-                    //Remove Loading Screen
-                    _showLoadingScreen.postValue(false)
+                    //Remove Loading Screen [100ms added to cover image switch]
+                    loadingHandler.postDelayed({
+                        _showLoadingScreen.postValue(false)
+                    }, 100)
                 }
             }
         }

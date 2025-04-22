@@ -53,8 +53,6 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
             binding.closeButton.setOnClickListener {
                 onCloseButtonClicked()
             }
-
-
         }
     }
 
@@ -79,6 +77,8 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
 
     fun closePrompt() {
         this.visibility = View.GONE
+        (binding.displayRecyclerview.adapter as PlaylistPromptAdapter).removeAllChecks()
+        updateAddButtonClickability(false)
     }
 
     fun showPrompt() {

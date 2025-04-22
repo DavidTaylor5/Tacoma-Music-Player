@@ -18,6 +18,8 @@ class PlaylistPromptAdapter(
     private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
+    private var playlistsWithCheckmarks = playlists.map { playlist -> false }
+
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
@@ -38,6 +40,9 @@ class PlaylistPromptAdapter(
 
         viewHolder.binding.playlistName.text = playlists[position].title
 
+
+        viewHolder.binding.addCheckbox.isChecked = playlistsWithCheckmarks[viewHolder.absoluteAdapterPosition]
+
         viewHolder.binding.root.setOnClickListener {
             viewHolder.binding.addCheckbox.isChecked = !viewHolder.binding.addCheckbox.isChecked
         }
@@ -45,6 +50,12 @@ class PlaylistPromptAdapter(
         viewHolder.binding.addCheckbox.setOnCheckedChangeListener { compoundButton, b ->
             onPlaylistChecked(playlists[position].title ?: "UNKNOWN", b)
         }
+    }
+
+    //Rebind all of the playlists to remove the checks
+    fun removeAllChecks() {
+        playlistsWithCheckmarks = playlists.map { false }
+        notifyDataSetChanged()
     }
 
     override fun onBindViewHolder(
