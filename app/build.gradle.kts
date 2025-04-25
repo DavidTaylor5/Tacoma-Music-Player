@@ -39,26 +39,27 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(project.property("RELEASE_STORE_FILE") as String)
-            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
-            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
-            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
-        }
-    }
+//    signingConfigs {
+//        create("release") {
+//            storeFile = file(project.property("RELEASE_STORE_FILE") as String)
+//            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+//            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+//            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
+//        }
+//    }
 
     buildTypes {
         debug {
 
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+//            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
