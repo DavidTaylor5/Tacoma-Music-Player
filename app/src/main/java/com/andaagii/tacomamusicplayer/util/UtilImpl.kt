@@ -13,6 +13,8 @@ import android.view.WindowInsets
 import android.widget.ImageView
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
+import coil.load
+import com.andaagii.tacomamusicplayer.R
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -59,16 +61,39 @@ class UtilImpl {
         }
 
         /**
-         * Call this function to draw a Uri onto an ImageView, return true if drawn without exception.
+         * TODO why does this function only work with the album uris?
          */
-        fun drawUriOntoImageView(view: ImageView, uri: Uri, size: Size): Boolean {
-            Timber.d("drawUriOntoImageView: view=$view, uri=$uri, size=$size")
+        fun drawUriOntoImageViewCoil(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+            Timber.d("drawUriOntoImageViewCoil: view=$view, uri=$uri, size=$imageSize")
             val resolver = view.context.contentResolver
             try {
                 //Album art as a bitmap, I need to work on what to do when this is blank / null?
-                val albumArt = resolver.loadThumbnail(uri, size, null)
-                val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
 
+                view.load(uri) {
+                    crossfade(true)
+                    size(imageSize.width, imageSize.height)
+                    error(R.drawable.white_note)
+                    fallback(R.drawable.white_note)
+                }
+
+                Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")
+                return true
+            } catch (e: Exception) {
+                Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW e=$e")
+                return false
+            }
+        }
+
+        /**
+         * Call this function to draw a Uri onto an ImageView, return true if drawn without exception.
+         */
+        fun drawUriOntoImageView(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+            Timber.d("drawUriOntoImageView: view=$view, uri=$uri, size=$imageSize")
+            val resolver = view.context.contentResolver
+            try {
+                //Album art as a bitmap, I need to work on what to do when this is blank / null?
+                val albumArt = resolver.loadThumbnail(uri, imageSize, null)
+                val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
                 view.setImageDrawable(albumDrawable)
 
                 Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")

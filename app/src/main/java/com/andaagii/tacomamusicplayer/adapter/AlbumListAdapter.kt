@@ -67,15 +67,11 @@ class AlbumListAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
-            val ableToDraw = UtilImpl.drawUriOntoImageView(
+            UtilImpl.drawUriOntoImageViewCoil(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400)
             )
-
-            if(!ableToDraw) {
-                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
-            }
 
             viewHolder.binding.menuIcon.setOnClickListener {
                 val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)

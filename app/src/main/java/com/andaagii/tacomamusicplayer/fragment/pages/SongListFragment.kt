@@ -171,13 +171,13 @@ class SongListFragment(
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
             val topSearchData = if(searchItems.isEmpty()) {
                 listOf()
-            } else if(searchItems.size > 10) {
-                searchItems.subList(0, 10)
+            } else if(searchItems.size > 20) {
+                searchItems.subList(0, 20)
             } else {
                 searchItems.subList(0, searchItems.size)
             }
 
-            val topTenSongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
+            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
 
             //Save last songgroup that wasn't a search so that I can return to it
             
@@ -193,7 +193,7 @@ class SongListFragment(
             //if(binding.displayRecyclerview.adapter)
             currentSongGroup = SongGroup(
                 SongGroupType.SEARCH_LIST,
-                topTenSongs,
+                topTwentySongs,
                 "Search Results"
             )
 
@@ -211,7 +211,7 @@ class SongListFragment(
                     determineIfShowingInformationScreen(songGroup)
                 }
             } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTenSongs, SongGroupType.SEARCH_LIST)
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTwentySongs, SongGroupType.SEARCH_LIST)
             }
         }
 
