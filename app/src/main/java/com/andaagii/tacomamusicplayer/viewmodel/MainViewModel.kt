@@ -147,7 +147,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _loopMode
     private val _loopMode: MutableLiveData<Int> = MutableLiveData()
 
-    val orderedSongList: LiveData<List<MediaItem>>
+    val originalSongOrder: LiveData<List<MediaItem>>
         get() = _originalSongOrder
     private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
@@ -819,7 +819,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             controller.clearMediaItems()
             controller.pause()
 
-            addTracksSaveTrackOrder(songGroup.songs)
+            addTracksSaveTrackOrder(songGroup.songs, clearOriginalSongList = true)
 
             controller.seekTo(position, 0L)
             controller.play()
@@ -841,7 +841,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 //Remove current songs in the queue
                 mediaController.value?.clearMediaItems()
 
-                addTracksSaveTrackOrder(playlistMediaItems)
+                addTracksSaveTrackOrder(playlistMediaItems, clearOriginalSongList = true)
 
                 mediaController.value?.play()
             }
@@ -1004,10 +1004,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                     //When I query the album, determine if/how album should be played
                     if(queueAddType == QueueAddType.QUEUE_END_ADD) {
-                        addTracksSaveTrackOrder(songs)
+                        addTracksSaveTrackOrder(songs, clearOriginalSongList = true)
                     } else if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
                         _mediaController.value?.clearMediaItems()
-                        addTracksSaveTrackOrder(songs)
+                        addTracksSaveTrackOrder(songs, clearOriginalSongList = true)
                         _mediaController.value?.play()
                     }
 
@@ -1022,13 +1022,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Instead of adding songs directly to the mediaController instead, I can track when songs are added
      * allowing for shuffle and restore functionality.
      */
-    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>) {
-        Timber.d("addTracksSaveTrackOrder: mediaItems=$mediaItems")
+    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>, clearOriginalSongList: Boolean = false) {
+        if(clearOriginalSongList) {
+            _originalSongOrder.value = listOf()
+        }
 
         //save songs to the original song order
-        val songOrder = orderedSongList.value?.toMutableList()
+        val songOrder = originalSongOrder.value?.toMutableList()
         songOrder?.addAll(mediaItems)
 
+        Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
         _originalSongOrder.postValue( songOrder ?: mediaItems  )
 
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
