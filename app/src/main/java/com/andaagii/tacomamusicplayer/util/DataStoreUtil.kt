@@ -10,8 +10,10 @@ import com.andaagii.tacomamusicplayer.activity.dataStore
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.ShuffleType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 /**
  * DataStoreUtil requires context from MainActivity, which has access to DataStore "Settings".

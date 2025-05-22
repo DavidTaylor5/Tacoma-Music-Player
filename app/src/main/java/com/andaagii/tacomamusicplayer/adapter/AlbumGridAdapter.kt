@@ -66,7 +66,7 @@ class AlbumGridAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
-            UtilImpl.drawUriOntoImageView(
+            UtilImpl.drawUriOntoImageViewCoil(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400)

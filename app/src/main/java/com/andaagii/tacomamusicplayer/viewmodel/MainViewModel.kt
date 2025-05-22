@@ -147,7 +147,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _loopMode
     private val _loopMode: MutableLiveData<Int> = MutableLiveData()
 
-    val originalSongOrder: LiveData<List<MediaItem>>
+    val orderedSongList: LiveData<List<MediaItem>>
         get() = _originalSongOrder
     private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
@@ -194,18 +194,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun handleSearchButtonClick() {
+        Timber.d("handleSearchButtonClick: ")
         _isShowingSearchMode.postValue(true)
     }
 
     fun handleCancelSearchButtonClick() {
+        Timber.d("handleCancelSearchButtonClick: ")
         _isShowingSearchMode.postValue(false)
     }
 
     fun removeVirtualKeyboard() {
+        Timber.d("removeVirtualKeyboard: ")
         _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
     }
 
     fun querySearchDatabase(search: String) {
+        Timber.d("querySearchDatabase: search=$search")
         viewModelScope.launch(Dispatchers.IO) {
             val searchResults = SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
@@ -218,7 +222,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * I need to catalog the music library so that I can add search functionality.
      */
     private fun catalogMusicLibrary() {
-
+        Timber.d("catalogMusicLibrary: ")
         val executor = Executors.newFixedThreadPool(4)
 
         albumMediaItemList.value?.let { albums ->
@@ -272,27 +276,30 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Changes between songs being shuffled and songs being in original order.
      */
     fun flipShuffleState() {
-        Timber.d("flipShuffleState: ")
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
             //Set to be original order
             _shuffleMode.postValue(ShuffleType.NOT_SHUFFLED)
             restoreOriginalSongOrder()
             saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.NOT_SHUFFLED)
+            Timber.d("flipShuffleState: ${ShuffleType.NOT_SHUFFLED}")
         } else {
             //Set to be shuffled
             _shuffleMode.postValue(ShuffleType.SHUFFLED)
             shuffleSongsInMediaController()
             saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.SHUFFLED)
+            Timber.d("flipShuffleState: ${ShuffleType.SHUFFLED}")
         }
     }
 
     fun flipLoopMode() {
-        Timber.d("flipRepeatMode: ")
         if(_loopMode.value == Player.REPEAT_MODE_OFF) {
+            Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_ONE}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ONE
         } else if(_loopMode.value == Player.REPEAT_MODE_ONE) {
+            Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_ALL}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ALL
         } else {
+            Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_OFF}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_OFF
         }
 
@@ -302,27 +309,33 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun flipPlayingState() {
         if(_isPlaying.value == true) {
             _mediaController.value?.pause()
+            Timber.d("flipPlayingState: Pausing!")
         } else {
             _mediaController.value?.play()
+            Timber.d("flipPlayingState: Playing!")
         }
     }
 
     private fun setTabLayoutsFromPrefs(context: Context) {
+        Timber.d("setTabLayoutsFromPrefs: ")
         determinePlaylistTabLayout(context)
         determineAlbumTabLayout(context)
     }
 
     private fun setTabSortingOptionFromPrefs(context: Context) {
+        Timber.d("setTabSortingOptionFromPrefs: ")
         determinePlaylistTabSorting(context)
         determineAlbumTabSorting(context)
     }
 
     private fun setMusicPlayingPrefs(context: Context) {
+        Timber.d("setMusicPlayingPrefs: ")
         //determineLoopingPref(context)
         determineShufflePref(context)
     }
 
     private fun determinePlaylistTabLayout(context: Context) {
+        Timber.d("determinePlaylistTabLayout: ")
         viewModelScope.launch {
             DataStoreUtil.getPlaylistLayoutPreference(context).collect { savedLayoutString ->
                 val layout = LayoutType.determineLayoutFromString(savedLayoutString)
@@ -332,6 +345,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun determineAlbumTabLayout(context: Context) {
+        Timber.d("determineAlbumTabLayout: ")
         viewModelScope.launch {
             DataStoreUtil.getAlbumLayoutPreference(context).collect { savedLayoutString ->
                 val layout = LayoutType.determineLayoutFromString(savedLayoutString)
@@ -341,6 +355,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun determinePlaylistTabSorting(context: Context) {
+        Timber.d("determinePlaylistTabSorting: ")
         viewModelScope.launch {
             DataStoreUtil.getPlaylistSortingPreference(context).collect { savedSortingString ->
                 val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
@@ -350,6 +365,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun determineAlbumTabSorting(context: Context) {
+        Timber.d("determineAlbumTabSorting: ")
         viewModelScope.launch {
             DataStoreUtil.getAlbumSortingPreference(context).collect { savedSortingString ->
                 val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
@@ -368,6 +384,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun determineShufflePref(context: Context) {
+        Timber.d("determineShufflePref: ")
         viewModelScope.launch {
             DataStoreUtil.getShufflePreference(context).collect { shufflePref ->
                 val shuffleType = ShuffleType.determineShuffleTypeFromString(shufflePref)
@@ -377,6 +394,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun savePlaylistLayout(context: Context, layout: LayoutType) {
+        Timber.d("savePlaylistLayout: layout=$layout")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setPlaylistLayoutPreference(context, layout)
         }
@@ -384,6 +402,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun saveAlbumLayout(context: Context, layout: LayoutType) {
+        Timber.d("saveAlbumLayout: layout=$layout")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setAlbumLayoutPreference(context, layout)
         }
@@ -391,6 +410,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun savePlaylistSorting(context: Context, sorting: SortingUtil.SortingOption) {
+        Timber.d("savePlaylistSorting: sorting=$sorting")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setPlaylistSortingPreference(context, sorting)
         }
@@ -398,19 +418,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun saveAlbumSorting(context: Context, sorting: SortingUtil.SortingOption) {
+        Timber.d("saveAlbumSorting: sorting=$sorting")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setAlbumSortingPreference(context, sorting)
         }
         _sortingForAlbumTab.postValue(sorting)
     }
 
-    fun saveLoopingPref(context: Context, loopInt: Int) {
+    private fun saveLoopingPref(context: Context, loopInt: Int) {
+        Timber.d("saveLoopingPref: loopInt=$loopInt")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setLoopingPreference(context, loopInt)
         }
     }
 
-    fun saveShufflePref(context: Context, shuffleType: ShuffleType) {
+    private fun saveShufflePref(context: Context, shuffleType: ShuffleType) {
+        Timber.d("saveShufflePref: shuffleType=$shuffleType")
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setShufflePreference(context, shuffleType)
         }
@@ -460,6 +483,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Determine all saved user preferences, loopMode, shuffleMode, layout, sorting.
      */
     private fun checkUserPreferences() {
+        Timber.d("checkUserPreferences: ")
         setTabLayoutsFromPrefs(getApplication<Application>().applicationContext)
         setTabSortingOptionFromPrefs(getApplication<Application>().applicationContext)
         setMusicPlayingPrefs(getApplication<Application>().applicationContext)
@@ -530,6 +554,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param albumSongGroup A song group associated with a playlist.
      */
     fun updatePlaylistOrder(albumSongGroup: SongGroup) {
+        Timber.d("updatePlaylistOrder: albumSongGroup=$albumSongGroup")
         if(albumSongGroup.type == SongGroupType.PLAYLIST) {
 
             viewModelScope.launch(Dispatchers.IO) {
@@ -572,7 +597,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * TODO I also want to save the position of the last song I was in.
      */
     fun saveQueue() {
-
+        Timber.d("saveQueue: ")
         mediaController.value?.let { controller ->
 
             //Save current Player state
@@ -622,6 +647,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun savePlayerState(controller: MediaController) {
         val playbackPosition = controller.currentPosition
         val songPosition = controller.currentMediaItemIndex
+        Timber.d("savePlayerState: playbackPosition=$playbackPosition, songPosition=$songPosition")
 
         viewModelScope.launch(Dispatchers.IO) {
             DataStoreUtil.setPlaybackPosition(getApplication<Application>().applicationContext, playbackPosition)
@@ -630,11 +656,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     }
 
-    //TODO the empty playingmusicfragment shows briefly, I might have to remove the dog image.
-    //Or add it later...
-    //TODO make the queue playlist not show up
-    //OR have a constant for the playlist ID that no one will think to use as a title....
     private fun restoreQueue() {
+        Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
             val oldQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
@@ -684,13 +707,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Ability to add a list of songs to a list of playlists.
      */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
+        Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songs=$songs")
         playlistTitles.forEach { playlist ->
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
         }
     }
-
-  //I need to add back that playlist id...
+    
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
+        Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
 
@@ -720,6 +744,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Update the playlist image.
      */
     fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
+        Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
 
@@ -756,10 +781,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 return@launch
             }
             
-            
             val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
-
-//TODO crash
+            
             val modifiedSongList = playlist.songs.songs.toMutableList()
             modifiedSongList.addAll(storableSongs)
 
@@ -778,13 +801,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Returns a list of playlists saved on the device.
-     */
-    private fun getCurrentPlaylists(): List<Playlist> {
-        return availablePlaylists.value ?: listOf()
-    }
-
     fun checkPermissionsIfOnPermissionDeniedScreen() {
         Timber.d("checkPermissionsIfOnPermissionDeniedScreen: ")
 
@@ -798,7 +814,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      *  Clear queue and play the song group at a certain position.
      */
     fun playSongGroupAtPosition(songGroup: SongGroup, position: Int) {
-
+        Timber.d("playSongGroupAtPosition: songGroup=$songGroup, position=$position")
         mediaController.value?.let { controller ->
             controller.clearMediaItems()
             controller.pause()
@@ -810,12 +826,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    //TODO add a play button the playlists and the albums, so that the user can quickly play just those albums or playlists
-
     /**
      * Clear queue and play the specified playlist.
      */
     fun playPlaylist(playlistTitle: String) {
+        Timber.d("playPlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
             val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
@@ -834,6 +849,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun addPlaylistToBackOfQueue(playlistTitle: String) {
+        Timber.d("addPlaylistToBackOfQueue: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
             val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
@@ -850,6 +866,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Adds multiple songs to the end of the controller in the queue
      */
     fun addSongsToEndOfQueue(songs: List<MediaItem>) {
+        Timber.d("addSongsToEndOfQueue: songs=$songs")
         addTracksSaveTrackOrder(songs)
     }
 
@@ -857,6 +874,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Clear all songs out of Player.
      */
     fun clearQueue() {
+        Timber.d("clearQueue: ")
         mediaController.value?.clearMediaItems()
     }
 
@@ -865,8 +883,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param nextScreen The next screen to be navigated to.
      */
     private fun setScreenData(nextScreen: ScreenType) {
-        Timber.d("setScreenData: ")
-
+        Timber.d("setScreenData: nextScreen=$nextScreen")
         if(screenState.value == null) {
             _screenState.value = ScreenData(nextScreen)
         } else {
@@ -880,6 +897,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Starts music service and sets up the media controller and media browser.
      */
     fun initializeMusicPlaying() {
+        Timber.d("initializeMusicPlaying: ")
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
         setupMediaBrowser(sessionToken)
@@ -973,9 +991,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param albumId The title of an album to be queried.
      */
     fun querySongsFromAlbum(albumId: String, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
-        Timber.d("querySongsFromAlbum: ")
+        Timber.d("querySongsFromAlbum: albumId=$albumId, queueAddType=$queueAddType")
         if(mediaBrowser != null) {
-
             mediaBrowser?.let { browser ->
                 val childrenFuture =
                     browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
@@ -1006,10 +1023,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * allowing for shuffle and restore functionality.
      */
     private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>) {
-        Timber.d("addTracksSaveTrackOrder: ")
+        Timber.d("addTracksSaveTrackOrder: mediaItems=$mediaItems")
 
         //save songs to the original song order
-        val songOrder = originalSongOrder.value?.toMutableList()
+        val songOrder = orderedSongList.value?.toMutableList()
         songOrder?.addAll(mediaItems)
 
         _originalSongOrder.postValue( songOrder ?: mediaItems  )
@@ -1023,10 +1040,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun shuffleSongs(mediaItems: List<MediaItem>): List<MediaItem> {
+        Timber.d("shuffleSongs: mediaItems=$mediaItems")
         return mediaItems.shuffled()
     }
 
     private fun shuffleSongsInMediaController() {
+        Timber.d("shuffleSongsInMediaController: ")
         _mediaController.value?.let { controller ->
             val currentSongs = UtilImpl.getSongListFromMediaController(controller)
 
@@ -1039,6 +1058,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     private fun restoreOriginalSongOrder() {
+        Timber.d("restoreOriginalSongOrder: ")
         _mediaController.value?.let { controller ->
             _originalSongOrder.value?.let { originalSongs ->
                 controller.clearMediaItems()
@@ -1052,7 +1072,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Clears the current queue and starts playing the chosen album.
      */
     fun playAlbum(albumTitle: String) {
-        Timber.d("playAlbum: ")
+        Timber.d("playAlbum: albumTitle=$albumTitle")
         querySongsFromAlbum(
             albumTitle,
             queueAddType = QueueAddType.QUEUE_CLEAR_ADD
@@ -1063,7 +1083,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Adds to album to the back of the current queue.
      */
     fun addAlbumToBackOfQueue(albumTitle: String) {
-        Timber.d("addAlbumToBackOfQueue: ")
+        Timber.d("addAlbumToBackOfQueue: albumTitle=$albumTitle")
         querySongsFromAlbum(
             albumTitle,
             queueAddType = QueueAddType.QUEUE_END_ADD
@@ -1075,7 +1095,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param albumId The title of an playlist to be queried.
      */
     fun querySongsFromPlaylist(playlistId: String) {
-        Timber.d("querySongsFromPlaylist: ")
+        Timber.d("querySongsFromPlaylist: playlistId=$playlistId")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
             val songs = playlist.songs.songs
@@ -1093,7 +1113,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param playlists A list of the playlist titles to be removed.
      */
     fun removePlaylists(playlists: List<String>) {
-
+        Timber.d("removePlaylists: playlist=$playlists")
         playlists.forEach { playlistTitle ->
             removePlaylist(playlistTitle)
         }
@@ -1103,6 +1123,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Removes a single playlist based on its title.
      */
     private fun removePlaylist(playlistTitle: String) {
+        Timber.d("removePlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
@@ -1139,7 +1160,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        Timber.d("handlePermissionResult: ")
+        Timber.d("handlePermissionResult: requestCode=$requestCode, permissions=$permissions, grantResults=$grantResults")
         if(requestCode == AppPermissionUtil.readMediaAudioRequestCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Timber.d("handlePermissionResult: read audio granted!")
