@@ -72,8 +72,11 @@ class MenuOptionUtil {
                 return Const.PLAY_ALBUM
             }
         },
-
-
+        ADD_ALBUM_IMAGE {
+          override fun type(): String {
+              return Const.ADD_ALBUM_IMAGE
+          }
+        },
         CHECK_STATS {
             override fun type(): String {
                 return Const.CHECK_STATS
@@ -106,6 +109,7 @@ class MenuOptionUtil {
                 Const.REMOVE_PLAYLIST -> MenuOption.REMOVE_PLAYLIST
 
                 Const.PLAY_ALBUM -> MenuOption.PLAY_ALBUM
+                Const.ADD_ALBUM_IMAGE -> MenuOption.ADD_ALBUM_IMAGE
 
                 Const.CLEAR_QUEUE -> MenuOption.CLEAR_QUEUE
                 Const.ADD_TO_QUEUE -> MenuOption.ADD_TO_QUEUE

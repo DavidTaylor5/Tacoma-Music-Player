@@ -1,9 +1,11 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -17,6 +19,7 @@ import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
+import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -25,6 +28,27 @@ class AlbumListFragment: Fragment() {
     private val parentViewModel: MainViewModel by activityViewModels()
 
     private var currentAlbumList: List<MediaItem> = listOf()
+
+    //The name of the most recent playlist that I want to update the image for
+    private var albumCustomImageName = "empty"
+
+    //Callback for when user chooses a playlist Image
+    private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        // Handle the returned Uri
+        val pictureUri = uri
+
+        if(pictureUri == null) {
+            Timber.d("getPicture: The picture is null!")
+        }
+
+        pictureUri?.let { uri ->
+            this.context?.let { fragmentContext ->
+                //Save picture to local data
+                UtilImpl.saveImageToFile(fragmentContext, uri, albumCustomImageName)
+                parentViewModel.updatePlaylistImage(albumCustomImageName, "$albumCustomImageName.jpg")
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,6 +99,14 @@ class AlbumListFragment: Fragment() {
         return binding.root
     }
 
+    private fun addCustomAlbumImage(customAlbumImageName: String) {
+        //Album that I should update the image for
+        albumCustomImageName = customAlbumImageName
+
+        // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
+        getPicture.launch("image/*")
+    }
+
     private fun updateAlbumSorting(sorting: SortingUtil.SortingOption) {
         Timber.d("updateAlbumSorting: sorting=$sorting")
 
@@ -119,13 +151,18 @@ class AlbumListFragment: Fragment() {
         }
     }
 
-    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: String) {
+    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: String, customAlbumImageName: String? = null) {
         when (option) {
             MenuOptionUtil.MenuOption.PLAY_ALBUM ->  {
                 parentViewModel.playAlbum(album)
             }
             MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
                 parentViewModel.addAlbumToBackOfQueue(album)
+            }
+            MenuOptionUtil.MenuOption.ADD_ALBUM_IMAGE -> {
+                customAlbumImageName?.let {
+                    addCustomAlbumImage(customAlbumImageName)
+                }
             }
             else -> {
                 Timber.d("handleAlbumSetting: unhandled album menu option")

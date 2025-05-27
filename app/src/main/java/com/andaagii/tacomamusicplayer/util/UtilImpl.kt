@@ -60,6 +60,40 @@ class UtilImpl {
             }
         }
 
+        fun drawImageAssociatedWithAlbum(view: ImageView, uri: Uri, imageSize: Size, customImageName: String = "", ) {
+            Timber.d("drawImageAssociatedWithAlbum: view=$view, uri=$uri, customImageName=$customImageName")
+            view.setImageURI(null)
+
+            //Determine if there is a custom Album image, associated with albums and its songs
+            val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
+            val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+            var usingCustomImage = false
+            for(suffix in possibleImageSuffix) {
+                val customAlbumImage = File(appDir, "${customImageName}$suffix")
+                if(customAlbumImage.exists()) {
+                    Timber.d("drawImageAssociatedWithAlbum: customAlbumImage=$customAlbumImage exists, setting image...")
+                    try {
+                        val artUri = Uri.fromFile(customAlbumImage)
+                        view.load(artUri) {
+                            crossfade(true)
+                            size(imageSize.width, imageSize.height)
+                            error(R.drawable.white_note)
+                            fallback(R.drawable.white_note)
+                        }
+                        usingCustomImage = true
+                    } catch(e: Exception) {
+                        Timber.d("onBindViewHolder: exception when setting playlist art customAlbumImage=$customAlbumImage e=$e")
+                    }
+                    break
+                }
+            }
+
+            if(!usingCustomImage) { //No custom image found, use metadata album art uri
+                drawUriOntoImageViewCoil(view, uri, imageSize)
+            }
+        }
+
         /**
          * TODO why does this function only work with the album uris?
          */

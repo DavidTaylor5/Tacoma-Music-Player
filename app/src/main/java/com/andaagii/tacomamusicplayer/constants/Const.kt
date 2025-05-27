@@ -17,6 +17,7 @@ class Const {
 
         //ALBUM OPTIONS
         const val PLAY_ALBUM: String = "Play Album"
+        const val ADD_ALBUM_IMAGE: String = "Add Custom Album Image"
 
         //QUEUE OPTIONS
         const val CLEAR_QUEUE: String = "Clear Queue"

@@ -9,4 +9,9 @@
         android:id="@+id/add_to_queue"
         android:title="Add to Queue"
         android:titleCondensed=""/>
+
+    <item
+        android:id="@+id/add_custom_image"
+        android:title="Add Custom Album Image"
+        android:titleCondensed=""/>
 </menu>
