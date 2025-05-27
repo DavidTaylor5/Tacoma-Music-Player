@@ -342,16 +342,13 @@ class SongListFragment(
             // Determine what icon to display for song group
             if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
                 songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
-                    val ableToDraw = UtilImpl.drawUriOntoImageView(
+                    val customImage = "${songGroup.songs[0].mediaMetadata.artist}_${songGroup.songs[0].mediaMetadata.albumTitle}"
+                    UtilImpl.drawSongArt(
                         binding.songGroupInfo.getSongGroupImage(),
                         songArt,
-                        Size(200, 200)
+                        Size(200, 200),
+                        customImage
                     )
-
-                    if(!ableToDraw) {
-                        binding.songGroupInfo.getSongGroupImage()
-                            .setImageResource(R.drawable.white_note)
-                    }
                 }
 
                 //Remove drag ability from songs in an album.

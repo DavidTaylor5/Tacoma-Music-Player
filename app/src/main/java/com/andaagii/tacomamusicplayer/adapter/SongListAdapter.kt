@@ -177,16 +177,13 @@ class SongListAdapter(
             val songMetadata = dataSet[position].mediaMetadata
             artworkUri = songMetadata.artworkUri
 
-            //Set Album Art
-            val ableToDraw = UtilImpl.drawUriOntoImageView(
+            val customImage = "${dataSet[position].mediaMetadata.artist}_${dataSet[position].mediaMetadata.albumTitle}"
+            UtilImpl.drawSongArt(
                 viewHolder.binding.albumArt,
                 artworkUri,
-                Size(200, 200)
+                Size(200, 200),
+                customImage
             )
-
-            if(!ableToDraw) {
-                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
-            }
 
             //Setup multi select...
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)

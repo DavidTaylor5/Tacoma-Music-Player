@@ -7,9 +7,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
-import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
@@ -24,7 +22,7 @@ class AlbumListAdapter(
     private var albums: List<MediaItem>,
     private val onAlbumClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
-    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String) -> Unit,
+    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String, String?) -> Unit,
 ): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() {
 
     /**
@@ -45,7 +43,7 @@ class AlbumListAdapter(
     }
 
     // Replace the contents of a view (invoked by the layout manager)
-    @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: AlbumViewHolder, position: Int) {
+    override fun onBindViewHolder(viewHolder: AlbumViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
         var albumTitle = "Default ALBUM"
@@ -54,12 +52,14 @@ class AlbumListAdapter(
 
         //First check that dataSet has a value for position
         if(position < albums.size) {
+            val album = albums[position]
+            val albumMetadata = album.mediaMetadata
+            val customImage = "${albumMetadata.albumArtist}_${albumMetadata.albumTitle}"
+            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albumMetadata.albumTitle}, albumArtist=${albumMetadata.albumArtist}, albumArtUri=${albumMetadata.artworkUri}")
 
-            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albums[0].mediaMetadata.albumTitle}, albumArtist=${albums[0].mediaMetadata.albumArtist}, albumArtUri=${albums[0].mediaMetadata.artworkUri}")
-
-            albumTitle = albums[position].mediaMetadata.albumTitle.toString()
-            albumArtist = albums[position].mediaMetadata.albumArtist.toString()
-            albumUri = albums[position].mediaMetadata.artworkUri
+            albumTitle = albumMetadata.albumTitle.toString()
+            albumArtist = albumMetadata.albumArtist.toString()
+            albumUri = albumMetadata.artworkUri
 
             viewHolder.binding.playButton.setOnClickListener {
                 onPlayIconClick(albumTitle)
@@ -67,10 +67,11 @@ class AlbumListAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
-            UtilImpl.drawUriOntoImageViewCoil(
+            UtilImpl.drawImageAssociatedWithAlbum(
                 viewHolder.binding.albumArt,
                 albumUri,
-                Size(400, 400)
+                Size(400, 400),
+                customImage
             )
 
             viewHolder.binding.menuIcon.setOnClickListener {
@@ -80,41 +81,26 @@ class AlbumListAdapter(
                 menu.setOnMenuItemClickListener {
                     Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
-                    handleMenuOption(it.title.toString(), position)
+                    //Handle Album Option
+                    val customImageName = "${albums[position].mediaMetadata.albumArtist}_${albums[position].mediaMetadata.albumTitle}"
+                    handleAlbumOption(
+                        MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
+                        albums[position].mediaId,
+                        customImageName
+                    )
 
                     return@setOnMenuItemClickListener true
                 }
                 menu.show()
             }
-        }
 
-        viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
+            viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
+            albumMetadata.releaseYear?.let { year ->
+                if(year > 0) {
+                    viewHolder.binding.releaseYear.text = year.toString()
+                }
+            }
 
-        albums[position].mediaMetadata.releaseYear?.let { year ->
-            if(year > 0) {
-                viewHolder.binding.releaseYear.text = year.toString()
-            }
-        }
-    }
-
-    private fun handleMenuOption(menuOptionTitle: String, position: Int) {
-        Timber.d("handleMenuOption: menuOptionTitle=$menuOptionTitle, position=$position")
-        when(MenuOptionUtil.determineMenuOptionFromTitle(menuOptionTitle)) {
-            MenuOptionUtil.MenuOption.PLAY_ALBUM -> {
-                handleAlbumOption(
-                    MenuOptionUtil.MenuOption.PLAY_ALBUM,
-                    albums[position].mediaId
-                )
-            }
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> {
-                handleAlbumOption(
-                    MenuOptionUtil.MenuOption.ADD_TO_QUEUE,
-                    albums[position].mediaId
-                )
-            }
-            else -> {
-                Timber.d("handleMenuOption: Album Menu Option not recognized.")
-            }
         }
     }
 
