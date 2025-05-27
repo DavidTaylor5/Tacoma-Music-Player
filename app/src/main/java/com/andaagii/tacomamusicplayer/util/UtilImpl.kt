@@ -1,10 +1,7 @@
 package com.andaagii.tacomamusicplayer.util
 
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -13,7 +10,6 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
@@ -122,10 +118,50 @@ class UtilImpl {
             }
         }
 
+        fun drawSongArt(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false) {
+            Timber.d("drawSongArt: uri=$uri, imageSize=$imageSize, customAlbumImageName=$customAlbumImageName")
+            view.setImageURI(null)
+            //Determine if there is a custom Album image, associated with albums and its songs
+            val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
+            val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+            var usingCustomImage = false
+            for(suffix in possibleImageSuffix) {
+                val customAlbumImage = File(appDir, "${customAlbumImageName}$suffix")
+                if(customAlbumImage.exists()) {
+                    Timber.d("drawImageAssociatedWithAlbum: customAlbumImage=$customAlbumImage exists, setting image...")
+                    try {
+                        val artUri = Uri.fromFile(customAlbumImage)
+
+                        if(synchronous) {
+                            view.setImageURI(artUri)
+                        } else {
+                            view.load(artUri) {
+                                crossfade(true)
+                                size(imageSize.width, imageSize.height)
+                                error(R.drawable.white_note)
+                                fallback(R.drawable.white_note)
+                            }
+                        }
+
+
+                        usingCustomImage = true
+                    } catch(e: Exception) {
+                        Timber.d("onBindViewHolder: exception when setting playlist art customAlbumImage=$customAlbumImage e=$e")
+                    }
+                    break
+                }
+            }
+
+            if(!usingCustomImage) { //No custom image found, use metadata album art uri
+                drawUriOntoImageView(view, uri, imageSize, synchronous = synchronous)
+            }
+        }
+
         /**
          * Call this function to draw a Uri onto an ImageView, return true if drawn without exception.
          */
-        fun drawUriOntoImageView(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+        fun drawUriOntoImageView(view: ImageView, uri: Uri, imageSize: Size, synchronous: Boolean = false): Boolean {
             Timber.d("drawUriOntoImageView: view=$view, uri=$uri, size=$imageSize")
             val resolver = view.context.contentResolver
             try {
@@ -133,12 +169,15 @@ class UtilImpl {
                 val albumArt = resolver.loadThumbnail(uri, imageSize, null)
                 val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
 
-                //view.setImageDrawable(albumDrawable)
-                view.load(albumDrawable) {
-                    crossfade(true)
-                    size(imageSize.width, imageSize.height)
-                    error(R.drawable.white_note)
-                    fallback(R.drawable.white_note)
+                if(synchronous) {
+                    view.setImageDrawable(albumDrawable)
+                } else {
+                    view.load(albumDrawable) {
+                        crossfade(true)
+                        size(imageSize.width, imageSize.height)
+                        error(R.drawable.white_note)
+                        fallback(R.drawable.white_note)
+                    }
                 }
 
                 Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")

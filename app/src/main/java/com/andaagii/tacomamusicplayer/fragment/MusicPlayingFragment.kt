@@ -1,12 +1,10 @@
 package com.andaagii.tacomamusicplayer.fragment
 
-import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.util.Size
-import android.view.GestureDetector
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.OptIn
@@ -21,6 +19,7 @@ import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.enum.ShuffleType
+import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -127,16 +126,27 @@ class MusicPlayingFragment: Fragment() {
     private fun updateCurrentSongArt() {
         this.context?.resources?.let { res ->
             this.context?.contentResolver?.let { resolver ->
-                controller?.mediaMetadata?.artworkUri?.let { artwork ->
-                    try {
-                        val songArt = resolver.loadThumbnail(artwork, Size(500, 500), null)
-                        val songDrawable = BitmapDrawable(res, songArt)
-                        binding.songArt?.setImageDrawable(songDrawable)
-                    } catch(e: Exception) {
-                        Timber.d("onStart: Couldn't load song art, e=$e")
+                controller?.mediaMetadata?.let { metadata ->
 
-                        binding.songArt?.setImageResource(R.drawable.white_note)
-                    }
+                    //TODO update with the custom album art if possible
+                    val customImage = "${metadata.artist}_${metadata.albumTitle}"
+                    UtilImpl.drawSongArt(
+                        binding.songArt!!,
+                        metadata.artworkUri?: Uri.EMPTY,
+                        Size(500, 500),
+                        customImage,
+                        synchronous = true
+                    )
+
+//                    try {
+//                        val songArt = resolver.loadThumbnail(artwork, Size(500, 500), null)
+//                        val songDrawable = BitmapDrawable(res, songArt)
+//                        binding.songArt?.setImageDrawable(songDrawable)
+//                    } catch(e: Exception) {
+//                        Timber.d("onStart: Couldn't load song art, e=$e")
+//
+//                        binding.songArt?.setImageResource(R.drawable.white_note)
+//                    }
                 }
             }
         }

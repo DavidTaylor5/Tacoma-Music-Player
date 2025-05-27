@@ -152,15 +152,13 @@ class QueueListAdapter(
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
             }
 
-            val ableToDraw = UtilImpl.drawUriOntoImageView(
+            val customImage = "${dataSet[position].mediaItem.mediaMetadata.artist}_${dataSet[position].mediaItem.mediaMetadata.albumTitle}"
+            UtilImpl.drawSongArt(
                 viewHolder.binding.albumArt,
                 artworkUri,
-                Size(200, 200)
+                Size(200, 200),
+                customImage
             )
-
-            if(!ableToDraw) {
-                viewHolder.binding.albumArt.setImageResource(R.drawable.white_note)
-            }
 
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
 //                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
