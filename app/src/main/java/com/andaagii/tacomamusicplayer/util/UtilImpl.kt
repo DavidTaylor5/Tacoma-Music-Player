@@ -14,6 +14,7 @@ import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
 import coil.load
@@ -132,6 +133,7 @@ class UtilImpl {
                 val albumArt = resolver.loadThumbnail(uri, imageSize, null)
                 val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
 
+                //view.setImageDrawable(albumDrawable)
                 view.load(albumDrawable) {
                     crossfade(true)
                     size(imageSize.width, imageSize.height)
@@ -142,7 +144,9 @@ class UtilImpl {
                 Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")
                 return true
             } catch (e: Exception) {
-                Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW e=$e")
+                Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW [setting default] e=$e")
+                val defaultArt = ResourcesCompat.getDrawable(view.resources, R.drawable.white_note, null)
+                view.load(defaultArt)
                 return false
             }
         }
