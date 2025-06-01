@@ -152,7 +152,7 @@ class QueueListAdapter(
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
             }
 
-            val customImage = "${dataSet[position].mediaItem.mediaMetadata.artist}_${dataSet[position].mediaItem.mediaMetadata.albumTitle}"
+            val customImage = "album_${dataSet[position].mediaItem.mediaMetadata.albumTitle}"
             UtilImpl.drawSongArt(
                 viewHolder.binding.albumArt,
                 artworkUri,
