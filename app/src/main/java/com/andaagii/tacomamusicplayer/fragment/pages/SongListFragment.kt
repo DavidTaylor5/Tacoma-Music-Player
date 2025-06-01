@@ -342,7 +342,7 @@ class SongListFragment(
             // Determine what icon to display for song group
             if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
                 songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
-                    val customImage = "${songGroup.songs[0].mediaMetadata.artist}_${songGroup.songs[0].mediaMetadata.albumTitle}"
+                    val customImage = "album_${songGroup.songs[0].mediaMetadata.albumTitle}"
                     UtilImpl.drawSongArt(
                         binding.songGroupInfo.getSongGroupImage(),
                         songArt,

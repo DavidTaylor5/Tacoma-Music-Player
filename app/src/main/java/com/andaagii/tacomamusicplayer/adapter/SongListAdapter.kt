@@ -177,7 +177,7 @@ class SongListAdapter(
             val songMetadata = dataSet[position].mediaMetadata
             artworkUri = songMetadata.artworkUri
 
-            val customImage = "${dataSet[position].mediaMetadata.artist}_${dataSet[position].mediaMetadata.albumTitle}"
+            val customImage = "album_${dataSet[position].mediaMetadata.albumTitle}"
             UtilImpl.drawSongArt(
                 viewHolder.binding.albumArt,
                 artworkUri,

@@ -129,7 +129,7 @@ class MusicPlayingFragment: Fragment() {
                 controller?.mediaMetadata?.let { metadata ->
 
                     //TODO update with the custom album art if possible
-                    val customImage = "${metadata.artist}_${metadata.albumTitle}"
+                    val customImage = "album_${metadata.albumTitle}"
                     UtilImpl.drawSongArt(
                         binding.songArt!!,
                         metadata.artworkUri?: Uri.EMPTY,

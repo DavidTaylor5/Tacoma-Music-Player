@@ -60,7 +60,7 @@ class AlbumGridAdapter(
         if(position < albums.size) {
             val album = albums[position]
             val albumMetadata = album.mediaMetadata
-            val customImage = "${albumMetadata.albumArtist}_${albumMetadata.albumTitle}"
+            val customImage = "album_${albumMetadata.albumTitle}"
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albumMetadata.albumTitle}, albumArtist=${albumMetadata.albumArtist}, albumArtUri=${albumMetadata.artworkUri}")
 
             albumTitle = albumMetadata.albumTitle.toString()
@@ -93,7 +93,7 @@ class AlbumGridAdapter(
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Handle Album Option
-                val customImageName = "${albums[position].mediaMetadata.albumArtist}_${albums[position].mediaMetadata.albumTitle}"
+                val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
                 handleAlbumOption(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
                     albums[position].mediaId,
