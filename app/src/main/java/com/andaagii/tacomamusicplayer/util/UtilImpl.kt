@@ -97,9 +97,8 @@ class UtilImpl {
         /**
          * TODO why does this function only work with the album uris?
          */
-        fun drawUriOntoImageViewCoil(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+        private fun drawUriOntoImageViewCoil(view: ImageView, uri: Uri, imageSize: Size): Boolean {
             Timber.d("drawUriOntoImageViewCoil: view=$view, uri=$uri, size=$imageSize")
-            val resolver = view.context.contentResolver
             try {
                 //Album art as a bitmap, I need to work on what to do when this is blank / null?
 

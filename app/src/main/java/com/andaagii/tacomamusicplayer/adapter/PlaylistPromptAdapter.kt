@@ -18,7 +18,7 @@ class PlaylistPromptAdapter(
     private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
-    private var playlistsWithCheckmarks = playlists.map { playlist -> false }
+    private var playlistsWithCheckmarks = playlists.map { _ -> false }
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -47,8 +47,8 @@ class PlaylistPromptAdapter(
             viewHolder.binding.addCheckbox.isChecked = !viewHolder.binding.addCheckbox.isChecked
         }
 
-        viewHolder.binding.addCheckbox.setOnCheckedChangeListener { compoundButton, b ->
-            onPlaylistChecked(playlists[position].title ?: "UNKNOWN", b)
+        viewHolder.binding.addCheckbox.setOnCheckedChangeListener { _, b ->
+            onPlaylistChecked(playlists[position].title, b)
         }
     }
 
