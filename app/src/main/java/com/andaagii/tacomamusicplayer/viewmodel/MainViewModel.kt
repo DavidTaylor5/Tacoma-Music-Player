@@ -1172,6 +1172,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 Timber.d("handlePermissionResult: read audio NOT granted!")
                 setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
             }
+        } else if(requestCode == AppPermissionUtil.readExternalStorageCode) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Timber.d("handlePermissionResult: read audio granted!")
+                _isAudioPermissionGranted.value = true
+            } else {
+                Timber.d("handlePermissionResult: read audio NOT granted!")
+                setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
+            }
         }
     }
 }
