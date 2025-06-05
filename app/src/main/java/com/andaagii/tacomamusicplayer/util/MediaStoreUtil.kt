@@ -109,10 +109,6 @@ class MediaStoreUtil {
 
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
-                val a= MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString()
-                val b = Build.VERSION_CODES.Q
-                val testUri = ContentUris.withAppendedId(uriExternal, albumId)
-
                 val songMediaItem = mediaItemUtil.createMediaItemFromSongData(
                     SongData(
                         songUri = fixUrl.toString(),

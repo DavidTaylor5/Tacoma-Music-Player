@@ -371,7 +371,7 @@ class SongListFragment(
     private fun clearCurrentSongs() {
         Timber.d("clearCurrentSongs: ")
         binding.displayRecyclerview.adapter?.let { adapter ->
-            (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(listOf(), SongGroupType.SEARCH_LIST)
+            (adapter as SongListAdapter).setSongs(listOf(), SongGroupType.SEARCH_LIST)
         }
     }
 

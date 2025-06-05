@@ -47,7 +47,7 @@ class PlaylistAdapter(
         viewHolder.binding.playlistName.text = playlists[position].title
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position].title ?: "Unknown title?")
+            onPlaylistClick(playlists[position].title)
         }
 
         //Determine Playlist Duration Information

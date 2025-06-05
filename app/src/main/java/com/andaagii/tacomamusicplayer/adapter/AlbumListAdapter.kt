@@ -46,10 +46,6 @@ class AlbumListAdapter(
     override fun onBindViewHolder(viewHolder: AlbumViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
-        var albumTitle = "Default ALBUM"
-        var albumArtist = ""
-        var albumUri = Uri.EMPTY
-
         //First check that dataSet has a value for position
         if(position < albums.size) {
             val album = albums[position]
@@ -57,9 +53,9 @@ class AlbumListAdapter(
             val customImage = "album_${albumMetadata.albumTitle}"
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albumMetadata.albumTitle}, albumArtist=${albumMetadata.albumArtist}, albumArtUri=${albumMetadata.artworkUri}")
 
-            albumTitle = albumMetadata.albumTitle.toString()
-            albumArtist = albumMetadata.albumArtist.toString()
-            albumUri = albumMetadata.artworkUri
+            val albumTitle = albumMetadata.albumTitle.toString()
+            val albumArtist = albumMetadata.albumArtist.toString()
+            val albumUri = albumMetadata.artworkUri ?: Uri.EMPTY
 
             viewHolder.binding.playButton.setOnClickListener {
                 onPlayIconClick(albumTitle)

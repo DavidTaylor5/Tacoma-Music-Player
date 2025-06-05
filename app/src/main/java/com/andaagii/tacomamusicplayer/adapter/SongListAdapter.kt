@@ -84,7 +84,7 @@ class SongListAdapter(
         val viewHolder = SongViewHolder(binding)
 
         //This code allows for the songHandle for dragging songs inside of the queue
-        viewHolder.binding.songHandle.setOnTouchListener { v, event ->
+        viewHolder.binding.songHandle.setOnTouchListener { _, event ->
             if(event.actionMasked == MotionEvent.ACTION_DOWN) {
                 onHandleDrag(viewHolder)
             }
@@ -110,7 +110,7 @@ class SongListAdapter(
 
         val songTitle = songMetadata.title.toString()
         val songArtist = songMetadata.artist.toString()
-        val albumTitle = songMetadata.albumTitle.toString()
+        //val albumTitle = songMetadata.albumTitle.toString()
         var songDurationReadable = ""
 
         val songDuration = songMetadata.description.toString()
@@ -165,17 +165,16 @@ class SongListAdapter(
         //Timber.d("onBindViewHolder: ")
 
         var songTitle = "DEFAULT SONG TITLE"
-        var songArtist = "DEFAULT SONG ARTIST"
-        var albumTitle = "DEFAULT ALBUM TITLE"
-        var songDuration = "DEFAULT SONG DURATION"
-        var artworkUri = Uri.EMPTY
-        var songDurationReadable = "Unknown Duration"
+        //var songArtist = "DEFAULT SONG ARTIST"
+        //var albumTitle = "DEFAULT ALBUM TITLE"
+        //var songDuration = "DEFAULT SONG DURATION"
+        //var songDurationReadable = "Unknown Duration"
 
         //Common additions to both search results and album/playlist display
         if(position < dataSet.size) {
 
             val songMetadata = dataSet[position].mediaMetadata
-            artworkUri = songMetadata.artworkUri
+            val artworkUri = songMetadata.artworkUri ?: Uri.EMPTY
 
             val customImage = "album_${dataSet[position].mediaMetadata.albumTitle}"
             UtilImpl.drawSongArt(

@@ -118,7 +118,7 @@ class QueueListAdapter(
 
         var songTitle = "DEFAULT SONG TITLE"
         var songArtist = "DEFAULT SONG ARTIST"
-        var albumTitle = "DEFAULT ALBUM TITLE"
+        //var albumTitle = "DEFAULT ALBUM TITLE"
         var songDuration = "DEFAULT SONG DURATION"
         var artworkUri = Uri.EMPTY
         var songDurationReadable = "Unknown Duration"
@@ -131,7 +131,7 @@ class QueueListAdapter(
 
             songTitle = songData.title.toString()
             songArtist = songData.artist.toString()
-            albumTitle = dataSet[position].mediaItem.mediaMetadata.albumTitle.toString()
+            //albumTitle = dataSet[position].mediaItem.mediaMetadata.albumTitle.toString()
             artworkUri = dataSet[position].mediaItem.mediaMetadata.artworkUri
             songDuration = dataSet[position].mediaItem.mediaMetadata.description.toString()
 
