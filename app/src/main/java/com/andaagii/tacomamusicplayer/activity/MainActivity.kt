@@ -2,6 +2,9 @@ package com.andaagii.tacomamusicplayer.activity
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.MediaStore
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -24,6 +27,7 @@ import com.andaagii.tacomamusicplayer.fragment.CurrentQueueFragment
 import com.andaagii.tacomamusicplayer.fragment.MusicChooserFragment
 import com.andaagii.tacomamusicplayer.fragment.MusicPlayingFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
+import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
@@ -37,6 +41,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val permissionManager = AppPermissionUtil()
     private lateinit var navController: NavController
+
+    private var musicObserver: MusicContentObserver? = null
 
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -86,6 +92,18 @@ class MainActivity : AppCompatActivity() {
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
                 viewModel.initializeMusicPlaying()
+
+                val handler = Handler(Looper.getMainLooper())
+                musicObserver = MusicContentObserver(
+                    handler = handler,
+                    context = this,
+                    onContentChange = viewModel::queryAvailableAlbums
+                )
+                contentResolver.registerContentObserver(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    true,
+                    musicObserver!!
+                )
             }
         }
 
@@ -160,6 +178,15 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         viewModel.saveQueue()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        musicObserver?.let {
+            contentResolver.unregisterContentObserver(it)
+            Timber.d("onDestroy: unregistered, musicobserver")
+        }
     }
 
     private fun removeVirtualKeyboard() {

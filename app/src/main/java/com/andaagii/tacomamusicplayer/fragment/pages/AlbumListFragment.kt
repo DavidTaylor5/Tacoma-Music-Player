@@ -29,6 +29,9 @@ class AlbumListFragment: Fragment() {
 
     private var currentAlbumList: List<MediaItem> = listOf()
 
+    private var currentSortingType: SortingUtil.SortingOption? = null
+    private var currentLayoutType: LayoutType? = null
+
     //The name of the most recent playlist that I want to update the image for
     private var albumCustomImageName = "empty"
 
@@ -58,7 +61,7 @@ class AlbumListFragment: Fragment() {
         binding = FragmentAlbumlistBinding.inflate(inflater)
         val observer: Observer<List<MediaItem>> =
             Observer { mediaList ->
-
+                Timber.d("observe mediaitemlist: mediaList=${mediaList.map { mediaItem -> mediaItem.mediaMetadata.albumTitle }}")
                 currentAlbumList = SortingUtil.sortAlbums(
                     mediaList,
                     parentViewModel.sortingForAlbumTab.value
@@ -66,12 +69,23 @@ class AlbumListFragment: Fragment() {
                 )
 
                 Timber.d("onCreateView: found albumList.size=${mediaList.size}")
-                binding.displayRecyclerview.adapter = AlbumListAdapter(
-                    mediaList,
-                    this::onAlbumClick,
-                    parentViewModel::playAlbum,
-                    this::handleAlbumSetting
-                )
+
+                if(binding.displayRecyclerview.adapter == null) {
+                    //on initial
+                    binding.displayRecyclerview.adapter = AlbumListAdapter(
+                        mediaList,
+                        this::onAlbumClick,
+                        parentViewModel::playAlbum,
+                        this::handleAlbumSetting
+                    )
+                } else {
+                    currentLayoutType?.let {
+                        updateAlbumLayout(it)
+                    }
+                    currentSortingType?.let {
+                        updateAlbumSorting(it)
+                    }
+                }
             }
 
         parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
@@ -88,10 +102,12 @@ class AlbumListFragment: Fragment() {
 
         parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
             updateAlbumLayout(layout)
+            currentLayoutType = layout
         }
 
         parentViewModel.sortingForAlbumTab.observe(viewLifecycleOwner) { sortingOption ->
             updateAlbumSorting(sortingOption)
+            currentSortingType = sortingOption
         }
 
         setupPage()
