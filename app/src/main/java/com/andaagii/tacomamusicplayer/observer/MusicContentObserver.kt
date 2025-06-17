@@ -5,6 +5,7 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import timber.log.Timber
 
 class MusicContentObserver(
@@ -22,6 +23,7 @@ class MusicContentObserver(
 
         if(!currentlyLoadingSongs) {
             currentlyLoadingSongs = true
+            Toast.makeText(context, "Updating Album List...", Toast.LENGTH_SHORT)
 
             delayCheckHandler.postDelayed({
                 //query new albums
