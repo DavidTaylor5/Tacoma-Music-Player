@@ -178,10 +178,6 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         viewModel.saveQueue()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
 
         musicObserver?.let {
             contentResolver.unregisterContentObserver(it)
