@@ -23,9 +23,10 @@ class MusicContentObserver(
 
         if(!currentlyLoadingSongs) {
             currentlyLoadingSongs = true
-            Toast.makeText(context, "Updating Album List...", Toast.LENGTH_SHORT)
+            Toast.makeText(context, "Updating Album List...", Toast.LENGTH_SHORT).show()
 
             delayCheckHandler.postDelayed({
+                //TODO only update album list if new album list != old album list
                 //query new albums
                 onContentChange()
 
