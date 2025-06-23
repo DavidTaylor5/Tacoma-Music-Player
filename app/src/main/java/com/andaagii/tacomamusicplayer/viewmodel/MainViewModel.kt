@@ -821,9 +821,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             controller.clearMediaItems()
             controller.pause()
 
-            addTracksSaveTrackOrder(songGroup.songs, clearOriginalSongList = true)
-
-            controller.seekTo(position, 0L)
+            addTracksSaveTrackOrder(songGroup.songs, clearOriginalSongList = true, startingSongPosition = position)
             controller.play()
         }
     }
@@ -1024,7 +1022,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Instead of adding songs directly to the mediaController instead, I can track when songs are added
      * allowing for shuffle and restore functionality.
      */
-    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>, clearOriginalSongList: Boolean = false) {
+    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>, clearOriginalSongList: Boolean = false, startingSongPosition: Int = 0) {
         if(clearOriginalSongList) {
             _originalSongOrder.value = listOf()
         }
@@ -1037,16 +1035,33 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         _originalSongOrder.postValue( songOrder ?: mediaItems  )
 
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
-            val shuffledSongs = shuffleSongs(mediaItems)
+            val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
             _mediaController.value?.addMediaItems(shuffledSongs)
         } else {
             _mediaController.value?.addMediaItems(mediaItems)
+            _mediaController.value?.seekTo(startingSongPosition, 0L)
         }
     }
 
-    private fun shuffleSongs(mediaItems: List<MediaItem>): List<MediaItem> {
-        Timber.d("shuffleSongs: mediaItems=$mediaItems")
-        return mediaItems.shuffled()
+    /**
+     * Shuffle the given songs, if startingSongPosition is given, that song will be the first in queue.
+     */
+    private fun shuffleSongs(mediaItems: List<MediaItem>, startingSongPosition: Int? = null): List<MediaItem> {
+        Timber.d("shuffleSongs: mediaItems=$mediaItems startingSongPosition=$startingSongPosition")
+        if(startingSongPosition == null) {
+            return mediaItems.shuffled()
+        } else {
+
+            val songOrder = mutableListOf<MediaItem>()
+            songOrder.add(mediaItems[startingSongPosition])
+
+            val songsMinusFirstSong = mediaItems.toMutableList()
+            songsMinusFirstSong.removeAt(startingSongPosition)
+            songsMinusFirstSong.shuffle()
+
+            songOrder.addAll(songsMinusFirstSong)
+            return songOrder
+        }
     }
 
     private fun shuffleSongsInMediaController() {
