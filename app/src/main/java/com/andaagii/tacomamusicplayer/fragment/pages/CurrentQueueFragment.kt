@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment
+package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.os.Bundle
 import android.transition.TransitionInflater
@@ -180,36 +180,20 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
-        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if(isPlaying) {
-                binding.controlButton.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.controlButton.setBackgroundResource(R.drawable.white_play_arrow)
-            }
-        }
-
-        binding.playerSection.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-        }
-
-        binding.controlButton.setOnClickListener {
-            parentViewModel.flipPlayingState()
-        }
-
-        binding.menuIcon.setOnClickListener {
-            val menu = PopupMenu(binding.root.context, binding.menuIcon)
-
-            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-                    parentViewModel.currentSongList.value?.songs ?: listOf()
-                )
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
-        }
+//        binding.menuIcon.setOnClickListener {
+//            val menu = PopupMenu(binding.root.context, binding.menuIcon)
+//
+//            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//                handleSongSetting(
+//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+//                    parentViewModel.currentSongList.value?.songs ?: listOf()
+//                )
+//                return@setOnMenuItemClickListener true
+//            }
+//            menu.show()
+//        }
 
         //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
         //TODO Remove this code when I implement coil or glide....

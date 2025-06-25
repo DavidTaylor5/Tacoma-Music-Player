@@ -23,9 +23,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
 import com.andaagii.tacomamusicplayer.enum.ScreenType
-import com.andaagii.tacomamusicplayer.fragment.CurrentQueueFragment
-import com.andaagii.tacomamusicplayer.fragment.MusicChooserFragment
-import com.andaagii.tacomamusicplayer.fragment.MusicPlayingFragment
+import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -154,7 +152,7 @@ class MainActivity : AppCompatActivity() {
 //            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
 //                label = "Player"
 //            }
-            fragment<MusicChooserFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
+            fragment<PlayerDisplayFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
                 label = "Choose Music!"
             }
             fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {

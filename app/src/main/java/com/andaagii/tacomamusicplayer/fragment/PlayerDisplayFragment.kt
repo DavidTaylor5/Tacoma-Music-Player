@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.fragment
 
-import android.graphics.pdf.PdfDocument.Page
 import android.os.Bundle
 import android.transition.TransitionInflater
 import android.view.GestureDetector
@@ -16,16 +15,16 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
-import com.andaagii.tacomamusicplayer.databinding.FragmentMusicChooserBinding
+import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
-class MusicChooserFragment: Fragment() {
+class PlayerDisplayFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
-    private lateinit var binding: FragmentMusicChooserBinding
+    private lateinit var binding: PlayerDisplayFragmentBinding
 
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -90,7 +89,7 @@ class MusicChooserFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentMusicChooserBinding.inflate(inflater)
+        binding = PlayerDisplayFragmentBinding.inflate(inflater)
 
         //val gesture = GestureDetector(container!!.context, detector)
 
@@ -100,10 +99,6 @@ class MusicChooserFragment: Fragment() {
 //            gesture.onTouchEvent(event)
 //        }
 
-        binding.playerSection?.setOnClickListener {
-            //navigate to the music chooser fragment...
-            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-        }
 
         //TODO If there are more options to add later on I will replace popupmenu with MenuView...
 //        binding.sortingButton?.setOnClickListener {
@@ -218,6 +213,18 @@ class MusicChooserFragment: Fragment() {
         }
         parentViewModel.navigateToPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
             binding.pager.currentItem = page.type()
+        }
+
+        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
+            if(isPlaying) {
+                binding.controlButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+            } else {
+                binding.controlButton?.setBackgroundResource(R.drawable.white_play_arrow)
+            }
+        }
+
+        binding.controlButton?.setOnClickListener {
+            parentViewModel.flipPlayingState()
         }
 
 

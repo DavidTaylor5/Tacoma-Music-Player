@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment
+package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.net.Uri
 import android.os.Bundle
@@ -13,11 +13,9 @@ import androidx.fragment.app.activityViewModels
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.navigation.fragment.findNavController
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
-import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.enum.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
