@@ -73,11 +73,11 @@ class MusicPlayingFragment: Fragment() {
 
         val inflater = TransitionInflater.from(requireContext())
 
-        enterTransition = if(findNavController().previousBackStackEntry?.destination?.route == ScreenType.MUSIC_QUEUE_SCREEN.route() ) {
-            inflater.inflateTransition(R.transition.slide_up)
-        } else {
-            inflater.inflateTransition(R.transition.slide_down)
-        }
+//        enterTransition = if(findNavController().previousBackStackEntry?.destination?.route == ScreenType.MUSIC_QUEUE_SCREEN.route() ) {
+//            inflater.inflateTransition(R.transition.slide_up)
+//        } else {
+//            inflater.inflateTransition(R.transition.slide_down)
+//        }
     }
 
     override fun onCreateView(
@@ -95,19 +95,25 @@ class MusicPlayingFragment: Fragment() {
 //            gesture.onTouchEvent(event)
 //        }
 
-        binding.librarySection?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-        }
-
-        binding.queueSection?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_QUEUE_SCREEN.route())
-        }
+//        binding.librarySection?.setOnClickListener {
+//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
+//        }
+//
+//        binding.queueSection?.setOnClickListener {
+//            findNavController().navigate(ScreenType.MUSIC_QUEUE_SCREEN.route())
+//        }
 
         return binding.root
     }
 
     override fun onResume() {
+        Timber.d("onResume: ")
         super.onResume()
+    }
+
+    override fun onPause() {
+        Timber.d("onPause: ")
+        super.onPause()
     }
 
 //    private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {

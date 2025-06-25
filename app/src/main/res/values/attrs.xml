@@ -2,6 +2,8 @@
 <resources>
 
     <declare-styleable name="CustomNavigationControl">
+        <attr name="queueImg" format="reference"/>
+        <attr name="playerImg" format="reference"/>
         <attr name="playlistImg" format="reference"/>
         <attr name="albumBrowseImg" format="reference"/>
         <attr name="albumImg" format="reference"/>

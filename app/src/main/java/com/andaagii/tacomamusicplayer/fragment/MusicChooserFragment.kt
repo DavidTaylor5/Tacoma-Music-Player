@@ -64,6 +64,7 @@ class MusicChooserFragment: Fragment() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Timber.d("onCreate: ")
         super.onCreate(savedInstanceState)
         pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
 
@@ -91,7 +92,7 @@ class MusicChooserFragment: Fragment() {
     ): View {
         binding = FragmentMusicChooserBinding.inflate(inflater)
 
-        val gesture = GestureDetector(container!!.context, detector)
+        //val gesture = GestureDetector(container!!.context, detector)
 
         //setupPlayingAnimation(binding)
 
@@ -155,15 +156,29 @@ class MusicChooserFragment: Fragment() {
         }
 
         binding.pager.adapter = pagerAdapter
+        binding.pager.offscreenPageLimit = 4
+        binding.pager.currentItem = 1
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
+                Timber.d("onPageSelected: position=$position")
                 super.onPageSelected(position)
 
                 //observe the current page
                 parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
 
                 when (position) {
+
+                    PageType.QUEUE_PAGE.type() -> {
+                        binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
+                        //adjustForPlaylistPage()
+                    }
+
+                    PageType.PLAYER_PAGE.type() -> {
+                        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
+                        //adjustForPlaylistPage()
+                    }
+
                     PageType.PLAYLIST_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
                         adjustForPlaylistPage()
@@ -183,6 +198,14 @@ class MusicChooserFragment: Fragment() {
         }
 
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
+
+        binding.navigationControl.setQueueButtonOnClick {
+            parentViewModel.setPage(PageType.QUEUE_PAGE)
+        }
+
+        binding.navigationControl.setPlayerButtonOnClick {
+            parentViewModel.setPage(PageType.PLAYER_PAGE)
+        }
 
         binding.navigationControl.setPlaylistButtonOnClick {
             parentViewModel.setPage(PageType.PLAYLIST_PAGE)

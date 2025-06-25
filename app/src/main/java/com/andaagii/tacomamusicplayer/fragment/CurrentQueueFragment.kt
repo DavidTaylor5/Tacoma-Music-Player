@@ -113,35 +113,71 @@ class CurrentQueueFragment: Fragment() {
 
         binding = FragmentCurrentQueueBinding.inflate(inflater)
 
-        parentViewModel.mediaController.value?.let { controller ->
-            val songs = UtilImpl.getSongListFromMediaController(controller)
-            val displaySongs = songs.map {song ->
-                if(song == controller.currentMediaItem) {
-                    DisplaySong(
-                        song,
-                        true
+        parentViewModel.showLoadingScreen.observe(viewLifecycleOwner) { loadingMusic ->
+            Timber.d("onCreateView: loadingMusic=$loadingMusic")
+            if(!loadingMusic) {
+                parentViewModel.mediaController.value?.let { controller ->
+                    val songs = UtilImpl.getSongListFromMediaController(controller)
+                    Timber.d("onCreateView: queueSongs=$songs")
+                    val displaySongs = songs.map {song ->
+                        if(song == controller.currentMediaItem) {
+                            DisplaySong(
+                                song,
+                                true
+                            )
+                        } else {
+                            DisplaySong(
+                                song,
+                                false
+                            )
+                        }
+                    }
+
+                    binding.displayRecyclerview.adapter = QueueListAdapter(
+                        displaySongs,
+                        this::handleSongSetting,
+                        this::handleViewHolderHandleDrag,
+                        this::handleRemoveSong,
+                        this::playSongAtPosition
                     )
-                } else {
-                    DisplaySong(
-                        song,
-                        false
-                    )
+                    determineIfShowingEmptyPlaylistScreen(songs)
                 }
             }
-
-            binding.displayRecyclerview.adapter = QueueListAdapter(
-                displaySongs,
-                this::handleSongSetting,
-                this::handleViewHolderHandleDrag,
-                this::handleRemoveSong,
-                this::playSongAtPosition
-            )
-            determineIfShowingEmptyPlaylistScreen(songs)
         }
 
-        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) {currSong ->
-            (binding.displayRecyclerview.adapter as QueueListAdapter)
-                .updateCurrentSongIndicator(currSong)
+        parentViewModel.currentSongList.observe(viewLifecycleOwner) { currSongs ->
+            parentViewModel.mediaController.value?.let { controller ->
+                val songs = UtilImpl.getSongListFromMediaController(controller)
+                Timber.d("onCreateView: queueSongs=$songs")
+                val displaySongs = songs.map {song ->
+                    if(song == controller.currentMediaItem) {
+                        DisplaySong(
+                            song,
+                            true
+                        )
+                    } else {
+                        DisplaySong(
+                            song,
+                            false
+                        )
+                    }
+                }
+
+                binding.displayRecyclerview.adapter = QueueListAdapter(
+                    displaySongs,
+                    this::handleSongSetting,
+                    this::handleViewHolderHandleDrag,
+                    this::handleRemoveSong,
+                    this::playSongAtPosition
+                )
+                determineIfShowingEmptyPlaylistScreen(songs)
+            }
+        }
+
+        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currSong ->
+            binding.displayRecyclerview.adapter?.let {
+                (it as QueueListAdapter).updateCurrentSongIndicator(currSong)
+            }
         }
 
         parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->

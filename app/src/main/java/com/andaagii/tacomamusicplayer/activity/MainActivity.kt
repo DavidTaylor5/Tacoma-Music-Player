@@ -148,21 +148,21 @@ class MainActivity : AppCompatActivity() {
 
         // Add navigation graph to the NavController
         navController.graph = navController.createGraph(
-            startDestination = ScreenType.MUSIC_PLAYING_SCREEN.route()
+            startDestination = ScreenType.MUSIC_CHOOSER_SCREEN.route()
         ) {
             //associate each destination with one of the route constants.
-            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
-                label = "Player"
-            }
+//            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
+//                label = "Player"
+//            }
             fragment<MusicChooserFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
                 label = "Choose Music!"
             }
             fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
                 label = "Permission Denied"
             }
-            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
-                label = "Music Queue"
-            }
+//            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
+//                label = "Music Queue"
+//            }
         }
     }
 

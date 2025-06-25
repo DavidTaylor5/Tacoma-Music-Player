@@ -117,7 +117,9 @@
         <com.andaagii.tacomamusicplayer.view.CustomNavigationControl
             android:id="@+id/navigation_control"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="80dp"
+            app:queueImg="@drawable/queue_icon"
+            app:playerImg="@drawable/play_circle_outline"
             app:playlistImg="@drawable/playlist_icon"
             app:albumBrowseImg="@drawable/browse_album_icon"
             app:albumImg="@drawable/album_icon"
