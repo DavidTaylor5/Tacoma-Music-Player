@@ -34,14 +34,4 @@
             />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginBottom="15dp"
-        android:layout_marginTop="15dp"
-        >
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
 </LinearLayout>
