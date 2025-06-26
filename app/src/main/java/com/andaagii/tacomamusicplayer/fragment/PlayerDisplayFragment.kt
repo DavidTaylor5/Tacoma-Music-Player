@@ -151,6 +151,7 @@ class PlayerDisplayFragment: Fragment() {
         //Start app on player page
         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
         binding.pager.currentItem = 1
+        adjustForPlayerPage()
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -164,12 +165,12 @@ class PlayerDisplayFragment: Fragment() {
 
                     PageType.QUEUE_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
-                        //adjustForPlaylistPage()
+                        adjustForQueuePage()
                     }
 
                     PageType.PLAYER_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-                        //adjustForPlaylistPage()
+                        adjustForPlayerPage()
                     }
 
                     PageType.PLAYLIST_PAGE.type() -> {
@@ -255,20 +256,47 @@ class PlayerDisplayFragment: Fragment() {
         binding.cancelSearchButton?.visibility = View.GONE
     }
 
+    private fun adjustForQueuePage() {
+        removeSearchIcons()
+        binding.miniPlayerControls?.visibility = View.VISIBLE
+        binding.pageTitle?.visibility = View.VISIBLE
+        binding.pageTitle?.text = "Queue"
+        binding.pageAction?.visibility = View.VISIBLE
+        binding.pageAction?.text = "Clear"
+    }
+
+    private fun adjustForPlayerPage() {
+        binding.pageTitle?.visibility = View.GONE
+        binding.pageAction?.visibility = View.GONE
+        removeSearchIcons()
+        binding.miniPlayerControls?.visibility = View.GONE
+    }
+
     private fun adjustForPlaylistPage() {
+        binding.pageTitle?.visibility = View.VISIBLE
+        binding.pageTitle?.text = "Playlists"
+        binding.pageAction?.visibility = View.VISIBLE
+        binding.pageAction?.text = "Add Playlist"
         binding.sortingButton?.visibility = View.VISIBLE
         removeSearchIcons()
+        binding.miniPlayerControls?.visibility = View.VISIBLE
     }
 
     private fun adjustForAlbumPage() {
+        binding.pageTitle?.visibility = View.VISIBLE
+        binding.pageTitle?.text = "Albums"
+        binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.VISIBLE
         removeSearchIcons()
+        binding.miniPlayerControls?.visibility = View.VISIBLE
     }
 
     private fun adjustForSongPage() {
+        binding.pageTitle?.visibility = View.VISIBLE
+        binding.pageTitle?.text = "Songs"
+        binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.INVISIBLE
         determineWhichSearchIconToShow()
+        binding.miniPlayerControls?.visibility = View.VISIBLE
     }
-
-
 }
