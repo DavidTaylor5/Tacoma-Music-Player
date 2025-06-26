@@ -117,6 +117,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private var currentPage: PageType? = null
 
+    val currentlyPlayingSongs: LiveData<List<MediaItem>>
+        get() = _currentlyPlayingSongs
+    private val _currentlyPlayingSongs: MutableLiveData<List<MediaItem>> = MutableLiveData()
+
     val currentPlayingSongInfo: LiveData<SongData>
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
@@ -168,6 +172,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val clearQueue: LiveData<Boolean>
         get() = _clearQueue
     private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
+        get() = _shouldShowAddPlaylistPromptOnPlaylistPage
+    private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
 
     private val loadingHandler = Handler(Looper.getMainLooper())
 
@@ -887,6 +895,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         _clearQueue.value = false
     }
 
+    fun showAddPlaylistPromptOnPlaylistPage(shouldShow: Boolean) {
+        _shouldShowAddPlaylistPromptOnPlaylistPage.value = shouldShow
+    }
+
     /**
      * Sets the current screen of the application.
      * @param nextScreen The next screen to be navigated to.
@@ -1029,7 +1041,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     /**
      * Instead of adding songs directly to the mediaController instead, I can track when songs are added
-     * allowing for shuffle and restore functionality.
+     * allowing for shuffle and restore functionality. [Also track current song list here, also track current song here?, do all player manipulation here to be observed]
      */
     private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>, clearOriginalSongList: Boolean = false, startingSongPosition: Int = 0) {
         if(clearOriginalSongList) {
@@ -1046,9 +1058,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
             val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
             _mediaController.value?.addMediaItems(shuffledSongs)
+            _currentlyPlayingSongs.value = shuffledSongs
         } else {
             _mediaController.value?.addMediaItems(mediaItems)
             _mediaController.value?.seekTo(startingSongPosition, 0L)
+            _currentlyPlayingSongs.value = mediaItems
         }
     }
 
@@ -1073,6 +1087,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    //TODO something sus about this...
     private fun shuffleSongsInMediaController() {
         Timber.d("shuffleSongsInMediaController: ")
         _mediaController.value?.let { controller ->
@@ -1082,7 +1097,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             controller.clearMediaItems()
 
+            //TODO move this to the main adding function...
             _mediaController.value?.addMediaItems(shuffledSongs)
+            _currentlyPlayingSongs.value = shuffledSongs
         }
     }
 
@@ -1092,7 +1109,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             _originalSongOrder.value?.let { originalSongs ->
                 controller.clearMediaItems()
 
+                //TODO something sus about this... Move all adding media items to the same function
                 controller.addMediaItems(originalSongs)
+                _currentlyPlayingSongs.value = originalSongs
             }
         }
     }

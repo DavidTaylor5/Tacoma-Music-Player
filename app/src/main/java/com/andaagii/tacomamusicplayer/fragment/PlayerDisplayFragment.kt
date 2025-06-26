@@ -280,6 +280,10 @@ class PlayerDisplayFragment: Fragment() {
         binding.pageTitle?.text = "Playlists"
         binding.pageAction?.visibility = View.VISIBLE
         binding.pageAction?.text = "Add Playlist"
+        binding.pageAction?.setOnClickListener {
+            parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
+        }
+
         binding.sortingButton?.visibility = View.VISIBLE
         removeSearchIcons()
         binding.miniPlayerControls?.visibility = View.VISIBLE

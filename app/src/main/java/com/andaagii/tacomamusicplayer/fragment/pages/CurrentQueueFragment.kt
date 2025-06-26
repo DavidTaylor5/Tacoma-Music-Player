@@ -145,7 +145,7 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
-        parentViewModel.currentSongList.observe(viewLifecycleOwner) { currSongs ->
+        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { currSongs ->
             parentViewModel.mediaController.value?.let { controller ->
                 val songs = UtilImpl.getSongListFromMediaController(controller)
                 Timber.d("onCreateView: queueSongs=$songs")
@@ -210,6 +210,12 @@ class CurrentQueueFragment: Fragment() {
         setupPage()
 
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+
     }
 
     private fun handleRemoveSong(songPosition: Int) {

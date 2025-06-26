@@ -117,6 +117,15 @@ class PlaylistFragment: Fragment() {
         parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
             updatePlaylistSorting(sorting)
         }
+
+        parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.observe(viewLifecycleOwner) { showPrompt ->
+            if(showPrompt) {
+                binding.playlistPrompt.resetUserInput()
+                binding.playlistPrompt.visibility = View.VISIBLE
+                parentViewModel.showAddPlaylistPromptOnPlaylistPage(false)
+            }
+        }
+
         binding.createPlaylistButton.setOnClickListener{
             deactivatePlaylistButton()
             binding.playlistPrompt.resetUserInput()
