@@ -263,6 +263,9 @@ class PlayerDisplayFragment: Fragment() {
         binding.pageTitle?.text = "Queue"
         binding.pageAction?.visibility = View.VISIBLE
         binding.pageAction?.text = "Clear"
+        binding.pageAction?.setOnClickListener {
+            parentViewModel.clearQueue()
+        }
     }
 
     private fun adjustForPlayerPage() {

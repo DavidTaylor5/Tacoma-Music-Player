@@ -165,6 +165,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
 
+    val clearQueue: LiveData<Boolean>
+        get() = _clearQueue
+    private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
+
     private val loadingHandler = Handler(Looper.getMainLooper())
 
     private val playerListener = object: Player.Listener {
@@ -876,6 +880,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun clearQueue() {
         Timber.d("clearQueue: ")
         mediaController.value?.clearMediaItems()
+        _clearQueue.value = true
+    }
+
+    fun handledClearningQueue() {
+        _clearQueue.value = false
     }
 
     /**

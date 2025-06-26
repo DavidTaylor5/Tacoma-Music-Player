@@ -180,6 +180,13 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
+        parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
+            if(shouldClear) {
+                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
+                parentViewModel.handledClearningQueue()
+            }
+        }
+
 //        binding.menuIcon.setOnClickListener {
 //            val menu = PopupMenu(binding.root.context, binding.menuIcon)
 //
