@@ -100,11 +100,6 @@ class PlayerDisplayFragment: Fragment() {
 //        }
 
 
-        //TODO If there are more options to add later on I will replace popupmenu with MenuView...
-//        binding.sortingButton?.setOnClickListener {
-//            binding.sortingPrompt?.visibility = View.VISIBLE
-//        }
-
         binding.sortingButton?.setOnClickListener {
             val menu = PopupMenu(this.context, binding.sortingButton)
 
@@ -152,6 +147,9 @@ class PlayerDisplayFragment: Fragment() {
 
         binding.pager.adapter = pagerAdapter
         binding.pager.offscreenPageLimit = 4
+
+        //Start app on player page
+        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
         binding.pager.currentItem = 1
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
