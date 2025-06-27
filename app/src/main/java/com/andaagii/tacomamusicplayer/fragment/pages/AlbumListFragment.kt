@@ -90,16 +90,6 @@ class AlbumListFragment: Fragment() {
 
         parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
 
-        binding.layoutButton.setOnClickListener {
-            if(parentViewModel.layoutForAlbumTab.value == LayoutType.LINEAR_LAYOUT) {
-                //Update Layout State / Save to datastore
-                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                //Update Layout State / Save to datastore
-                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-            }
-        }
-
         parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
             updateAlbumLayout(layout)
             currentLayoutType = layout
@@ -147,7 +137,6 @@ class AlbumListFragment: Fragment() {
 
         //TODO Dangerous, what if I only update one adapter... this is not efficient?
         if(layout == LayoutType.LINEAR_LAYOUT) {
-            binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
             binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             binding.displayRecyclerview.adapter = AlbumListAdapter(
                 currentAlbumList,
@@ -156,7 +145,6 @@ class AlbumListFragment: Fragment() {
                 this::handleAlbumSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
             binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
             binding.displayRecyclerview.adapter = AlbumGridAdapter(
                 currentAlbumList,
@@ -192,7 +180,6 @@ class AlbumListFragment: Fragment() {
     }
 
     private fun setupPage() {
-        binding.sectionTitle.text = "ALBUMS"
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }
