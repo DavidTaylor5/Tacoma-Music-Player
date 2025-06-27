@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.constants
 class Const {
     companion object {
         const val PLAYLIST_QUEUE_TITLE: String = "03_NOV_2025_F22_0906_LN7"
+        const val ORIGINAL_QUEUE_ORDER: String = "ORIGINAL_QUEUE_ORDER"
 
         //SongGroup Options
         const val PLAY_SONG_GROUP: String = "Play Song Group"

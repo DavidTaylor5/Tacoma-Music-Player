@@ -85,9 +85,10 @@ class PlaylistFragment: Fragment() {
         binding = FragmentPlaylistBinding.inflate(inflater)
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            //Queue is saved as a playlist in database, user doesn't need to access it.
+            //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
             val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE &&
+                        playlist.title != Const.ORIGINAL_QUEUE_ORDER
             }
 
             currentPlaylists = SortingUtil.sortPlaylists(

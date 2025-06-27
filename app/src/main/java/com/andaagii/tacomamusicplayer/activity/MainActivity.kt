@@ -175,7 +175,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        //Saves the current song list in queue
         viewModel.saveQueue()
+        //Saves the original song list order [in case the user has shuffled]
+        viewModel.saveOriginalOrder()
 
         musicObserver?.let {
             contentResolver.unregisterContentObserver(it)
