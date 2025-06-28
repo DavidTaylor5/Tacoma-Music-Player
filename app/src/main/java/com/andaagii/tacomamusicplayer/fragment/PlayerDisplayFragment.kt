@@ -1,7 +1,9 @@
 package com.andaagii.tacomamusicplayer.fragment
 
+import android.net.Uri
 import android.os.Bundle
 import android.transition.TransitionInflater
+import android.util.Size
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -15,11 +17,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
+import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.util.SortingUtil
+import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
 
@@ -156,7 +160,7 @@ class PlayerDisplayFragment: Fragment() {
 
         //Start app on player page
         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-        binding.pager.currentItem = 1
+        navigateToPlayerPage()
         adjustForPlayerPage()
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
@@ -222,9 +226,9 @@ class PlayerDisplayFragment: Fragment() {
 
         parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
             if(isPlaying) {
-                binding.controlButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
             } else {
-                binding.controlButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
             }
         }
 
@@ -248,8 +252,20 @@ class PlayerDisplayFragment: Fragment() {
             binding.layoutButton?.setBackgroundResource(albumPageCurrentIcon ?: 0)
         }
 
-        binding.controlButton?.setOnClickListener {
+        binding.miniPlayerPlayButton?.setOnClickListener {
             parentViewModel.flipPlayingState()
+        }
+
+        binding.miniPlayerPrevButton?.setOnClickListener {
+            parentViewModel.mediaController.value?.seekToPrevious()
+        }
+
+        binding.miniPlayerNextButton?.setOnClickListener {
+            parentViewModel.mediaController.value?.seekToNextMediaItem()
+        }
+
+        binding.miniPlayerControls?.setOnClickListener {
+            navigateToPlayerPage()
         }
 
         parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
@@ -262,7 +278,31 @@ class PlayerDisplayFragment: Fragment() {
             }
         }
 
+        parentViewModel.currentPlayingSongInfo.observe(requireActivity()) { currentSong ->
+            updateMiniPlayerForCurrentSong(currentSong)
+        }
+
         return binding.root
+    }
+
+    private fun navigateToPlayerPage() {
+        binding.pager.currentItem = 1
+    }
+
+    private fun updateMiniPlayerForCurrentSong(song: SongData) {
+        //Set mini player song image
+        val customImage = "album_${song.albumTitle}"
+        UtilImpl.drawSongArt(
+            binding.miniPlayerImage!!,
+            Uri.parse(song.artworkUri),
+            Size(300, 300),
+            customImage,
+            synchronous = true
+        )
+
+        //Set mini player description
+        val songDescription = "${song.songTitle} - ${song.artist}"
+        binding.miniPlayerDescription?.text = songDescription
     }
 
     private fun determineWhichSearchIconToShow() {
@@ -292,6 +332,8 @@ class PlayerDisplayFragment: Fragment() {
         }
 
         binding.layoutButton?.visibility = View.GONE
+
+        binding.buttonContainer?.visibility = View.GONE
     }
 
     private fun adjustForPlayerPage() {
@@ -301,6 +343,8 @@ class PlayerDisplayFragment: Fragment() {
         binding.miniPlayerControls?.visibility = View.GONE
 
         binding.layoutButton?.visibility = View.GONE
+
+        binding.buttonContainer?.visibility = View.GONE
     }
 
     private fun adjustForPlaylistPage() {
@@ -329,6 +373,8 @@ class PlayerDisplayFragment: Fragment() {
         playlistPageCurrentIcon?.let { iconResId ->
             binding.layoutButton?.setBackgroundResource(iconResId)
         }
+
+        binding.buttonContainer?.visibility = View.VISIBLE
     }
 
     private fun adjustForAlbumPage() {
@@ -352,6 +398,8 @@ class PlayerDisplayFragment: Fragment() {
         albumPageCurrentIcon?.let { iconResId ->
             binding.layoutButton?.setBackgroundResource(iconResId)
         }
+
+        binding.buttonContainer?.visibility = View.VISIBLE
     }
 
     private fun adjustForSongPage() {
@@ -362,5 +410,7 @@ class PlayerDisplayFragment: Fragment() {
         determineWhichSearchIconToShow()
         binding.miniPlayerControls?.visibility = View.VISIBLE
         binding.layoutButton?.visibility = View.GONE
+
+        binding.buttonContainer?.visibility = View.VISIBLE
     }
 }

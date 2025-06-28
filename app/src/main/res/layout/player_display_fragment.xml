@@ -109,12 +109,14 @@
                 >
 
                 <ImageView
+                    android:id="@+id/mini_player_image"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:src="@drawable/chopper_default"
                     />
 
                 <TextView
+                    android:id="@+id/mini_player_description"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
@@ -126,7 +128,7 @@
                     />
 
                 <View
-                    android:id="@+id/prev_button"
+                    android:id="@+id/mini_player_prev_button"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:background="@drawable/baseline_keyboard_double_arrow_left_24"
@@ -134,14 +136,14 @@
                     />
 
                 <View
-                    android:id="@+id/control_button"
+                    android:id="@+id/mini_player_play_button"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/white_play_arrow"
                     />
 
                 <View
-                    android:id="@+id/next_button"
+                    android:id="@+id/mini_player_next_button"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:background="@drawable/baseline_keyboard_double_arrow_right_24"
