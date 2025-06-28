@@ -8,6 +8,20 @@
     >
 
     <ImageView
+        android:id="@+id/queue_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/unfocused_button"/>
+
+    <ImageView
+        android:id="@+id/player_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/unfocused_button"/>
+
+    <ImageView
         android:id="@+id/playlist_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

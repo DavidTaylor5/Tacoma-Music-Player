@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -57,7 +56,6 @@ class PlaylistFragment: Fragment() {
         Timber.d("updatePlaylistLayout: layout=$layout")
         currentLayout = layout
         if(layout == LayoutType.LINEAR_LAYOUT) {
-            binding.layoutButton.text = LayoutType.LINEAR_LAYOUT.type()
             binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             binding.displayRecyclerview.adapter = PlaylistAdapter(
                 currentPlaylists,
@@ -66,7 +64,6 @@ class PlaylistFragment: Fragment() {
                 this::handlePlaylistSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.layoutButton.text = LayoutType.TWO_GRID_LAYOUT.type()
             binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
             binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                 currentPlaylists,
@@ -85,9 +82,10 @@ class PlaylistFragment: Fragment() {
         binding = FragmentPlaylistBinding.inflate(inflater)
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            //Queue is saved as a playlist in database, user doesn't need to access it.
+            //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
             val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE &&
+                        playlist.title != Const.ORIGINAL_QUEUE_ORDER
             }
 
             currentPlaylists = SortingUtil.sortPlaylists(
@@ -117,18 +115,12 @@ class PlaylistFragment: Fragment() {
         parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
             updatePlaylistSorting(sorting)
         }
-        binding.createPlaylistButton.setOnClickListener{
-            deactivatePlaylistButton()
-            binding.playlistPrompt.resetUserInput()
-            binding.playlistPrompt.visibility = View.VISIBLE
-        }
-        binding.layoutButton.setOnClickListener {
-            if(currentLayout == LayoutType.LINEAR_LAYOUT) {
-                //Update Layout State / Save to datastore
-                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                //Update Layout State / Save to datastore
-                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
+
+        parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.observe(viewLifecycleOwner) { showPrompt ->
+            if(showPrompt) {
+                binding.playlistPrompt.resetUserInput()
+                binding.playlistPrompt.visibility = View.VISIBLE
+                parentViewModel.showAddPlaylistPromptOnPlaylistPage(false)
             }
         }
         setupCreatePlaylistPrompt()
@@ -151,16 +143,6 @@ class PlaylistFragment: Fragment() {
                 }
             }
         }
-    }
-
-    private fun activatePlaylistButton() {
-        binding.createPlaylistButton.isClickable = true
-        binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#4CAF50"))
-    }
-
-    private fun deactivatePlaylistButton() {
-        binding.createPlaylistButton.isClickable = false
-        binding.createPlaylistButton.setBackgroundColor(Color.parseColor("#000000"))
     }
 
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
@@ -223,7 +205,6 @@ class PlaylistFragment: Fragment() {
         // Option 1 will be to cancel
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
-            activatePlaylistButton()
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
@@ -231,7 +212,6 @@ class PlaylistFragment: Fragment() {
         // Option 2 will be to create a new playlist with given name
         binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
         binding.playlistPrompt.setOption2ButtonOnClick {
-            activatePlaylistButton()
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.updatePlaylistTitle(playlistTitle, binding.playlistPrompt.getUserInputtedText())
@@ -248,7 +228,6 @@ class PlaylistFragment: Fragment() {
         // Option 1 will be to cancel
         binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
-            activatePlaylistButton()
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
@@ -256,7 +235,6 @@ class PlaylistFragment: Fragment() {
         // Option 2 will be to create a new playlist with given name
         binding.playlistPrompt.setOption2ButtonText(Const.ADD)
         binding.playlistPrompt.setOption2ButtonOnClick {
-            activatePlaylistButton()
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
             parentViewModel.createNamedPlaylist(binding.playlistPrompt.getUserInputtedText())
@@ -269,7 +247,6 @@ class PlaylistFragment: Fragment() {
     }
 
     private fun setupPage() {
-        binding.sectionTitle.text = "PLAYLISTS"
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

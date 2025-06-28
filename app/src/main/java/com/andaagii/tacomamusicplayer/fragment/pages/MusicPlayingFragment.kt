@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment
+package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.net.Uri
 import android.os.Bundle
@@ -13,11 +13,9 @@ import androidx.fragment.app.activityViewModels
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.navigation.fragment.findNavController
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
-import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.enum.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
@@ -68,16 +66,7 @@ class MusicPlayingFragment: Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
-
         super.onCreate(savedInstanceState)
-
-        val inflater = TransitionInflater.from(requireContext())
-
-        enterTransition = if(findNavController().previousBackStackEntry?.destination?.route == ScreenType.MUSIC_QUEUE_SCREEN.route() ) {
-            inflater.inflateTransition(R.transition.slide_up)
-        } else {
-            inflater.inflateTransition(R.transition.slide_down)
-        }
     }
 
     override fun onCreateView(
@@ -90,31 +79,19 @@ class MusicPlayingFragment: Fragment() {
 
 //        GESTURE DETECTOR CODE
 //        val gesture = GestureDetector(container!!.context, detector)
-//
-//        binding.librarySection?.setOnTouchListener { v, event ->
-//            gesture.onTouchEvent(event)
-//        }
-
-        binding.librarySection?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-        }
-
-        binding.queueSection?.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_QUEUE_SCREEN.route())
-        }
 
         return binding.root
     }
 
     override fun onResume() {
+        Timber.d("onResume: ")
         super.onResume()
     }
 
-//    private fun setupLibraryButtonAnimation(binding:FragmentMusicPlayingBinding) {
-//        binding.libraryAnimation!!.setBackgroundResource(R.drawable.library_animation)
-//        val frameAnimation = binding.libraryAnimation.background as AnimationDrawable
-//        frameAnimation.start()
-//    }
+    override fun onPause() {
+        Timber.d("onPause: ")
+        super.onPause()
+    }
 
     private fun updateUIForCurrentSong() {
         updateCurrentSongArt()
@@ -125,29 +102,15 @@ class MusicPlayingFragment: Fragment() {
 
     private fun updateCurrentSongArt() {
         this.context?.resources?.let { res ->
-            this.context?.contentResolver?.let { resolver ->
-                controller?.mediaMetadata?.let { metadata ->
-
-                    //TODO update with the custom album art if possible
-                    val customImage = "album_${metadata.albumTitle}"
-                    UtilImpl.drawSongArt(
-                        binding.songArt!!,
-                        metadata.artworkUri?: Uri.EMPTY,
-                        Size(500, 500),
-                        customImage,
-                        synchronous = true
-                    )
-
-//                    try {
-//                        val songArt = resolver.loadThumbnail(artwork, Size(500, 500), null)
-//                        val songDrawable = BitmapDrawable(res, songArt)
-//                        binding.songArt?.setImageDrawable(songDrawable)
-//                    } catch(e: Exception) {
-//                        Timber.d("onStart: Couldn't load song art, e=$e")
-//
-//                        binding.songArt?.setImageResource(R.drawable.white_note)
-//                    }
-                }
+            controller?.mediaMetadata?.let { metadata ->
+                val customImage = "album_${metadata.albumTitle}"
+                UtilImpl.drawSongArt(
+                    binding.songArt!!,
+                    metadata.artworkUri?: Uri.EMPTY,
+                    Size(500, 500),
+                    customImage,
+                    synchronous = true
+                )
             }
         }
     }

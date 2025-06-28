@@ -23,16 +23,27 @@
         android:background="@color/black"
         >
 
-        <ImageView
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/loading_screen_icon"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:src="@drawable/app_play_store_512"
-            />
+            app:cardCornerRadius="20dp"
+            android:layout_marginBottom="30dp"
+            >
+
+            <ImageView
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/app_play_store_512"
+                />
+
+        </com.google.android.material.card.MaterialCardView>
+
+
 
         <TextView
             android:id="@+id/loading_screen_text"

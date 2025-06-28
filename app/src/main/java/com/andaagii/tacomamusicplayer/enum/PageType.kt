@@ -4,19 +4,32 @@ package com.andaagii.tacomamusicplayer.enum
  * Pages associated to choosing a song.
  */
 enum class PageType {
-    PLAYLIST_PAGE {
+
+    QUEUE_PAGE {
         override fun type(): Int {
             return 0
         }
     },
-    ALBUM_PAGE {
+
+    PLAYER_PAGE {
         override fun type(): Int {
             return 1
         }
     },
-    SONG_PAGE {
+
+    PLAYLIST_PAGE {
         override fun type(): Int {
             return 2
+        }
+    },
+    ALBUM_PAGE {
+        override fun type(): Int {
+            return 3
+        }
+    },
+    SONG_PAGE {
+        override fun type(): Int {
+            return 4
         }
     };
 
@@ -25,10 +38,12 @@ enum class PageType {
     companion object {
         fun determinePageFromPosition(position: Int): PageType {
             return when(position) {
-                0 -> PLAYLIST_PAGE
-                1 -> ALBUM_PAGE
-                2 -> SONG_PAGE
-                else -> PLAYLIST_PAGE
+                0 -> QUEUE_PAGE
+                1 -> PLAYER_PAGE
+                2 -> PLAYLIST_PAGE
+                3 -> ALBUM_PAGE
+                4 -> SONG_PAGE
+                else -> QUEUE_PAGE
             }
         }
     }

@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import android.database.ContentObservable
-import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
@@ -117,6 +115,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private var currentPage: PageType? = null
 
+    val currentlyPlayingSongs: LiveData<List<MediaItem>>
+        get() = _currentlyPlayingSongs
+    private val _currentlyPlayingSongs: MutableLiveData<List<MediaItem>> = MutableLiveData()
+
     val currentPlayingSongInfo: LiveData<SongData>
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
@@ -164,6 +166,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    val clearQueue: LiveData<Boolean>
+        get() = _clearQueue
+    private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
+        get() = _shouldShowAddPlaylistPromptOnPlaylistPage
+    private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
 
     private val loadingHandler = Handler(Looper.getMainLooper())
 
@@ -280,13 +290,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun flipShuffleState() {
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
             //Set to be original order
-            _shuffleMode.postValue(ShuffleType.NOT_SHUFFLED)
-            restoreOriginalSongOrder()
+            _shuffleMode.value = ShuffleType.NOT_SHUFFLED
+            unshuffleSongs()
             saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.NOT_SHUFFLED)
             Timber.d("flipShuffleState: ${ShuffleType.NOT_SHUFFLED}")
         } else {
             //Set to be shuffled
-            _shuffleMode.postValue(ShuffleType.SHUFFLED)
+            _shuffleMode.value = ShuffleType.SHUFFLED
             shuffleSongsInMediaController()
             saveShufflePref(getApplication<Application>().applicationContext, ShuffleType.SHUFFLED)
             Timber.d("flipShuffleState: ${ShuffleType.SHUFFLED}")
@@ -646,6 +656,46 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    fun saveOriginalOrder() {
+        Timber.d("saveOriginalOrder: ")
+        originalSongOrder.value?.let { originalOrderSongs ->
+            val playlistData = PlaylistData(
+                mediaItemUtil.createSongDataFromListOfMediaItem(originalOrderSongs)
+            )
+
+            viewModelScope.launch(Dispatchers.IO) {
+                val savedOriginalOrder =
+                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                        .playlistDao()
+                        .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
+
+                //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
+                val updateStoredQueue = if (savedOriginalOrder != null) {
+                    Playlist(
+                        id = savedOriginalOrder.id,
+                        title = savedOriginalOrder.title,
+                        artFile = savedOriginalOrder.artFile,
+                        songs = playlistData,
+                        creationTimestamp = savedOriginalOrder.creationTimestamp,
+                        lastModificationTimestamp = LocalDateTime.now().toString()
+                    )
+                } else {
+                    Playlist(
+                        title = Const.ORIGINAL_QUEUE_ORDER,
+                        artFile = "",
+                        songs = playlistData,
+                        creationTimestamp = LocalDateTime.now().toString(),
+                        lastModificationTimestamp = LocalDateTime.now().toString()
+                    )
+                }
+
+                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .playlistDao()
+                    .insertPlaylists(updateStoredQueue)
+            }
+        }
+    }
+
     private fun savePlayerState(controller: MediaController) {
         val playbackPosition = controller.currentPosition
         val songPosition = controller.currentMediaItemIndex
@@ -701,6 +751,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         _showLoadingScreen.postValue(false)
                     }, 100)
                 }
+            }
+        }
+    }
+
+    private fun restoreQueueOrder() {
+        Timber.d("restoreQueueOrder: ")
+        viewModelScope.launch(Dispatchers.IO) {
+            val originalQueueOrderPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .playlistDao()
+                .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
+
+            originalQueueOrderPlaylist?.let { playlist ->
+                val originalQueueOrderMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
+                    playlist.songs.songs
+                )
+                _originalSongOrder.postValue(originalQueueOrderMediaItems)
             }
         }
     }
@@ -818,12 +884,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun playSongGroupAtPosition(songGroup: SongGroup, position: Int) {
         Timber.d("playSongGroupAtPosition: songGroup=$songGroup, position=$position")
         mediaController.value?.let { controller ->
-            controller.clearMediaItems()
             controller.pause()
 
-            addTracksSaveTrackOrder(songGroup.songs, clearOriginalSongList = true)
-
-            controller.seekTo(position, 0L)
+            addTracksSaveTrackOrder(
+                songGroup.songs,
+                clearOriginalSongList = true,
+                startingSongPosition = position,
+                clearCurrentSongs = true,
+                shouldAddToOriginalList = true
+            )
             controller.play()
         }
     }
@@ -840,10 +909,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
             withContext(Dispatchers.Main) {
-                //Remove current songs in the queue
-                mediaController.value?.clearMediaItems()
-
-                addTracksSaveTrackOrder(playlistMediaItems, clearOriginalSongList = true)
+                addTracksSaveTrackOrder(
+                    mediaItems = playlistMediaItems,
+                    clearOriginalSongList = true,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = true
+                )
 
                 mediaController.value?.play()
             }
@@ -859,7 +931,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
             withContext(Dispatchers.Main) {
-                addTracksSaveTrackOrder(playlistMediaItems)
+                addTracksSaveTrackOrder(
+                    mediaItems = playlistMediaItems,
+                    clearOriginalSongList = false,
+                    clearCurrentSongs = false,
+                    shouldAddToOriginalList = true
+                )
             }
         }
     }
@@ -869,7 +946,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      */
     fun addSongsToEndOfQueue(songs: List<MediaItem>) {
         Timber.d("addSongsToEndOfQueue: songs=$songs")
-        addTracksSaveTrackOrder(songs)
+        addTracksSaveTrackOrder(
+            mediaItems = songs,
+            clearOriginalSongList = false,
+            clearCurrentSongs = false,
+            shouldAddToOriginalList = true
+        )
     }
 
     /**
@@ -877,7 +959,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      */
     fun clearQueue() {
         Timber.d("clearQueue: ")
-        mediaController.value?.clearMediaItems()
+        addTracksSaveTrackOrder(
+            mediaItems = listOf(),
+            clearOriginalSongList = true,
+            clearCurrentSongs = true,
+            shouldAddToOriginalList = false
+        )
+        _clearQueue.value = true
+    }
+
+    fun handledClearningQueue() {
+        _clearQueue.value = false
+    }
+
+    fun showAddPlaylistPromptOnPlaylistPage(shouldShow: Boolean) {
+        _shouldShowAddPlaylistPromptOnPlaylistPage.value = shouldShow
     }
 
     /**
@@ -929,6 +1025,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             //Add old queue to the mediaController
             restoreQueue()
+
+            //Restore the original ordering for current songs in mediaController
+            restoreQueueOrder()
 
             _loopMode.postValue(controller.repeatMode)
             controller.addListener(playerListener)
@@ -1006,10 +1105,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                     //When I query the album, determine if/how album should be played
                     if(queueAddType == QueueAddType.QUEUE_END_ADD) {
-                        addTracksSaveTrackOrder(songs, clearOriginalSongList = true)
+                        addTracksSaveTrackOrder(
+                            mediaItems = songs,
+                            clearOriginalSongList = false,
+                            startingSongPosition = 0,
+                            clearCurrentSongs = false,
+                            shouldAddToOriginalList = true
+                        )
                     } else if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
-                        _mediaController.value?.clearMediaItems()
-                        addTracksSaveTrackOrder(songs, clearOriginalSongList = true)
+                        addTracksSaveTrackOrder(
+                            mediaItems = songs,
+                            clearOriginalSongList = true,
+                            startingSongPosition = 0,
+                            clearCurrentSongs = true,
+                            shouldAddToOriginalList = true
+                        )
                         _mediaController.value?.play()
                     }
 
@@ -1022,9 +1132,22 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     /**
      * Instead of adding songs directly to the mediaController instead, I can track when songs are added
-     * allowing for shuffle and restore functionality.
+     * allowing for shuffle and restore functionality. [Also track current song list here, also track current song here?, do all player manipulation here to be observed]
      */
-    private fun addTracksSaveTrackOrder(mediaItems: List<MediaItem>, clearOriginalSongList: Boolean = false) {
+    private fun addTracksSaveTrackOrder(
+        mediaItems: List<MediaItem>,
+        clearOriginalSongList: Boolean = false,
+        startingSongPosition: Int? = null,
+        clearCurrentSongs: Boolean = false,
+        shouldAddToOriginalList: Boolean = false
+    ) {
+        Timber.d("addTracksSaveTrackOrder: originalSongOrder=${_originalSongOrder.value?.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, " +
+                "clearOriginalSongList=$clearOriginalSongList, startingSongPosition=$startingSongPosition, " +
+                "clearCurrentSongs=$clearCurrentSongs, shouldAddToOriginalList=$shouldAddToOriginalList")
+        if(clearCurrentSongs) {
+            _mediaController.value?.clearMediaItems()
+        }
+
         if(clearOriginalSongList) {
             _originalSongOrder.value = listOf()
         }
@@ -1033,20 +1156,49 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         val songOrder = originalSongOrder.value?.toMutableList()
         songOrder?.addAll(mediaItems)
 
-        Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
-        _originalSongOrder.postValue( songOrder ?: mediaItems  )
+        if(shouldAddToOriginalList) {
+            Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
+            _originalSongOrder.postValue( songOrder ?: mediaItems  )
+        }
 
         if(_shuffleMode.value == ShuffleType.SHUFFLED) {
-            val shuffledSongs = shuffleSongs(mediaItems)
+            val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
             _mediaController.value?.addMediaItems(shuffledSongs)
+            _currentlyPlayingSongs.value = shuffledSongs
         } else {
             _mediaController.value?.addMediaItems(mediaItems)
+            _currentlyPlayingSongs.value = mediaItems
+        }
+
+        startingSongPosition?.let { position ->
+            _mediaController.value?.seekTo(position, 0L)
+        }
+
+        //Save the current state of mediaController to a live data of currently playing songs
+        _mediaController.value?.let { controller ->
+            _currentlyPlayingSongs.value = UtilImpl.getSongListFromMediaController(controller)
         }
     }
 
-    private fun shuffleSongs(mediaItems: List<MediaItem>): List<MediaItem> {
-        Timber.d("shuffleSongs: mediaItems=$mediaItems")
-        return mediaItems.shuffled()
+    /**
+     * Shuffle the given songs, if startingSongPosition is given, that song will be the first in queue.
+     */
+    private fun shuffleSongs(mediaItems: List<MediaItem>, startingSongPosition: Int? = null): List<MediaItem> {
+        Timber.d("shuffleSongs: mediaItems=$mediaItems startingSongPosition=$startingSongPosition")
+        if(startingSongPosition == null) {
+            return mediaItems.shuffled()
+        } else {
+
+            val songOrder = mutableListOf<MediaItem>()
+            songOrder.add(mediaItems[startingSongPosition])
+
+            val songsMinusFirstSong = mediaItems.toMutableList()
+            songsMinusFirstSong.removeAt(startingSongPosition)
+            songsMinusFirstSong.shuffle()
+
+            songOrder.addAll(songsMinusFirstSong)
+            return songOrder
+        }
     }
 
     private fun shuffleSongsInMediaController() {
@@ -1056,19 +1208,30 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             val shuffledSongs = shuffleSongs(currentSongs)
 
-            controller.clearMediaItems()
-
-            _mediaController.value?.addMediaItems(shuffledSongs)
+            if(shuffledSongs.isNotEmpty()) {
+                addTracksSaveTrackOrder(
+                    mediaItems = shuffledSongs,
+                    clearOriginalSongList = false,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = false
+                )
+            }
         }
     }
 
-    private fun restoreOriginalSongOrder() {
-        Timber.d("restoreOriginalSongOrder: ")
+    private fun unshuffleSongs() {
+        Timber.d("unshuffleSongs: ")
         _mediaController.value?.let { controller ->
             _originalSongOrder.value?.let { originalSongs ->
-                controller.clearMediaItems()
-
-                controller.addMediaItems(originalSongs)
+                Timber.d("restoreOriginalSongOrder: originalSongs.size=${originalSongs.size}")
+                addTracksSaveTrackOrder(
+                    mediaItems = originalSongs,
+                    clearOriginalSongList = false,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = false
+                )
             }
         }
     }

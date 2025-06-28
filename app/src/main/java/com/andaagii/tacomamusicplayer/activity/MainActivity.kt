@@ -23,9 +23,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
 import com.andaagii.tacomamusicplayer.enum.ScreenType
-import com.andaagii.tacomamusicplayer.fragment.CurrentQueueFragment
-import com.andaagii.tacomamusicplayer.fragment.MusicChooserFragment
-import com.andaagii.tacomamusicplayer.fragment.MusicPlayingFragment
+import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -148,21 +146,21 @@ class MainActivity : AppCompatActivity() {
 
         // Add navigation graph to the NavController
         navController.graph = navController.createGraph(
-            startDestination = ScreenType.MUSIC_PLAYING_SCREEN.route()
+            startDestination = ScreenType.MUSIC_CHOOSER_SCREEN.route()
         ) {
             //associate each destination with one of the route constants.
-            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
-                label = "Player"
-            }
-            fragment<MusicChooserFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
+//            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
+//                label = "Player"
+//            }
+            fragment<PlayerDisplayFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
                 label = "Choose Music!"
             }
             fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
                 label = "Permission Denied"
             }
-            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
-                label = "Music Queue"
-            }
+//            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
+//                label = "Music Queue"
+//            }
         }
     }
 
@@ -177,7 +175,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        //Saves the current song list in queue
         viewModel.saveQueue()
+        //Saves the original song list order [in case the user has shuffled]
+        viewModel.saveOriginalOrder()
 
         musicObserver?.let {
             contentResolver.unregisterContentObserver(it)

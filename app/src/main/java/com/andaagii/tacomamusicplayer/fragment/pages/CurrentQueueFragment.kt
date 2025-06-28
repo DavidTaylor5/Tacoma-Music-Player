@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment
+package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.os.Bundle
 import android.transition.TransitionInflater
@@ -113,67 +113,94 @@ class CurrentQueueFragment: Fragment() {
 
         binding = FragmentCurrentQueueBinding.inflate(inflater)
 
-        parentViewModel.mediaController.value?.let { controller ->
-            val songs = UtilImpl.getSongListFromMediaController(controller)
-            val displaySongs = songs.map {song ->
-                if(song == controller.currentMediaItem) {
-                    DisplaySong(
-                        song,
-                        true
+        parentViewModel.showLoadingScreen.observe(viewLifecycleOwner) { loadingMusic ->
+            Timber.d("onCreateView: loadingMusic=$loadingMusic")
+            if(!loadingMusic) {
+                parentViewModel.mediaController.value?.let { controller ->
+                    val songs = UtilImpl.getSongListFromMediaController(controller)
+                    Timber.d("onCreateView: queueSongs=$songs")
+                    val displaySongs = songs.map {song ->
+                        if(song == controller.currentMediaItem) {
+                            DisplaySong(
+                                song,
+                                true
+                            )
+                        } else {
+                            DisplaySong(
+                                song,
+                                false
+                            )
+                        }
+                    }
+
+                    binding.displayRecyclerview.adapter = QueueListAdapter(
+                        displaySongs,
+                        this::handleSongSetting,
+                        this::handleViewHolderHandleDrag,
+                        this::handleRemoveSong,
+                        this::playSongAtPosition
                     )
-                } else {
-                    DisplaySong(
-                        song,
-                        false
-                    )
+                    determineIfShowingEmptyPlaylistScreen(songs)
                 }
             }
-
-            binding.displayRecyclerview.adapter = QueueListAdapter(
-                displaySongs,
-                this::handleSongSetting,
-                this::handleViewHolderHandleDrag,
-                this::handleRemoveSong,
-                this::playSongAtPosition
-            )
-            determineIfShowingEmptyPlaylistScreen(songs)
         }
 
-        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) {currSong ->
-            (binding.displayRecyclerview.adapter as QueueListAdapter)
-                .updateCurrentSongIndicator(currSong)
-        }
+        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { currSongs ->
+            parentViewModel.mediaController.value?.let { controller ->
+                val songs = UtilImpl.getSongListFromMediaController(controller)
+                Timber.d("onCreateView: queueSongs=$songs")
+                val displaySongs = songs.map {song ->
+                    if(song == controller.currentMediaItem) {
+                        DisplaySong(
+                            song,
+                            true
+                        )
+                    } else {
+                        DisplaySong(
+                            song,
+                            false
+                        )
+                    }
+                }
 
-        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if(isPlaying) {
-                binding.controlButton.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.controlButton.setBackgroundResource(R.drawable.white_play_arrow)
-            }
-        }
-
-        binding.playerSection.setOnClickListener {
-            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-        }
-
-        binding.controlButton.setOnClickListener {
-            parentViewModel.flipPlayingState()
-        }
-
-        binding.menuIcon.setOnClickListener {
-            val menu = PopupMenu(binding.root.context, binding.menuIcon)
-
-            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-                    parentViewModel.currentSongList.value?.songs ?: listOf()
+                binding.displayRecyclerview.adapter = QueueListAdapter(
+                    displaySongs,
+                    this::handleSongSetting,
+                    this::handleViewHolderHandleDrag,
+                    this::handleRemoveSong,
+                    this::playSongAtPosition
                 )
-                return@setOnMenuItemClickListener true
+                determineIfShowingEmptyPlaylistScreen(songs)
             }
-            menu.show()
         }
+
+        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currSong ->
+            binding.displayRecyclerview.adapter?.let {
+                (it as QueueListAdapter).updateCurrentSongIndicator(currSong)
+            }
+        }
+
+        parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
+            if(shouldClear) {
+                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
+                parentViewModel.handledClearningQueue()
+            }
+        }
+
+//        binding.menuIcon.setOnClickListener {
+//            val menu = PopupMenu(binding.root.context, binding.menuIcon)
+//
+//            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//                handleSongSetting(
+//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+//                    parentViewModel.currentSongList.value?.songs ?: listOf()
+//                )
+//                return@setOnMenuItemClickListener true
+//            }
+//            menu.show()
+//        }
 
         //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
         //TODO Remove this code when I implement coil or glide....
@@ -183,6 +210,12 @@ class CurrentQueueFragment: Fragment() {
         setupPage()
 
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+
     }
 
     private fun handleRemoveSong(songPosition: Int) {
