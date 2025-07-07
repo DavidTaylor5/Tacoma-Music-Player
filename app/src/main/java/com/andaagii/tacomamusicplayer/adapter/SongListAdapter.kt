@@ -245,10 +245,9 @@ class SongListAdapter(
             }
 
             viewHolder.binding.addIcon.setOnClickListener {
-                Toast.makeText(viewHolder.itemView.context, "Added $songTitle to the queue!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(viewHolder.itemView.context, "Added ${dataSet[position].mediaMetadata.title} to queue!", Toast.LENGTH_SHORT).show()
                 handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_QUEUE, listOf(dataSet[position]))
             }
-
 
             //HANDLE SPECIFICS RELATED TO DISPLAY SONG VERSUS DISPLAY SEARCH RESULT
 

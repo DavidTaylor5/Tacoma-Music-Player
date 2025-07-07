@@ -9,8 +9,12 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -76,9 +80,6 @@ class PlayerDisplayFragment: Fragment() {
         Timber.d("onCreate: ")
         super.onCreate(savedInstanceState)
         pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
-
-        val inflater = TransitionInflater.from(requireContext())
-        enterTransition = inflater.inflateTransition(R.transition.slide_up)
     }
 
     override fun onStart() {
@@ -100,6 +101,17 @@ class PlayerDisplayFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = PlayerDisplayFragmentBinding.inflate(inflater)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.statusBarInset!!) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
+
+            v.updateLayoutParams<MarginLayoutParams> {
+                topMargin = insets.top
+            }
+
+            //Return consumed if you don't want the window insets to keep passing down to descendant views
+            WindowInsetsCompat.CONSUMED
+        }
 
         //val gesture = GestureDetector(container!!.context, detector)
 
