@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
+import timber.log.Timber
 
 class SongListViewModel: ViewModel() {
 
@@ -31,6 +32,8 @@ class SongListViewModel: ViewModel() {
      * @param newSongs List of songs that can be potentially added to a playlist.
      */
     fun prepareSongsForPlaylists() {
+        Timber.d("prepareSongsForPlaylists: ")
+        
         val resetCheckedPlaylists = mutableListOf<String>()
 
         //As I prepare a song for playlists, I don't yet know which playlist I'm going to add it to
@@ -41,6 +44,8 @@ class SongListViewModel: ViewModel() {
 
     fun selectSongs(songs: List<MediaItem>, showPrompt: Boolean) {
         val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
+        Timber.d("selectSongs: songs=${songs.map { it.mediaMetadata.title }}, _currentlySelectedSongs=${_currentlySelectedSongs.value?.map { it.mediaMetadata.title }}")
+
         currentSongs.addAll(songs)
         if(currentSongs.isNotEmpty() && showPrompt) {
             _isShowingMultiSelectPrompt.postValue(true)
@@ -49,6 +54,8 @@ class SongListViewModel: ViewModel() {
     }
 
     fun unselectSong(song: MediaItem) {
+        Timber.d("unselectSong: song=${ song.mediaMetadata.title }")
+
         val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
         currentSongs.removeAll {
             it.mediaId == song.mediaId
@@ -60,6 +67,8 @@ class SongListViewModel: ViewModel() {
     }
 
     fun clearMultiSelectSongs() {
+        Timber.d("clearMultiSelectSongs: ")
+        
         _currentlySelectedSongs.postValue(listOf())
         _isShowingMultiSelectPrompt.postValue(false)
     }
@@ -71,7 +80,8 @@ class SongListViewModel: ViewModel() {
      * @param isChecked Boolean value, true if user selected the playlist.
      */
     fun updateCheckedPlaylists(playlistTitle: String, isChecked: Boolean ) {
-
+        Timber.d("updateCheckedPlaylists: ")
+        
         //I keep a copy of updated playlists, to determine if 'Add' button is enabled.
         var updatedPlaylistsWithCheckmarks = mutableListOf<String>()
 
