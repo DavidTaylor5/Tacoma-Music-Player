@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.andaagii.tacomamusicplayer"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.andaagii.tacomamusicplayer"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 5
         versionName = "1.5"
 
