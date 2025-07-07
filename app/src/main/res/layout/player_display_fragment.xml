@@ -11,6 +11,14 @@
         android:background="@color/primary"
         android:orientation="vertical"
         >
+<!--        android:paddingTop="30dp"-->
+
+        <View
+            android:id="@+id/status_bar_inset"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/black"
+            />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -113,6 +121,7 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:src="@drawable/chopper_default"
+                    android:scaleType="centerCrop"
                     />
 
                 <TextView

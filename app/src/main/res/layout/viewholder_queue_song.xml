@@ -47,6 +47,7 @@
                 android:src="@drawable/white_note"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="5dp"
+                android:scaleType="centerCrop"
                 />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
