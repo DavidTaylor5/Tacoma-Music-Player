@@ -82,8 +82,7 @@
             android:id="@+id/create_playlist_prompt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"/>
-
+            android:visibility="invisible"/>
 
         <com.andaagii.tacomamusicplayer.view.CustomMultiSelectPrompt
             android:id="@+id/multi_select_prompt"

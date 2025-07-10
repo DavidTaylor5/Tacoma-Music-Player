@@ -228,7 +228,7 @@ class SongListFragment(
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
             val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE
+                playlist.title != Const.PLAYLIST_QUEUE_TITLE && playlist.title != Const.ORIGINAL_QUEUE_ORDER
             }
             binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
         }
@@ -263,10 +263,17 @@ class SongListFragment(
         viewModel.currentlySelectedSongs.observe(viewLifecycleOwner) { currentlySelectedSongs ->
             binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
 
+            if(currentlySelectedSongs.isEmpty()) {
+                Timber.d("onCreateView: set multiselectPrompt to GONE")
+                binding.multiSelectPrompt.visibility = View.INVISIBLE //it appears for custom views, setting invisible is better than gone?
+            } else {
+                Timber.d("onCreateView: set multiselectPrompt to VISIBLE")
+                binding.multiSelectPrompt.visibility = View.VISIBLE
+            }
+
             binding.displayRecyclerview.adapter?.let { adapter ->
                 if(currentlySelectedSongs.isEmpty()) {
                     (adapter as SongListAdapter).clearAllSelected()
-                    binding.multiSelectPrompt.visibility = View.GONE
                 }
             }
         }
@@ -278,7 +285,7 @@ class SongListFragment(
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 //I don't need to add any more songs here, already added when selected.
-                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()), listOf())
+                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),  viewModel.currentlySelectedSongs.value ?: listOf())
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -496,13 +503,13 @@ class SongListFragment(
             viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
         }
 
-        viewModel.isShowingMultiSelectPrompt.observe(viewLifecycleOwner) { isShowing ->
-            if(isShowing) {
-                binding.multiSelectPrompt.visibility = View.VISIBLE
-            } else {
-                binding.multiSelectPrompt.visibility = View.GONE
-            }
-        }
+//        viewModel.isShowingMultiSelectPrompt.observe(viewLifecycleOwner) { isShowing ->
+//            if(isShowing) {
+//                binding.multiSelectPrompt.visibility = View.VISIBLE
+//            } else {
+//                binding.multiSelectPrompt.visibility = View.GONE
+//            }
+//        }
 
         viewModel.isPlaylistPromptAddClickable.observe(viewLifecycleOwner) { isClickable ->
             binding.playlistPrompt.updateAddButtonClickability(isClickable)
@@ -565,6 +572,7 @@ class SongListFragment(
     }
 
     private fun handleAddToQueue(mediaItems: List<MediaItem>) {
+        Timber.d("handleAddToQueue: mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
         parentViewModel.addSongsToEndOfQueue(mediaItems)
     }
 
