@@ -52,6 +52,8 @@ class SongListFragment(
     private var currentSongGroup:  SongGroup? = null
     private var lastDisplaySongGroup: SongGroup? =  null
 
+    private var songsToAddToPlaylistPrompt: List<MediaItem>? = null
+
     //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
         /*
@@ -480,7 +482,7 @@ class SongListFragment(
         //When add button is clicked, I should add songs into playlists
         binding.playlistPrompt.onAddButtonClick {
             val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value ?: listOf()
-            val playlistAddSongs: List<MediaItem> = viewModel.currentlySelectedSongs.value ?: listOf()
+            val playlistAddSongs: List<MediaItem> = songsToAddToPlaylistPrompt ?: listOf()
 
             parentViewModel.addSongsToAPlaylist(
                 checkedPlaylists,
@@ -517,11 +519,14 @@ class SongListFragment(
     }
 
     //TODO move this logic ?
-    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>) {
+    private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>, fromMultiSelect: Boolean = false) {
+        Timber.d("handleSongSetting: menuOption=$menuOption, mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
+
         when (menuOption) {
             PLAY_SONG_GROUP -> handlePlaySongGroup()
             ADD_TO_PLAYLIST -> {
                 viewModel.prepareSongsForPlaylists()
+                songsToAddToPlaylistPrompt = mediaItems
                 handleAddToPlaylist(mediaItems)
             }
             MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
@@ -567,7 +572,6 @@ class SongListFragment(
     }
 
     private fun handleAddToPlaylist(mediaItems: List<MediaItem>) {
-        viewModel.selectSongs(mediaItems, showPrompt = false)
         binding.playlistPrompt.showPrompt()
     }
 

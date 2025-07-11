@@ -113,6 +113,17 @@ class PlayerDisplayFragment: Fragment() {
             WindowInsetsCompat.CONSUMED
         }
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navigationControl) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
+
+            v.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = insets.bottom
+            }
+
+            //Return consumed if you don't want the window insets to keep passing down to descendant views
+            WindowInsetsCompat.CONSUMED
+        }
+
         //val gesture = GestureDetector(container!!.context, detector)
 
         //setupPlayingAnimation(binding)
