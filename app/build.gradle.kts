@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.andaagii.tacomamusicplayer"
-        minSdk = 29
+        minSdk = 30
         targetSdk = 36
         versionCode = 6
         versionName = "1.6"
