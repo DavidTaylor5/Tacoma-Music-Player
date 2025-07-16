@@ -189,37 +189,39 @@ class SongListAdapter(
             viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
             viewHolder.isFavorited = false
 
-            if(favoriteList[position]) {
-                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
-            } else {
-                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-            }
-
-            (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
-            (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).selectDrawable(0)
-            (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).invalidateSelf()
-
-            viewHolder.binding.albumArt.setOnClickListener {
-
-                if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
+            if(position < favoriteList.size) {
+                if(favoriteList[position]) {
                     viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
-                    viewHolder.isFavorited = false
-                    favoriteList[position] = false
-                    handleSongSelected(
-                        dataSet[position],
-                        false
-                    )
-                } else { //currently un favorited, turn to favorited...
+                } else {
                     viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-                    viewHolder.isFavorited = true
-                    favoriteList[position] = true
-                    handleSongSelected(
-                        dataSet[position],
-                        true
-                    )
                 }
-                val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
-                frameAnimation.start()
+
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).selectDrawable(0)
+                (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).invalidateSelf()
+
+                viewHolder.binding.albumArt.setOnClickListener {
+
+                    if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
+                        viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
+                        viewHolder.isFavorited = false
+                        favoriteList[position] = false
+                        handleSongSelected(
+                            dataSet[position],
+                            false
+                        )
+                    } else { //currently un favorited, turn to favorited...
+                        viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
+                        viewHolder.isFavorited = true
+                        favoriteList[position] = true
+                        handleSongSelected(
+                            dataSet[position],
+                            true
+                        )
+                    }
+                    val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
+                    frameAnimation.start()
+                }
             }
 
             viewHolder.binding.menuIcon.setOnClickListener {

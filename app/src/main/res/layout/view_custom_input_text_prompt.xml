@@ -14,12 +14,16 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:background="@color/black"
+        app:hintTextColor="@color/white"
+        android:textColorHint="@color/white"
         android:visibility="visible">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/prompt_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:hintTextColor="@color/white"
+            android:textColor="@color/white"
             />
 
         <LinearLayout
