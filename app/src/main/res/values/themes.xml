@@ -15,6 +15,12 @@
         <item name="materialCardViewStyle">@style/Widget.MyApp.CardView</item>
 
         <item name="android:textColor">@color/white</item>
+        <item name="popupMenuStyle">@style/PopupMenuBlack</item>
+    </style>
+
+    <style name="PopupMenuBlack" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">#000000</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="Widget.MyApp.CardView" parent="Widget.MaterialComponents.CardView">

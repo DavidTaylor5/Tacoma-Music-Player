@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Size
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -253,9 +254,18 @@ class SongListFragment(
         }
 
         binding.songGroupInfo.setOnMenuIconPressed {
-            val menu = PopupMenu(binding.root.context, binding.songGroupInfo.getMenuIconView())
+            val menu = PopupMenu(
+                binding.root.context,
+                binding.songGroupInfo.getMenuIconView(),
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
 
-            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
+            menu.menuInflater.inflate(
+                R.menu.songlist_songgroup_options,
+                menu.menu
+            )
             menu.setOnMenuItemClickListener {
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
@@ -286,7 +296,13 @@ class SongListFragment(
         }
 
         binding.multiSelectPrompt.setOnMenuIconClick {
-            val menu = PopupMenu(this.context, binding.multiSelectPrompt)
+            val menu = PopupMenu(
+                this.context,
+                binding.multiSelectPrompt,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
 
             menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
             menu.setOnMenuItemClickListener {

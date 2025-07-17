@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.adapter
 import android.content.Context
 import android.net.Uri
 import android.util.Size
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
@@ -71,7 +72,13 @@ class AlbumListAdapter(
             )
 
             viewHolder.binding.menuIcon.setOnClickListener {
-                val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+                val menu = PopupMenu(
+                    viewHolder.itemView.context,
+                    viewHolder.binding.menuIcon,
+                    Gravity.START,
+                    0,
+                    R.style.PopupMenuBlack
+                )
 
                 menu.menuInflater.inflate(R.menu.album_options, menu.menu)
                 menu.setOnMenuItemClickListener {
