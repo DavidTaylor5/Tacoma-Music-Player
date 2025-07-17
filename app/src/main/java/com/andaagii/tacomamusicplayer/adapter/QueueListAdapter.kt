@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.net.Uri
 import android.util.Size
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -199,7 +200,13 @@ class QueueListAdapter(
 
         viewHolder.binding.menuIcon.setOnClickListener {
 
-            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+            val menu = PopupMenu(
+                viewHolder.itemView.context,
+                viewHolder.binding.menuIcon,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
 
             menu.menuInflater.inflate(R.menu.queue_song_options, menu.menu)
             menu.setOnMenuItemClickListener {

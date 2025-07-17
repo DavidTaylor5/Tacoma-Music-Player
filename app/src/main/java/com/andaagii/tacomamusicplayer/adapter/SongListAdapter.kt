@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.AnimationDrawable
 import android.net.Uri
 import android.util.Size
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -226,7 +227,13 @@ class SongListAdapter(
 
             viewHolder.binding.menuIcon.setOnClickListener {
 
-                val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.menuIcon)
+                val menu = PopupMenu(
+                    viewHolder.itemView.context,
+                    viewHolder.binding.menuIcon,
+                    Gravity.START,
+                    0,
+                    R.style.PopupMenuBlack
+                )
 
                 if (songGroupType == SongGroupType.PLAYLIST) {
                     menu.menuInflater.inflate(R.menu.songlist_playlist_options, menu.menu)

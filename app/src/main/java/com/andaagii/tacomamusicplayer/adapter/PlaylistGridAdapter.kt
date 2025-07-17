@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -85,7 +86,13 @@ class PlaylistGridAdapter(
 
             Toast.makeText(viewHolder.itemView.context, "Long Click on Playlist!", Toast.LENGTH_SHORT).show()
 
-            val menu = PopupMenu(viewHolder.itemView.context, viewHolder.binding.playlistName)
+            val menu = PopupMenu(
+                viewHolder.itemView.context,
+                viewHolder.binding.playlistName,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
 
             menu.menuInflater.inflate(R.menu.playlist_options, menu.menu)
             menu.setOnMenuItemClickListener {

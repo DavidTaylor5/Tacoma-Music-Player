@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.transition.TransitionInflater
 import android.util.Size
 import android.view.GestureDetector
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -134,7 +135,13 @@ class PlayerDisplayFragment: Fragment() {
 
 
         binding.sortingButton?.setOnClickListener {
-            val menu = PopupMenu(this.context, binding.sortingButton)
+            val menu = PopupMenu(
+                this.context,
+                binding.sortingButton,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
 
             parentViewModel.getCurrentPage()?.let {page ->
                 if(page == PageType.PLAYLIST_PAGE) {
