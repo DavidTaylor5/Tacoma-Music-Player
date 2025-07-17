@@ -226,6 +226,11 @@ class SongListFragment(
                 deactivateSearchMode()
                 activateDisplayMode()
             }
+
+            //Clear the favorite list when changing modes
+            binding.displayRecyclerview.adapter?.let { adapter ->
+                (adapter as SongListAdapter).clearAllSelected()
+            }
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->

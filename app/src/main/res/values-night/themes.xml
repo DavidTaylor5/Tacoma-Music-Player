@@ -12,5 +12,7 @@
 
         <item name="android:navigationBarColor">@color/primary</item>
         <item name="android:statusBarColor">@color/primary</item>
+
+        <item name="android:textColor">#EEEEEE</item>
     </style>
 </resources>

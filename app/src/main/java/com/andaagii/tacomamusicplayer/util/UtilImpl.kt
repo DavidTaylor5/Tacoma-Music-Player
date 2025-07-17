@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.util
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
@@ -19,6 +20,7 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.math.floor
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -217,6 +219,20 @@ class UtilImpl {
                 songList.add(controller.getMediaItemAt(i))
             }
             return songList
+        }
+
+        fun determineGridSize(): Int {
+            val displayMetrics = Resources.getSystem().displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val dp = displayMetrics.density
+            val widthDp = screenWidth / dp
+
+            //The album/playlist card is a set 150dp width and I factor in some padding
+            val widthInGrids = widthDp / 170
+            val maxGridSize = floor(widthInGrids).toInt()
+
+            Timber.d("updateAlbumLayout: screenWidth=$screenWidth, screenHeight=${displayMetrics.heightPixels}, dp=${dp}, widthDp=$widthDp, widthInGrids=$widthInGrids, maxGridSize=$maxGridSize")
+            return maxGridSize
         }
 
         fun deletePicture(context: Context, fileName: String): Boolean {

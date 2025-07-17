@@ -2,13 +2,30 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.TacomaMusicPlayer" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-<!--        <item name="android:windowNoTitle">true</item>-->
-<!--        <item name="android:windowFullscreen">true</item>-->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">#6CBCE0</item>
+        <item name="colorPrimaryVariant">#326273</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#E39774</item>
+        <item name="colorSecondaryVariant">#E39774</item>
+        <item name="colorOnSecondary">#EEEEEE</item>
 
         <item name="android:navigationBarColor">@color/primary</item>
         <item name="android:statusBarColor">@color/primary</item>
+
+        <item name="materialCardViewStyle">@style/Widget.MyApp.CardView</item>
+
+        <item name="android:textColor">@color/white</item>
     </style>
 
-    <style name="Theme.TacomaMusicPlayer" parent="Base.Theme.TacomaMusicPlayer" />
+    <style name="Widget.MyApp.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">#141118</item>
+        <item name="cardElevation">4dp</item>
+        <item name="cardCornerRadius">10dp</item>
+        <item name="strokeColor">#48454C</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+
+
+<!--    <style name="Theme.TacomaMusicPlayer" parent="Base.Theme.TacomaMusicPlayer" />-->
 </resources>
