@@ -64,7 +64,7 @@ class PlaylistFragment: Fragment() {
                 this::handlePlaylistSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
+            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
             binding.displayRecyclerview.adapter = PlaylistGridAdapter(
                 currentPlaylists,
                 this::onPlaylistClick,

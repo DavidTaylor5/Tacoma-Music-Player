@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,6 +23,7 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
+import kotlin.math.floor
 
 class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding
@@ -145,7 +147,7 @@ class AlbumListFragment: Fragment() {
                 this::handleAlbumSetting
             )
         } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, 2)
+            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
             binding.displayRecyclerview.adapter = AlbumGridAdapter(
                 currentAlbumList,
                 this::onAlbumClick,
