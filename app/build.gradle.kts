@@ -16,8 +16,8 @@ android {
         applicationId = "com.andaagii.tacomamusicplayer"
         minSdk = 30
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
