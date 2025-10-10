@@ -198,7 +198,12 @@ class MediaStoreUtil {
                 val albumMediaItem =
                     mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri, releaseYear)
 
-                albumList.add(albumMediaItem)
+                if( albumList.map { it.mediaMetadata.albumTitle }.contains(albumTitle)) {
+                    Timber.d("queryAvailableAlbums: albumTitle found in albumList=${albumList.map { it.mediaMetadata.albumTitle} }")
+                } else {
+                    Timber.d("queryAvailableAlbums: Adding albumTitle=$albumTitle to albumList")
+                    albumList.add(albumMediaItem)
+                }
             }
         }
         Timber.d("queryAvailableAlbums: DONE SEARCHING!")
