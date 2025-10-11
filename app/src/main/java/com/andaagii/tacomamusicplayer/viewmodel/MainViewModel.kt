@@ -23,8 +23,7 @@ import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
-import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
-import com.andaagii.tacomamusicplayer.database.SearchDatabase
+import com.andaagii.tacomamusicplayer.database.PlayerDatabase
 import com.andaagii.tacomamusicplayer.enum.LayoutType
 import com.andaagii.tacomamusicplayer.enum.PageType
 import com.andaagii.tacomamusicplayer.enum.QueueAddType
@@ -220,11 +219,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
     }
 
-    fun querySearchDatabase(search: String) {
-        Timber.d("querySearchDatabase: search=$search")
+    fun querySearchData(search: String) {
+        Timber.d("querySearchData: search=$search")
         viewModelScope.launch(Dispatchers.IO) {
-            val searchResults = SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
+            val searchResults = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .searchDao()
                 .findDescriptionFromSearchStr(search)
             _currentSearchList.postValue(searchResults)
         }
@@ -276,8 +275,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
 
             viewModelScope.launch(Dispatchers.IO) {
-                SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .searchDao()
                     .insertItems(*updatedSearchData.toTypedArray())
             }
         }
@@ -489,7 +488,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         checkUserPreferences()
 
         //TODO this should be moved into dependency injection...
-        availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
+        availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
     }
 
     /**
@@ -518,7 +517,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
+            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
                 playlist
             )
         }
@@ -530,7 +529,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             try {
                 val currentPlaylist =
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                         .playlistDao()
                         .findPlaylistByName(playlistTitle)
 
@@ -552,7 +551,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     lastModificationTimestamp = LocalDateTime.now().toString()
                 )
 
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .updatePlaylists(
                         updatePlaylist
@@ -571,7 +570,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         if(albumSongGroup.type == SongGroupType.PLAYLIST) {
 
             viewModelScope.launch(Dispatchers.IO) {
-                val currentPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .findPlaylistByName(albumSongGroup.title)
 
@@ -589,7 +588,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 )
 
                 //Update the database with the updated playlist
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .updatePlaylists(
                         modifyPlaylist
@@ -625,7 +624,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 )
 
                 viewModelScope.launch(Dispatchers.IO) {
-                    val savedQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    val savedQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                         .playlistDao()
                         .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
 
@@ -649,7 +648,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         )
                     }
 
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                         .playlistDao()
                         .insertPlaylists(updateStoredQueue)
                 }
@@ -666,7 +665,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             viewModelScope.launch(Dispatchers.IO) {
                 val savedOriginalOrder =
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                         .playlistDao()
                         .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
 
@@ -690,7 +689,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                     )
                 }
 
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .insertPlaylists(updateStoredQueue)
             }
@@ -712,7 +711,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun restoreQueue() {
         Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val oldQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+            val oldQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
                 .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
 
@@ -759,7 +758,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val originalQueueOrderPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+            val originalQueueOrderPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
                 .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
 
@@ -785,7 +784,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -805,7 +804,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             //The playlistImage is saved using playlistTitle, update playlist image file name
            UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
 
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
         }
     }
 
@@ -815,7 +814,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
         Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -832,7 +831,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 lastModificationTimestamp = LocalDateTime.now().toString()
             )
 
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
         }
     }
 
@@ -842,7 +841,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -857,7 +856,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             playlist.songs = PlaylistData(modifiedSongList)
             playlist.lastModificationTimestamp = LocalDateTime.now().toString()
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
+            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
         }
     }
 
@@ -905,7 +904,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("playPlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
             val songs = playlist.songs.songs
             val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
@@ -927,7 +926,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("addPlaylistToBackOfQueue: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
             val songs = playlist.songs.songs
             val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
@@ -1266,7 +1265,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun querySongsFromPlaylist(playlistId: String) {
         Timber.d("querySongsFromPlaylist: playlistId=$playlistId")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
             val songs = playlist.songs.songs
             val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
 
@@ -1294,12 +1293,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun removePlaylist(playlistTitle: String) {
         Timber.d("removePlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                 .playlistDao()
                 .findPlaylistByName(playlistTitle)
 
             if(playlist != null) {
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .playlistDao()
                     .deletePlaylists(playlist)
 

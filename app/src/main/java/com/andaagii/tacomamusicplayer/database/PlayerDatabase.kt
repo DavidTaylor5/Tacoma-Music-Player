@@ -6,20 +6,22 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.data.SearchData
 
-@Database(entities = [Playlist::class], version = 8, exportSchema = false)
+@Database(entities = [Playlist::class, SearchData::class], version = 8, exportSchema = false)
 @TypeConverters(Converters::class)
-abstract class PlaylistDatabase : RoomDatabase() {
+abstract class PlayerDatabase : RoomDatabase() {
 
     abstract fun playlistDao(): PlaylistDao
+    abstract fun searchDao(): SearchDao
 
     companion object {
         @Volatile
-        private var INSTANCE: PlaylistDatabase? = null
+        private var INSTANCE: PlayerDatabase? = null
 
-        fun getDatabase(context: Context): PlaylistDatabase {
+        fun getDatabase(context: Context): PlayerDatabase {
             return INSTANCE ?: synchronized(this) {
-                Room.databaseBuilder(context, PlaylistDatabase::class.java, "playlist_database")
+                Room.databaseBuilder(context, PlayerDatabase::class.java, "player_database")
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

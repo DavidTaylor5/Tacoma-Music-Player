@@ -343,7 +343,7 @@ class SongListFragment(
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 Timber.d("onTextChanged: User is typing: $s")
                 if(parentViewModel.isShowingSearchMode.value == true) {
-                    parentViewModel.querySearchDatabase(s.toString())
+                    parentViewModel.querySearchData(s.toString())
                 }
             }
 
