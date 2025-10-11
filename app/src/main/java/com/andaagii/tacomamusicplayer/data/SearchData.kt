@@ -4,6 +4,12 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+//TODO add an optional bitmap to the database?
+// Save the bitmap to app storage // save a reference to it..
+//TODO move the saving songs to the background
+//TODO Use workmanager to check albums, update what songs are available, save the references to images.
+// TODO move both DAOs to the same database
+
 @Entity
 data class SearchData(
     @PrimaryKey

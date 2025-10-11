@@ -109,6 +109,10 @@ dependencies {
     //Timber logs
     implementation("com.jakewharton.timber:timber:4.7.1")
 
+    // mp3agic
+    //implementation("com.github.mpatric:mp3agic:0.9.1")
+    implementation("com.mpatric:mp3agic:0.9.1")
+
     //media3, all modules need to be the same version
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.2.1")

@@ -10,6 +10,11 @@ import androidx.room.Update
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.SearchData
 
+
+//TODO Maybe I should save all items in the database>
+
+//TODO have the songdatabase FLOW into the viewmodel, aka it will start updating
+
 @Dao
 interface SearchDao {
     @Query("SELECT * FROM searchdata")

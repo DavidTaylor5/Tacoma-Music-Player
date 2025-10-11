@@ -2,6 +2,7 @@ package com.andaagii.tacomamusicplayer.util
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
@@ -16,6 +17,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
 import coil.load
 import com.andaagii.tacomamusicplayer.R
+import com.mpatric.mp3agic.Mp3File
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -92,7 +94,30 @@ class UtilImpl {
             }
 
             if(!usingCustomImage) { //No custom image found, use metadata album art uri
-                drawUriOntoImageViewCoil(view, uri, imageSize)
+                val ableToDrawUri = drawUriOntoImageViewCoil(view, uri, imageSize)
+
+                if(!ableToDrawUri) {
+                    drawMp3agicBitmap(view, uri, imageSize)
+                }
+            }
+        }
+
+        private fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size) {
+            Timber.d("drawMp3agicBitmap: uri=$uri")
+            val fixUrl = Uri.fromFile(File("/storage/emulated/0/Music/Clipse/let-god-sort-em-out/11-so-far-ahead-(pharrell-williams).mp3"))
+            val file = UtilImpl.uriToFile(view.context, fixUrl)
+            val mp3File = Mp3File(file)
+
+            if(mp3File.hasId3v2Tag()) {
+                val tag = mp3File.id3v2Tag
+                val imageData = tag.albumImage
+
+                val albumArt = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+
+                view.setImageBitmap(albumArt)
+            } else {
+                val defaultArt = ResourcesCompat.getDrawable(view.resources, R.drawable.white_note, null)
+                view.load(defaultArt)
             }
         }
 
@@ -185,28 +210,22 @@ class UtilImpl {
                 return true
             } catch (e: Exception) {
                 Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW [setting default] e=$e")
-                val defaultArt = ResourcesCompat.getDrawable(view.resources, R.drawable.white_note, null)
-                view.load(defaultArt)
+                Timber.d("drawUriOntoImageView: Attempting to use mp3agic Id3v2Tag...")
+                drawMp3agicBitmap(view, uri, imageSize)
+
                 return false
             }
         }
 
-//        fun drawUriOntoImageViewUsingMediaMetaDataRetriever(view: ImageView, uri: Uri, imageSize: Size) {
-//            Timber.d("drawUriOntoImageViewUsingMediaMetaDataRetriever: ")
-//
-//            //val a = ContextCompat.checkSelfPermission()
-//
-//            val retriever = MediaMetadataRetriever()
-//            retriever.setDataSource(view.context, uri)
-//            val art: ByteArray? = retriever.embeddedPicture
-//            retriever.release()
-//            if(art != null) {
-//                val bitmap = BitmapFactory.decodeByteArray(art, 0, art.size)
-//                view.setImageBitmap(bitmap)
-//            } else {
-//                Timber.d("drawUriOntoImageViewUsingMediaMetaDataRetriever: no art retrieved!")
-//            }
-//        }
+        private fun uriToFile(context: Context, uri: Uri): File? {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val tempFile = File.createTempFile("temp_audio", ".mp3", context.cacheDir)
+            FileOutputStream(tempFile).use { output ->
+                inputStream.copyTo(output)
+            }
+            inputStream.close()
+            return tempFile
+        }
 
         /**
          *  Function to return all current mediaItems inside of the MediaController.

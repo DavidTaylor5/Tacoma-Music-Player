@@ -232,6 +232,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     /**
      * I need to catalog the music library so that I can add search functionality.
+     * TODO move this to a background worker
      */
     private fun catalogMusicLibrary() {
         Timber.d("catalogMusicLibrary: ")
@@ -1078,7 +1079,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         _albumMediaItemList.value =  childrenFuture.get().value?.toList() ?: listOf()
 
                         //Start Cataloging the Songs found in the music library
-                        catalogMusicLibrary()
+                        //catalogMusicLibrary() //TODO I need to do this in the background...
                     }, MoreExecutors.directExecutor())
                 }
             }
