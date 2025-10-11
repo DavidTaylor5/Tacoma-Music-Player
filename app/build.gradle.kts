@@ -110,8 +110,10 @@ dependencies {
     implementation("com.jakewharton.timber:timber:4.7.1")
 
     // mp3agic
-    //implementation("com.github.mpatric:mp3agic:0.9.1")
     implementation("com.mpatric:mp3agic:0.9.1")
+
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.10.5")
 
     //media3, all modules need to be the same version
     implementation("androidx.media3:media3-exoplayer:1.2.1")
