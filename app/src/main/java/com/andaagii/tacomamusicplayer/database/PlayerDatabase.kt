@@ -5,15 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.data.SearchData
+import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
+import com.andaagii.tacomamusicplayer.database.dao.SongDao
+import com.andaagii.tacomamusicplayer.database.entity.*
 
-@Database(entities = [Playlist::class, SearchData::class], version = 8, exportSchema = false)
+@Database(entities = [SongEntity::class, SongGroupEntity::class, SongGroupCrossRefEntity::class], version = 9, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class PlayerDatabase : RoomDatabase() {
 
-    abstract fun playlistDao(): PlaylistDao
-    abstract fun searchDao(): SearchDao
+    abstract fun songDao(): SongDao
+    abstract fun songGroupDao(): SongGroupDao
 
     companion object {
         @Volatile

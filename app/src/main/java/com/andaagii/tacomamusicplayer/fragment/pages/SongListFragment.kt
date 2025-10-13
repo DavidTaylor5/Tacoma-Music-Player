@@ -30,8 +30,8 @@ import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
-import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
@@ -235,10 +235,13 @@ class SongListFragment(
         }
 
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-            val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE && playlist.title != Const.ORIGINAL_QUEUE_ORDER
-            }
-            binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+
+            //TODO IMPLEMENT THE BELOW LOGIC...
+
+//            val playlistsWithoutQueue = playlists.filter { playlist ->
+//                playlist.title != Const.PLAYLIST_QUEUE_TITLE && playlist.title != Const.ORIGINAL_QUEUE_ORDER
+//            }
+//            binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
         }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->

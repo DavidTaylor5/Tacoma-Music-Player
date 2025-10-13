@@ -22,7 +22,7 @@ import androidx.navigation.createGraph
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
-import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
             Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
             if(playlists.isNotEmpty()) {
                 for(playlist in playlists) {
-                    Timber.d("AllPlaylistLiveData: playlist.title=${playlist.title}, songs=${playlist.songs}")
+                    Timber.d("AllPlaylistLiveData: playlist.title=${playlist.groupTitle}, songs=${"I'm working on it..."}")
                 }
             }
         }

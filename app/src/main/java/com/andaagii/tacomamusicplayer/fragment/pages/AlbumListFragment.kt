@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,14 +15,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
 import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import timber.log.Timber
-import kotlin.math.floor
 
 class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding

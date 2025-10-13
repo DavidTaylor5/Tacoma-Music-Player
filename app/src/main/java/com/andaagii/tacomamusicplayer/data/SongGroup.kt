@@ -1,7 +1,7 @@
 package com.andaagii.tacomamusicplayer.data
 
 import androidx.media3.common.MediaItem
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
 /**
  * Song group representation, ex Playlist or Album.

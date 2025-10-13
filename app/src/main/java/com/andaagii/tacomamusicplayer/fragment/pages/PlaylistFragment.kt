@@ -15,8 +15,8 @@ import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
@@ -82,32 +82,34 @@ class PlaylistFragment: Fragment() {
         binding = FragmentPlaylistBinding.inflate(inflater)
         parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
-            val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE &&
-                        playlist.title != Const.ORIGINAL_QUEUE_ORDER
-            }
+            //TODO WHAT TO DO WITH PLAYLIST...
 
-            currentPlaylists = SortingUtil.sortPlaylists(
-                playlistsWithoutQueue,
-                parentViewModel.sortingForPlaylistTab.value
-                    ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
-            )
-            if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
-                binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-                    currentPlaylists,
-                    this::onPlaylistClick,
-                    parentViewModel::playPlaylist,
-                    this::handlePlaylistSetting
-                )
-            } else {
-                binding.displayRecyclerview.adapter = PlaylistAdapter(
-                    currentPlaylists,
-                    this::onPlaylistClick,
-                    parentViewModel::playPlaylist,
-                    this::handlePlaylistSetting
-                )
-            }
+//            //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
+//            val playlistsWithoutQueue = playlists.filter { playlist ->
+//                playlist.title != Const.PLAYLIST_QUEUE_TITLE &&
+//                        playlist.title != Const.ORIGINAL_QUEUE_ORDER
+//            }
+//
+//            currentPlaylists = SortingUtil.sortPlaylists(
+//                playlistsWithoutQueue,
+//                parentViewModel.sortingForPlaylistTab.value
+//                    ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
+//            )
+//            if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
+//                binding.displayRecyclerview.adapter = PlaylistGridAdapter(
+//                    currentPlaylists,
+//                    this::onPlaylistClick,
+//                    parentViewModel::playPlaylist,
+//                    this::handlePlaylistSetting
+//                )
+//            } else {
+//                binding.displayRecyclerview.adapter = PlaylistAdapter(
+//                    currentPlaylists,
+//                    this::onPlaylistClick,
+//                    parentViewModel::playPlaylist,
+//                    this::handlePlaylistSetting
+//                )
+//            }
         }
         parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
             updatePlaylistLayout(layout)

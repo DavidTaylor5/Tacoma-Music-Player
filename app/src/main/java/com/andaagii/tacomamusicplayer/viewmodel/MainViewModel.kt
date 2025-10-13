@@ -17,19 +17,20 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.enum.QueueAddType
-import com.andaagii.tacomamusicplayer.enum.ScreenType
-import com.andaagii.tacomamusicplayer.enum.ShuffleType
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
+import com.andaagii.tacomamusicplayer.enumtype.ScreenType
+import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
@@ -41,7 +42,6 @@ import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.util.concurrent.Executors
@@ -53,7 +53,7 @@ import java.util.concurrent.Executors
 class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-    var availablePlaylists: LiveData<List<Playlist>>
+    var availablePlaylists: LiveData<List<SongGroupEntity>>
 
     /**
      * Reference to the app's mediaController.
@@ -79,6 +79,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val currentSearchList: LiveData<List<SearchData>>
         get() = _currentSearchList
     private val _currentSearchList: MutableLiveData<List<SearchData>> = MutableLiveData()
+
+    //TODO convert entity to other data object later?
+    val currentSearchSongList: LiveData<List<SongEntity>>
+        get() = _currentSearchSongList
+    private val _currentSearchSongList: MutableLiveData<List<SongEntity>> = MutableLiveData()
+
+    val currentSearchSongGroupList: LiveData<List<SongGroupEntity>>
+        get() = _currentSearchSongGroupList
+    private val _currentSearchSongGroupList: MutableLiveData<List<SongGroupEntity>> = MutableLiveData()
 
     /**
      * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
@@ -164,7 +173,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
-    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(false) //TODO make this false again....
 
     val clearQueue: LiveData<Boolean>
         get() = _clearQueue
@@ -221,12 +230,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun querySearchData(search: String) {
         Timber.d("querySearchData: search=$search")
-        viewModelScope.launch(Dispatchers.IO) {
-            val searchResults = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .searchDao()
-                .findDescriptionFromSearchStr(search)
-            _currentSearchList.postValue(searchResults)
-        }
+
+        //TODO Finish this to display both currentSearchSongList and currentSearchSongGroupList
+
+//        viewModelScope.launch(Dispatchers.IO) {
+//            val searchResults = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                .songDao()
+//                .findDescriptionFromSearchStr(search)
+//            _currentSearchList.postValue(searchResults)
+//        }
     }
 
     /**
@@ -274,11 +286,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 }
             }
 
-            viewModelScope.launch(Dispatchers.IO) {
-                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .searchDao()
-                    .insertItems(*updatedSearchData.toTypedArray())
-            }
+            //TODO ADD CODE SO THAT I CAN CATELOG THE DATABASE FROM CURRENT ALBUMS AND SONGS IN THE BACKGROUND!
+//            viewModelScope.launch(Dispatchers.IO) {
+//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                    .songGroupDao()
+//                    .insertItems(*updatedSearchData.toTypedArray())
+//            }
         }
 
         //TODO should this code recursively run?
@@ -488,7 +501,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         checkUserPreferences()
 
         //TODO this should be moved into dependency injection...
-        availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
+        availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().getSongGroupsByType(SongGroupType.PLAYLIST)
     }
 
     /**
@@ -508,58 +521,69 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
 
-        val playlist = Playlist(
-            title = playlistName,
+        val playlist = SongGroupEntity(
+            groupTitle = playlistName,
             artFile = "",
-            songs = PlaylistData(listOf()),
             creationTimestamp = LocalDateTime.now().toString(),
-            lastModificationTimestamp = LocalDateTime.now().toString()
+            lastModificationTimestamp = LocalDateTime.now().toString(),
+            songGroupType = SongGroupType.PLAYLIST,
+            searchDescription = playlistName,
+            groupDuration = "0"
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
+            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().insertSongGroups(
                 playlist
             )
         }
     }
 
+    /**
+     * Remove a songs from a specific playlist
+     * @param playlistTitle Title of a playlist.
+     * @param songs Songs to be deleted.
+     */
     fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
-        viewModelScope.launch(Dispatchers.IO) {
 
-            try {
-                val currentPlaylist =
-                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(playlistTitle)
 
-                val removeSongTitles = MediaItemUtil().createSongDataFromListOfMediaItem(songs).map { removeSong ->
-                    removeSong.songTitle
-                }
+        //TODO remove songs from playlist functionality!!
 
-                val modSongList = currentPlaylist.songs.songs.toMutableList()
-                modSongList.removeAll { song ->
-                        removeSongTitles.contains(song.songTitle)
-                    }
-
-                val updatePlaylist = Playlist(
-                    id = currentPlaylist.id,
-                    title = currentPlaylist.title,
-                    artFile = currentPlaylist.artFile,
-                    songs = PlaylistData(modSongList),
-                    creationTimestamp = currentPlaylist.creationTimestamp,
-                    lastModificationTimestamp = LocalDateTime.now().toString()
-                )
-
-                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .updatePlaylists(
-                        updatePlaylist
-                    )
-            } catch (e: Exception) {
-                Timber.d("removeSongsFromPlaylist: Error removing song from playlist, e=$e")
-            }
-        }
+//        viewModelScope.launch(Dispatchers.IO) {
+//
+//            try {
+//                val currentPlaylist =
+//                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                        .songGroupDao()
+//                        .findSongGroupByName(playlistTitle)
+//
+//                val removeSongTitles = MediaItemUtil().createSongDataFromListOfMediaItem(songs).map { removeSong ->
+//                    removeSong.songTitle
+//                }
+//
+//                val modSongList = currentPlaylist.songs.songs.toMutableList()
+//                modSongList.removeAll { song ->
+//                        removeSongTitles.contains(song.songTitle)
+//                    }
+//
+//                val updatePlaylist = Playlist(
+//                    id = currentPlaylist.id,
+//                    title = currentPlaylist.title,
+//                    artFile = currentPlaylist.artFile,
+//                    songs = PlaylistData(modSongList),
+//                    creationTimestamp = currentPlaylist.creationTimestamp,
+//                    lastModificationTimestamp = LocalDateTime.now().toString()
+//                )
+//
+//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                    .playlistDao()
+//                    .updatePlaylists(
+//                        updatePlaylist
+//                    )
+//            } catch (e: Exception) {
+//                Timber.d("removeSongsFromPlaylist: Error removing song from playlist, e=$e")
+//            }
+//        }
     }
 
     /**
@@ -571,28 +595,31 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
             viewModelScope.launch(Dispatchers.IO) {
                 val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .findPlaylistByName(albumSongGroup.title)
+                    .songGroupDao()
+                    .findSongGroupByName(albumSongGroup.title)
 
                 //Turn the media items into a list of SongData
                 val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
 
-                //Modify the original playlist
-                val modifyPlaylist = Playlist(
-                    id = currentPlaylist.id,
-                    title = currentPlaylist.title,
-                    artFile = currentPlaylist.artFile,
-                    songs = PlaylistData(modifySongData),
-                    creationTimestamp = currentPlaylist.creationTimestamp,
-                    lastModificationTimestamp = LocalDateTime.now().toString()
-                )
+                //TODO update the playlist order!
+                //TODO update the SongGroupCrossRefEntity with song position?
 
-                //Update the database with the updated playlist
-                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .updatePlaylists(
-                        modifyPlaylist
-                    )
+//                //Modify the original playlist
+//                val modifyPlaylist = Playlist(
+//                    id = currentPlaylist.id,
+//                    title = currentPlaylist.title,
+//                    artFile = currentPlaylist.artFile,
+//                    songs = PlaylistData(modifySongData),
+//                    creationTimestamp = currentPlaylist.creationTimestamp,
+//                    lastModificationTimestamp = LocalDateTime.now().toString()
+//                )
+//
+//                //Update the database with the updated playlist
+//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                    .playlistDao()
+//                    .updatePlaylists(
+//                        modifyPlaylist
+//                    )
             }
         }
     }
@@ -625,32 +652,34 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
                 viewModelScope.launch(Dispatchers.IO) {
                     val savedQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
+                        .songGroupDao()
+                        .findSongGroupByName(Const.PLAYLIST_QUEUE_TITLE)
 
-                    //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-                    val updateStoredQueue = if(savedQueue != null) {
-                        Playlist(
-                            id = savedQueue.id,
-                            title = savedQueue.title,
-                            artFile = savedQueue.artFile,
-                            songs = playlistData,
-                            creationTimestamp = savedQueue.creationTimestamp,
-                            lastModificationTimestamp = LocalDateTime.now().toString()
-                        )
-                    } else {
-                        Playlist(
-                            title = Const.PLAYLIST_QUEUE_TITLE,
-                            artFile = "",
-                            songs = playlistData,
-                            creationTimestamp = LocalDateTime.now().toString(),
-                            lastModificationTimestamp = LocalDateTime.now().toString()
-                        )
-                    }
+                    //TODO update the savedQueue
 
-                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .insertPlaylists(updateStoredQueue)
+//                    //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
+//                    val updateStoredQueue = if(savedQueue != null) {
+//                        Playlist(
+//                            id = savedQueue.id,
+//                            title = savedQueue.title,
+//                            artFile = savedQueue.artFile,
+//                            songs = playlistData,
+//                            creationTimestamp = savedQueue.creationTimestamp,
+//                            lastModificationTimestamp = LocalDateTime.now().toString()
+//                        )
+//                    } else {
+//                        Playlist(
+//                            title = Const.PLAYLIST_QUEUE_TITLE,
+//                            artFile = "",
+//                            songs = playlistData,
+//                            creationTimestamp = LocalDateTime.now().toString(),
+//                            lastModificationTimestamp = LocalDateTime.now().toString()
+//                        )
+//                    }
+//
+//                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                        .playlistDao()
+//                        .insertPlaylists(updateStoredQueue)
                 }
             }
         }
@@ -666,32 +695,34 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             viewModelScope.launch(Dispatchers.IO) {
                 val savedOriginalOrder =
                     PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
+                        .songGroupDao()
+                        .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
 
-                //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-                val updateStoredQueue = if (savedOriginalOrder != null) {
-                    Playlist(
-                        id = savedOriginalOrder.id,
-                        title = savedOriginalOrder.title,
-                        artFile = savedOriginalOrder.artFile,
-                        songs = playlistData,
-                        creationTimestamp = savedOriginalOrder.creationTimestamp,
-                        lastModificationTimestamp = LocalDateTime.now().toString()
-                    )
-                } else {
-                    Playlist(
-                        title = Const.ORIGINAL_QUEUE_ORDER,
-                        artFile = "",
-                        songs = playlistData,
-                        creationTimestamp = LocalDateTime.now().toString(),
-                        lastModificationTimestamp = LocalDateTime.now().toString()
-                    )
-                }
+                //TODO save the original queue order, I guess for shuffling purposes?
 
-                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .insertPlaylists(updateStoredQueue)
+//                //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
+//                val updateStoredQueue = if (savedOriginalOrder != null) {
+//                    Playlist(
+//                        id = savedOriginalOrder.id,
+//                        title = savedOriginalOrder.title,
+//                        artFile = savedOriginalOrder.artFile,
+//                        songs = playlistData,
+//                        creationTimestamp = savedOriginalOrder.creationTimestamp,
+//                        lastModificationTimestamp = LocalDateTime.now().toString()
+//                    )
+//                } else {
+//                    Playlist(
+//                        title = Const.ORIGINAL_QUEUE_ORDER,
+//                        artFile = "",
+//                        songs = playlistData,
+//                        creationTimestamp = LocalDateTime.now().toString(),
+//                        lastModificationTimestamp = LocalDateTime.now().toString()
+//                    )
+//                }
+//
+//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                    .playlistDao()
+//                    .insertPlaylists(updateStoredQueue)
             }
         }
     }
@@ -712,46 +743,48 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
             val oldQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
+                .songGroupDao()
+                .findSongGroupByName(Const.PLAYLIST_QUEUE_TITLE)
 
             val playbackPosition = DataStoreUtil.getPlaybackPosition(getApplication<Application>().applicationContext).firstOrNull()
             val songPosition = DataStoreUtil.getSongPosition(getApplication<Application>().applicationContext).firstOrNull()
 
-            //oldQueue can be null if this is a fresh install or if there is no previous queue
-            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
-                Timber.d("restoreQueue: No queue to restore!")
+            //TODO restore queue to the forefront logic!
 
-                //Remove Loading Screen [100ms added to cover image switch]
-                loadingHandler.postDelayed({
-                    _showLoadingScreen.postValue(false)
-                }, 100)
-                return@launch
-            }
-
-            withContext(Dispatchers.Main) {
-                mediaController.value?.let { controller ->
-                    controller.setMediaItems(
-                        mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-                            oldQueue.songs.songs
-                        )
-                    )
-
-                    // Restore Playback State
-                    if(songPosition != null && songPosition < controller.mediaItemCount) {
-                        if(playbackPosition != null) {
-                            controller.seekTo(songPosition, playbackPosition)
-                        } else {
-                            controller.seekTo(songPosition, 0)
-                        }
-                    }
-
-                    //Remove Loading Screen [100ms added to cover image switch]
-                    loadingHandler.postDelayed({
-                        _showLoadingScreen.postValue(false)
-                    }, 100)
-                }
-            }
+//            //oldQueue can be null if this is a fresh install or if there is no previous queue
+//            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
+//                Timber.d("restoreQueue: No queue to restore!")
+//
+//                //Remove Loading Screen [100ms added to cover image switch]
+//                loadingHandler.postDelayed({
+//                    _showLoadingScreen.postValue(false)
+//                }, 100)
+//                return@launch
+//            }
+//
+//            withContext(Dispatchers.Main) {
+//                mediaController.value?.let { controller ->
+//                    controller.setMediaItems(
+//                        mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
+//                            oldQueue.songs.songs
+//                        )
+//                    )
+//
+//                    // Restore Playback State
+//                    if(songPosition != null && songPosition < controller.mediaItemCount) {
+//                        if(playbackPosition != null) {
+//                            controller.seekTo(songPosition, playbackPosition)
+//                        } else {
+//                            controller.seekTo(songPosition, 0)
+//                        }
+//                    }
+//
+//                    //Remove Loading Screen [100ms added to cover image switch]
+//                    loadingHandler.postDelayed({
+//                        _showLoadingScreen.postValue(false)
+//                    }, 100)
+//                }
+//            }
         }
     }
 
@@ -759,15 +792,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
             val originalQueueOrderPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
+                .songGroupDao()
+                .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
 
-            originalQueueOrderPlaylist?.let { playlist ->
-                val originalQueueOrderMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-                    playlist.songs.songs
-                )
-                _originalSongOrder.postValue(originalQueueOrderMediaItems)
-            }
+            //TODO restore the queue order
+
+//            originalQueueOrderPlaylist?.let { playlist ->
+//                val originalQueueOrderMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
+//                    playlist.songs.songs
+//                )
+//                _originalSongOrder.postValue(originalQueueOrderMediaItems)
+//            }
         }
     }
 
@@ -784,7 +819,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(currentTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -792,19 +827,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 return@launch
             }
 
-            val updatedPlaylist = Playlist(
-                id = playlist.id,
-                title = newTitle,
-                artFile = "$newTitle.jpg",
-                songs = playlist.songs,
-                creationTimestamp = playlist.creationTimestamp,
-                lastModificationTimestamp = LocalDateTime.now().toString()
-            )
+            //TODO update playlist title
 
-            //The playlistImage is saved using playlistTitle, update playlist image file name
-           UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
-
-            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+//            val updatedPlaylist = Playlist(
+//                id = playlist.id,
+//                title = newTitle,
+//                artFile = "$newTitle.jpg",
+//                songs = playlist.songs,
+//                creationTimestamp = playlist.creationTimestamp,
+//                lastModificationTimestamp = LocalDateTime.now().toString()
+//            )
+//
+//            //The playlistImage is saved using playlistTitle, update playlist image file name
+//           UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
+//
+//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(updatedPlaylist)
         }
     }
 
@@ -814,7 +851,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
         Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -822,16 +859,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                 return@launch
             }
 
-            val updatedPlaylist = Playlist(
-                id = playlist.id,
-                title = playlist.title,
-                artFile = artFileName,
-                songs = playlist.songs,
-                creationTimestamp = playlist.creationTimestamp,
-                lastModificationTimestamp = LocalDateTime.now().toString()
-            )
+            //TODO update playlist image
 
-            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+//            val updatedPlaylist = Playlist(
+//                id = playlist.id,
+//                title = playlist.title,
+//                artFile = artFileName,
+//                songs = playlist.songs,
+//                creationTimestamp = playlist.creationTimestamp,
+//                lastModificationTimestamp = LocalDateTime.now().toString()
+//            )
+//
+//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(updatedPlaylist)
         }
     }
 
@@ -841,7 +880,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
 
             //If playlist is null I should create one?
             if(playlist == null) {
@@ -850,13 +889,15 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
             
             val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
-            
-            val modifiedSongList = playlist.songs.songs.toMutableList()
-            modifiedSongList.addAll(storableSongs)
 
-            playlist.songs = PlaylistData(modifiedSongList)
-            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
-            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
+            //TODO add list of songs to playlist...
+            
+//            val modifiedSongList = playlist.songs.songs.toMutableList()
+//            modifiedSongList.addAll(storableSongs)
+//
+//            playlist.songs = PlaylistData(modifiedSongList)
+//            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
+//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(playlist)
         }
     }
 
@@ -904,21 +945,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("playPlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-            val songs = playlist.songs.songs
-            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
 
-            withContext(Dispatchers.Main) {
-                addTracksSaveTrackOrder(
-                    mediaItems = playlistMediaItems,
-                    clearOriginalSongList = true,
-                    startingSongPosition = 0,
-                    clearCurrentSongs = true,
-                    shouldAddToOriginalList = true
-                )
+            //TODO play playlist logic
 
-                mediaController.value?.play()
-            }
+//            val songs = playlist.songs.songs
+//            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+//
+//            withContext(Dispatchers.Main) {
+//                addTracksSaveTrackOrder(
+//                    mediaItems = playlistMediaItems,
+//                    clearOriginalSongList = true,
+//                    startingSongPosition = 0,
+//                    clearCurrentSongs = true,
+//                    shouldAddToOriginalList = true
+//                )
+//
+//                mediaController.value?.play()
+//            }
         }
     }
 
@@ -926,18 +970,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("addPlaylistToBackOfQueue: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             //Grab the media items based on the playlistTitle
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-            val songs = playlist.songs.songs
-            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
 
-            withContext(Dispatchers.Main) {
-                addTracksSaveTrackOrder(
-                    mediaItems = playlistMediaItems,
-                    clearOriginalSongList = false,
-                    clearCurrentSongs = false,
-                    shouldAddToOriginalList = true
-                )
-            }
+            //TODO add playlist to back of queue
+
+//            val songs = playlist.songs.songs
+//            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+//
+//            withContext(Dispatchers.Main) {
+//                addTracksSaveTrackOrder(
+//                    mediaItems = playlistMediaItems,
+//                    clearOriginalSongList = false,
+//                    clearCurrentSongs = false,
+//                    shouldAddToOriginalList = true
+//                )
+//            }
         }
     }
 
@@ -1265,14 +1312,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun querySongsFromPlaylist(playlistId: String) {
         Timber.d("querySongsFromPlaylist: playlistId=$playlistId")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
-            val songs = playlist.songs.songs
-            val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistId)
 
-            val songGroupType = SongGroupType.PLAYLIST
-            val title = playlistId
+            //TODO query songs from playlist
 
-            _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
+//            val songs = playlist.songs.songs
+//            val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+//
+//            val songGroupType = SongGroupType.PLAYLIST
+//            val title = playlistId
+//
+//            _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
         }
     }
 
@@ -1294,13 +1344,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         Timber.d("removePlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
             val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(playlistTitle)
+                .songGroupDao()
+                .findSongGroupByName(playlistTitle)
 
             if(playlist != null) {
                 PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .deletePlaylists(playlist)
+                    .songGroupDao()
+                    .deleteSongGroups(playlist)
 
                 //remove associated image
                 deletePicture(getApplication<Application>().applicationContext, "$playlistTitle.jpg")

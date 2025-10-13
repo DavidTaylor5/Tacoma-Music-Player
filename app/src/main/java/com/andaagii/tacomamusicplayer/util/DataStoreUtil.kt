@@ -8,12 +8,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.media3.common.Player
 import com.andaagii.tacomamusicplayer.activity.dataStore
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.ShuffleType
-import kotlinx.coroutines.CoroutineScope
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 /**
  * DataStoreUtil requires context from MainActivity, which has access to DataStore "Settings".

@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.enum
+package com.andaagii.tacomamusicplayer.enumtype
 
 /**
  * Groups of songs can be categorized as either a playlist or an album.

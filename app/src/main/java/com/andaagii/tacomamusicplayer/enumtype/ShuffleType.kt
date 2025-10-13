@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.enum
+package com.andaagii.tacomamusicplayer.enumtype
 
 import com.andaagii.tacomamusicplayer.constants.Const
 import timber.log.Timber

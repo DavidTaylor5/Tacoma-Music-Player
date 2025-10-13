@@ -3,7 +3,7 @@ package com.andaagii.tacomamusicplayer.adapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.fragment.pages.CurrentQueueFragment
 import com.andaagii.tacomamusicplayer.fragment.pages.MusicPlayingFragment
 import com.andaagii.tacomamusicplayer.fragment.pages.AlbumListFragment
