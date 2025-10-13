@@ -31,6 +31,7 @@ import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
@@ -39,18 +40,24 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.util.concurrent.Executors
+import javax.inject.Inject
 
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
  * permissions, and will provide the UI with media related information.
  */
-class MainViewModel(application: Application): AndroidViewModel(application) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    application: Application,
+    musicRepo: MusicRepository
+): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
     var availablePlaylists: LiveData<List<SongGroupEntity>>

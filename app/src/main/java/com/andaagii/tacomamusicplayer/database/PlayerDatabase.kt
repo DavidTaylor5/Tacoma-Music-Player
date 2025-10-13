@@ -9,8 +9,7 @@ import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.entity.*
 
-@Database(entities = [SongEntity::class, SongGroupEntity::class, SongGroupCrossRefEntity::class], version = 9, exportSchema = false)
-@TypeConverters(Converters::class)
+@Database(entities = [SongEntity::class, SongGroupEntity::class, SongGroupCrossRefEntity::class], version = 10, exportSchema = false)
 abstract class PlayerDatabase : RoomDatabase() {
 
     abstract fun songDao(): SongDao

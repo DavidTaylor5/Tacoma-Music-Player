@@ -2,6 +2,7 @@ package com.andaagii.tacomamusicplayer.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
     tableName = "song_ref_table",
@@ -19,6 +20,10 @@ import androidx.room.ForeignKey
             childColumns = ["songId"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["songGroupId"]),
+        Index(value = ["songId"])
     ]
 )
 data class SongGroupCrossRefEntity (

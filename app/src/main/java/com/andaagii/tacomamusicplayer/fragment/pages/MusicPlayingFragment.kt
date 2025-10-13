@@ -18,8 +18,10 @@ import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class MusicPlayingFragment: Fragment() {
 
     private val parentViewModel: MainViewModel by activityViewModels()

@@ -29,8 +29,10 @@ import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class PlayerDisplayFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: PlayerDisplayFragmentBinding

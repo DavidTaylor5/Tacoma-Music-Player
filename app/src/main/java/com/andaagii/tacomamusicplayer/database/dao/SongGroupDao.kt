@@ -25,7 +25,7 @@ interface SongGroupDao {
     fun getSongGroupsByType(type: SongGroupType): LiveData<List<SongGroupEntity>>
 
     @Query("SELECT * FROM song_group_table WHERE group_title LIKE :title LIMIT 1")
-    fun findSongGroupByName(title: String): SongGroupEntity
+    fun findSongGroupByName(title: String): SongGroupEntity?
 
     @Update
     fun updateSongGroups(vararg songGroup: SongGroupEntity)

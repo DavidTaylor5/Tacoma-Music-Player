@@ -2,8 +2,10 @@ package com.andaagii.tacomamusicplayer
 
 import android.app.Application
 import com.andaagii.tacomamusicplayer.util.FileLoggingTree
+import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
+@HiltAndroidApp
 class TacomaMusicPlayerApplication: Application() {
 
     override fun onCreate() {

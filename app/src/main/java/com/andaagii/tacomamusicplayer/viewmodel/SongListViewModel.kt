@@ -4,8 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
 
+//@HiltViewModel
 class SongListViewModel: ViewModel() {
 
     val isShowingPlaylistPrompt: LiveData<Boolean>

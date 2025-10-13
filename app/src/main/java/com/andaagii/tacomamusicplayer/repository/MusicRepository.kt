@@ -6,7 +6,7 @@ package com.andaagii.tacomamusicplayer.repository
  * then I will inject the repository into the viewmodel.
  * This will also allow be to work on testing my app.
  */
-class MusicRepository {
+interface MusicRepository {
 
 
 
