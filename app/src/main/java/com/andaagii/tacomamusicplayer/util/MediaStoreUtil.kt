@@ -12,6 +12,7 @@ import com.andaagii.tacomamusicplayer.data.SongData
 import timber.log.Timber
 import java.io.File
 import com.mpatric.mp3agic.Mp3File
+import javax.inject.Inject
 
 /**
  * This class handles logic related to the android class MediaStore. MediaStore is an abstraction of
@@ -19,9 +20,9 @@ import com.mpatric.mp3agic.Mp3File
  * having applications able to directly access on board storage could be dangerous. By using MediaStore
  * I can request safe permissions from the user and query audio to use in the mp3 app.
  */
-class MediaStoreUtil {
-
-    private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
+class MediaStoreUtil @Inject constructor(
+    private val mediaItemUtil: MediaItemUtil
+) {
 
     /**
      * Query all songs from associated album on device storage.

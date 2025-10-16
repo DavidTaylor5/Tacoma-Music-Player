@@ -5,8 +5,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
+import javax.inject.Inject
 
-class MediaItemUtil {
+class MediaItemUtil @Inject constructor() {
 
     /**
      * Convert a list of songdata into mediaItems.

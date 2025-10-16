@@ -16,16 +16,52 @@ import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import javax.inject.Inject
 import kotlin.random.Random
+
+
+//TODO back this with MusicRepository rather than directly interacting with MediaStore
+
+//TODO also allow "Albums" and "Playlists" to return all albums or playlists, then return content inside albums or playlists
+
+//TODO GET GENRE FROM THE MEDIA ITEM?
+
+/*
+* TODO add all of Android's expected well-known root IDs
+*  2️⃣ Android’s expected well-known root IDs
+
+Google doesn’t document every single ID, but Media3 samples and Android Auto / Assistant guidelines follow this pattern:
+
+const val ROOT_ID = "root"
+const val ALBUMS_ID = "albums"
+const val ARTISTS_ID = "artists"
+const val PLAYLISTS_ID = "playlists"
+const val GENRES_ID = "genres"
+const val RECENTLY_ADDED_ID = "recently_added"
+
+
+onGetLibraryRoot() should return LibraryResult.ofRoot(ROOT_ID)
+
+onGetChildren(ROOT_ID) → returns all top-level categories (albums, artists, playlists, etc.)
+
+onGetChildren(ALBUMS_ID) → returns list of albums
+
+onGetChildren("album_<albumId>") → returns songs in that album
+
+Key point: Assistant expects these consistent IDs. If your service uses "album" instead of "albums", the Assistant may fail to find albums because it looks for "albums" specifically.
+* */
 
 /**
  * MusicService serves up a way to query albums and songs for the UI.
  */
+@AndroidEntryPoint
 class MusicService : MediaLibraryService() {
     private lateinit var player: ExoPlayer
     private var session: MediaLibrarySession? = null
-    private val mediaStoreUtil: MediaStoreUtil = MediaStoreUtil()
+    @Inject
+    lateinit var mediaStoreUtil: MediaStoreUtil
 
     val rootItem = MediaItem.Builder()
         .setMediaId("root")

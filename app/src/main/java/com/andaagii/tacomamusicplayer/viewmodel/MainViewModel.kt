@@ -56,7 +56,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     application: Application,
-    musicRepo: MusicRepository
+    private val musicRepo: MusicRepository
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
@@ -527,21 +527,8 @@ class MainViewModel @Inject constructor(
      */
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
-
-        val playlist = SongGroupEntity(
-            groupTitle = playlistName,
-            artFile = "",
-            creationTimestamp = LocalDateTime.now().toString(),
-            lastModificationTimestamp = LocalDateTime.now().toString(),
-            songGroupType = SongGroupType.PLAYLIST,
-            searchDescription = playlistName,
-            groupDuration = "0"
-        )
-
-        viewModelScope.launch(Dispatchers.IO) {
-            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().insertSongGroups(
-                playlist
-            )
+        viewModelScope.launch {
+            musicRepo.createPlaylist(playlistName)
         }
     }
 

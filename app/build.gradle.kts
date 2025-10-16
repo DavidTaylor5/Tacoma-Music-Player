@@ -116,9 +116,16 @@ dependencies {
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.10.5")
 
+    // Allows await for MediaBrowser.buildAsync()
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.3.0")
+
     // Hilt
     implementation("com.google.dagger:hilt-android:2.57.2")
     ksp("com.google.dagger:hilt-android-compiler:2.57.2")
+
+    // Hilt work
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     //media3, all modules need to be the same version
     implementation("androidx.media3:media3-exoplayer:1.2.1")

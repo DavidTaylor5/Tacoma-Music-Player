@@ -27,6 +27,9 @@ interface SongGroupDao {
     @Query("SELECT * FROM song_group_table WHERE group_title LIKE :title LIMIT 1")
     fun findSongGroupByName(title: String): SongGroupEntity?
 
+    @Query("SELECT * FROM song_group_table WHERE search_description = :description LIMIT 1")
+    fun findSongGroupByDescription(description: String): SongGroupEntity?
+
     @Update
     fun updateSongGroups(vararg songGroup: SongGroupEntity)
 
