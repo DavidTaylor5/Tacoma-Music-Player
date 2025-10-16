@@ -49,7 +49,8 @@ class MusicRepositoryImpl @Inject constructor(
                 lastModificationTimestamp = LocalDateTime.now().toString(),
                 songGroupType = SongGroupType.PLAYLIST,
                 searchDescription = playlistName,
-                groupDuration = "0"
+                groupDuration = "0",
+                groupArtist = "USER"
             )
 
             songGroupDao.insertSongGroups(playlist)

@@ -6,10 +6,11 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "song_table")
 data class SongEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+//    @PrimaryKey(autoGenerate = true)
+//    val id: Int = 0,
     @ColumnInfo(name = "album_title") val albumTitle: String,
     @ColumnInfo(name = "song_artist") val artist: String,
+    @PrimaryKey
     @ColumnInfo(name = "search_description") val searchDescription: String,
     @ColumnInfo(name = "song_name") val name: String,
     @ColumnInfo(name = "song_uri") val uri: String,

@@ -6,27 +6,27 @@ import androidx.room.Index
 
 @Entity(
     tableName = "song_ref_table",
-    primaryKeys = ["songGroupId", "songId"],
+    primaryKeys = ["groupTitle", "searchDescription"],
     foreignKeys = [
         ForeignKey(
             entity = SongGroupEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["songGroupId"],
+            parentColumns = ["group_title"],
+            childColumns = ["groupTitle"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = SongEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["songId"],
+            parentColumns = ["search_description"],
+            childColumns = ["searchDescription"],
             onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [
-        Index(value = ["songGroupId"]),
-        Index(value = ["songId"])
+        Index(value = ["groupTitle"]),
+        Index(value = ["searchDescription"])
     ]
 )
 data class SongGroupCrossRefEntity (
-    val songGroupId: Long,
-    val songId: Long
+    val groupTitle: Long,
+    val searchDescription: Long
 )

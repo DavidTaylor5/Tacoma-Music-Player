@@ -2,11 +2,16 @@ package com.andaagii.tacomamusicplayer.worker
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaBrowser
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -39,16 +44,84 @@ class CatalogMusicWorker @AssistedInject constructor(
      */
     private fun catalogMusic() {
         Timber.d("catalogMusic: ")
-        //TODO query the albums with the MediaStore...
+
+        val albums = mediaStoreUtil.queryAvailableAlbums(appContext)
+        catalogAlbums(albums)
+
+        for(album in albums) {
+            catalogAlbumSongs(album.mediaId)
+        }
     }
 
+    private fun catalogAlbums(albums: List<MediaItem>) {
+        Timber.d("catalogAlbums: album amount=${albums.size}")
+        val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
+        for(album in albums) {
+            val albumInfo = album.mediaMetadata
+            val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
+
+            val savedAlbum = songGroupDao.findSongGroupByDescription(description)
+
+            val songGroupEntity = SongGroupEntity(
+                songGroupType = SongGroupType.ALBUM,
+                artFile = if(savedAlbum!=null) savedAlbum.artFile else albumInfo.artworkUri.toString(),
+                groupTitle = albumInfo.albumTitle.toString(),
+                groupArtist = albumInfo.albumArtist.toString(),
+                searchDescription = description,
+                groupDuration = if(savedAlbum!=null) savedAlbum.groupDuration else "0",
+                creationTimestamp = "0",
+                lastModificationTimestamp = "0"
+            )
+
+            albumEntityList.add(songGroupEntity)
+        }
+
+        if(albumEntityList.isNotEmpty()) {
+            songGroupDao.insertSongGroups(*albumEntityList.toTypedArray())
+        }
+    }
 
     /**
      * Takes an album and adds all of it's songs to the
      */
-    private fun catalogAlbumSongs(albumId: String) {
-        Timber.d("catalogAlbumSongs: ")
-        //TODO Query a certain album using mediaStore...
+    private fun catalogAlbumSongs(albumName: String) {
+        Timber.d("catalogAlbumSongs: albumName=$albumName")
+
+        val songs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
+        val songEntityList: MutableList<SongEntity> = mutableListOf()
+
+        //After parsing all the songs, update album duration
+        var albumDuration: Long = 0
+
+        for(song in songs) {
+            val songInfo = song.mediaMetadata
+            val songEntity = SongEntity(
+                albumTitle = songInfo.albumTitle.toString(),
+                artist = songInfo.artist.toString(),
+                searchDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}",
+                name = songInfo.title.toString(),
+                uri = song.mediaId,
+                songDuration = songInfo.description.toString()
+            )
+            songEntityList.add(songEntity)
+
+            songInfo.description.toString().toLongOrNull()?.let { duration ->
+                albumDuration += duration
+            }
+        }
+
+        val albumWithDuration = songGroupDao.findSongGroupByName(albumName)?.copy(
+            groupDuration = albumDuration.toString()
+        )
+
+        //Update the album's duration
+        albumWithDuration?.let {
+            songGroupDao.updateSongGroups(albumWithDuration)
+        }
+
+        if(songEntityList.isNotEmpty()) {
+            songDao.insertItems(*songEntityList.toTypedArray())
+        }
     }
 }
 
