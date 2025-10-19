@@ -27,6 +27,6 @@ import androidx.room.Index
     ]
 )
 data class SongGroupCrossRefEntity (
-    val groupTitle: Long,
-    val searchDescription: Long
+    val groupTitle: String,
+    val searchDescription: String
 )

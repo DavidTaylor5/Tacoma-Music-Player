@@ -3,8 +3,16 @@ package com.andaagii.tacomamusicplayer.database.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
-@Entity(tableName = "song_table")
+@Entity(
+    tableName = "song_table",
+    indices = [
+        Index(value = ["song_artist"]),
+        Index(value = ["album_title"]),
+        Index(value = ["song_name"])
+    ]
+)
 data class SongEntity(
 //    @PrimaryKey(autoGenerate = true)
 //    val id: Int = 0,

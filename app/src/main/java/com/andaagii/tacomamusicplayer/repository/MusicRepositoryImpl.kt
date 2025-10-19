@@ -11,9 +11,12 @@ import androidx.work.WorkRequest
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.factory.MediaBrowserFactory
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -25,10 +28,11 @@ import javax.inject.Inject
 
 class MusicRepositoryImpl @Inject constructor(
     @ApplicationContext context: Context,
-    val mediaBrowserFactory: MediaBrowserFactory,
-    val songDao: SongDao,
-    val songGroupDao: SongGroupDao
-): MusicRepository {
+    private val mediaItemUtil: MediaItemUtil,
+    private val mediaBrowserFactory: MediaBrowserFactory,
+    private val songDao: SongDao,
+    private val songGroupDao: SongGroupDao
+): MusicRepository, MusicProviderRepository {
 
     init {
         //Catalog all of the music on the user's device to a database in the background
@@ -57,12 +61,64 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>) {
+    override suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>) {
+        Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
         withContext(Dispatchers.IO) {
-            //TODO how can I remove the song ids from the cross ref?
-            //TODO I need to the songs in the database first...
+            val playlistRefs = songs.map { song ->
+                SongGroupCrossRefEntity(
+                    playlistTitle,
+                    song.searchDescription
+                )
+            }
+
+            songGroupDao.deleteSongsFromPlaylist(*playlistRefs.toTypedArray())
         }
     }
 
-    //TODO how can I go from MediaItem to songId?
+    override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {
+         songGroupDao.getSongGroupsByType(SongGroupType.ALBUM).map { songGroup ->
+            mediaItemUtil.createMediaItemFromAlbum(songGroup.groupTitle)
+        }
+    }
+
+
+    override suspend fun getAllArtists(): List<MediaItem> = withContext(Dispatchers.IO) {
+        songDao.getAllArtists().map { artist ->
+            mediaItemUtil.createMediaItemFromArtist(artist)
+        }
+    }
+
+
+    override suspend fun getAllPlaylists(): List<MediaItem> = withContext(Dispatchers.IO) {
+        songGroupDao.getSongGroupsByType(SongGroupType.PLAYLIST).map { songGroup ->
+            mediaItemUtil.createMediaItemFromPlaylist(songGroup.groupTitle)
+        }
+    }
+
+
+    override suspend fun getAlbumsFromArtist(artist: String): List<MediaItem> = withContext(Dispatchers.IO) {
+        songGroupDao.findAllSongGroupsByArtist(artist).map { songGroup ->
+            mediaItemUtil.createMediaItemFromAlbum(songGroup.groupTitle)
+        }
+    }
+
+    override suspend fun getSongsFromAlbum(albumTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
+        songDao.getAllSongsFromAlbum(albumTitle).map { songEntity ->
+            mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+        }
+    }
+
+    override suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
+        songDao.selectAllSongsFromPlaylist(playlistTitle).map { songEntity ->
+            mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+        }
+    }
+
+    override suspend fun getSongFromName(songTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
+        songDao.queryAllSongsWithSongName(songTitle).map { songEntity ->
+            mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+        }
+    }
+
+
 }

@@ -5,6 +5,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import javax.inject.Inject
 
 class MediaItemUtil @Inject constructor() {
@@ -18,6 +19,69 @@ class MediaItemUtil @Inject constructor() {
          return songs.map {data ->
              createMediaItemFromSongData(data)
          }
+    }
+
+    fun createMediaItemFromArtist(artist: String): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId("artist:$artist")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(true)
+                    .build()
+            )
+            .build()
+    }
+
+    fun createMediaItemFromAlbum(albumTitle: String): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId("album:$albumTitle")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(true)
+                    .build()
+            )
+            .build()
+    }
+
+    fun createMediaItemFromPlaylist(playlistTitle: String): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId("playlist:$playlistTitle")
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(true)
+                    .build()
+            )
+            .build()
+    }
+
+    fun createMediaItemFromSongEntity(
+        song: SongEntity
+    ): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(song.uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setTitle(song.name)
+                    .setAlbumTitle(song.albumTitle)
+                    .setArtist(song.artist)
+                    //.setArtworkUri(Uri.parse(song.uri)
+                    .setDescription(song.songDuration)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .build()
+            )
+            .build()
+    }
+
+    fun removeMediaItemPrefix(
+        mediaItemId: String
+    ): String {
+        val prefixEnd = mediaItemId.indexOfFirst { char ->
+            char == ':'
+        }
+
+        return if(prefixEnd != -1) mediaItemId.substring(prefixEnd + 1) else mediaItemId
     }
 
     /**

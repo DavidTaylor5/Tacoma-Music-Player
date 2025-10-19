@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.repository
 
 import androidx.media3.common.MediaItem
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 
 /**
  * I want my app to follow the repository pattern...
@@ -21,6 +22,6 @@ interface MusicRepository {
      * @param playlistTitle Title of a playlist.
      * @param songs Songs to be deleted.
      */
-    suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>)
+    suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>)
 
 }

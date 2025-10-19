@@ -65,11 +65,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_18
+        targetCompatibility = JavaVersion.VERSION_18
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "18"
     }
 
     buildFeatures {
@@ -100,7 +100,11 @@ dependencies {
     implementation("com.squareup.moshi:moshi:1.12.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -128,10 +132,11 @@ dependencies {
     ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     //media3, all modules need to be the same version
-    implementation("androidx.media3:media3-exoplayer:1.2.1")
-    implementation("androidx.media3:media3-exoplayer-dash:1.2.1")
-    implementation("androidx.media3:media3-ui:1.2.1")
-    implementation("androidx.media3:media3-session:1.2.1")
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.4.1")
+    implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.media3:media3-session:1.4.1")
+    implementation("androidx.media3:media3-common:1.4.1")
 
     //adding viewmodel functionality
     implementation ("androidx.activity:activity-ktx:1.8.2")

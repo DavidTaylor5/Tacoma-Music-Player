@@ -60,7 +60,7 @@ class MainViewModel @Inject constructor(
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-    var availablePlaylists: LiveData<List<SongGroupEntity>>
+    var availablePlaylists: LiveData<List<SongGroupEntity>> = MutableLiveData<List<SongGroupEntity>>(listOf()) //TODO remove this assignment...
 
     /**
      * Reference to the app's mediaController.
@@ -507,8 +507,8 @@ class MainViewModel @Inject constructor(
         //ex. the layout of the albums / playlist fragments
         checkUserPreferences()
 
-        //TODO this should be moved into dependency injection...
-        availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().getSongGroupsByType(SongGroupType.PLAYLIST)
+        //TODO I need to add back available playlists...
+        //availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().getSongGroupsByType(SongGroupType.PLAYLIST)
     }
 
     /**

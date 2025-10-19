@@ -7,6 +7,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
@@ -22,13 +24,28 @@ interface SongGroupDao {
     fun getAllSongGroups(): LiveData<List<SongGroupEntity>>
 
     @Query("SELECT * FROM song_group_table WHERE song_group_type = :type")
-    fun getSongGroupsByType(type: SongGroupType): LiveData<List<SongGroupEntity>>
+    fun getSongGroupsByType(type: SongGroupType): List<SongGroupEntity>
 
     @Query("SELECT * FROM song_group_table WHERE group_title LIKE :title LIMIT 1")
     fun findSongGroupByName(title: String): SongGroupEntity?
 
     @Query("SELECT * FROM song_group_table WHERE search_description = :description LIMIT 1")
     fun findSongGroupByDescription(description: String): SongGroupEntity?
+
+    @Query("DELETE FROM song_ref_table WHERE groupTitle = :playlistName AND searchDescription = :songDescription")
+    fun deleteSongFromPlaylist(playlistName: String, songDescription: String)
+
+    @Delete
+    fun deleteSongsFromPlaylist(vararg songGroupRef: SongGroupCrossRefEntity)
+
+    @Query("DELETE FROM song_ref_table WHERE groupTitle = :playlistName")
+    fun deleteAllSongsFromPlaylist(playlistName: String)
+
+    @Query("SELECT * FROM song_group_table WHERE group_artist = :artist")
+    fun findAllSongGroupsByArtist(artist: String): List<SongGroupEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertRef(vararg songGroupRef: SongGroupCrossRefEntity)
 
     @Update
     fun updateSongGroups(vararg songGroup: SongGroupEntity)

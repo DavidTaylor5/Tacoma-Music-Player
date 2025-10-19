@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.service
 
 import android.content.Intent
+import android.os.Bundle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -12,15 +13,24 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.random.Random
-
+import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO back this with MusicRepository rather than directly interacting with MediaStore
 
@@ -31,6 +41,18 @@ import kotlin.random.Random
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs
+*
+*
+* KEY IDEA
+* So for full integration:
+
+Implement onGetChildren() for Auto browsing
+
+Implement onSearch() + onGetSearchResult() for Assistant voice commands
+
+They both share the same MediaLibrarySession and can reuse your MusicRepository for actual song data.
+*
+*
 
 Google doesn’t document every single ID, but Media3 samples and Android Auto / Assistant guidelines follow this pattern:
 
@@ -62,6 +84,14 @@ class MusicService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
     @Inject
     lateinit var mediaStoreUtil: MediaStoreUtil
+    @Inject
+    lateinit var musicProvider: MusicProviderRepository
+    @Inject
+    lateinit var mediaItemUtil: MediaItemUtil
+
+    // Gives my service the ability to run coroutines
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
@@ -79,6 +109,7 @@ class MusicService : MediaLibraryService() {
     // UI queries music from the service.
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
 
+        //Used to add the media items from google assistant search...
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -90,6 +121,16 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(updatedMediaItems)
         }
 
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+            return super.onCustomCommand(session, controller, customCommand, args)
+        }
+
+
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -98,6 +139,40 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
 
+        //Usually used to start async search
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+            return super.onSearch(session, browser, query, params)
+        }
+
+        //Used by Google assistant to get the result of a search
+        override fun onGetSearchResult(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String, //ex GNX Kendrick Lamar
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+
+
+
+            //TODO refer to onGetCHildren below...
+//            return LibraryResult.ofFuture(
+//                coroutineScope.async {
+//                    val results = repository.searchSongsAlbumsArtists(query)
+//                    results.map { it.toMediaItem() }
+//                }.asListenableFuture()
+
+
+            return super.onGetSearchResult(session, browser, query, page, pageSize, params)
+        }
+
+        //Used by Android Auto to browse the user's media
         override fun onGetChildren(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -106,20 +181,80 @@ class MusicService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            return when {
+                parentId == "root" -> {
+                    Futures.immediateFuture(
+                        LibraryResult.ofItemList(
+                            listOf(
+                                MediaItem.Builder().setMediaId("artists").setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle("Artists").build()
+                                ).build(),
+                                MediaItem.Builder().setMediaId("albums").setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle("Albums").build()
+                                ).build(),
+                                MediaItem.Builder().setMediaId("playlists").setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle("Playlists").build()
+                                ).build()
+                            ),
+                            params
+                        )
+                    )
+                }
+                parentId == "albums" -> {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(musicProvider.getAllAlbums(), params)
+                    }.asListenableFuture()
+                }
+                parentId == "artists" -> {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(musicProvider.getAllArtists(), params)
+                    }.asListenableFuture()
+                }
+                parentId == "playlists" -> {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
+                    }.asListenableFuture()
+                }
+                parentId.contains("album:") -> { //TODO string manipulation
+                    serviceScope.async {
+                        LibraryResult.ofItemList(
+                            musicProvider.getSongsFromAlbum(
+                                mediaItemUtil.removeMediaItemPrefix(parentId)
+                            ),
+                            params
+                        )
+                    }.asListenableFuture()
+                }
+                parentId.contains("artist:") -> {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(
+                            musicProvider.getAlbumsFromArtist(
+                                mediaItemUtil.removeMediaItemPrefix(parentId)
+                            ),
+                            params
+                        )
+                    }.asListenableFuture()
+                }
+                parentId.contains("playlist:") -> {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(
+                            musicProvider.getSongsFromPlaylist(
+                                mediaItemUtil.removeMediaItemPrefix(parentId)
+                            ),
+                            params
+                        )
+                    }.asListenableFuture()
+                }
+                else ->  {
+                    serviceScope.async {
+                        LibraryResult.ofItemList(
+                            musicProvider.getSongFromName(parentId),
+                            params
+                        )
+                    }.asListenableFuture()
+                }
+            }
 
-            return Futures.immediateFuture(
-                LibraryResult.ofItemList(
-                    when(parentId) {
-                        "root" -> {
-                            mediaStoreUtil.queryAvailableAlbums(this@MusicService)
-                        }
-                        else ->  {
-                            getListOfSongMediaItemsFromAlbum(parentId)
-                        }
-                    },
-                    params
-                )
-            )
         }
     }
 
@@ -142,6 +277,7 @@ class MusicService : MediaLibraryService() {
 
     override fun onDestroy() {
         Timber.d("onDestroy: ")
+        serviceJob.cancel()
         session?.run {
             player.release()
             session = null
