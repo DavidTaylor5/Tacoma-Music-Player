@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.PlaylistPromptAdapter
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewCustomPlaylistPromptBinding
 
 class CustomPlaylistPrompt @JvmOverloads constructor(
@@ -59,7 +60,7 @@ class CustomPlaylistPrompt @JvmOverloads constructor(
     /**
      * Show all available playlists in the prompt.
      */
-    fun setPlaylistData(playlists: List<Playlist>) {
+    fun setPlaylistData(playlists: List<SongGroupEntity>) {
         binding.displayRecyclerview.adapter = PlaylistPromptAdapter(
             playlists,
             this::onPlaylistChecked

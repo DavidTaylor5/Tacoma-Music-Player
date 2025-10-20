@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.util
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import timber.log.Timber
 
 class SortingUtil {
@@ -69,11 +70,11 @@ class SortingUtil {
             }
         }
 
-        fun sortPlaylists(playlists: List<Playlist>, sorting: SortingOption): List<Playlist> {
+        fun sortPlaylists(playlists: List<SongGroupEntity>, sorting: SortingOption): List<SongGroupEntity> {
             return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     playlists.sortedBy { playlist ->
-                        playlist.title
+                        playlist.groupTitle
                     }
                 }
                 SortingOption.SORTING_BY_CREATION_DATE -> {

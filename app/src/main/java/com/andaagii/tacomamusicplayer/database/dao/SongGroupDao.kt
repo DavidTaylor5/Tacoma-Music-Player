@@ -11,6 +11,7 @@ import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import kotlinx.coroutines.flow.Flow
 
 //TODO return values as FLOW
 
@@ -23,8 +24,13 @@ interface SongGroupDao {
     @Query("SELECT * FROM song_group_table")
     fun getAllSongGroups(): LiveData<List<SongGroupEntity>>
 
+    //TODO I can mirror functions, having one function for one-shot, one function for flow of data.
+
     @Query("SELECT * FROM song_group_table WHERE song_group_type = :type")
     fun getSongGroupsByType(type: SongGroupType): List<SongGroupEntity>
+
+    @Query("SELECT * FROM song_group_table WHERE song_group_type = :type")
+    fun getSongGroupsByTypeFlow(type: SongGroupType): Flow<List<SongGroupEntity>>
 
     @Query("SELECT * FROM song_group_table WHERE group_title LIKE :title LIMIT 1")
     fun findSongGroupByName(title: String): SongGroupEntity?

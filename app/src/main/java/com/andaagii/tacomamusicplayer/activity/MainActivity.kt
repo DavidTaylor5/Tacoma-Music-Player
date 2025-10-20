@@ -16,6 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -30,6 +34,7 @@ import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 //Preferences DataStore, for storing settings in my app
@@ -107,11 +112,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.availablePlaylists.observe(this) { playlists ->
-            Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
-            if(playlists.isNotEmpty()) {
-                for(playlist in playlists) {
-                    Timber.d("AllPlaylistLiveData: playlist.title=${playlist.groupTitle}, songs=${"I'm working on it..."}")
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.availablePlaylists.collect { playlists ->
+                    Timber.d("availablePlaylists: playlists has updated size=${playlists.size}  ")
+                    if(playlists.isNotEmpty()) {
+                        for(playlist in playlists) {
+                            Timber.d("availablePlaylists: playlist.title=${playlist.groupTitle}")
+                        }
+                    }
                 }
             }
         }

@@ -15,6 +15,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -42,6 +45,7 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -236,14 +240,15 @@ class SongListFragment(
             }
         }
 
-        parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-
-            //TODO IMPLEMENT THE BELOW LOGIC...
-
-//            val playlistsWithoutQueue = playlists.filter { playlist ->
-//                playlist.title != Const.PLAYLIST_QUEUE_TITLE && playlist.title != Const.ORIGINAL_QUEUE_ORDER
-//            }
-//            binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.availablePlaylists.collect { playlists ->
+                    val playlistsWithoutQueue = playlists.filter { playlist ->
+                        playlist.groupTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.groupTitle != Const.ORIGINAL_QUEUE_ORDER
+                    }
+                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+                }
+            }
         }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->

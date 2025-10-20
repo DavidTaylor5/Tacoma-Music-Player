@@ -2,6 +2,8 @@ package com.andaagii.tacomamusicplayer.repository
 
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import kotlinx.coroutines.flow.Flow
 
 /**
  * I want my app to follow the repository pattern...
@@ -23,5 +25,10 @@ interface MusicRepository {
      * @param songs Songs to be deleted.
      */
     suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>)
+
+
+    fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
+
+    fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
 
 }

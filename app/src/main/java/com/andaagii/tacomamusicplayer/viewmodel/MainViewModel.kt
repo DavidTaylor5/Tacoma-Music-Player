@@ -42,7 +42,10 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -60,7 +63,12 @@ class MainViewModel @Inject constructor(
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-    var availablePlaylists: LiveData<List<SongGroupEntity>> = MutableLiveData<List<SongGroupEntity>>(listOf()) //TODO remove this assignment...
+    var availablePlaylists: StateFlow<List<SongGroupEntity>> = musicRepo.getAllAvailablePlaylistFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        ) //TODO collect this flow...
 
     /**
      * Reference to the app's mediaController.
@@ -506,9 +514,6 @@ class MainViewModel @Inject constructor(
 
         //ex. the layout of the albums / playlist fragments
         checkUserPreferences()
-
-        //TODO I need to add back available playlists...
-        //availablePlaylists = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().getSongGroupsByType(SongGroupType.PLAYLIST)
     }
 
     /**

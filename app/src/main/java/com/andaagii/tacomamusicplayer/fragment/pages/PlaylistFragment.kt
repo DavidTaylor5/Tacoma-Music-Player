@@ -8,12 +8,16 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
@@ -22,6 +26,7 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -34,7 +39,7 @@ class PlaylistFragment: Fragment() {
     private var playlistThatNeedsNewImage = "empty"
 
     private var currentLayout = LayoutType.LINEAR_LAYOUT
-    private var currentPlaylists: List<Playlist> = listOf()
+    private var currentPlaylists: List<SongGroupEntity> = listOf()
 
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -82,37 +87,42 @@ class PlaylistFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentPlaylistBinding.inflate(inflater)
-        parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
 
-            //TODO WHAT TO DO WITH PLAYLIST...
 
-//            //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
-//            val playlistsWithoutQueue = playlists.filter { playlist ->
-//                playlist.title != Const.PLAYLIST_QUEUE_TITLE &&
-//                        playlist.title != Const.ORIGINAL_QUEUE_ORDER
-//            }
-//
-//            currentPlaylists = SortingUtil.sortPlaylists(
-//                playlistsWithoutQueue,
-//                parentViewModel.sortingForPlaylistTab.value
-//                    ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
-//            )
-//            if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
-//                binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-//                    currentPlaylists,
-//                    this::onPlaylistClick,
-//                    parentViewModel::playPlaylist,
-//                    this::handlePlaylistSetting
-//                )
-//            } else {
-//                binding.displayRecyclerview.adapter = PlaylistAdapter(
-//                    currentPlaylists,
-//                    this::onPlaylistClick,
-//                    parentViewModel::playPlaylist,
-//                    this::handlePlaylistSetting
-//                )
-//            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.availablePlaylists.collect { playlists ->
+                                //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
+                    val playlistsWithoutQueue = playlists.filter { playlist ->
+                        playlist.groupTitle != Const.PLAYLIST_QUEUE_TITLE &&
+                                playlist.groupTitle != Const.ORIGINAL_QUEUE_ORDER
+                    }
+
+                    currentPlaylists = SortingUtil.sortPlaylists(
+                        playlistsWithoutQueue,
+                        parentViewModel.sortingForPlaylistTab.value
+                            ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
+                    )
+                    if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
+                        binding.displayRecyclerview.adapter = PlaylistGridAdapter(
+                            currentPlaylists,
+                            this@PlaylistFragment::onPlaylistClick,
+                            parentViewModel::playPlaylist,
+                            this@PlaylistFragment::handlePlaylistSetting
+                        )
+                    } else {
+                        binding.displayRecyclerview.adapter = PlaylistAdapter(
+                            currentPlaylists,
+                            this@PlaylistFragment::onPlaylistClick,
+                            parentViewModel::playPlaylist,
+                            this@PlaylistFragment::handlePlaylistSetting
+                        )
+                    }
+                }
+            }
         }
+
+
         parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
             updatePlaylistLayout(layout)
         }

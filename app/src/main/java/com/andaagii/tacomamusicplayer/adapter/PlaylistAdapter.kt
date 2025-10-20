@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
@@ -19,7 +20,7 @@ import timber.log.Timber
 import java.io.File
 
 class PlaylistAdapter(
-    private var playlists:  List<Playlist>,
+    private var playlists:  List<SongGroupEntity>,
     private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
@@ -38,30 +39,30 @@ class PlaylistAdapter(
         return PlaylistViewHolder(binding)
     }
 
-    fun updateData(playlists: List<Playlist>) {
+    fun updateData(playlists: List<SongGroupEntity>) {
         this.playlists = playlists
         this.notifyDataSetChanged()
     }
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
-        viewHolder.binding.playlistName.text = playlists[position].title
+        viewHolder.binding.playlistName.text = playlists[position].groupTitle
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position].title)
+            onPlaylistClick(playlists[position].groupTitle)
         }
 
-        //Determine Playlist Duration Information
-        val numberOfSongs = playlists[position].songs.songs.size
-        viewHolder.binding.durationTracks.text = if(numberOfSongs == 1) "1 track" else {"$numberOfSongs tracks"}
+        //Determine Playlist Duration Information TODO how can I get the track numbers....
+//        val numberOfSongs = playlists[position].songs.songs.size
+//        viewHolder.binding.durationTracks.text = if(numberOfSongs == 1) "1 track" else {"$numberOfSongs tracks"}
+//
+//        val playlistDuration = playlists[position].songs.songs.fold(0L) { acc, songData ->
+//            val songDuration = songData.duration.toLongOrNull() ?: 0
+//            acc + songDuration
+//        }
 
-        val playlistDuration = playlists[position].songs.songs.fold(0L) { acc, songData ->
-            val songDuration = songData.duration.toLongOrNull() ?: 0
-            acc + songDuration
-        }
-
-        val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
-        viewHolder.binding.durationTime.text = playlistDurationReadable
+        //val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
+        //viewHolder.binding.durationTime.text = playlistDurationReadable
 
         //Logic for showing custom playist image
         val artFile = playlists[position].artFile
@@ -79,7 +80,7 @@ class PlaylistAdapter(
         }
 
         viewHolder.binding.playButton.setOnClickListener {
-            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].title)
+            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].groupTitle)
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {
@@ -103,7 +104,7 @@ class PlaylistAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        val playlistTitle = playlists[position].title
+        val playlistTitle = playlists[position].groupTitle
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
         Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(

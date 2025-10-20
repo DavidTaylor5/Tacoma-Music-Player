@@ -20,6 +20,7 @@ import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -73,6 +74,16 @@ class MusicRepositoryImpl @Inject constructor(
 
             songGroupDao.deleteSongsFromPlaylist(*playlistRefs.toTypedArray())
         }
+    }
+
+    override fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>> {
+        Timber.d("getAllAvailableAlbumsFlow: ")
+        return songGroupDao.getSongGroupsByTypeFlow(SongGroupType.ALBUM)
+    }
+
+    override fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>> {
+        Timber.d("getAllAvailablePlaylistFlow: ")
+        return songGroupDao.getSongGroupsByTypeFlow(SongGroupType.PLAYLIST)
     }
 
     override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {
