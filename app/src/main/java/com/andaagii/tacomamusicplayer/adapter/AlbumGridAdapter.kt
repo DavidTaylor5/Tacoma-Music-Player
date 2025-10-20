@@ -9,10 +9,12 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
@@ -22,7 +24,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
 class AlbumGridAdapter(
-    private var albums: List<MediaItem>,
+    private var albums: List<SongGroupEntity>,
     private val onAlbumClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     private val handleAlbumOption: (MenuOptionUtil.MenuOption, String, String?) -> Unit,
@@ -44,7 +46,7 @@ class AlbumGridAdapter(
         return AlbumGridViewHolder(binding)
     }
 
-    fun updateData(albums: List<MediaItem>) {
+    fun updateData(albums: List<SongGroupEntity>) {
         this.albums = albums
         this.notifyDataSetChanged()
     }
@@ -56,13 +58,13 @@ class AlbumGridAdapter(
         //First check that dataSet has a value for position
         if(position < albums.size) {
             val album = albums[position]
-            val albumMetadata = album.mediaMetadata
-            val customImage = "album_${albumMetadata.albumTitle}"
-            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albumMetadata.albumTitle}, albumArtist=${albumMetadata.albumArtist}, albumArtUri=${albumMetadata.artworkUri}")
+            //val albumMetadata = album.mediaMetadata
+            val customImage = "album_${album.groupTitle}"
+            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.groupTitle}, albumArtist=${album.groupArtist}, albumArtUri=${album.artFile}")
 
-            val albumTitle = albumMetadata.albumTitle.toString()
-            val albumArtist = albumMetadata.albumArtist.toString()
-            val albumUri = albumMetadata.artworkUri ?: Uri.EMPTY
+            val albumTitle = album.groupTitle
+            val albumArtist = album.groupArtist
+            val albumUri = album.artFile?.toUri() ?: Uri.EMPTY
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
 
@@ -75,7 +77,7 @@ class AlbumGridAdapter(
 
             viewHolder.binding.albumName.text = albumTitle
 
-            albumMetadata.releaseYear?.let { year ->
+            album.releaseYear.toIntOrNull()?.let { year ->
                 if(year > 0) {
                     viewHolder.binding.descriptionText.text = "$year | $albumArtist"
                 }
@@ -96,10 +98,10 @@ class AlbumGridAdapter(
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Handle Album Option
-                val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
+                val customImageName = "album_${albums[position].groupTitle}"
                 handleAlbumOption(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                    albums[position].mediaId,
+                    albums[position].groupTitle,
                     customImageName
                 )
 

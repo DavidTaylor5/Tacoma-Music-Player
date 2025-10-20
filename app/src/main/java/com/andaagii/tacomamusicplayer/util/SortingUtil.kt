@@ -95,31 +95,31 @@ class SortingUtil {
             }
         }
 
-        fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption): List<MediaItem> {
+        fun sortAlbums(albums: List<SongGroupEntity>, sorting: SortingOption): List<SongGroupEntity> {
             return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.mediaMetadata.albumTitle.toString()
+                        album.groupTitle
                     }
                 }
                 SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.mediaMetadata.albumArtist.toString()
+                        album.groupArtist.toString()
                     }
                 }
                 SortingOption.SORTING_NEWEST_RELEASE -> {
                     albums.sortedByDescending { album ->
-                        album.mediaMetadata.releaseYear
+                        album.releaseYear
                     }
                 }
                 SortingOption.SORTING_OLDEST_RELEASE -> {
                     albums.sortedBy { album ->
-                        album.mediaMetadata.releaseYear
+                        album.releaseYear
                     }
                 }
                 else -> { //Default to most recent release year.
                     albums.sortedBy { album ->
-                        album.mediaMetadata.releaseYear
+                        album.releaseYear
                     }
                 }
             }

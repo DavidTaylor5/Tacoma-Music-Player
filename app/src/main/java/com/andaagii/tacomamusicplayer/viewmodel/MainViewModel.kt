@@ -63,12 +63,20 @@ class MainViewModel @Inject constructor(
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
+
     var availablePlaylists: StateFlow<List<SongGroupEntity>> = musicRepo.getAllAvailablePlaylistFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
-        ) //TODO collect this flow...
+        )
+
+    var availableAlbums: StateFlow<List<SongGroupEntity>> = musicRepo.getAllAvailableAlbumsFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     /**
      * Reference to the app's mediaController.
@@ -76,13 +84,6 @@ class MainViewModel @Inject constructor(
     val mediaController: LiveData<MediaController>
         get() = _mediaController
     private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
-
-    /**
-     * Livedata observable list of albums on the device.
-     */
-    val albumMediaItemList: LiveData<List<MediaItem>>
-        get() = _albumMediaItemList
-    private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
     /**
      * List of songs to be inspected.
@@ -254,62 +255,6 @@ class MainViewModel @Inject constructor(
 //                .findDescriptionFromSearchStr(search)
 //            _currentSearchList.postValue(searchResults)
 //        }
-    }
-
-    /**
-     * I need to catalog the music library so that I can add search functionality.
-     * TODO move this to a background worker
-     */
-    private fun catalogMusicLibrary() {
-        Timber.d("catalogMusicLibrary: ")
-        val executor = Executors.newFixedThreadPool(4)
-
-        albumMediaItemList.value?.let { albums ->
-            val updatedSearchData: MutableList<SearchData> = mutableListOf()
-
-            for(album in albums) {
-                val albumSearchData = SearchData(
-                    description = "${album.mediaId} - ${album.mediaMetadata.albumArtist}",
-                    albumTitle = album.mediaId,
-                    artist = album.mediaMetadata.albumArtist.toString(),
-                    artworkUri = album.mediaMetadata.artworkUri.toString(),
-                    isAlbum = true
-                )
-
-                updatedSearchData.add(albumSearchData)
-
-                mediaBrowser?.let { browser ->
-                    val childrenFuture =
-                        browser.getChildren(album.mediaId, 0, Int.MAX_VALUE, null)
-                    childrenFuture.addListener({
-
-                        val songs = childrenFuture.get().value?.toList() ?: listOf()
-
-                        for(song in songs) {
-                            updatedSearchData.add(
-                                SearchData(
-                                    description = "${song.mediaMetadata.title.toString()} - ${song.mediaMetadata.albumTitle}",
-                                    songTitle = song.mediaMetadata.title.toString(),
-                                    artworkUri = song.mediaMetadata.artworkUri.toString(),
-                                    albumTitle = song.mediaMetadata.albumTitle.toString(),
-                                    artist = song.mediaMetadata.artist.toString(),
-                                    songUri = song.mediaId,
-                                    isAlbum = false
-                            ))
-                        }
-                    }, executor)
-                }
-            }
-
-            //TODO ADD CODE SO THAT I CAN CATELOG THE DATABASE FROM CURRENT ALBUMS AND SONGS IN THE BACKGROUND!
-//            viewModelScope.launch(Dispatchers.IO) {
-//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                    .songGroupDao()
-//                    .insertItems(*updatedSearchData.toTypedArray())
-//            }
-        }
-
-        //TODO should this code recursively run?
     }
 
     /**
@@ -1106,30 +1051,6 @@ class MainViewModel @Inject constructor(
                 rootMediaItem = rootFuture.get().value
                 _isRootAvailable.value = true
             }, MoreExecutors.directExecutor())
-        }
-    }
-
-    /**
-     * Will return a list of MediaItems associated with albums on device storage.
-     */
-    fun queryAvailableAlbums() {
-        Timber.d("queryAvailableAlbums: ")
-        if(mediaBrowser != null) {
-
-            mediaBrowser?.let { browser ->
-                rootMediaItem?.let { rootItem ->
-                    val childrenFuture =
-                        browser.getChildren(rootItem.mediaId, 0, Int.MAX_VALUE, null)
-                    childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                        _albumMediaItemList.value =  childrenFuture.get().value?.toList() ?: listOf()
-
-                        //Start Cataloging the Songs found in the music library
-                        //catalogMusicLibrary() //TODO I need to do this in the background...
-                    }, MoreExecutors.directExecutor())
-                }
-            }
-        } else {
-            Timber.d("queryAvailableAlbums: mediaBrowser isn't ready...")
         }
     }
 

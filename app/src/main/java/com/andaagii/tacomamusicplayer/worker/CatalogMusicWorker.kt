@@ -70,7 +70,8 @@ class CatalogMusicWorker @AssistedInject constructor(
                 searchDescription = description,
                 groupDuration = if(savedAlbum!=null) savedAlbum.groupDuration else "0",
                 creationTimestamp = "0",
-                lastModificationTimestamp = "0"
+                lastModificationTimestamp = "0",
+                releaseYear = albumInfo.releaseYear.toString()
             )
 
             albumEntityList.add(songGroupEntity)

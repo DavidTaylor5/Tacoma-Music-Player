@@ -98,17 +98,18 @@ class MainActivity : AppCompatActivity() {
             } else {
                 viewModel.initializeMusicPlaying()
 
-                val handler = Handler(Looper.getMainLooper())
-                musicObserver = MusicContentObserver(
-                    handler = handler,
-                    context = this,
-                    onContentChange = viewModel::queryAvailableAlbums
-                )
-                contentResolver.registerContentObserver(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    true,
-                    musicObserver!!
-                )
+                //TODO add back code for music content observer?
+//                val handler = Handler(Looper.getMainLooper())
+//                musicObserver = MusicContentObserver(
+//                    handler = handler,
+//                    context = this,
+//                    onContentChange = viewModel::queryAvailableAlbums
+//                )
+//                contentResolver.registerContentObserver(
+//                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+//                    true,
+//                    musicObserver!!
+//                )
             }
         }
 
@@ -122,14 +123,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-            }
-        }
-
-        viewModel.isRootAvailable.observe(this) { isAvailable ->
-            //The root is available, I can now check albums and stuff
-            if(isAvailable) {
-                //query available albums
-                viewModel.queryAvailableAlbums()
             }
         }
 

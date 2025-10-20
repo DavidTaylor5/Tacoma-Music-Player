@@ -16,6 +16,9 @@ data class SongGroupEntity(
     @ColumnInfo(name = "group_artist") val groupArtist: String?,
     @ColumnInfo(name = "search_description") val searchDescription: String,
     @ColumnInfo(name = "group_duration") val groupDuration: String?,
+
+    @ColumnInfo(name = "release_year") val releaseYear: String = "",
+
     @ColumnInfo(name = "creation_timestamp") var creationTimestamp: String = "",
     @ColumnInfo(name = "last_modification_timestamp") var lastModificationTimestamp: String = "",
 )
