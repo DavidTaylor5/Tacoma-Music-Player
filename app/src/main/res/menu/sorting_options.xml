@@ -5,18 +5,18 @@
 
     <item
         android:id="@+id/order_by_alphabetical"
-        android:title="Order by Title Alphabetical" />
+        android:title="@string/order_by_title_alphabetical" />
 
     <item
         android:id="@+id/order_by_artist_alphabetical"
-        android:title="Order by Artist Alphabetical" />
+        android:title="@string/order_by_artist_alphabetical" />
 
     <item
         android:id="@+id/order_by_newest_release"
-        android:title="Order by Newest Release" />
+        android:title="@string/order_by_newest_release" />
 
     <item
         android:id="@+id/order_by_oldest_release"
-        android:title="Order by Oldest Release" />
+        android:title="@string/order_by_oldest_release" />
 
 </menu>

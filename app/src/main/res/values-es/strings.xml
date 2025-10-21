@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Tacoma Music Player</string>
     <string name="read_media_audio_denied_explanation">
@@ -9,8 +10,8 @@
     <string name="permission_denied_screen_title">User Notice</string>
     <string name="library_animation">library animation</string>
     <string name="playing_animation">playing_animation</string>
-    <string name="playlists">Playlists</string>
-    <string name="albums">Albums</string>
+    <string name="playlists">Playlists but spanish</string>
+    <string name="albums">Albums but spanish</string>
     <string name="songs">Songs</string>
     <string name="play_album">Play Album</string>
     <string name="add_to_queue">Add to Queue</string>

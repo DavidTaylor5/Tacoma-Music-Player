@@ -355,9 +355,9 @@ class PlayerDisplayFragment: Fragment() {
         removeSearchIcons()
         binding.miniPlayerControls?.visibility = View.VISIBLE
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Queue"
+        binding.pageTitle?.text = getString(R.string.queue)
         binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = "Clear"
+        binding.pageAction?.text = getString(R.string.clear)
         binding.pageAction?.setOnClickListener {
             parentViewModel.clearQueue()
         }
@@ -380,9 +380,9 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForPlaylistPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Playlists"
+        binding.pageTitle?.text = getString(R.string.playlists)
         binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = "Add Playlist"
+        binding.pageAction?.text = getString(R.string.add_playlist)
         binding.pageAction?.setOnClickListener {
             parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
         }
@@ -410,7 +410,7 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForAlbumPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Albums"
+        binding.pageTitle?.text = getString(R.string.albums)
         binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.VISIBLE
         removeSearchIcons()
@@ -435,7 +435,7 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForSongPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Songs"
+        binding.pageTitle?.text = getString(R.string.songs)
         binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.INVISIBLE
         determineWhichSearchIconToShow()

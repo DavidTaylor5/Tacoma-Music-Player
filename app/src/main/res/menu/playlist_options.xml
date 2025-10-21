@@ -2,23 +2,23 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/play_playlist_only"
-        android:title="Play Playlist"
+        android:title="@string/play_playlist"
         android:titleCondensed=""/>
 
     <item
         android:id="@+id/add_to_queue"
-        android:title="Add to Queue"
+        android:title="@string/add_to_queue"
         android:titleCondensed=""/>
 
     <item
         android:id="@+id/rename_playlist"
-        android:title="Rename Playlist" />
+        android:title="@string/rename_playlist" />
 
     <item
         android:id="@+id/add_playlist_image"
-        android:title="Add Playlist Image" />
+        android:title="@string/add_playlist_image" />
 
     <item
         android:id="@+id/remove_playlist"
-        android:title="Remove Playlist" />
+        android:title="@string/remove_playlist" />
 </menu>

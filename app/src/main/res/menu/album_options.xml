@@ -2,16 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/play_album_only"
-        android:title="Play Album"
+        android:title="@string/play_album"
         android:titleCondensed=""/>
 
     <item
         android:id="@+id/add_to_queue"
-        android:title="Add to Queue"
+        android:title="@string/add_to_queue"
         android:titleCondensed=""/>
 
     <item
         android:id="@+id/add_custom_image"
-        android:title="Add Custom Album Image"
+        android:title="@string/add_custom_album_image"
         android:titleCondensed=""/>
 </menu>

@@ -88,9 +88,9 @@ class MainViewModel @Inject constructor(
     /**
      * List of songs to be inspected.
      */
-    val currentSongList: LiveData<SongGroup>
+    val currentSongList: LiveData<SongGroupEntity>
         get() = _currentSongList
-    private val _currentSongList: MutableLiveData<SongGroup> = MutableLiveData()
+    private val _currentSongList: MutableLiveData<SongGroupEntity> = MutableLiveData()
 
     val currentSearchList: LiveData<List<SearchData>>
         get() = _currentSearchList
@@ -1068,7 +1068,7 @@ class MainViewModel @Inject constructor(
                     val songs = childrenFuture.get().value?.toList() ?: listOf()
                     val title = albumId
                     val songGroupType = SongGroupType.ALBUM
-                    _currentSongList.value = SongGroup(songGroupType, songs, title)
+                    //_currentSongList.value = SongGroup(songGroupType, songs, title) //TODO create a function to go from mediaItem to SongGroupEntity
 
                     //When I query the album, determine if/how album should be played
                     if(queueAddType == QueueAddType.QUEUE_END_ADD) {

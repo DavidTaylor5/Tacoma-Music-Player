@@ -6,7 +6,7 @@
 
     <item
         android:id="@+id/queue_remove"
-        android:title="Remove from Queue"
+        android:title="@string/remove_from_queue"
         android:titleCondensed=""/>
 
 <!--    <item-->

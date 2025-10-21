@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -155,26 +156,28 @@ class SongListFragment(
     ): View {
         binding = FragmentSonglistBinding.inflate(inflater)
 
-        parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroup ->
-            Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
+        parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroupEntity ->
+            Timber.d("onCreateView: title=${songGroupEntity.groupTitle}")
 
-            currentSongGroup = songGroup
-            lastDisplaySongGroup = songGroup
+            //TODO I need to reimplement this code to work!!
 
-            parentViewModel.handleCancelSearchButtonClick()
-
-            binding.displayRecyclerview.adapter = SongListAdapter(
-                songGroup.songs,
-                this::handleSongSetting,
-                this::handleSongClicked,
-                this::handleAlbumClicked,
-                this::handleSongSelected,
-                songGroup.type,
-                this::handleViewHolderHandleDrag
-            )
-            determineIfShowingInformationScreen(songGroup)
-
-            initializeSongGroupInfo()
+//            currentSongGroup = songGroupEntity
+//            lastDisplaySongGroup = songGroupEntity
+//
+//            parentViewModel.handleCancelSearchButtonClick()
+//
+//            binding.displayRecyclerview.adapter = SongListAdapter(
+//                songGroup.songs,
+//                this::handleSongSetting,
+//                this::handleSongClicked,
+//                this::handleAlbumClicked,
+//                this::handleSongSelected,
+//                songGroup.type,
+//                this::handleViewHolderHandleDrag
+//            )
+//            determineIfShowingInformationScreen(songGroup)
+//
+//            initializeSongGroupInfo()
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
@@ -276,14 +279,16 @@ class SongListFragment(
                 R.menu.songlist_songgroup_options,
                 menu.menu
             )
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-                    parentViewModel.currentSongList.value?.songs ?: listOf()
-                )
-                return@setOnMenuItemClickListener true
-            }
+
+            //TODO add this back!!!
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//                handleSongSetting(
+//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+//                    parentViewModel.currentSongList.value?.songs ?: listOf()
+//                )
+//                return@setOnMenuItemClickListener true
+//            }
             menu.show()
         }
 
@@ -650,13 +655,17 @@ class SongListFragment(
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         //First Icon will be the playlists
-        binding.songListInformationScreen.setFirstInfo("Choose a playlist to View")
-        binding.songListInformationScreen.setFirstIcon(resources.getDrawable(R.drawable.playlist_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setFirstInfo(getString(R.string.choose_a_playlist_to_view))
+        ResourcesCompat.getDrawable(resources, R.drawable.playlist_icon, null)?.let { drawable ->
+            binding.songListInformationScreen.setFirstIcon(drawable)
+        }
         binding.songListInformationScreen.setFirstIconCallback { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
 
         //Second Icon will be the Albums
-        binding.songListInformationScreen.setSecondInfo("Choose an album to View")
-        binding.songListInformationScreen.setSecondIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setSecondInfo(getString(R.string.choose_an_album_to_view))
+        ResourcesCompat.getDrawable(resources, R.drawable.browse_album_icon, null)?.let { drawable ->
+            binding.songListInformationScreen.setSecondIcon(drawable)
+        }
         binding.songListInformationScreen.setSecondIconCallback { parentViewModel.setPage(PageType.ALBUM_PAGE) }
     }
 }

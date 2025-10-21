@@ -215,7 +215,8 @@ class MusicService : MediaLibraryService() {
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
                     }.asListenableFuture()
                 }
-                parentId.contains("album:") -> { //TODO string manipulation
+                parentId.contains("album:") -> { //TODO string manipulation SEEMS right, must be an error on listening for the response?
+                    val a = mediaItemUtil.removeMediaItemPrefix(parentId)
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(

@@ -28,7 +28,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:hint="Search for Albums and Songs"
+                android:hint="@string/search_for_albums_and_songs"
                 android:inputType="text"
                 android:textColorHint="@color/white"
                 android:textColor="@color/white"
