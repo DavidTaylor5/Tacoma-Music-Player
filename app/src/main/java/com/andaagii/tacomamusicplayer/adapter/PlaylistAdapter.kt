@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.Playlist
@@ -20,7 +21,7 @@ import timber.log.Timber
 import java.io.File
 
 class PlaylistAdapter(
-    private var playlists:  List<SongGroupEntity>,
+    private var playlists:  List<MediaItem>,
     private val onPlaylistClick: (String) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
@@ -39,17 +40,17 @@ class PlaylistAdapter(
         return PlaylistViewHolder(binding)
     }
 
-    fun updateData(playlists: List<SongGroupEntity>) {
+    fun updateData(playlists: List<MediaItem>) {
         this.playlists = playlists
         this.notifyDataSetChanged()
     }
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: PlaylistViewHolder, position: Int) {
-        viewHolder.binding.playlistName.text = playlists[position].groupTitle
+        viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position].groupTitle)
+            onPlaylistClick(playlists[position].mediaId)
         }
 
         //Determine Playlist Duration Information TODO how can I get the track numbers....
@@ -65,7 +66,7 @@ class PlaylistAdapter(
         //viewHolder.binding.durationTime.text = playlistDurationReadable
 
         //Logic for showing custom playist image
-        val artFile = playlists[position].artFile
+        val artFile = playlists[position].mediaMetadata.artworkUri.toString() //TODO this might need to be fixed
         if(!artFile.isNullOrEmpty()) {
             val appDir = viewHolder.itemView.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
             val playlistImageFile = File(appDir, artFile)
@@ -80,7 +81,7 @@ class PlaylistAdapter(
         }
 
         viewHolder.binding.playButton.setOnClickListener {
-            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].groupTitle)
+            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].mediaId)
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {
@@ -104,7 +105,7 @@ class PlaylistAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        val playlistTitle = playlists[position].groupTitle
+        val playlistTitle = playlists[position].mediaId
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
         Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(

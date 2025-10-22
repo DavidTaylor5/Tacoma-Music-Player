@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
                     Timber.d("availablePlaylists: playlists has updated size=${playlists.size}  ")
                     if(playlists.isNotEmpty()) {
                         for(playlist in playlists) {
-                            Timber.d("availablePlaylists: playlist.title=${playlist.groupTitle}")
+                            Timber.d("availablePlaylists: playlist.title=${playlist.mediaMetadata.albumTitle}")
                         }
                     }
                 }

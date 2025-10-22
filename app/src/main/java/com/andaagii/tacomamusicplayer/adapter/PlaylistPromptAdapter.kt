@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.OptIn
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.data.Playlist
@@ -15,7 +16,7 @@ import timber.log.Timber
  * A recyclerview adapter that is able to take a list of Playlist Items and displays them.
  */
 class PlaylistPromptAdapter(
-    private val playlists: List<SongGroupEntity>,
+    private val playlists: List<MediaItem>,
     private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
@@ -39,7 +40,7 @@ class PlaylistPromptAdapter(
     @OptIn(UnstableApi::class) override fun onBindViewHolder(viewHolder: PlaylistPromptViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
-        viewHolder.binding.playlistName.text = playlists[position].groupTitle
+        viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
 
 
         viewHolder.binding.addCheckbox.isChecked = playlistsWithCheckmarks[viewHolder.absoluteAdapterPosition]
@@ -49,7 +50,7 @@ class PlaylistPromptAdapter(
         }
 
         viewHolder.binding.addCheckbox.setOnCheckedChangeListener { _, b ->
-            onPlaylistChecked(playlists[position].groupTitle, b)
+            onPlaylistChecked(playlists[position].mediaId, b)
         }
     }
 

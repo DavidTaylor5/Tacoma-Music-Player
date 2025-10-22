@@ -70,56 +70,66 @@ class SortingUtil {
             }
         }
 
-        fun sortPlaylists(playlists: List<SongGroupEntity>, sorting: SortingOption): List<SongGroupEntity> {
+        fun sortPlaylists(playlists: List<MediaItem>, sorting: SortingOption): List<MediaItem> {
             return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     playlists.sortedBy { playlist ->
-                        playlist.groupTitle
+                        playlist.mediaMetadata.albumTitle.toString()
                     }
                 }
                 SortingOption.SORTING_BY_CREATION_DATE -> {
                     playlists.sortedByDescending { playlist ->
-                        playlist.creationTimestamp
+                        getCreationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
                 SortingOption.SORTING_BY_MODIFICATION_DATE -> {
                     playlists.sortedByDescending { playlist ->
-                        playlist.lastModificationTimestamp
+                        getModificationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
                 else -> { //Default to most recently created.
                     playlists.sortedByDescending { playlist ->
-                        playlist.lastModificationTimestamp
+                        getModificationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
             }
         }
 
-        fun sortAlbums(albums: List<SongGroupEntity>, sorting: SortingOption): List<SongGroupEntity> {
+        private fun getCreationTimestamp(playlistDescription: String): String {
+            val timestamps = playlistDescription.split(":")
+            return if(timestamps.isNotEmpty()) timestamps[0] else "Unknown"
+        }
+
+        private fun getModificationTimestamp(playlistDescription: String): String {
+            val timestamps = playlistDescription.split(":")
+            return if(timestamps.size >= 2) timestamps[1] else "Unknown"
+        }
+
+        fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption): List<MediaItem> {
             return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.groupTitle
+                        album.mediaMetadata.albumTitle.toString()
                     }
                 }
                 SortingOption.SORTING_ARTIST_ALPHABETICAL -> {
                     albums.sortedBy { album ->
-                        album.groupArtist.toString()
+                        album.mediaMetadata.albumArtist.toString()
                     }
                 }
                 SortingOption.SORTING_NEWEST_RELEASE -> {
                     albums.sortedByDescending { album ->
-                        album.releaseYear
+                        album.mediaMetadata.releaseYear
                     }
                 }
                 SortingOption.SORTING_OLDEST_RELEASE -> {
                     albums.sortedBy { album ->
-                        album.releaseYear
+                        album.mediaMetadata.releaseYear
                     }
                 }
                 else -> { //Default to most recent release year.
                     albums.sortedBy { album ->
-                        album.releaseYear
+                        album.mediaMetadata.releaseYear
                     }
                 }
             }

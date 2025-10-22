@@ -2,14 +2,19 @@ package com.andaagii.tacomamusicplayer.repository
 
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import kotlinx.coroutines.flow.Flow
 
 interface MusicProviderRepository {
 
     suspend fun getAllAlbums(): List<MediaItem>
 
+    fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
+
     suspend fun getAllArtists(): List<MediaItem>
 
     suspend fun getAllPlaylists(): List<MediaItem>
+
+    fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
 
     suspend fun getAlbumsFromArtist(artist: String): List<MediaItem>
 

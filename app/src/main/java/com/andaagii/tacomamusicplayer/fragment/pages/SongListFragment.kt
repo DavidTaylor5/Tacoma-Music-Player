@@ -247,7 +247,7 @@ class SongListFragment(
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.availablePlaylists.collect { playlists ->
                     val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.groupTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.groupTitle != Const.ORIGINAL_QUEUE_ORDER
+                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
                     }
                     binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
                 }

@@ -27,8 +27,8 @@ interface MusicRepository {
     suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>)
 
 
-    fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
+    //fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
 
-    fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
+    //fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
 
 }

@@ -34,7 +34,7 @@ class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
-    private var currentAlbumList: List<SongGroupEntity> = listOf()
+    private var currentAlbumList: List<MediaItem> = listOf()
 
     private var currentSortingType: SortingUtil.SortingOption? = null
     private var currentLayoutType: LayoutType? = null

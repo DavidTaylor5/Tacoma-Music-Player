@@ -1,11 +1,13 @@
 package com.andaagii.tacomamusicplayer.util
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import javax.inject.Inject
 
 class MediaItemUtil @Inject constructor() {
@@ -32,22 +34,30 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
-    fun createMediaItemFromAlbum(albumTitle: String): MediaItem {
+    fun createAlbumMediaItemFromSongGroupEntity(album: SongGroupEntity): MediaItem {
         return MediaItem.Builder()
-            .setMediaId("album:$albumTitle")
+            .setMediaId("album:${album.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
+                    .setAlbumArtist(album.groupArtist)
+                    .setArtworkUri(album.artFile?.toUri())
+                    .setReleaseYear(album.releaseYear.toIntOrNull())
+                    .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
                     .build()
             )
             .build()
     }
 
-    fun createMediaItemFromPlaylist(playlistTitle: String): MediaItem {
+    fun createPlaylistMediaItemFromSongGroupEntity(playlist: SongGroupEntity): MediaItem {
         return MediaItem.Builder()
-            .setMediaId("playlist:$playlistTitle")
+            .setMediaId("playlist:${playlist.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
+                    .setAlbumTitle(playlist.groupTitle)
+                    .setAlbumArtist(playlist.groupArtist)
+                    .setArtworkUri(playlist.artFile?.toUri())
+                    .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .build()
             )

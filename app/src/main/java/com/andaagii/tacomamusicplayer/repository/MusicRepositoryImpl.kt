@@ -88,10 +88,9 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {
          songGroupDao.getSongGroupsByType(SongGroupType.ALBUM).map { songGroup ->
-            mediaItemUtil.createMediaItemFromAlbum(songGroup.groupTitle)
+            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(songGroup)
         }
     }
-
 
     override suspend fun getAllArtists(): List<MediaItem> = withContext(Dispatchers.IO) {
         songDao.getAllArtists().map { artist ->
@@ -99,17 +98,15 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-
     override suspend fun getAllPlaylists(): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.getSongGroupsByType(SongGroupType.PLAYLIST).map { songGroup ->
-            mediaItemUtil.createMediaItemFromPlaylist(songGroup.groupTitle)
+            mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(songGroup)
         }
     }
 
-
     override suspend fun getAlbumsFromArtist(artist: String): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findAllSongGroupsByArtist(artist).map { songGroup ->
-            mediaItemUtil.createMediaItemFromAlbum(songGroup.groupTitle)
+            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(songGroup)
         }
     }
 

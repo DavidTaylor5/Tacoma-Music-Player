@@ -15,6 +15,12 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.ALBUM_ID
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.ALBUM_PREFIX
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.ARTIST_ID
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.ARTIST_PREFIX
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_ID
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_PREFIX
 import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
@@ -200,23 +206,22 @@ class MusicService : MediaLibraryService() {
                         )
                     )
                 }
-                parentId == "albums" -> {
+                parentId == ALBUM_ID -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(musicProvider.getAllAlbums(), params)
                     }.asListenableFuture()
                 }
-                parentId == "artists" -> {
+                parentId == ARTIST_ID -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(musicProvider.getAllArtists(), params)
                     }.asListenableFuture()
                 }
-                parentId == "playlists" -> {
+                parentId == PLAYLIST_ID -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
                     }.asListenableFuture()
                 }
-                parentId.contains("album:") -> { //TODO string manipulation SEEMS right, must be an error on listening for the response?
-                    val a = mediaItemUtil.removeMediaItemPrefix(parentId)
+                parentId.contains(ALBUM_PREFIX) -> { //TODO string manipulation SEEMS right, must be an error on listening for the response?
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
@@ -226,7 +231,7 @@ class MusicService : MediaLibraryService() {
                         )
                     }.asListenableFuture()
                 }
-                parentId.contains("artist:") -> {
+                parentId.contains(ARTIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getAlbumsFromArtist(
@@ -236,7 +241,7 @@ class MusicService : MediaLibraryService() {
                         )
                     }.asListenableFuture()
                 }
-                parentId.contains("playlist:") -> {
+                parentId.contains(PLAYLIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromPlaylist(
@@ -268,6 +273,18 @@ class MusicService : MediaLibraryService() {
         super.onCreate()
         initializePlayer()
         initializeMediaSession()
+
+
+        //Allow the service to notify children if albums or playlists is updated.
+        serviceScope.launch {
+            musicProvider.getAllAvailableAlbumsFlow().collect { songGroupEntities ->
+                session?.notifyChildrenChanged(ALBUM_ID, songGroupEntities.size, null)
+            }
+
+            musicProvider.getAllAvailablePlaylistFlow().collect { songGroupEntities ->
+                session?.notifyChildrenChanged(PLAYLIST_ID, songGroupEntities.size, null)
+            }
+        }
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

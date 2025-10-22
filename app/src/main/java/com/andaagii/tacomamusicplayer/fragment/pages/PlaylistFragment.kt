@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
@@ -39,7 +40,7 @@ class PlaylistFragment: Fragment() {
     private var playlistThatNeedsNewImage = "empty"
 
     private var currentLayout = LayoutType.LINEAR_LAYOUT
-    private var currentPlaylists: List<SongGroupEntity> = listOf()
+    private var currentPlaylists: List<MediaItem> = listOf()
 
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -94,8 +95,8 @@ class PlaylistFragment: Fragment() {
                 parentViewModel.availablePlaylists.collect { playlists ->
                                 //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
                     val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.groupTitle != Const.PLAYLIST_QUEUE_TITLE &&
-                                playlist.groupTitle != Const.ORIGINAL_QUEUE_ORDER
+                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE &&
+                                playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
                     }
 
                     currentPlaylists = SortingUtil.sortPlaylists(
