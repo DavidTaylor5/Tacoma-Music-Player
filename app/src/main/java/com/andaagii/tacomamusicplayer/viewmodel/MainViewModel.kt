@@ -45,9 +45,12 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -64,11 +67,19 @@ class MainViewModel @Inject constructor(
 
     private val permissionManager = AppPermissionUtil()
 
-    private var _availablePlaylists: MutableStateFlow<List<MediaItem>> = MutableStateFlow(listOf())
-    var availablePlaylists: StateFlow<List<MediaItem>> = _availablePlaylists
+    var availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            listOf()
+        )
 
-    private var _availableAlbums: MutableStateFlow<List<MediaItem>> = MutableStateFlow(listOf())
-    var availableAlbums: StateFlow<List<MediaItem>> = _availableAlbums
+    var availableAlbums: StateFlow<List<MediaItem>> = musicRepo.getAllAvailableAlbumsFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            listOf()
+        )
 
     /**
      * Reference to the app's mediaController.
@@ -190,29 +201,6 @@ class MainViewModel @Inject constructor(
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
     private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
-
-    private val loadingHandler = Handler(Looper.getMainLooper())
-
-    private val browserListener = object : MediaBrowser.Listener {
-        override fun onChildrenChanged(
-            browser: MediaBrowser,
-            parentId: String,
-            itemCount: Int,
-            params: MediaLibraryService.LibraryParams?
-        ) {
-            when (parentId) {
-                ALBUM_ID -> {
-                    queryAlbums()
-                }
-                PLAYLIST_ID -> {
-                    queryPlaylists()
-                }
-                else -> {
-                    Timber.d("onChildrenChanged: parentId=$parentId, itemCount=$itemCount")
-                }
-            }
-        }
-    }
 
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -865,6 +853,10 @@ class MainViewModel @Inject constructor(
         mediaController.value?.let { controller ->
             controller.removeListener(playerListener)
         }
+
+        if(this::mediaBrowser.isInitialized) {
+            mediaBrowser.release()
+        }
     }
 
     fun checkPermissionsIfOnPermissionDeniedScreen() {
@@ -1043,50 +1035,17 @@ class MainViewModel @Inject constructor(
      * @param session The session token associated with this app. [Should only be one]
      */
     private fun setupMediaBrowser(session: SessionToken) {
-        Timber.d("setupMediaBrowser: session=$session")
-
+        Timber.d("DT>>> setupMediaBrowser: session=$session")
         val browserFuture = MediaBrowser.Builder(getApplication<Application>().applicationContext, sessionToken)
-            .setListener(browserListener)
             .buildAsync()
         browserFuture.addListener({
             browserFuture.get().let { browser ->
                 mediaBrowser = browser
-                //Subscribe
-                subscribeToAlbumAndPlaylistChanges(browser)
-                initialAlbumAndPlaylistQuery()
+                getRoot()
+                Timber.d("setupMediaBrowser: sessionToken=${mediaBrowser.connectedToken}")
             }
             mediaBrowser = browserFuture.get()
-            getRoot()
-        }, MoreExecutors.directExecutor())
-    }
-
-    private fun subscribeToAlbumAndPlaylistChanges(mediaBrowser: MediaBrowser) {
-        mediaBrowser.subscribe(ALBUM_ID, null)
-        mediaBrowser.subscribe(PLAYLIST_ID, null)
-    }
-
-    private fun initialAlbumAndPlaylistQuery() {
-        queryAlbums()
-        queryPlaylists()
-    }
-
-    private fun queryAlbums() {
-        val childrenFuture = mediaBrowser.getChildren(ALBUM_ID, 0, Int.MAX_VALUE, null)
-        childrenFuture.addListener({
-            val albums = childrenFuture.get().value?.toList() ?: listOf()
-            viewModelScope.launch {
-                _availableAlbums.emit(albums)
-            }
-        }, MoreExecutors.directExecutor())
-    }
-
-    private fun queryPlaylists() {
-        val childrenFuture = mediaBrowser.getChildren(PLAYLIST_ID, 0, Int.MAX_VALUE, null)
-        childrenFuture.addListener({
-            val playlists = childrenFuture.get().value?.toList() ?: listOf()
-            viewModelScope.launch {
-                _availablePlaylists.emit(playlists)
-            }
+            //getRoot()
         }, MoreExecutors.directExecutor())
     }
 

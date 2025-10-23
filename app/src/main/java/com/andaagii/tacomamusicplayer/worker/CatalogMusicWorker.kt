@@ -3,10 +3,8 @@ package com.andaagii.tacomamusicplayer.worker
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.media3.common.MediaItem
-import androidx.media3.session.MediaBrowser
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
@@ -46,39 +44,58 @@ class CatalogMusicWorker @AssistedInject constructor(
         Timber.d("catalogMusic: ")
 
         val albums = mediaStoreUtil.queryAvailableAlbums(appContext)
-        catalogAlbums(albums)
+        val dbAlbums = songGroupDao.getSongGroupsByType(SongGroupType.ALBUM)
+        catalogAlbums(albums, dbAlbums)
 
         for(album in albums) {
             catalogAlbumSongs(album.mediaId)
         }
     }
 
-    private fun catalogAlbums(albums: List<MediaItem>) {
+    private fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
         val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
+
+        val dbAlbumTitles = dbAlbums.map { it.groupTitle }
+        val albumTitles = albums.map { it.mediaMetadata.albumTitle }
+
+        //Determine if I need to add any albums
         for(album in albums) {
+
             val albumInfo = album.mediaMetadata
             val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
 
-            val savedAlbum = songGroupDao.findSongGroupByDescription(description)
+            // Don't need to add album if it already exists
+            if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
+                val savedAlbum = songGroupDao.findSongGroupByDescription(description)
 
-            val songGroupEntity = SongGroupEntity(
-                songGroupType = SongGroupType.ALBUM,
-                artFile = if(savedAlbum!=null) savedAlbum.artFile else albumInfo.artworkUri.toString(),
-                groupTitle = albumInfo.albumTitle.toString(),
-                groupArtist = albumInfo.albumArtist.toString(),
-                searchDescription = description,
-                groupDuration = if(savedAlbum!=null) savedAlbum.groupDuration else "0",
-                creationTimestamp = "0",
-                lastModificationTimestamp = "0",
-                releaseYear = albumInfo.releaseYear.toString()
-            )
-
-            albumEntityList.add(songGroupEntity)
+                val songGroupEntity = SongGroupEntity(
+                    songGroupType = SongGroupType.ALBUM,
+                    artFile = null,
+                    artUri = albumInfo.artworkUri.toString(),
+                    groupTitle = albumInfo.albumTitle.toString(),
+                    groupArtist = albumInfo.albumArtist.toString(),
+                    searchDescription = description,
+                    groupDuration = if(savedAlbum!=null) savedAlbum.groupDuration else "0",
+                    creationTimestamp = "0",
+                    lastModificationTimestamp = "0",
+                    releaseYear = albumInfo.releaseYear.toString()
+                )
+                albumEntityList.add(songGroupEntity)
+            }
         }
+
+        //MediaStore no longer finds the album, meaning it needs to be deleted from the database? Or Should it be greyed out.
+        val deleteAlbumTitles = dbAlbumTitles.filter { !albumTitles.contains(it) }
+
+        val deleteAlbums = dbAlbums.filter { deleteAlbumTitles.contains(it.groupTitle) }
 
         if(albumEntityList.isNotEmpty()) {
             songGroupDao.insertSongGroups(*albumEntityList.toTypedArray())
+        }
+
+        if(deleteAlbums.isNotEmpty()) {
+            songGroupDao.deleteSongGroups(*deleteAlbums.toTypedArray())
         }
     }
 
@@ -88,40 +105,41 @@ class CatalogMusicWorker @AssistedInject constructor(
     private fun catalogAlbumSongs(albumName: String) {
         Timber.d("catalogAlbumSongs: albumName=$albumName")
 
-        val songs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
+        val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
+        val foundSongTitles = foundSongs.map { it.mediaMetadata.title }
+        val dbSongs = songDao.getAllSongsFromAlbum(albumName)
+        val dbSongTitles = dbSongs.map { it.name }
         val songEntityList: MutableList<SongEntity> = mutableListOf()
 
         //After parsing all the songs, update album duration
         var albumDuration: Long = 0
 
-        for(song in songs) {
+        for(song in foundSongs) {
             val songInfo = song.mediaMetadata
-            val songEntity = SongEntity(
-                albumTitle = songInfo.albumTitle.toString(),
-                artist = songInfo.artist.toString(),
-                searchDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}",
-                name = songInfo.title.toString(),
-                uri = song.mediaId,
-                songDuration = songInfo.description.toString()
-            )
-            songEntityList.add(songEntity)
+            val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
+            //val dbSong = songDao.findSongFromSearchDescription(songDescription)
 
-            songInfo.description.toString().toLongOrNull()?.let { duration ->
-                albumDuration += duration
+            if (!dbSongTitles.contains(songInfo.title)) {
+                val songEntity = SongEntity(
+                    albumTitle = songInfo.albumTitle.toString(),
+                    artist = songInfo.artist.toString(),
+                    searchDescription = songDescription,
+                    name = songInfo.title.toString(),
+                    uri = song.mediaId,
+                    songDuration = songInfo.description.toString()
+                )
+                songEntityList.add(songEntity)
             }
-        }
-
-        val albumWithDuration = songGroupDao.findSongGroupByName(albumName)?.copy(
-            groupDuration = albumDuration.toString()
-        )
-
-        //Update the album's duration
-        albumWithDuration?.let {
-            songGroupDao.updateSongGroups(albumWithDuration)
         }
 
         if(songEntityList.isNotEmpty()) {
             songDao.insertItems(*songEntityList.toTypedArray())
+        }
+
+        // Delete songs that are no longer found
+        val deleteSongs = dbSongs.filter { foundSongTitles.contains(it.name) }
+        if(deleteSongs.isNotEmpty()) {
+            songDao.deleteItems(*deleteSongs.toTypedArray())
         }
     }
 }

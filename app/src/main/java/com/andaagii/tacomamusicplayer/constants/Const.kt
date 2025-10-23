@@ -63,6 +63,7 @@ class Const {
 
 
         // CHILDREN MEDIA IDs
+        const val ROOT_ID = "root"
         const val ALBUM_ID = "albums"
         const val PLAYLIST_ID = "playlists"
         const val ARTIST_ID = "artists"

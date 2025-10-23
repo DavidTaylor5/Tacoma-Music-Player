@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * then I will inject the repository into the viewmodel.
  * This will also allow be to work on testing my app.
  */
-interface MusicRepository {
+interface MusicRepository: MusicProviderRepository {
 
     /**
      * Creates a playlist in memory.
@@ -27,8 +27,13 @@ interface MusicRepository {
     suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>)
 
 
-    //fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
+    /**
+     * Returns a continuous flow of Album data, will update if more albums are added.
+     */
+    fun getAllAvailableAlbumsFlow(): Flow<List<MediaItem>>
 
-    //fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
-
+    /**
+     * Returns a continuous flow of Playlist data, will update if more playlists are added.
+     */
+    fun getAllAvailablePlaylistFlow(): Flow<List<MediaItem>>
 }

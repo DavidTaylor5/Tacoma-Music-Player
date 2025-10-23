@@ -49,6 +49,9 @@ interface SongDao {
     @Delete
     fun deleteItems(vararg item: SongEntity)
 
+    @Query("SELECT * FROM song_table WHERE search_description = :searchDescription")
+    fun findSongFromSearchDescription(searchDescription: String): List<SongEntity>
+
     /**
      * Search through search data descriptions to determine return results, case insensitive.
      */

@@ -21,6 +21,7 @@ import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -50,6 +51,7 @@ class MusicRepositoryImpl @Inject constructor(
             val playlist = SongGroupEntity(
                 groupTitle = playlistName,
                 artFile = "",
+                artUri = "",
                 creationTimestamp = LocalDateTime.now().toString(),
                 lastModificationTimestamp = LocalDateTime.now().toString(),
                 songGroupType = SongGroupType.PLAYLIST,
@@ -76,14 +78,16 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>> {
+    override fun getAllAvailableAlbumsFlow(): Flow<List<MediaItem>> {
         Timber.d("getAllAvailableAlbumsFlow: ")
         return songGroupDao.getSongGroupsByTypeFlow(SongGroupType.ALBUM)
+            .map { albums -> albums.map { album -> mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(album) } }
     }
 
-    override fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>> {
+    override fun getAllAvailablePlaylistFlow(): Flow<List<MediaItem>> {
         Timber.d("getAllAvailablePlaylistFlow: ")
         return songGroupDao.getSongGroupsByTypeFlow(SongGroupType.PLAYLIST)
+            .map { playlists -> playlists.map { playlist -> mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(playlist) } }
     }
 
     override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {

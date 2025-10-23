@@ -11,6 +11,7 @@ data class SongGroupEntity(
 //    val id: Int = 0,
     @ColumnInfo(name = "song_group_type") val songGroupType: SongGroupType,
     @ColumnInfo(name = "art_file") val artFile: String?,
+    @ColumnInfo(name = "art_uri") val artUri: String?,
     @PrimaryKey
     @ColumnInfo(name = "group_title") val groupTitle: String,
     @ColumnInfo(name = "group_artist") val groupArtist: String?,

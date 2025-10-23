@@ -93,6 +93,7 @@ class PlaylistFragment: Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.availablePlaylists.collect { playlists ->
+                    Timber.d("onCreateView: availablePlaylists updated! playlists.size=${playlists.size}")
                                 //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
                     val playlistsWithoutQueue = playlists.filter { playlist ->
                         playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE &&

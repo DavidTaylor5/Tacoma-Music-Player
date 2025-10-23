@@ -56,8 +56,8 @@ class AlbumListAdapter(
             val customImage = "album_${album.mediaMetadata.albumTitle}"
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
-            val albumTitle = album.mediaId
-            val albumArtist = album.mediaMetadata.artist
+            val albumTitle = album.mediaMetadata.albumTitle.toString()
+            val albumArtist = album.mediaMetadata.artist.toString()
             val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
 
             viewHolder.binding.playButton.setOnClickListener {

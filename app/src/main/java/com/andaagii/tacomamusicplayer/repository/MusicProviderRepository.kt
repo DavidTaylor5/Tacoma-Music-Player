@@ -8,13 +8,9 @@ interface MusicProviderRepository {
 
     suspend fun getAllAlbums(): List<MediaItem>
 
-    fun getAllAvailableAlbumsFlow(): Flow<List<SongGroupEntity>>
-
     suspend fun getAllArtists(): List<MediaItem>
 
     suspend fun getAllPlaylists(): List<MediaItem>
-
-    fun getAllAvailablePlaylistFlow(): Flow<List<SongGroupEntity>>
 
     suspend fun getAlbumsFromArtist(artist: String): List<MediaItem>
 

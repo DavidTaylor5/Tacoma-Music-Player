@@ -21,6 +21,7 @@ import com.andaagii.tacomamusicplayer.constants.Const.Companion.ARTIST_ID
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.ARTIST_PREFIX
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_ID
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_PREFIX
+import com.andaagii.tacomamusicplayer.constants.Const.Companion.ROOT_ID
 import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
@@ -87,7 +88,7 @@ Key point: Assistant expects these consistent IDs. If your service uses "album" 
 @AndroidEntryPoint
 class MusicService : MediaLibraryService() {
     private lateinit var player: ExoPlayer
-    private var session: MediaLibrarySession? = null
+    private var session:MediaLibrarySession? = null
     @Inject
     lateinit var mediaStoreUtil: MediaStoreUtil
     @Inject
@@ -188,18 +189,18 @@ class MusicService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             return when {
-                parentId == "root" -> {
+                parentId == ROOT_ID -> {
                     Futures.immediateFuture(
                         LibraryResult.ofItemList(
                             listOf(
-                                MediaItem.Builder().setMediaId("artists").setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle("Artists").build()
+                                MediaItem.Builder().setMediaId(ARTIST_ID).setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle(ARTIST_ID).build()
                                 ).build(),
-                                MediaItem.Builder().setMediaId("albums").setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle("Albums").build()
+                                MediaItem.Builder().setMediaId(ALBUM_ID).setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle(ALBUM_ID).build()
                                 ).build(),
-                                MediaItem.Builder().setMediaId("playlists").setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle("Playlists").build()
+                                MediaItem.Builder().setMediaId(PLAYLIST_ID).setMediaMetadata(
+                                    MediaMetadata.Builder().setTitle(PLAYLIST_ID).build()
                                 ).build()
                             ),
                             params
@@ -208,6 +209,8 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == ALBUM_ID -> {
                     serviceScope.async {
+                        val a = musicProvider.getAllAlbums()
+                        Timber.d("onGetChildren: a=$a")
                         LibraryResult.ofItemList(musicProvider.getAllAlbums(), params)
                     }.asListenableFuture()
                 }
@@ -218,6 +221,8 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == PLAYLIST_ID -> {
                     serviceScope.async {
+                        val a = musicProvider.getAllPlaylists()
+                        Timber.d("onGetChildren: a=$a")
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
                     }.asListenableFuture()
                 }
@@ -273,18 +278,6 @@ class MusicService : MediaLibraryService() {
         super.onCreate()
         initializePlayer()
         initializeMediaSession()
-
-
-        //Allow the service to notify children if albums or playlists is updated.
-        serviceScope.launch {
-            musicProvider.getAllAvailableAlbumsFlow().collect { songGroupEntities ->
-                session?.notifyChildrenChanged(ALBUM_ID, songGroupEntities.size, null)
-            }
-
-            musicProvider.getAllAvailablePlaylistFlow().collect { songGroupEntities ->
-                session?.notifyChildrenChanged(PLAYLIST_ID, songGroupEntities.size, null)
-            }
-        }
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -305,7 +298,7 @@ class MusicService : MediaLibraryService() {
 
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
-        Timber.d("onGetSession: ")
+        Timber.d("onGetSession: session=$session, session.token=${session?.token}")
         return session
     }
 
@@ -344,8 +337,8 @@ class MusicService : MediaLibraryService() {
         session = MediaLibrarySession.Builder(this, player, librarySessionCallback)
             .setId(generateRandomStringId())
             .build()
+        Timber.d("initializeMediaSession: DT>>> ADD SESSION")
         addSession(session!!)
-
         return true
     }
 
