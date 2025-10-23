@@ -25,7 +25,7 @@ class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
-    val handleAlbumClick: (albumTitle: String) -> Unit,
+    val handleAlbumClick: (album: MediaItem) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     var songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
@@ -156,7 +156,7 @@ class SongListAdapter(
         } else {
             viewHolder.binding.textVerticalContainer.setOnClickListener {
                 Timber.d("bindSearchHolder: handleAlbumClick -> ${albumTitle}")
-                handleAlbumClick(albumTitle)
+                handleAlbumClick(dataSet[position])
             }
         }
     }

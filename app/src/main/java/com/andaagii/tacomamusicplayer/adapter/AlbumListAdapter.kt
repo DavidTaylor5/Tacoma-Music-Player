@@ -23,9 +23,9 @@ import androidx.core.net.toUri
  */
 class AlbumListAdapter(
     private var albums: List<MediaItem>,
-    private val onAlbumClick: (String) -> Unit,
-    private val onPlayIconClick: (String) -> Unit,
-    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String, String?) -> Unit,
+    private val onAlbumClick: (MediaItem) -> Unit,
+    private val onPlayIconClick: (MediaItem) -> Unit,
+    private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
 ): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() { //TODO I want to update all of my recyclerview to use Paging3 library
 
     /**
@@ -57,14 +57,14 @@ class AlbumListAdapter(
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
             val albumTitle = album.mediaMetadata.albumTitle.toString()
-            val albumArtist = album.mediaMetadata.artist.toString()
+            val albumArtist = album.mediaMetadata.albumArtist.toString()
             val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
 
             viewHolder.binding.playButton.setOnClickListener {
-                onPlayIconClick(albumTitle)
+                onPlayIconClick(album)
             }
 
-            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
             UtilImpl.drawImageAssociatedWithAlbum(
                 viewHolder.binding.albumArt,
@@ -90,7 +90,7 @@ class AlbumListAdapter(
                     val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
                     handleAlbumOption(
                         MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                        albums[position].mediaId,
+                        albums[position],
                         customImageName
                     )
 

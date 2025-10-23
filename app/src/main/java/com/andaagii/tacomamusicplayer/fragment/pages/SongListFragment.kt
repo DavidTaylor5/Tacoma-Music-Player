@@ -20,6 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
@@ -156,28 +157,28 @@ class SongListFragment(
     ): View {
         binding = FragmentSonglistBinding.inflate(inflater)
 
-        parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroupEntity ->
-            Timber.d("onCreateView: title=${songGroupEntity.groupTitle}")
+        parentViewModel.currentSongGroup.observe(viewLifecycleOwner) { songGroup ->
+            Timber.d("onCreateView: title=${songGroup.group.mediaMetadata.albumTitle}")
 
             //TODO I need to reimplement this code to work!!
 
-//            currentSongGroup = songGroupEntity
-//            lastDisplaySongGroup = songGroupEntity
-//
-//            parentViewModel.handleCancelSearchButtonClick()
-//
-//            binding.displayRecyclerview.adapter = SongListAdapter(
-//                songGroup.songs,
-//                this::handleSongSetting,
-//                this::handleSongClicked,
-//                this::handleAlbumClicked,
-//                this::handleSongSelected,
-//                songGroup.type,
-//                this::handleViewHolderHandleDrag
-//            )
-//            determineIfShowingInformationScreen(songGroup)
-//
-//            initializeSongGroupInfo()
+            currentSongGroup = songGroup
+            lastDisplaySongGroup = songGroup
+
+            parentViewModel.handleCancelSearchButtonClick()
+
+            binding.displayRecyclerview.adapter = SongListAdapter(
+                songGroup.songs,
+                this::handleSongSetting,
+                this::handleSongClicked,
+                this::handleAlbumClicked,
+                this::handleSongSelected,
+                songGroup.type,
+                this::handleViewHolderHandleDrag
+            )
+            determineIfShowingInformationScreen(songGroup)
+
+            initializeSongGroupInfo()
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
@@ -202,11 +203,15 @@ class SongListFragment(
 //                }
 //            }
 
+            val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
+                MediaMetadata.Builder().setTitle("Search").build()
+            ).build()
+
             //if(binding.displayRecyclerview.adapter)
             currentSongGroup = SongGroup(
                 SongGroupType.SEARCH_LIST,
                 topTwentySongs,
-                "Search Results"
+                searchMediaItem
             )
 
             if(binding.displayRecyclerview.adapter == null) {
@@ -382,7 +387,7 @@ class SongListFragment(
     private fun initializeSongGroupInfo() {
         Timber.d("initializeSongGroupInfo: ")
         currentSongGroup?.let { songGroup ->
-            binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
+            binding.songGroupInfo.setSongGroupTitleText(songGroup.group.mediaMetadata.albumTitle.toString())
 
             // Determine what icon to display for song group
             if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
@@ -400,7 +405,7 @@ class SongListFragment(
                 itemTouchHelper.attachToRecyclerView(null)
 
             } else { // Playlist icon
-                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
+                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.group.mediaMetadata.albumTitle.toString())
 
                 if(!ableToDraw) {
                     binding.songGroupInfo.getSongGroupImage()
@@ -454,10 +459,16 @@ class SongListFragment(
     private fun activateSearchMode() {
         Timber.d("activateSearchMode: ")
         binding.searchContainer.visibility = View.VISIBLE
+
+        val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
+                MediaMetadata.Builder().setTitle("Search").build()
+            ).build()
+
+
         currentSongGroup = SongGroup(
             type = SongGroupType.SEARCH_LIST,
             songs = listOf(),
-            title = "search..."
+            group = searchMediaItem
         )
     }
 
@@ -593,8 +604,8 @@ class SongListFragment(
         }
     }
 
-    private fun handleAlbumClicked(albumTitle: String) {
-        parentViewModel.querySongsFromAlbum(albumTitle)
+    private fun handleAlbumClicked(album: MediaItem) {
+        parentViewModel.querySongsFromAlbum(album)
         parentViewModel.removeVirtualKeyboard()
         parentViewModel.handleCancelSearchButtonClick()
     }

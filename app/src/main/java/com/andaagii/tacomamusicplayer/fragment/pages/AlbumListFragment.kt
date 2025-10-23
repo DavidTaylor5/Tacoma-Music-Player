@@ -161,7 +161,7 @@ class AlbumListFragment: Fragment() {
         }
     }
 
-    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: String, customAlbumImageName: String? = null) {
+    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: MediaItem, customAlbumImageName: String? = null) {
         when (option) {
             MenuOptionUtil.MenuOption.PLAY_ALBUM ->  {
                 parentViewModel.playAlbum(album)
@@ -180,8 +180,8 @@ class AlbumListFragment: Fragment() {
         }
     }
 
-    private fun onAlbumClick(albumTitle: String) {
-        parentViewModel.querySongsFromAlbum(albumTitle)
+    private fun onAlbumClick(album: MediaItem) {
+        parentViewModel.querySongsFromAlbum(album)
         parentViewModel.setPage(PageType.SONG_PAGE)
     }
 

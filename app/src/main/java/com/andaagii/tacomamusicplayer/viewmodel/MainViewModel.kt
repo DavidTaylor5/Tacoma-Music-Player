@@ -4,22 +4,18 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
-import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.constants.Const.Companion.ALBUM_ID
-import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_ID
 import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SearchData
@@ -45,8 +41,6 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
@@ -91,9 +85,9 @@ class MainViewModel @Inject constructor(
     /**
      * List of songs to be inspected.
      */
-    val currentSongList: LiveData<SongGroupEntity>
-        get() = _currentSongList
-    private val _currentSongList: MutableLiveData<SongGroupEntity> = MutableLiveData()
+    val currentSongGroup: LiveData<SongGroup>
+        get() = _currentSongGroup
+    private val _currentSongGroup: MutableLiveData<SongGroup> = MutableLiveData()
 
     val currentSearchList: LiveData<List<SearchData>>
         get() = _currentSearchList
@@ -541,7 +535,7 @@ class MainViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
                     .songGroupDao()
-                    .findSongGroupByName(albumSongGroup.title)
+                    .findSongGroupByName(albumSongGroup.group.mediaMetadata.albumTitle.toString())
 
                 //Turn the media items into a list of SongData
                 val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
@@ -1068,42 +1062,17 @@ class MainViewModel @Inject constructor(
      * High level function that will attempt to set a list of songs (MediaItems) based on album title.
      * @param albumId The title of an album to be queried.
      */
-    fun querySongsFromAlbum(albumId: String, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
-        Timber.d("querySongsFromAlbum: albumId=$albumId, queueAddType=$queueAddType")
-        if(mediaBrowser != null) {
-            mediaBrowser?.let { browser ->
-                val childrenFuture =
-                    browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
-                childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                    val songs = childrenFuture.get().value?.toList() ?: listOf()
-                    val title = albumId
-                    val songGroupType = SongGroupType.ALBUM
-                    //_currentSongList.value = SongGroup(songGroupType, songs, title) //TODO create a function to go from mediaItem to SongGroupEntity
-
-                    //When I query the album, determine if/how album should be played
-                    if(queueAddType == QueueAddType.QUEUE_END_ADD) {
-                        addTracksSaveTrackOrder(
-                            mediaItems = songs,
-                            clearOriginalSongList = false,
-                            startingSongPosition = 0,
-                            clearCurrentSongs = false,
-                            shouldAddToOriginalList = true
-                        )
-                    } else if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
-                        addTracksSaveTrackOrder(
-                            mediaItems = songs,
-                            clearOriginalSongList = true,
-                            startingSongPosition = 0,
-                            clearCurrentSongs = true,
-                            shouldAddToOriginalList = true
-                        )
-                        _mediaController.value?.play()
-                    }
-
-                }, MoreExecutors.directExecutor())
-            }
-        } else {
-            Timber.d("querySongsFromAlbum: mediaBrowser isn't ready...")
+    fun querySongsFromAlbum(album: MediaItem, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
+        Timber.d("querySongsFromAlbum: album=$album, queueAddType=$queueAddType")
+        val albumTitle = album.mediaMetadata.albumTitle.toString()
+        viewModelScope.launch {
+            val albumSongs = musicRepo.getSongsFromAlbum(albumTitle)
+            val songGroup = SongGroup(
+                type = SongGroupType.ALBUM,
+                songs = albumSongs,
+                album
+            )
+            _currentSongGroup.postValue(songGroup) //TODO change this to StateFlow
         }
     }
 
@@ -1216,10 +1185,10 @@ class MainViewModel @Inject constructor(
     /**
      * Clears the current queue and starts playing the chosen album.
      */
-    fun playAlbum(albumTitle: String) {
-        Timber.d("playAlbum: albumTitle=$albumTitle")
+    fun playAlbum(album: MediaItem) {
+        Timber.d("playAlbum: album=$album")
         querySongsFromAlbum(
-            albumTitle,
+            album,
             queueAddType = QueueAddType.QUEUE_CLEAR_ADD
         )
     }
@@ -1227,10 +1196,10 @@ class MainViewModel @Inject constructor(
     /**
      * Adds to album to the back of the current queue.
      */
-    fun addAlbumToBackOfQueue(albumTitle: String) {
-        Timber.d("addAlbumToBackOfQueue: albumTitle=$albumTitle")
+    fun addAlbumToBackOfQueue(album: MediaItem) {
+        Timber.d("addAlbumToBackOfQueue: album=$album")
         querySongsFromAlbum(
-            albumTitle,
+            album,
             queueAddType = QueueAddType.QUEUE_END_ADD
         )
     }

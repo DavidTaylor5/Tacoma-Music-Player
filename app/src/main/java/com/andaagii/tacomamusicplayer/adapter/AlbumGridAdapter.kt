@@ -25,9 +25,9 @@ import timber.log.Timber
  */
 class AlbumGridAdapter(
     private var albums: List<MediaItem>,
-    private val onAlbumClick: (String) -> Unit,
-    private val onPlayIconClick: (String) -> Unit,
-    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String, String?) -> Unit,
+    private val onAlbumClick: (MediaItem) -> Unit,
+    private val onPlayIconClick: (MediaItem) -> Unit,
+    private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
 ): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
 
     /**
@@ -66,7 +66,7 @@ class AlbumGridAdapter(
             val albumArtist = album.mediaMetadata.albumArtist
             val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
 
-            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
             UtilImpl.drawImageAssociatedWithAlbum(
                 viewHolder.binding.albumArt,
@@ -101,7 +101,7 @@ class AlbumGridAdapter(
                 val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
                 handleAlbumOption(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                    albums[position].mediaId,
+                    albums[position],
                     customImageName
                 )
 

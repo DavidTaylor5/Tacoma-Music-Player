@@ -9,5 +9,5 @@ import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 data class SongGroup(
     val type: SongGroupType = SongGroupType.PLAYLIST,
     var songs: List<MediaItem>,
-    val title: String,
+    val group: MediaItem,
 )
