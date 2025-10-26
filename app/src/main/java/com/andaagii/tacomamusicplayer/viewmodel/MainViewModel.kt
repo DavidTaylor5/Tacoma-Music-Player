@@ -1073,6 +1073,27 @@ class MainViewModel @Inject constructor(
                 album
             )
             _currentSongGroup.postValue(songGroup) //TODO change this to StateFlow
+
+            if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
+                addTracksSaveTrackOrder(
+                    mediaItems = songGroup.songs,
+                    clearOriginalSongList = true,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = false
+                )
+                mediaController.value?.let { controller ->
+                    controller.play()
+                }
+            } else if(queueAddType == QueueAddType.QUEUE_END_ADD) {
+                addTracksSaveTrackOrder(
+                    mediaItems = songGroup.songs,
+                    clearOriginalSongList = false,
+                    startingSongPosition = null,
+                    clearCurrentSongs = false,
+                    shouldAddToOriginalList = true
+                )
+            }
         }
     }
 
@@ -1185,7 +1206,7 @@ class MainViewModel @Inject constructor(
     /**
      * Clears the current queue and starts playing the chosen album.
      */
-    fun playAlbum(album: MediaItem) {
+    fun playAlbum(album: MediaItem) { //TODO I don't think this is working...
         Timber.d("playAlbum: album=$album")
         querySongsFromAlbum(
             album,
