@@ -60,7 +60,7 @@ class AlbumGridAdapter(
             val customImage = "album_${album.mediaMetadata.albumTitle}"
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
-            val albumTitle = album.mediaId
+            val albumTitle = album.mediaMetadata.albumTitle
             val albumArtist = album.mediaMetadata.albumArtist
             val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
 
