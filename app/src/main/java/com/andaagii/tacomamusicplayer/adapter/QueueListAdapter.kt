@@ -154,7 +154,7 @@ class QueueListAdapter(
             }
 
             val customImage = "album_${dataSet[position].mediaItem.mediaMetadata.albumTitle}"
-            UtilImpl.drawSongArt(
+            UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 artworkUri,
                 Size(200, 200),

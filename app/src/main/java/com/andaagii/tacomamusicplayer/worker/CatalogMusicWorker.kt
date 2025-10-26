@@ -46,10 +46,6 @@ class CatalogMusicWorker @AssistedInject constructor(
         val albums = mediaStoreUtil.queryAvailableAlbums(appContext)
         val dbAlbums = songGroupDao.getSongGroupsByType(SongGroupType.ALBUM)
         catalogAlbums(albums, dbAlbums)
-
-        for(album in albums) {
-            catalogAlbumSongs(album.mediaId)
-        }
     }
 
     private fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
@@ -61,6 +57,9 @@ class CatalogMusicWorker @AssistedInject constructor(
 
         //Determine if I need to add any albums
         for(album in albums) {
+
+            //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
+            catalogAlbumSongs(album.mediaId, album.mediaMetadata.artworkUri.toString())
 
             val albumInfo = album.mediaMetadata
             val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
@@ -102,7 +101,7 @@ class CatalogMusicWorker @AssistedInject constructor(
     /**
      * Takes an album and adds all of it's songs to the
      */
-    private fun catalogAlbumSongs(albumName: String) {
+    private fun catalogAlbumSongs(albumName: String, albumArtUri: String) {
         Timber.d("catalogAlbumSongs: albumName=$albumName")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
@@ -118,7 +117,6 @@ class CatalogMusicWorker @AssistedInject constructor(
             val songInfo = song.mediaMetadata
             val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
             //val dbSong = songDao.findSongFromSearchDescription(songDescription)
-
             if (!dbSongTitles.contains(songInfo.title)) {
                 val songEntity = SongEntity(
                     albumTitle = songInfo.albumTitle.toString(),
@@ -126,7 +124,8 @@ class CatalogMusicWorker @AssistedInject constructor(
                     searchDescription = songDescription,
                     name = songInfo.title.toString(),
                     uri = song.mediaId,
-                    songDuration = songInfo.description.toString()
+                    songDuration = songInfo.description.toString(),
+                    artworkUri = albumArtUri
                 )
                 songEntityList.add(songEntity)
             }
@@ -137,7 +136,7 @@ class CatalogMusicWorker @AssistedInject constructor(
         }
 
         // Delete songs that are no longer found
-        val deleteSongs = dbSongs.filter { foundSongTitles.contains(it.name) }
+        val deleteSongs = dbSongs.filter { !foundSongTitles.contains(it.name) }
         if(deleteSongs.isNotEmpty()) {
             songDao.deleteItems(*deleteSongs.toTypedArray())
         }

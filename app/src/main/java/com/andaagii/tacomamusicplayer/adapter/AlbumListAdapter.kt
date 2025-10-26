@@ -11,12 +11,10 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
-import androidx.core.net.toUri
 
 /**
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
@@ -66,7 +64,7 @@ class AlbumListAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
-            UtilImpl.drawImageAssociatedWithAlbum(
+            UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400),

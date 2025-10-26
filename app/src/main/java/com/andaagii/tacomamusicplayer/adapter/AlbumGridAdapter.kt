@@ -9,12 +9,10 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
@@ -68,7 +66,7 @@ class AlbumGridAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
-            UtilImpl.drawImageAssociatedWithAlbum(
+            UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400),

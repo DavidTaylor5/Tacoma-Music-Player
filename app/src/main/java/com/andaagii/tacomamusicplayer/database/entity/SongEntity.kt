@@ -23,4 +23,5 @@ data class SongEntity(
     @ColumnInfo(name = "song_name") val name: String,
     @ColumnInfo(name = "song_uri") val uri: String,
     @ColumnInfo(name = "song_duration") val songDuration: String,
+    @ColumnInfo(name = "artwork_uri") val artworkUri: String,
 )

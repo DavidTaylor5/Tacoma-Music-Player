@@ -105,7 +105,7 @@ class MusicPlayingFragment: Fragment() {
         this.context?.resources?.let { res ->
             controller?.mediaMetadata?.let { metadata ->
                 val customImage = "album_${metadata.albumTitle}"
-                UtilImpl.drawSongArt(
+                UtilImpl.drawMediaItemArt(
                     binding.songArt!!,
                     metadata.artworkUri?: Uri.EMPTY,
                     Size(500, 500),

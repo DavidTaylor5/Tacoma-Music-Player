@@ -323,7 +323,7 @@ class PlayerDisplayFragment: Fragment() {
     private fun updateMiniPlayerForCurrentSong(song: SongData) {
         //Set mini player song image
         val customImage = "album_${song.albumTitle}"
-        UtilImpl.drawSongArt(
+        UtilImpl.drawMediaItemArt(
             binding.miniPlayerImage!!,
             Uri.parse(song.artworkUri),
             Size(300, 300),

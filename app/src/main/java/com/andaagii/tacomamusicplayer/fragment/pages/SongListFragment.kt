@@ -393,7 +393,7 @@ class SongListFragment(
             if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
                 songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
                     val customImage = "album_${songGroup.songs[0].mediaMetadata.albumTitle}"
-                    UtilImpl.drawSongArt(
+                    UtilImpl.drawMediaItemArt(
                         binding.songGroupInfo.getSongGroupImage(),
                         songArt,
                         Size(200, 200),

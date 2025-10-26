@@ -3,7 +3,6 @@ package com.andaagii.tacomamusicplayer.util
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -25,6 +24,7 @@ import java.io.IOException
 import kotlin.math.floor
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+import androidx.core.graphics.drawable.toDrawable
 
 class UtilImpl {
 
@@ -64,45 +64,7 @@ class UtilImpl {
             }
         }
 
-        fun drawImageAssociatedWithAlbum(view: ImageView, uri: Uri, imageSize: Size, customImageName: String = "", ) {
-            Timber.d("drawImageAssociatedWithAlbum: view=$view, uri=$uri, customImageName=$customImageName")
-            view.setImageURI(null)
-
-            //Determine if there is a custom Album image, associated with albums and its songs
-            val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
-            val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-
-            var usingCustomImage = false
-            for(suffix in possibleImageSuffix) {
-                val customAlbumImage = File(appDir, "${customImageName}$suffix")
-                if(customAlbumImage.exists()) {
-                    Timber.d("drawImageAssociatedWithAlbum: customAlbumImage=$customAlbumImage exists, setting image...")
-                    try {
-                        val artUri = Uri.fromFile(customAlbumImage)
-                        view.load(artUri) {
-                            crossfade(true)
-                            size(imageSize.width, imageSize.height)
-                            error(R.drawable.white_note)
-                            fallback(R.drawable.white_note)
-                        }
-                        usingCustomImage = true
-                    } catch(e: Exception) {
-                        Timber.d("onBindViewHolder: exception when setting playlist art customAlbumImage=$customAlbumImage e=$e")
-                    }
-                    break
-                }
-            }
-
-            if(!usingCustomImage) { //No custom image found, use metadata album art uri
-                val ableToDrawUri = drawUriOntoImageViewCoil(view, uri, imageSize)
-
-                if(!ableToDrawUri) {
-                    drawMp3agicBitmap(view, uri, imageSize)
-                }
-            }
-        }
-
-        private fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size) {
+        private fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size): Boolean {
             Timber.d("drawMp3agicBitmap: uri=$uri")
             val fixUrl = Uri.fromFile(File("/storage/emulated/0/Music/Clipse/let-god-sort-em-out/11-so-far-ahead-(pharrell-williams).mp3"))
             val file = UtilImpl.uriToFile(view.context, fixUrl)
@@ -114,11 +76,19 @@ class UtilImpl {
 
                 val albumArt = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
 
-                view.setImageBitmap(albumArt)
-            } else {
-                val defaultArt = ResourcesCompat.getDrawable(view.resources, R.drawable.white_note, null)
-                view.load(defaultArt)
+                view.load(albumArt) {
+                    crossfade(true)
+                    size(imageSize.width, imageSize.height)
+                    error(R.drawable.white_note)
+                    fallback(R.drawable.white_note)
+                }
+
+
+                //view.setImageBitmap(albumArt)
+                return true
             }
+
+            return false
         }
 
         /**
@@ -134,6 +104,11 @@ class UtilImpl {
                     size(imageSize.width, imageSize.height)
                     error(R.drawable.white_note)
                     fallback(R.drawable.white_note)
+//                    listener( //TODO I want to save the bitmaps based on ID tags to custom storage to reference instead?...
+//                        onError = { request, throwable ->
+//                            drawMp3agicBitmap(view, uri, imageSize)
+//                        }
+//                    )
                 }
 
                 Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")
@@ -144,14 +119,35 @@ class UtilImpl {
             }
         }
 
-        fun drawSongArt(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false) {
+        fun drawMediaItemArt(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false) {
             Timber.d("drawSongArt: uri=$uri, imageSize=$imageSize, customAlbumImageName=$customAlbumImageName")
             view.setImageURI(null)
-            //Determine if there is a custom Album image, associated with albums and its songs
+
+            // Try to draw custom image
+            val usingCustomImage = loadCustomImage(view, uri, imageSize, customAlbumImageName, synchronous)
+            if(usingCustomImage) {
+                return
+            }
+
+            // Try to draw based on URI
+            val drewURI = drawUriOntoImageViewCoil(view, uri, imageSize)
+            if(drewURI) {
+                return
+            }
+
+            // Try to draw based on ID3v2 tag
+            val drewMp3agic = drawMp3agicBitmap(view, uri, imageSize)
+            if(drewMp3agic) {
+                return
+            }
+
+            // Draw default
+            drawDefault(view)
+        }
+
+        private fun loadCustomImage(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false): Boolean {
             val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
             val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-
-            var usingCustomImage = false
             for(suffix in possibleImageSuffix) {
                 val customAlbumImage = File(appDir, "${customAlbumImageName}$suffix")
                 if(customAlbumImage.exists()) {
@@ -161,6 +157,7 @@ class UtilImpl {
 
                         if(synchronous) {
                             view.setImageURI(artUri)
+                            return true
                         } else {
                             view.load(artUri) {
                                 crossfade(true)
@@ -168,32 +165,33 @@ class UtilImpl {
                                 error(R.drawable.white_note)
                                 fallback(R.drawable.white_note)
                             }
+                            return true
                         }
-
-
-                        usingCustomImage = true
                     } catch(e: Exception) {
                         Timber.d("onBindViewHolder: exception when setting playlist art customAlbumImage=$customAlbumImage e=$e")
+                        return false
                     }
-                    break
                 }
             }
 
-            if(!usingCustomImage) { //No custom image found, use metadata album art uri
-                drawUriOntoImageView(view, uri, imageSize, synchronous = synchronous)
-            }
+            return false
+        }
+
+        private fun drawDefault(view: ImageView) {
+            val defaultArt = ResourcesCompat.getDrawable(view.resources, R.drawable.white_note, null)
+            view.load(defaultArt)
         }
 
         /**
          * Call this function to draw a Uri onto an ImageView, return true if drawn without exception.
          */
-        fun drawUriOntoImageView(view: ImageView, uri: Uri, imageSize: Size, synchronous: Boolean = false): Boolean {
+        private fun drawUriOntoImageView(view: ImageView, uri: Uri, imageSize: Size, synchronous: Boolean = false): Boolean {
             Timber.d("drawUriOntoImageView: view=$view, uri=$uri, size=$imageSize")
             val resolver = view.context.contentResolver
             try {
                 //Album art as a bitmap, I need to work on what to do when this is blank / null?
                 val albumArt = resolver.loadThumbnail(uri, imageSize, null)
-                val albumDrawable = BitmapDrawable(view.context.resources, albumArt)
+                val albumDrawable = albumArt.toDrawable(view.context.resources)
 
                 if(synchronous) {
                     view.setImageDrawable(albumDrawable)
@@ -205,14 +203,10 @@ class UtilImpl {
                         fallback(R.drawable.white_note)
                     }
                 }
-
                 Timber.d("drawUriOntoImageView: SUCCESSFUL! Uri is placed on View!")
                 return true
             } catch (e: Exception) {
                 Timber.d("drawUriOntoImageView: ERROR ON adding URI to VIEW [setting default] e=$e")
-                Timber.d("drawUriOntoImageView: Attempting to use mp3agic Id3v2Tag...")
-                drawMp3agicBitmap(view, uri, imageSize)
-
                 return false
             }
         }
