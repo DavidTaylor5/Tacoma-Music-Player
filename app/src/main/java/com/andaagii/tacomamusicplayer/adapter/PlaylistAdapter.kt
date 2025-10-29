@@ -105,7 +105,7 @@ class PlaylistAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        val playlistTitle = playlists[position].mediaId
+        val playlistTitle = playlists[position].mediaMetadata.albumTitle.toString()
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
         Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(

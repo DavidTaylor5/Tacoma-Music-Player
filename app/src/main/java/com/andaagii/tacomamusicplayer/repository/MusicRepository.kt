@@ -36,4 +36,6 @@ interface MusicRepository: MusicProviderRepository {
      * Returns a continuous flow of Playlist data, will update if more playlists are added.
      */
     fun getAllAvailablePlaylistFlow(): Flow<List<MediaItem>>
+
+    suspend fun updatePlaylistImage(playlistTitle: String, artFileName: String)
 }

@@ -38,6 +38,7 @@ class MusicRepositoryImpl @Inject constructor(
 
     init {
         //Catalog all of the music on the user's device to a database in the background
+        //TODO I also need to run a workrequest everytime I observe a change in the MUSIC folder
         val catalogWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<CatalogMusicWorker>()
             .build()
 
@@ -88,6 +89,25 @@ class MusicRepositoryImpl @Inject constructor(
         Timber.d("getAllAvailablePlaylistFlow: ")
         return songGroupDao.getSongGroupsByTypeFlow(SongGroupType.PLAYLIST)
             .map { playlists -> playlists.map { playlist -> mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(playlist) } }
+    }
+
+    override suspend fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
+        Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
+        withContext(Dispatchers.IO) {
+            val playlist = songGroupDao.findSongGroupByName(playlistTitle)
+
+            //If playlist is null I should create one?
+            if(playlist == null) {
+                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
+                return@withContext
+            }
+
+            val updatedPlaylist = playlist.copy(
+                artUri = artFileName
+            )
+
+            songGroupDao.updateSongGroups(updatedPlaylist)
+        }
     }
 
     override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {

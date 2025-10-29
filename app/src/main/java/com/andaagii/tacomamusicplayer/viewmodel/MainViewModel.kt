@@ -22,6 +22,7 @@ import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
+import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
@@ -790,26 +791,7 @@ class MainViewModel @Inject constructor(
     fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
         Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
-                return@launch
-            }
-
-            //TODO update playlist image
-
-//            val updatedPlaylist = Playlist(
-//                id = playlist.id,
-//                title = playlist.title,
-//                artFile = artFileName,
-//                songs = playlist.songs,
-//                creationTimestamp = playlist.creationTimestamp,
-//                lastModificationTimestamp = LocalDateTime.now().toString()
-//            )
-//
-//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(updatedPlaylist)
+            musicRepo.updatePlaylistImage(playlistTitle, artFileName)
         }
     }
 
