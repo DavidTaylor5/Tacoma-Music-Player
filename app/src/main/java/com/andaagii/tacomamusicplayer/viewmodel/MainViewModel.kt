@@ -534,7 +534,7 @@ class MainViewModel @Inject constructor(
         if(albumSongGroup.type == SongGroupType.PLAYLIST) {
 
             viewModelScope.launch(Dispatchers.IO) {
-                val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext) //TODO move this to repo
                     .songGroupDao()
                     .findSongGroupByName(albumSongGroup.group.mediaMetadata.albumTitle.toString())
 
@@ -750,7 +750,7 @@ class MainViewModel @Inject constructor(
      * Ability to add a list of songs to a list of playlists.
      */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
-        Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songs=$songs")
+        Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songDescriptions=$songs")
         playlistTitles.forEach { playlist ->
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
         }
@@ -798,27 +798,11 @@ class MainViewModel @Inject constructor(
     /**
      * Add a list of songs to the Playlist. Even if adding only one song still use this function.
      */
-    private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
-        Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
+    private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) { //TODO this should be a list of searchdescriptions...
+        Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songDescriptions.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
-                return@launch
-            }
-            
-            val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
-
-            //TODO add list of songs to playlist...
-            
-//            val modifiedSongList = playlist.songs.songs.toMutableList()
-//            modifiedSongList.addAll(storableSongs)
-//
-//            playlist.songs = PlaylistData(modifiedSongList)
-//            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
-//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(playlist)
+            val songDescriptions = songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+            musicRepo.addSongsToPlaylist(playlistTitle, songDescriptions)
         }
     }
 
@@ -1211,20 +1195,18 @@ class MainViewModel @Inject constructor(
      * High level function that will attempt to set a list of songs (MediaItems) based on a playlist.
      * @param albumId The title of an playlist to be queried.
      */
-    fun querySongsFromPlaylist(playlistId: String) {
-        Timber.d("querySongsFromPlaylist: playlistId=$playlistId")
+    fun querySongsFromPlaylist(playlist: MediaItem) {
+        Timber.d("querySongsFromPlaylist: playlistId=${playlist.mediaMetadata.albumTitle}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistId)
-
-            //TODO query songs from playlist
-
-//            val songs = playlist.songs.songs
-//            val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-//
-//            val songGroupType = SongGroupType.PLAYLIST
-//            val title = playlistId
-//
-//            _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlist.mediaMetadata.albumTitle.toString())
+            val songGroupType = SongGroupType.PLAYLIST
+            _currentSongGroup.postValue(
+                SongGroup(
+                    songGroupType,
+                    playlistSongs,
+                    playlist
+                )
+            )
         }
     }
 

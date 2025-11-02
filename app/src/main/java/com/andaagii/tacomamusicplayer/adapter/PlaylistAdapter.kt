@@ -22,7 +22,7 @@ import java.io.File
 
 class PlaylistAdapter(
     private var playlists:  List<MediaItem>,
-    private val onPlaylistClick: (String) -> Unit,
+    private val onPlaylistClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
 ): RecyclerView.Adapter<PlaylistAdapter.PlaylistViewHolder>() {
@@ -50,7 +50,7 @@ class PlaylistAdapter(
         viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position].mediaId)
+            onPlaylistClick(playlists[position])
         }
 
         //Determine Playlist Duration Information TODO how can I get the track numbers....

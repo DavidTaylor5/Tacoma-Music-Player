@@ -22,6 +22,11 @@ class MediaItemUtil @Inject constructor() {
              createMediaItemFromSongData(data)
          }
     }
+    fun getSongSearchDescriptionFromMediaItem(song: MediaItem): String {
+        val songInfo = song.mediaMetadata
+        val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
+        return songDescription
+    }
 
     fun createMediaItemFromArtist(artist: String): MediaItem {
         return MediaItem.Builder()

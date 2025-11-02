@@ -10,6 +10,7 @@ import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -24,7 +25,8 @@ class CatalogMusicWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val mediaStoreUtil: MediaStoreUtil,
     private val songDao: SongDao,
-    private val songGroupDao: SongGroupDao
+    private val songGroupDao: SongGroupDao,
+    private val mediaItemUtil: MediaItemUtil
 ): CoroutineWorker(appContext, workerParams) { //TODO find another way to pass in these dependencies...
 
     override suspend fun doWork(): Result {
@@ -115,7 +117,7 @@ class CatalogMusicWorker @AssistedInject constructor(
 
         for(song in foundSongs) {
             val songInfo = song.mediaMetadata
-            val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
+            val songDescription = mediaItemUtil.getSongSearchDescriptionFromMediaItem(song)
             //val dbSong = songDao.findSongFromSearchDescription(songDescription)
             if (!dbSongTitles.contains(songInfo.title)) {
                 val songEntity = SongEntity(

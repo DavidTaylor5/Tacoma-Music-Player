@@ -1,19 +1,17 @@
 package com.andaagii.tacomamusicplayer.repository
 
-import android.app.Application
 import android.content.Context
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
-import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
-import com.andaagii.tacomamusicplayer.database.PlayerDatabase
+import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.factory.MediaBrowserFactory
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
@@ -22,7 +20,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -67,16 +64,17 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun removeSongsFromPlaylist(playlistTitle: String, songs: List<SongEntity>) {
         Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
-        withContext(Dispatchers.IO) {
-            val playlistRefs = songs.map { song ->
-                SongGroupCrossRefEntity(
-                    playlistTitle,
-                    song.searchDescription
-                )
-            }
-
-            songGroupDao.deleteSongsFromPlaylist(*playlistRefs.toTypedArray())
-        }
+        //TODO How do I remove a song from the certain position, same song can be added more than once?
+//        withContext(Dispatchers.IO) {
+//            val playlistRefs = songs.map { song ->
+//                SongGroupCrossRefEntity(
+//                    playlistTitle,
+//                    song.searchDescription
+//                )
+//            }
+//
+//            songGroupDao.deleteSongsFromPlaylist(*playlistRefs.toTypedArray())
+//        }
     }
 
     override fun getAllAvailableAlbumsFlow(): Flow<List<MediaItem>> {
@@ -107,6 +105,49 @@ class MusicRepositoryImpl @Inject constructor(
             )
 
             songGroupDao.updateSongGroups(updatedPlaylist)
+        }
+    }
+
+    override suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>) {
+        withContext(Dispatchers.IO) {
+            val playlist = songGroupDao.findSongGroupByName(playlistTitle) //TODO playlist is showing up as null
+            val currentPlaylistSongs = songGroupDao.selectSongsFromPlaylist(playlistTitle)
+            val songs: List<SongEntity> = songDescriptions.map {
+                val foundSongs = songDao.findSongFromSearchDescription(it)
+                if(foundSongs.size > 1) {
+                    Timber.e("addSongsToPlaylist: FOUND MULTIPLE SONGS WITH description=$it")
+                }
+                if(foundSongs.isEmpty()) {
+                    Timber.e("addSongsToPlaylist: FOUND NO SONG WITH description=$it")
+                }
+                foundSongs[0]
+            }
+
+            val durationAdded = songs.map { it.songDuration.toLongOrNull() ?:0 }.reduce { acc, l -> acc+l }
+            val nextPosition = if(currentPlaylistSongs.isNotEmpty()) currentPlaylistSongs.last().position + 100 else 0
+
+            if(playlist == null) {
+                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
+                return@withContext
+            }
+
+            //update playlist group duration
+            songGroupDao.updateSongGroups(
+                playlist.copy(
+                    groupDuration = playlist.groupDuration + durationAdded
+                )
+            )
+
+            val playlistRefs = songs.mapIndexed { index, song ->
+                SongGroupCrossRefEntity(
+                    groupTitle = playlistTitle,
+                    searchDescription = song.searchDescription,
+                    position = nextPosition + (100 * index)
+                )
+            }
+
+            //Update the playlist refs
+            songGroupDao.insertPlaylistSongs(*playlistRefs.toTypedArray())
         }
     }
 

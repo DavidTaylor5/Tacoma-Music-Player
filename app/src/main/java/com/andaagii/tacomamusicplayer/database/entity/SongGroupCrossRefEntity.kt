@@ -3,10 +3,10 @@ package com.andaagii.tacomamusicplayer.database.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "song_ref_table",
-    primaryKeys = ["groupTitle", "searchDescription"],
     foreignKeys = [
         ForeignKey(
             entity = SongGroupEntity::class,
@@ -27,6 +27,10 @@ import androidx.room.Index
     ]
 )
 data class SongGroupCrossRefEntity (
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val groupTitle: String,
-    val searchDescription: String
+    val searchDescription: String,
+    val position: Int
 )
+
+//Position 100 Increments, swapping places will be between two songs 100 200 -> 150

@@ -50,7 +50,7 @@ class PlaylistPromptAdapter(
         }
 
         viewHolder.binding.addCheckbox.setOnCheckedChangeListener { _, b ->
-            onPlaylistChecked(playlists[position].mediaId, b)
+            onPlaylistChecked(playlists[position].mediaMetadata.albumTitle.toString(), b)
         }
     }
 

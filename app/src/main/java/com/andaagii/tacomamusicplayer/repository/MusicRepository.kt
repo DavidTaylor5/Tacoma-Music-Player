@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.repository
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -38,4 +39,6 @@ interface MusicRepository: MusicProviderRepository {
     fun getAllAvailablePlaylistFlow(): Flow<List<MediaItem>>
 
     suspend fun updatePlaylistImage(playlistTitle: String, artFileName: String)
+
+    suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
 }

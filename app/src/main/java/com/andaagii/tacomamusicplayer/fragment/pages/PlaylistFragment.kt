@@ -257,8 +257,8 @@ class PlaylistFragment: Fragment() {
         }
     }
 
-    private fun onPlaylistClick(playlistTitle: String) {
-        parentViewModel.querySongsFromPlaylist(playlistTitle)
+    private fun onPlaylistClick(playlist: MediaItem) {
+        parentViewModel.querySongsFromPlaylist(playlist)
         parentViewModel.setPage(PageType.SONG_PAGE)
     }
 
