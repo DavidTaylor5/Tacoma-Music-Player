@@ -108,6 +108,27 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updatePlaylistSongOrder(
+        playlistTitle: String,
+        songDescriptions: List<String>
+    ) {
+        //val playlist = songGroupDao.findSongGroupByName(playlistTitle)
+        //val currentPlaylistSongs = songGroupDao.selectSongsFromPlaylist(playlistTitle)
+
+        //TODO I should probably update at some point to only delete, swap positions of songs that have changed.
+        songGroupDao.deleteAllSongsFromPlaylist(playlistTitle)
+
+        val updatedPlaylist = songDescriptions.mapIndexed { index, desc ->
+            SongGroupCrossRefEntity(
+                groupTitle = playlistTitle,
+                searchDescription = desc,
+                position = index
+            )
+        }
+
+        songGroupDao.insertPlaylistSongs(*updatedPlaylist.toTypedArray())
+    }
+
     override suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>) {
         withContext(Dispatchers.IO) {
             val playlist = songGroupDao.findSongGroupByName(playlistTitle) //TODO playlist is showing up as null

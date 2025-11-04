@@ -41,4 +41,11 @@ interface MusicRepository: MusicProviderRepository {
     suspend fun updatePlaylistImage(playlistTitle: String, artFileName: String)
 
     suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
+
+    /**
+     * Update the songs in a playlist.
+     */
+    suspend fun updatePlaylistSongOrder(playlistTitle: String, songDescriptions: List<String>)
+
+    //suspend fun removeSongsFromPlaylist(playlistTitle: String, songPositions: List<Int>)
 }

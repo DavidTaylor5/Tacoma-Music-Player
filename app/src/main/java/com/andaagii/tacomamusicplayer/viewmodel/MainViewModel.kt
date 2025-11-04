@@ -532,34 +532,11 @@ class MainViewModel @Inject constructor(
     fun updatePlaylistOrder(albumSongGroup: SongGroup) {
         Timber.d("updatePlaylistOrder: albumSongGroup=$albumSongGroup")
         if(albumSongGroup.type == SongGroupType.PLAYLIST) {
-
             viewModelScope.launch(Dispatchers.IO) {
-                val currentPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext) //TODO move this to repo
-                    .songGroupDao()
-                    .findSongGroupByName(albumSongGroup.group.mediaMetadata.albumTitle.toString())
-
-                //Turn the media items into a list of SongData
-                val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
-
-                //TODO update the playlist order!
-                //TODO update the SongGroupCrossRefEntity with song position?
-
-//                //Modify the original playlist
-//                val modifyPlaylist = Playlist(
-//                    id = currentPlaylist.id,
-//                    title = currentPlaylist.title,
-//                    artFile = currentPlaylist.artFile,
-//                    songs = PlaylistData(modifySongData),
-//                    creationTimestamp = currentPlaylist.creationTimestamp,
-//                    lastModificationTimestamp = LocalDateTime.now().toString()
-//                )
-//
-//                //Update the database with the updated playlist
-//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                    .playlistDao()
-//                    .updatePlaylists(
-//                        modifyPlaylist
-//                    )
+                musicRepo.updatePlaylistSongOrder(
+                    albumSongGroup.group.mediaMetadata.albumTitle.toString(),
+                    albumSongGroup.songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+                )
             }
         }
     }
