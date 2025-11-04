@@ -283,15 +283,14 @@ class SongListFragment(): Fragment() {
                 menu.menu
             )
 
-            //TODO add this back!!!
-//            menu.setOnMenuItemClickListener {
-//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-//                handleSongSetting(
-//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-//                    parentViewModel.currentSongList.value?.songs ?: listOf()
-//                )
-//                return@setOnMenuItemClickListener true
-//            }
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+                handleSongSetting(
+                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+                    parentViewModel.currentSongGroup.value?.songs ?: listOf()
+                )
+                return@setOnMenuItemClickListener true
+            }
             menu.show()
         }
 
