@@ -479,54 +479,6 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Remove a songs from a specific playlist
-     * @param playlistTitle Title of a playlist.
-     * @param songs Songs to be deleted.
-     */
-    fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>) {
-        Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
-
-
-        //TODO remove songs from playlist functionality!!
-
-//        viewModelScope.launch(Dispatchers.IO) {
-//
-//            try {
-//                val currentPlaylist =
-//                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                        .songGroupDao()
-//                        .findSongGroupByName(playlistTitle)
-//
-//                val removeSongTitles = MediaItemUtil().createSongDataFromListOfMediaItem(songs).map { removeSong ->
-//                    removeSong.songTitle
-//                }
-//
-//                val modSongList = currentPlaylist.songs.songs.toMutableList()
-//                modSongList.removeAll { song ->
-//                        removeSongTitles.contains(song.songTitle)
-//                    }
-//
-//                val updatePlaylist = Playlist(
-//                    id = currentPlaylist.id,
-//                    title = currentPlaylist.title,
-//                    artFile = currentPlaylist.artFile,
-//                    songs = PlaylistData(modSongList),
-//                    creationTimestamp = currentPlaylist.creationTimestamp,
-//                    lastModificationTimestamp = LocalDateTime.now().toString()
-//                )
-//
-//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                    .playlistDao()
-//                    .updatePlaylists(
-//                        updatePlaylist
-//                    )
-//            } catch (e: Exception) {
-//                Timber.d("removeSongsFromPlaylist: Error removing song from playlist, e=$e")
-//            }
-//        }
-    }
-
-    /**
      * @param albumSongGroup A song group associated with a playlist.
      */
     fun updatePlaylistOrder(albumSongGroup: SongGroup) {
@@ -736,29 +688,7 @@ class MainViewModel @Inject constructor(
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(currentTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$currentTitle")
-                return@launch
-            }
-
-            //TODO update playlist title
-
-//            val updatedPlaylist = Playlist(
-//                id = playlist.id,
-//                title = newTitle,
-//                artFile = "$newTitle.jpg",
-//                songs = playlist.songs,
-//                creationTimestamp = playlist.creationTimestamp,
-//                lastModificationTimestamp = LocalDateTime.now().toString()
-//            )
-//
-//            //The playlistImage is saved using playlistTitle, update playlist image file name
-//           UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
-//
-//            PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().updateSongGroups(updatedPlaylist)
+            musicRepo.updatePlaylistTitle(currentTitle, newTitle)
         }
     }
 

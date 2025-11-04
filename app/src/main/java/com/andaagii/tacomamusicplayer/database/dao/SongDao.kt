@@ -33,9 +33,9 @@ interface SongDao {
         SELECT s.* FROM song_table AS s
         INNER JOIN song_ref_table AS p
         ON s.search_description = p.searchDescription
-        WHERE p.groupTitle = :playlistName
+        WHERE p.groupId = :groupId
     """)
-    fun selectAllSongsFromPlaylist(playlistName: String): List<SongEntity>
+    fun selectAllSongsFromPlaylist(groupId: Int): List<SongEntity>
 
     @Query("SELECT * FROM song_table WHERE song_name = :songName")
     fun queryAllSongsWithSongName(songName: String): List<SongEntity>

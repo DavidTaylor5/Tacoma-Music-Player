@@ -10,8 +10,8 @@ import androidx.room.PrimaryKey
     foreignKeys = [
         ForeignKey(
             entity = SongGroupEntity::class,
-            parentColumns = ["group_title"],
-            childColumns = ["groupTitle"],
+            parentColumns = ["groupId"],
+            childColumns = ["groupId"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
@@ -22,13 +22,13 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
-        Index(value = ["groupTitle"]),
+        Index(value = ["groupId"]),
         Index(value = ["searchDescription"])
     ]
 )
 data class SongGroupCrossRefEntity (
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val groupTitle: String,
+    val groupId: Int,
     val searchDescription: String,
     val position: Int
 )

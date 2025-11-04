@@ -65,12 +65,12 @@ interface SongGroupDao {
     @Update
     fun updatePlaylistSong(vararg songGroupRef: SongGroupCrossRefEntity)
 
-    @Query("SELECT * FROM song_ref_table WHERE groupTitle = :playlistTitle ORDER BY position ASC")
-    fun selectSongsFromPlaylist(playlistTitle: String): List<SongGroupCrossRefEntity>
+    @Query("SELECT * FROM song_ref_table WHERE groupId = :groupId ORDER BY position ASC")
+    fun selectSongsFromPlaylist(groupId: Int): List<SongGroupCrossRefEntity>
 
-    @Query("DELETE FROM song_ref_table WHERE groupTitle = :playlistName AND searchDescription = :songDescription AND position = :position")
-    fun deleteSongFromPlaylist(playlistName: String, songDescription: String, position: Int)
+    @Query("DELETE FROM song_ref_table WHERE groupId = :groupId AND searchDescription = :songDescription AND position = :position")
+    fun deleteSongFromPlaylist(groupId: Int, songDescription: String, position: Int)
 
-    @Query("DELETE FROM song_ref_table WHERE groupTitle = :playlistName")
-    fun deleteAllSongsFromPlaylist(playlistName: String)
+    @Query("DELETE FROM song_ref_table WHERE groupId = :groupId")
+    fun deleteAllSongsFromPlaylist(groupId: Int)
 }

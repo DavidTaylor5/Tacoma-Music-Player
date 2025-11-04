@@ -42,6 +42,7 @@ class MusicRepositoryImpl @Inject constructor(
         WorkManager.getInstance(context).enqueue(catalogWorkRequest)
     }
 
+//TODO ADD LOGIC TO BLOCK TWO PLAYLISTS WITH THE SAME NAME! Probably using UI
     override suspend fun createPlaylist(playlistName: String) {
         withContext(Dispatchers.IO) {
             Timber.d("createNamedPlaylist: playlistName=$playlistName")
@@ -112,27 +113,54 @@ class MusicRepositoryImpl @Inject constructor(
         playlistTitle: String,
         songDescriptions: List<String>
     ) {
-        //val playlist = songGroupDao.findSongGroupByName(playlistTitle)
+        val playlist = songGroupDao.findSongGroupByName(playlistTitle)
         //val currentPlaylistSongs = songGroupDao.selectSongsFromPlaylist(playlistTitle)
+        if(playlist != null) {
+            songGroupDao.deleteAllSongsFromPlaylist(playlist.groupId)
 
-        //TODO I should probably update at some point to only delete, swap positions of songs that have changed.
-        songGroupDao.deleteAllSongsFromPlaylist(playlistTitle)
+            val updatedPlaylist = songDescriptions.mapIndexed { index, desc ->
+                SongGroupCrossRefEntity(
+                    groupId = playlist.groupId,
+                    searchDescription = desc,
+                    position = index
+                )
+            }
 
-        val updatedPlaylist = songDescriptions.mapIndexed { index, desc ->
-            SongGroupCrossRefEntity(
-                groupTitle = playlistTitle,
-                searchDescription = desc,
-                position = index
-            )
+            songGroupDao.insertPlaylistSongs(*updatedPlaylist.toTypedArray())
+        } else {
+            Timber.d("updatePlaylistSongOrder: no playlist found for playlistTitle=$playlistTitle")
         }
 
-        songGroupDao.insertPlaylistSongs(*updatedPlaylist.toTypedArray())
+        //TODO I should probably update at some point to only delete, swap positions of songs that have changed.
+
+    }
+
+    override suspend fun updatePlaylistTitle(originalTitle: String, newTitle: String) {
+        withContext(Dispatchers.IO) {
+            val playlist = songGroupDao.findSongGroupByName(originalTitle)
+            if(playlist != null) {
+                songGroupDao.updateSongGroups(
+                    playlist.copy(
+                        groupTitle = newTitle
+                    )
+                )
+            } else {
+                Timber.d("updatePlaylistTitle: No playlist found with title=$originalTitle")
+            }
+        }
     }
 
     override suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>) {
         withContext(Dispatchers.IO) {
             val playlist = songGroupDao.findSongGroupByName(playlistTitle) //TODO playlist is showing up as null
-            val currentPlaylistSongs = songGroupDao.selectSongsFromPlaylist(playlistTitle)
+            
+            if(playlist == null) {
+                Timber.d("addSongsToPlaylist: No playlist found for playlistTitle=$playlistTitle")
+                return@withContext
+            }
+            
+            val currentPlaylistSongs = songGroupDao.selectSongsFromPlaylist(playlist.groupId)
+            
             val songs: List<SongEntity> = songDescriptions.map {
                 val foundSongs = songDao.findSongFromSearchDescription(it)
                 if(foundSongs.size > 1) {
@@ -161,7 +189,7 @@ class MusicRepositoryImpl @Inject constructor(
 
             val playlistRefs = songs.mapIndexed { index, song ->
                 SongGroupCrossRefEntity(
-                    groupTitle = playlistTitle,
+                    groupId = playlist.groupId,
                     searchDescription = song.searchDescription,
                     position = nextPosition + (100 * index)
                 )
@@ -203,8 +231,14 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
-        songDao.selectAllSongsFromPlaylist(playlistTitle).map { songEntity ->
-            mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+        val playlist = songGroupDao.findSongGroupByName(playlistTitle)
+        if(playlist != null) {
+            songDao.selectAllSongsFromPlaylist(playlist.groupId).map { songEntity ->
+                mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+            }
+        } else {
+            Timber.d("getSongsFromPlaylist: No playlist with playlistTitle=$playlistTitle found.")
+            listOf()
         }
     }
 

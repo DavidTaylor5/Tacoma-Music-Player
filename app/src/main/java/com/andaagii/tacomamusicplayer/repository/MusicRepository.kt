@@ -47,5 +47,5 @@ interface MusicRepository: MusicProviderRepository {
      */
     suspend fun updatePlaylistSongOrder(playlistTitle: String, songDescriptions: List<String>)
 
-    //suspend fun removeSongsFromPlaylist(playlistTitle: String, songPositions: List<Int>)
+    suspend fun updatePlaylistTitle(originalTitle: String, newTitle: String)
 }

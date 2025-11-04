@@ -52,7 +52,7 @@ class CatalogMusicWorker @AssistedInject constructor(
 
     private fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
-        val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
+        //val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
 
         val dbAlbumTitles = dbAlbums.map { it.groupTitle }
         val albumTitles = albums.map { it.mediaMetadata.albumTitle }
@@ -70,19 +70,32 @@ class CatalogMusicWorker @AssistedInject constructor(
             if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
                 val savedAlbum = songGroupDao.findSongGroupByDescription(description)
 
-                val songGroupEntity = SongGroupEntity(
-                    songGroupType = SongGroupType.ALBUM,
-                    artFile = null,
-                    artUri = albumInfo.artworkUri.toString(),
-                    groupTitle = albumInfo.albumTitle.toString(),
-                    groupArtist = albumInfo.albumArtist.toString(),
-                    searchDescription = description,
-                    groupDuration = if(savedAlbum!=null) savedAlbum.groupDuration else "0",
-                    creationTimestamp = "0",
-                    lastModificationTimestamp = "0",
-                    releaseYear = albumInfo.releaseYear.toString()
-                )
-                albumEntityList.add(songGroupEntity)
+                // Because SongGroups are now saved by groupId rather than groupTitle, I need to make sure I'm not saving twice.
+                val songGroupEntity = if(savedAlbum != null) {
+                    savedAlbum.copy(
+                        artUri = albumInfo.artworkUri.toString(),
+                        groupTitle = albumInfo.albumTitle.toString(),
+                        groupArtist = albumInfo.albumArtist.toString(),
+                        releaseYear = albumInfo.releaseYear.toString()
+                    )
+                } else {
+                    SongGroupEntity(
+                        songGroupType = SongGroupType.ALBUM,
+                        artFile = null,
+                        artUri = albumInfo.artworkUri.toString(),
+                        groupTitle = albumInfo.albumTitle.toString(),
+                        groupArtist = albumInfo.albumArtist.toString(),
+                        searchDescription = description,
+                        groupDuration =  "0",
+                        creationTimestamp = "0",
+                        lastModificationTimestamp = "0",
+                        releaseYear = albumInfo.releaseYear.toString()
+                    )
+                }
+
+
+                //albumEntityList.add(songGroupEntity)
+                songGroupDao.insertSongGroups(songGroupEntity)
             }
         }
 
@@ -91,9 +104,9 @@ class CatalogMusicWorker @AssistedInject constructor(
 
         val deleteAlbums = dbAlbums.filter { deleteAlbumTitles.contains(it.groupTitle) }
 
-        if(albumEntityList.isNotEmpty()) {
-            songGroupDao.insertSongGroups(*albumEntityList.toTypedArray())
-        }
+//        if(albumEntityList.isNotEmpty()) {
+//            songGroupDao.insertSongGroups(*albumEntityList.toTypedArray())
+//        }
 
         if(deleteAlbums.isNotEmpty()) {
             songGroupDao.deleteSongGroups(*deleteAlbums.toTypedArray())
