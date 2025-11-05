@@ -42,6 +42,8 @@ interface MusicRepository: MusicProviderRepository {
 
     suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
 
+    suspend fun  createInitialQueueIfEmpty(title: String)
+
     /**
      * Update the songs in a playlist.
      */

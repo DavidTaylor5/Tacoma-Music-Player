@@ -5,6 +5,7 @@ import androidx.media3.common.MediaItem
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
@@ -49,7 +50,9 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override fun cancelCatalogWorker() {
-        workManager.cancelWorkById(currentWorkerId)
+        if(::currentWorkerId.isInitialized) {
+            workManager.cancelWorkById(currentWorkerId)
+        }
     }
 
 //TODO ADD LOGIC TO BLOCK TWO PLAYLISTS WITH THE SAME NAME! Probably using UI
@@ -116,6 +119,23 @@ class MusicRepositoryImpl @Inject constructor(
             )
 
             songGroupDao.updateSongGroups(updatedPlaylist)
+        }
+    }
+
+    override suspend fun  createInitialQueueIfEmpty(title: String) {
+        var queue = songGroupDao.findSongGroupByName(title)
+        if(queue == null) {
+            queue = SongGroupEntity(
+                songGroupType = SongGroupType.QUEUE,
+                groupTitle = title,
+                artFile = null,
+                artUri = null,
+                groupArtist = "QUEUE",
+                searchDescription = "QUEUE",
+                groupDuration = ""
+            )
+
+            songGroupDao.insertSongGroups(queue)
         }
     }
 

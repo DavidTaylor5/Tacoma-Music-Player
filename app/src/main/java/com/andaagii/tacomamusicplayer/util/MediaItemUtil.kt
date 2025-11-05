@@ -72,6 +72,25 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
+    /**
+     * Creates a song entity from a mediaItem, don't use this in the worker as I'm adding in album uri there.
+     * TODO I might remove this... Unless I find a use for it.
+     */
+    fun createSongEntityFromMediaItem(mediaItem: MediaItem): SongEntity {
+        val songInfo = mediaItem.mediaMetadata
+        val songDescription = getSongSearchDescriptionFromMediaItem(mediaItem)
+
+        return SongEntity(
+            albumTitle = songInfo.albumTitle.toString(),
+            artist = songInfo.artist.toString(),
+            searchDescription = songDescription,
+            name = songInfo.title.toString(),
+            uri = mediaItem.mediaId,
+            songDuration = songInfo.description.toString(),
+            artworkUri = songInfo.artworkUri.toString()
+        )
+    }
+
     fun createMediaItemFromSongEntity(
         song: SongEntity
     ): MediaItem {

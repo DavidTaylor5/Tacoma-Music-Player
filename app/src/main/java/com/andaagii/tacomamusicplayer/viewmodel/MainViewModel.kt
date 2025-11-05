@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -502,96 +503,43 @@ class MainViewModel @Inject constructor(
 
     /**
      * Saves the current songs playing in the queue, to be loaded when the app opens next.
-     * TODO I also want to save the position of the last song I was in.
      */
     fun saveQueue() {
         Timber.d("saveQueue: ")
         mediaController.value?.let { controller ->
-
             //Save current Player state
             savePlayerState(controller)
 
             val songs = UtilImpl.getSongListFromMediaController(controller)
 
-            if(!songs.isNullOrEmpty()) {
-
-                val playlistData = PlaylistData(
-                    mediaItemUtil.createSongDataFromListOfMediaItem(songs)
-                )
-
+            if(songs.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.IO) {
-                    val savedQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .songGroupDao()
-                        .findSongGroupByName(Const.PLAYLIST_QUEUE_TITLE)
+                    //In case queue has never been initialized
+                    musicRepo.createInitialQueueIfEmpty(Const.PLAYLIST_QUEUE_TITLE)
 
-                    //TODO update the savedQueue
-
-//                    //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-//                    val updateStoredQueue = if(savedQueue != null) {
-//                        Playlist(
-//                            id = savedQueue.id,
-//                            title = savedQueue.title,
-//                            artFile = savedQueue.artFile,
-//                            songs = playlistData,
-//                            creationTimestamp = savedQueue.creationTimestamp,
-//                            lastModificationTimestamp = LocalDateTime.now().toString()
-//                        )
-//                    } else {
-//                        Playlist(
-//                            title = Const.PLAYLIST_QUEUE_TITLE,
-//                            artFile = "",
-//                            songs = playlistData,
-//                            creationTimestamp = LocalDateTime.now().toString(),
-//                            lastModificationTimestamp = LocalDateTime.now().toString()
-//                        )
-//                    }
-//
-//                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                        .playlistDao()
-//                        .insertPlaylists(updateStoredQueue)
+                    musicRepo.updatePlaylistSongOrder(
+                        Const.PLAYLIST_QUEUE_TITLE,
+                        songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+                    )
                 }
             }
         }
     }
 
+    /**
+     * When the user exits the app in shuffled mode, give the user the ability to return to ordered mode.
+     */
     fun saveOriginalOrder() {
         Timber.d("saveOriginalOrder: ")
         originalSongOrder.value?.let { originalOrderSongs ->
-            val playlistData = PlaylistData(
-                mediaItemUtil.createSongDataFromListOfMediaItem(originalOrderSongs)
-            )
-
             viewModelScope.launch(Dispatchers.IO) {
-                val savedOriginalOrder =
-                    PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .songGroupDao()
-                        .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
+                //In case queue has never been initialized
+                musicRepo.createInitialQueueIfEmpty(Const.ORIGINAL_QUEUE_ORDER)
 
-                //TODO save the original queue order, I guess for shuffling purposes?
-
-//                //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-//                val updateStoredQueue = if (savedOriginalOrder != null) {
-//                    Playlist(
-//                        id = savedOriginalOrder.id,
-//                        title = savedOriginalOrder.title,
-//                        artFile = savedOriginalOrder.artFile,
-//                        songs = playlistData,
-//                        creationTimestamp = savedOriginalOrder.creationTimestamp,
-//                        lastModificationTimestamp = LocalDateTime.now().toString()
-//                    )
-//                } else {
-//                    Playlist(
-//                        title = Const.ORIGINAL_QUEUE_ORDER,
-//                        artFile = "",
-//                        songs = playlistData,
-//                        creationTimestamp = LocalDateTime.now().toString(),
-//                        lastModificationTimestamp = LocalDateTime.now().toString()
-//                    )
-//                }
-//
-//                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                    .playlistDao()
-//                    .insertPlaylists(updateStoredQueue)
+                musicRepo.updatePlaylistSongOrder(
+                    Const.ORIGINAL_QUEUE_ORDER,
+                    originalOrderSongs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+                )
             }
         }
     }
@@ -611,59 +559,39 @@ class MainViewModel @Inject constructor(
     private fun restoreQueue() {
         Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val oldQueue = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .songGroupDao()
-                .findSongGroupByName(Const.PLAYLIST_QUEUE_TITLE)
-
             val playbackPosition = DataStoreUtil.getPlaybackPosition(getApplication<Application>().applicationContext).firstOrNull()
             val songPosition = DataStoreUtil.getSongPosition(getApplication<Application>().applicationContext).firstOrNull()
 
-            //TODO restore queue to the forefront logic!
+            val queue = musicRepo.getSongsFromPlaylist(Const.PLAYLIST_QUEUE_TITLE)
 
-//            //oldQueue can be null if this is a fresh install or if there is no previous queue
-//            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
-//                Timber.d("restoreQueue: No queue to restore!")
-//
-//                //Remove Loading Screen [100ms added to cover image switch]
-//                loadingHandler.postDelayed({
-//                    _showLoadingScreen.postValue(false)
-//                }, 100)
-//                return@launch
-//            }
-//
-//            withContext(Dispatchers.Main) {
-//                mediaController.value?.let { controller ->
-//                    controller.setMediaItems(
-//                        mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-//                            oldQueue.songs.songs
-//                        )
-//                    )
-//
-//                    // Restore Playback State
-//                    if(songPosition != null && songPosition < controller.mediaItemCount) {
-//                        if(playbackPosition != null) {
-//                            controller.seekTo(songPosition, playbackPosition)
-//                        } else {
-//                            controller.seekTo(songPosition, 0)
-//                        }
-//                    }
-//
-//                    //Remove Loading Screen [100ms added to cover image switch]
-//                    loadingHandler.postDelayed({
-//                        _showLoadingScreen.postValue(false)
-//                    }, 100)
-//                }
-//            }
+            withContext(Dispatchers.Main) {
+                // Restore Playback State
+                mediaController.value?.let { controller ->
+                    controller.setMediaItems(queue)
+
+                    if(songPosition != null && songPosition < controller.mediaItemCount) {
+                        if(playbackPosition != null) {
+                            controller.seekTo(songPosition, playbackPosition)
+                        } else {
+                            controller.seekTo(songPosition, 0)
+                        }
+                    }
+                }
+            }
         }
     }
 
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val originalQueueOrderPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .songGroupDao()
-                .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
+//            val originalQueueOrderPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+//                .songGroupDao()
+//                .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
 
+            val queueOrdered = musicRepo.getSongsFromPlaylist(Const.ORIGINAL_QUEUE_ORDER)
+
+
+            _originalSongOrder.postValue(queueOrdered)
             //TODO restore the queue order
 
 //            originalQueueOrderPlaylist?.let { playlist ->
@@ -1005,14 +933,24 @@ class MainViewModel @Inject constructor(
             _originalSongOrder.postValue( songOrder ?: mediaItems  )
         }
 
-        if(_shuffleMode.value == ShuffleType.SHUFFLED) {
-            val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
-            _mediaController.value?.addMediaItems(shuffledSongs)
-            _currentlyPlayingSongs.value = shuffledSongs
-        } else {
-            _mediaController.value?.addMediaItems(mediaItems)
-            _currentlyPlayingSongs.value = mediaItems
+        _mediaController.value?.let { controller ->
+            if(_shuffleMode.value == ShuffleType.SHUFFLED) {
+                val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
+                controller.addMediaItems(shuffledSongs)
+                _currentlyPlayingSongs.value = shuffledSongs
+            } else {
+                //TODO update all places where I set / add mediaItems
+                if(controller.mediaItemCount == 0) {
+                    controller.setMediaItems(mediaItems)
+                } else {
+                    controller.addMediaItems(mediaItems)
+                }
+
+                _currentlyPlayingSongs.value = mediaItems
+            }
         }
+
+
 
         startingSongPosition?.let { position ->
             _mediaController.value?.seekTo(position, 0L)

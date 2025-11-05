@@ -70,8 +70,11 @@ class CatalogMusicWorker @AssistedInject constructor(
             if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
                 val savedAlbum = songGroupDao.findSongGroupByDescription(description)
 
+                //TODO update with mediaItemUtil createSongGroupEntityFromMediaItem
+
                 // Because SongGroups are now saved by groupId rather than groupTitle, I need to make sure I'm not saving twice.
                 val songGroupEntity = if(savedAlbum != null) {
+                    Timber.d("catalogAlbums: album=$album copying album, new info")
                     savedAlbum.copy(
                         artUri = albumInfo.artworkUri.toString(),
                         groupTitle = albumInfo.albumTitle.toString(),
@@ -79,6 +82,7 @@ class CatalogMusicWorker @AssistedInject constructor(
                         releaseYear = albumInfo.releaseYear.toString()
                     )
                 } else {
+                    Timber.d("catalogAlbums: album=$album Creating new album entry!")
                     SongGroupEntity(
                         songGroupType = SongGroupType.ALBUM,
                         artFile = null,
@@ -117,7 +121,7 @@ class CatalogMusicWorker @AssistedInject constructor(
      * Takes an album and adds all of it's songs to the
      */
     private fun catalogAlbumSongs(albumName: String, albumArtUri: String) {
-        Timber.d("catalogAlbumSongs: albumName=$albumName")
+        //Timber.d("catalogAlbumSongs: albumName=$albumName")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
         val foundSongTitles = foundSongs.map { it.mediaMetadata.title }
@@ -127,6 +131,8 @@ class CatalogMusicWorker @AssistedInject constructor(
 
         //After parsing all the songs, update album duration
         var albumDuration: Long = 0
+
+        //TODO update with mediaItemUtil createSongEntityFromMediaItem
 
         for(song in foundSongs) {
             val songInfo = song.mediaMetadata
