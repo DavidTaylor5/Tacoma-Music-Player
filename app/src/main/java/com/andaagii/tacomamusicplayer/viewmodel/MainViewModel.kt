@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -188,7 +190,9 @@ class MainViewModel @Inject constructor(
 
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
-    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(false) //TODO make this false again....
+    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+
+    val loadingHandler = Handler(Looper.getMainLooper())
 
     val clearQueue: LiveData<Boolean>
         get() = _clearQueue
@@ -581,6 +585,10 @@ class MainViewModel @Inject constructor(
                             controller.seekTo(songPosition, 0)
                         }
                     }
+
+                    loadingHandler.postDelayed({
+                        _showLoadingScreen.postValue(false)
+                    }, 500)
                 }
             }
         }

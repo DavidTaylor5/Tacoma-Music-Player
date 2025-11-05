@@ -62,7 +62,6 @@ class MusicRepositoryImpl @Inject constructor(
         Timber.d("cancelCatalogWorker: onClea")
         if(::currentWorkerId.isInitialized) {
             workManager.cancelWorkById(currentWorkerId)
-            workManager.cancelAllWork()
         }
     }
 
