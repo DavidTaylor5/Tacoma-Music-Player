@@ -26,7 +26,9 @@ import timber.log.Timber
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class MusicRepositoryImpl @Inject constructor(
     @ApplicationContext context: Context,
     private val mediaItemUtil: MediaItemUtil,
@@ -45,13 +47,22 @@ class MusicRepositoryImpl @Inject constructor(
             .build()
 
         workManager = WorkManager.getInstance(context)
+        currentWorkerId = catalogWorkRequest.id
+
+        //TODO there is still another parallel execution that is happening, two workers are finishing at the same
+        //time and I need to figure that out...
+
+        //Cancel previous work
+        workManager.cancelAllWork()
 
         workManager.enqueue(catalogWorkRequest)
     }
 
     override fun cancelCatalogWorker() {
+        Timber.d("cancelCatalogWorker: onClea")
         if(::currentWorkerId.isInitialized) {
             workManager.cancelWorkById(currentWorkerId)
+            workManager.cancelAllWork()
         }
     }
 
