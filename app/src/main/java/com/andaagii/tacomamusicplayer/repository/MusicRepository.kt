@@ -48,4 +48,9 @@ interface MusicRepository: MusicProviderRepository {
     suspend fun updatePlaylistSongOrder(playlistTitle: String, songDescriptions: List<String>)
 
     suspend fun updatePlaylistTitle(originalTitle: String, newTitle: String)
+
+    /**
+     * Tell the repository to cancel the catalog worker in case app is closed before worker is done.
+     */
+    fun cancelCatalogWorker()
 }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.inject.Inject
 
 class MusicRepositoryImpl @Inject constructor(
@@ -33,13 +34,22 @@ class MusicRepositoryImpl @Inject constructor(
     private val songGroupDao: SongGroupDao
 ): MusicRepository, MusicProviderRepository {
 
+    private lateinit var currentWorkerId: UUID
+    private lateinit var workManager: WorkManager
+
     init {
         //Catalog all of the music on the user's device to a database in the background
         //TODO I also need to run a workrequest everytime I observe a change in the MUSIC folder
         val catalogWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<CatalogMusicWorker>()
             .build()
 
-        WorkManager.getInstance(context).enqueue(catalogWorkRequest)
+        workManager = WorkManager.getInstance(context)
+
+        workManager.enqueue(catalogWorkRequest)
+    }
+
+    override fun cancelCatalogWorker() {
+        workManager.cancelWorkById(currentWorkerId)
     }
 
 //TODO ADD LOGIC TO BLOCK TWO PLAYLISTS WITH THE SAME NAME! Probably using UI
