@@ -567,7 +567,12 @@ class MainViewModel @Inject constructor(
             withContext(Dispatchers.Main) {
                 // Restore Playback State
                 mediaController.value?.let { controller ->
-                    controller.setMediaItems(queue)
+                    addTracksSaveTrackOrder(
+                        mediaItems = queue,
+                        clearOriginalSongList = false,
+                        clearCurrentSongs = true,
+                        shouldAddToOriginalList = false
+                    )
 
                     if(songPosition != null && songPosition < controller.mediaItemCount) {
                         if(playbackPosition != null) {
@@ -584,22 +589,8 @@ class MainViewModel @Inject constructor(
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
-//            val originalQueueOrderPlaylist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                .songGroupDao()
-//                .findSongGroupByName(Const.ORIGINAL_QUEUE_ORDER)
-
             val queueOrdered = musicRepo.getSongsFromPlaylist(Const.ORIGINAL_QUEUE_ORDER)
-
-
             _originalSongOrder.postValue(queueOrdered)
-            //TODO restore the queue order
-
-//            originalQueueOrderPlaylist?.let { playlist ->
-//                val originalQueueOrderMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-//                    playlist.songs.songs
-//                )
-//                _originalSongOrder.postValue(originalQueueOrderMediaItems)
-//            }
         }
     }
 
