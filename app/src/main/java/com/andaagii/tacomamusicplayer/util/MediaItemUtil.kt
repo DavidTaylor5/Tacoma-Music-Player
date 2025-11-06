@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
@@ -51,6 +50,7 @@ class MediaItemUtil @Inject constructor() {
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
                     .setIsPlayable(true)
+                    .setSubtitle(album.searchDescription)
                     .build()
             )
             .build()
@@ -67,6 +67,7 @@ class MediaItemUtil @Inject constructor() {
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(true)
+                    .setSubtitle(playlist.searchDescription)
                     .build()
             )
             .build()
@@ -106,6 +107,7 @@ class MediaItemUtil @Inject constructor() {
                     .setArtworkUri(song.artworkUri.toUri())
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .setSubtitle(song.searchDescription)
                     .build()
             )
             .build()
@@ -143,63 +145,6 @@ class MediaItemUtil @Inject constructor() {
                     .build()
                 )
             .build()
-    }
-
-//    fun convertListOfSearchDataIntoListOfMediaItem(
-//        searchItems: List<SearchData>
-//    ): List<MediaItem> {
-//        return searchItems.map { searchItem ->
-//            createMediaItemFromSearchData(searchItem)
-//        }
-//    }
-
-//    fun createMediaItemFromSearchData(
-//        searchItem: SearchData
-//    ): MediaItem {
-//        if(searchItem.isAlbum) {
-//            return MediaItem.Builder()
-//                .setMediaId(searchItem.albumTitle)
-//                .setMediaMetadata(
-//                    MediaMetadata.Builder()
-//                        .setIsBrowsable(true)
-//                        .setIsPlayable(false)
-//                        .setTitle("")
-//                        .setAlbumTitle(searchItem.albumTitle)
-//                        .setArtist(searchItem.artist)
-//                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
-//                        .setDescription(searchItem.description)
-//                        .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
-//                        .build()
-//                )
-//                .build()
-//        } else {
-//            return MediaItem.Builder()
-//                .setMediaId(searchItem.songUri)
-//                .setMediaMetadata(
-//                    MediaMetadata.Builder()
-//                        .setIsBrowsable(false)
-//                        .setIsPlayable(true)
-//                        .setTitle(searchItem.songTitle)
-//                        .setAlbumTitle(searchItem.albumTitle)
-//                        .setArtist(searchItem.artist)
-//                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
-//                        .setDescription(searchItem.description)
-//                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-//                        .build()
-//                )
-//                .build()
-//        }
-//    }
-
-    /**
-     * Creates a list of SongData from a List of MediaItems that represent songs.
-     */
-    fun createSongDataFromListOfMediaItem(
-        mediaItems: List<MediaItem>
-    ): List<SongData> {
-        return mediaItems.map { songMediaItem ->
-            createSongDataFromMediaItem(songMediaItem)
-        }
     }
 
     /**

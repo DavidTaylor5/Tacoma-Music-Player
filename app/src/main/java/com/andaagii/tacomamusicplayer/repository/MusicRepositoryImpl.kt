@@ -59,7 +59,7 @@ class MusicRepositoryImpl @Inject constructor(
         workManager.enqueue(catalogWorkRequest)
     }
 
-    override suspend fun searchMusic(search: String): SearchData {
+    override suspend fun searchMusic(search: String): List<MediaItem> {
         val matchingSongGroups = songGroupDao.findDescriptionFromSearchStr(search)
         val matchingAlbums = matchingSongGroups.filter { it.songGroupType == SongGroupType.ALBUM }
             .map { mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(it) }
@@ -68,11 +68,13 @@ class MusicRepositoryImpl @Inject constructor(
         val matchingSongs = songDao.findDescriptionFromSearchStr(search)
             .map { mediaItemUtil.createMediaItemFromSongEntity(it) }
 
-        return SearchData(
-            songs = matchingSongs,
-            albums = matchingAlbums,
-            playlists = matchingPlaylists
-        )
+        //TODO now I need to combine the lists, and sort by substring position first, then reduce size to 20 total.
+        val combinedData = matchingAlbums + matchingPlaylists + matchingSongs
+        val searchData = combinedData.sortedBy {
+            it.mediaMetadata.subtitle.toString().indexOf(string = search, ignoreCase = true)
+        }
+
+        return searchData
     }
 
     override fun cancelCatalogWorker() {

@@ -54,6 +54,11 @@ interface SongDao {
     /**
      * Search through search data descriptions to determine return results, case insensitive.
      */
-    @Query("SELECT * FROM song_table WHERE LOWER(search_description) LIKE '%' || LOWER(:search) || '%'")
+    @Query("""
+        SELECT * FROM song_table 
+        WHERE LOWER(search_description) LIKE '%' || LOWER(:search) || '%'
+        ORDER BY INSTR( LOWER(search_description), LOWER(:search))
+        LIMIT 25
+    """)
     suspend fun findDescriptionFromSearchStr(search: String): List<SongEntity>
 }

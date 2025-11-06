@@ -60,5 +60,5 @@ interface MusicRepository: MusicProviderRepository {
     /**
      * Searches music database to return 25 relevant songs/albums/playlists
      */
-    suspend fun searchMusic(search: String): SearchData
+    suspend fun searchMusic(search: String): List<MediaItem>
 }

@@ -247,27 +247,11 @@ class MainViewModel @Inject constructor(
 
     fun querySearchData(search: String) {
         Timber.d("querySearchData: search=$search")
-
-        //TODO Finish this to display both currentSearchSongList and currentSearchSongGroupList
-
-        //TODO 1) Grab albums that are relevant
-        //TODO 2) Grab playlists that are relevant
-        //TODO 3) Grab songs that are relevant
-        //determine how I can show them...
-        //If its a song, I can click it to start playing the song
-        //If its an album I can click it to look at the album
-        //If its a playlist I can click it to look at the playlist
-
-        //I need a new viewholder for this new functionality?
-        //I need to update the serach adapter if I have one to support this...
-        //Other than that this should be find.
-
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val searchResults = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
-//                .songDao()
-//                .findDescriptionFromSearchStr(search)
+        viewModelScope.launch(Dispatchers.IO) {
+            musicRepo.searchMusic(search)
+            //TODO pass this search data on to the program...
 //            _currentSearchList.postValue(searchResults)
-//        }
+        }
     }
 
     /**
