@@ -250,6 +250,18 @@ class MainViewModel @Inject constructor(
 
         //TODO Finish this to display both currentSearchSongList and currentSearchSongGroupList
 
+        //TODO 1) Grab albums that are relevant
+        //TODO 2) Grab playlists that are relevant
+        //TODO 3) Grab songs that are relevant
+        //determine how I can show them...
+        //If its a song, I can click it to start playing the song
+        //If its an album I can click it to look at the album
+        //If its a playlist I can click it to look at the playlist
+
+        //I need a new viewholder for this new functionality?
+        //I need to update the serach adapter if I have one to support this...
+        //Other than that this should be find.
+
 //        viewModelScope.launch(Dispatchers.IO) {
 //            val searchResults = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
 //                .songDao()
@@ -632,7 +644,7 @@ class MainViewModel @Inject constructor(
     /**
      * Add a list of songs to the Playlist. Even if adding only one song still use this function.
      */
-    private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) { //TODO this should be a list of searchdescriptions...
+    private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songDescriptions.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
             val songDescriptions = songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }

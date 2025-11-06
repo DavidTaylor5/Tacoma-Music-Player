@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
@@ -56,6 +57,22 @@ class MusicRepositoryImpl @Inject constructor(
         workManager.cancelAllWork()
 
         workManager.enqueue(catalogWorkRequest)
+    }
+
+    override suspend fun searchMusic(search: String): SearchData {
+        val matchingSongGroups = songGroupDao.findDescriptionFromSearchStr(search)
+        val matchingAlbums = matchingSongGroups.filter { it.songGroupType == SongGroupType.ALBUM }
+            .map { mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(it) }
+        val matchingPlaylists = matchingSongGroups.filter { it.songGroupType == SongGroupType.PLAYLIST }
+            .map { mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(it) }
+        val matchingSongs = songDao.findDescriptionFromSearchStr(search)
+            .map { mediaItemUtil.createMediaItemFromSongEntity(it) }
+
+        return SearchData(
+            songs = matchingSongs,
+            albums = matchingAlbums,
+            playlists = matchingPlaylists
+        )
     }
 
     override fun cancelCatalogWorker() {

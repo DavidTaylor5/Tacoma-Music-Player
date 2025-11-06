@@ -145,51 +145,51 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
-    fun convertListOfSearchDataIntoListOfMediaItem(
-        searchItems: List<SearchData>
-    ): List<MediaItem> {
-        return searchItems.map { searchItem ->
-            createMediaItemFromSearchData(searchItem)
-        }
-    }
+//    fun convertListOfSearchDataIntoListOfMediaItem(
+//        searchItems: List<SearchData>
+//    ): List<MediaItem> {
+//        return searchItems.map { searchItem ->
+//            createMediaItemFromSearchData(searchItem)
+//        }
+//    }
 
-    fun createMediaItemFromSearchData(
-        searchItem: SearchData
-    ): MediaItem {
-        if(searchItem.isAlbum) {
-            return MediaItem.Builder()
-                .setMediaId(searchItem.albumTitle)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setIsBrowsable(true)
-                        .setIsPlayable(false)
-                        .setTitle("")
-                        .setAlbumTitle(searchItem.albumTitle)
-                        .setArtist(searchItem.artist)
-                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
-                        .setDescription(searchItem.description)
-                        .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
-                        .build()
-                )
-                .build()
-        } else {
-            return MediaItem.Builder()
-                .setMediaId(searchItem.songUri)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setIsBrowsable(false)
-                        .setIsPlayable(true)
-                        .setTitle(searchItem.songTitle)
-                        .setAlbumTitle(searchItem.albumTitle)
-                        .setArtist(searchItem.artist)
-                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
-                        .setDescription(searchItem.description)
-                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                        .build()
-                )
-                .build()
-        }
-    }
+//    fun createMediaItemFromSearchData(
+//        searchItem: SearchData
+//    ): MediaItem {
+//        if(searchItem.isAlbum) {
+//            return MediaItem.Builder()
+//                .setMediaId(searchItem.albumTitle)
+//                .setMediaMetadata(
+//                    MediaMetadata.Builder()
+//                        .setIsBrowsable(true)
+//                        .setIsPlayable(false)
+//                        .setTitle("")
+//                        .setAlbumTitle(searchItem.albumTitle)
+//                        .setArtist(searchItem.artist)
+//                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+//                        .setDescription(searchItem.description)
+//                        .setMediaType(MediaMetadata.MEDIA_TYPE_ALBUM)
+//                        .build()
+//                )
+//                .build()
+//        } else {
+//            return MediaItem.Builder()
+//                .setMediaId(searchItem.songUri)
+//                .setMediaMetadata(
+//                    MediaMetadata.Builder()
+//                        .setIsBrowsable(false)
+//                        .setIsPlayable(true)
+//                        .setTitle(searchItem.songTitle)
+//                        .setAlbumTitle(searchItem.albumTitle)
+//                        .setArtist(searchItem.artist)
+//                        .setArtworkUri(Uri.parse(searchItem.artworkUri))
+//                        .setDescription(searchItem.description)
+//                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+//                        .build()
+//                )
+//                .build()
+//        }
+//    }
 
     /**
      * Creates a list of SongData from a List of MediaItems that represent songs.

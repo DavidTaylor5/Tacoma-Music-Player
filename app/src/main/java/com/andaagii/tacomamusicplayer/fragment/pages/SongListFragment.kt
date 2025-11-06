@@ -188,7 +188,7 @@ class SongListFragment(): Fragment() {
                 searchItems.subList(0, searchItems.size)
             }
 
-            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
+//            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
 
             //Save last songgroup that wasn't a search so that I can return to it
             
@@ -206,11 +206,12 @@ class SongListFragment(): Fragment() {
             ).build()
 
             //if(binding.displayRecyclerview.adapter)
-            currentSongGroup = SongGroup(
-                SongGroupType.SEARCH_LIST,
-                topTwentySongs,
-                searchMediaItem
-            )
+            //TODO set the currentSongGroup to be the search data...
+//            currentSongGroup = SongGroup(
+//                SongGroupType.SEARCH_LIST,
+//                topTwentySongs,
+//                searchMediaItem
+//            )
 
             if(binding.displayRecyclerview.adapter == null) {
                 currentSongGroup?.let { songGroup ->
@@ -226,7 +227,8 @@ class SongListFragment(): Fragment() {
                     determineIfShowingInformationScreen(songGroup)
                 }
             } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTwentySongs, SongGroupType.SEARCH_LIST)
+                //TODO
+                //(binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTwentySongs, SongGroupType.SEARCH_LIST)
             }
         }
 

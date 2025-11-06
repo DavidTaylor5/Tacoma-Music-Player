@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.repository
 
 import androidx.media3.common.MediaItem
+import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
@@ -55,4 +56,9 @@ interface MusicRepository: MusicProviderRepository {
      * Tell the repository to cancel the catalog worker in case app is closed before worker is done.
      */
     fun cancelCatalogWorker()
+
+    /**
+     * Searches music database to return 25 relevant songs/albums/playlists
+     */
+    suspend fun searchMusic(search: String): SearchData
 }

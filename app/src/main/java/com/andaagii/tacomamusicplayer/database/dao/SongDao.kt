@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.database.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -18,16 +17,16 @@ import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 @Dao
 interface SongDao {
     @Query("SELECT * FROM song_table")
-    fun getAllSongs(): List<SongEntity>
+    suspend fun getAllSongs(): List<SongEntity>
 
     @Query("SELECT * FROM song_table WHERE album_title = :albumTitle")
-    fun getAllSongsFromAlbum(albumTitle: String): List<SongEntity>
+    suspend fun getAllSongsFromAlbum(albumTitle: String): List<SongEntity>
 
     @Query("SELECT * FROM song_table WHERE album_title = :artist")
-    fun getAllSongsFromArtist(artist: String): List<SongEntity>
+    suspend fun getAllSongsFromArtist(artist: String): List<SongEntity>
 
     @Query("SELECT DISTINCT song_artist FROM song_table")
-    fun getAllArtists(): List<String>
+    suspend fun getAllArtists(): List<String>
 
     @Query("""
         SELECT s.* FROM song_table AS s
@@ -35,26 +34,26 @@ interface SongDao {
         ON s.search_description = p.searchDescription
         WHERE p.groupId = :groupId
     """)
-    fun selectAllSongsFromPlaylist(groupId: Int): List<SongEntity>
+    suspend fun selectAllSongsFromPlaylist(groupId: Int): List<SongEntity>
 
     @Query("SELECT * FROM song_table WHERE song_name = :songName")
-    fun queryAllSongsWithSongName(songName: String): List<SongEntity>
+    suspend fun queryAllSongsWithSongName(songName: String): List<SongEntity>
 
     @Update
-    fun updateItems(vararg item: SongEntity)
+    suspend fun updateItems(vararg item: SongEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertItems(vararg item: SongEntity)
+    suspend fun insertItems(vararg item: SongEntity)
 
     @Delete
-    fun deleteItems(vararg item: SongEntity)
+    suspend fun deleteItems(vararg item: SongEntity)
 
     @Query("SELECT * FROM song_table WHERE search_description = :searchDescription")
-    fun findSongFromSearchDescription(searchDescription: String): List<SongEntity>
+    suspend fun findSongFromSearchDescription(searchDescription: String): List<SongEntity>
 
     /**
      * Search through search data descriptions to determine return results, case insensitive.
      */
     @Query("SELECT * FROM song_table WHERE LOWER(search_description) LIKE '%' || LOWER(:search) || '%'")
-    fun findDescriptionFromSearchStr(search: String): List<SongEntity>
+    suspend fun findDescriptionFromSearchStr(search: String): List<SongEntity>
 }

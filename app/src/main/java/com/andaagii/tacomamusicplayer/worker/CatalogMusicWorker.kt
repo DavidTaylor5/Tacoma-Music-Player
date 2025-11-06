@@ -42,7 +42,7 @@ class CatalogMusicWorker @AssistedInject constructor(
     /**
      * Catalog all of the music on a user's phone
      */
-    private fun catalogMusic() {
+    private suspend fun catalogMusic() {
         Timber.d("catalogMusic: ")
 
         val albums = mediaStoreUtil.queryAvailableAlbums(appContext)
@@ -50,7 +50,7 @@ class CatalogMusicWorker @AssistedInject constructor(
         catalogAlbums(albums, dbAlbums)
     }
 
-    private fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
+    private suspend fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
         //val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
 
@@ -122,7 +122,7 @@ class CatalogMusicWorker @AssistedInject constructor(
     /**
      * Takes an album and adds all of it's songs to the
      */
-    private fun catalogAlbumSongs(albumName: String, albumArtUri: String) {
+    private suspend fun catalogAlbumSongs(albumName: String, albumArtUri: String) {
         //Timber.d("catalogAlbumSongs: albumName=$albumName")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
