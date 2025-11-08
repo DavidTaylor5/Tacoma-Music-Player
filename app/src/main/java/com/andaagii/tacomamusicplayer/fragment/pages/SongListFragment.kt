@@ -170,6 +170,7 @@ class SongListFragment(): Fragment() {
                 this::handleSongSetting,
                 this::handleSongClicked,
                 this::handleAlbumClicked,
+                this::handlePlaylistClicked,
                 this::handleSongSelected,
                 songGroup.type,
                 this::handleViewHolderHandleDrag
@@ -180,13 +181,13 @@ class SongListFragment(): Fragment() {
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-            val topSearchData = if(searchItems.isEmpty()) {
-                listOf()
-            } else if(searchItems.size > 20) {
-                searchItems.subList(0, 20)
-            } else {
-                searchItems.subList(0, searchItems.size)
-            }
+//            val topSearchData = if(searchItems.isEmpty()) {
+//                listOf()
+//            } else if(searchItems.size > 20) {
+//                searchItems.subList(0, 20)
+//            } else {
+//                searchItems.subList(0, searchItems.size)
+//            }
 
 //            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
 
@@ -194,12 +195,12 @@ class SongListFragment(): Fragment() {
             
 //            Timber.d("onCreateView: currentSearchList updated -> songroup.type=${currentSongGroup?.type}")
 
-//            currentSongGroup?.let { songGroup ->
-//                if(songGroup.type != SongGroupType.SEARCH_LIST) {
-//                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
-//                    lastDisplaySongGroup = songGroup
-//                }
-//            }
+            currentSongGroup?.let { songGroup ->
+                if(songGroup.type != SongGroupType.SEARCH_LIST) {
+                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
+                    lastDisplaySongGroup = songGroup
+                }
+            }
 
             val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
                 MediaMetadata.Builder().setTitle("Search").build()
@@ -207,11 +208,11 @@ class SongListFragment(): Fragment() {
 
             //if(binding.displayRecyclerview.adapter)
             //TODO set the currentSongGroup to be the search data...
-//            currentSongGroup = SongGroup(
-//                SongGroupType.SEARCH_LIST,
-//                topTwentySongs,
-//                searchMediaItem
-//            )
+            currentSongGroup = SongGroup(
+                SongGroupType.SEARCH_LIST,
+                searchItems,
+                searchMediaItem
+            )
 
             if(binding.displayRecyclerview.adapter == null) {
                 currentSongGroup?.let { songGroup ->
@@ -220,6 +221,7 @@ class SongListFragment(): Fragment() {
                         this::handleSongSetting,
                         this::handleSongClicked,
                         this::handleAlbumClicked,
+                        this::handlePlaylistClicked,
                         this::handleSongSelected,
                         songGroup.type,
                         this::handleViewHolderHandleDrag
@@ -227,8 +229,7 @@ class SongListFragment(): Fragment() {
                     determineIfShowingInformationScreen(songGroup)
                 }
             } else {
-                //TODO
-                //(binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTwentySongs, SongGroupType.SEARCH_LIST)
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(searchItems, SongGroupType.SEARCH_LIST)
             }
         }
 
@@ -444,6 +445,7 @@ class SongListFragment(): Fragment() {
                     this::handleSongSetting,
                     this::handleSongClicked,
                     this::handleAlbumClicked,
+                    this::handlePlaylistClicked,
                     this::handleSongSelected,
                     songGroup.type,
                     this::handleViewHolderHandleDrag
@@ -600,11 +602,18 @@ class SongListFragment(): Fragment() {
     private fun handleSongClicked(position: Int) {
         currentSongGroup?.let { songGroup ->
             parentViewModel.playSongGroupAtPosition(songGroup, position)
+            parentViewModel.removeVirtualKeyboard()
         }
     }
 
     private fun handleAlbumClicked(album: MediaItem) {
         parentViewModel.querySongsFromAlbum(album)
+        parentViewModel.removeVirtualKeyboard()
+        parentViewModel.handleCancelSearchButtonClick()
+    }
+
+    private fun handlePlaylistClicked(playlist: MediaItem) {
+        parentViewModel.querySongsFromPlaylist(playlist)
         parentViewModel.removeVirtualKeyboard()
         parentViewModel.handleCancelSearchButtonClick()
     }

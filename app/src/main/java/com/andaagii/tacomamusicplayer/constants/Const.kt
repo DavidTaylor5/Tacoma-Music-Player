@@ -61,6 +61,7 @@ class Const {
         const val NOT_SHUFFLED = "NOT_SHUFFLED"
         const val SHUFFLED = "SHUFFLED"
 
+        const val USER_PLAYLIST = "USER_PLAYLIST"
 
         // CHILDREN MEDIA IDs
         const val ROOT_ID = "root"

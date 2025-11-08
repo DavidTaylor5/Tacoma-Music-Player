@@ -93,9 +93,9 @@ class MainViewModel @Inject constructor(
         get() = _currentSongGroup
     private val _currentSongGroup: MutableLiveData<SongGroup> = MutableLiveData()
 
-    val currentSearchList: LiveData<List<SearchData>>
+    val currentSearchList: LiveData<List<MediaItem>>
         get() = _currentSearchList
-    private val _currentSearchList: MutableLiveData<List<SearchData>> = MutableLiveData()
+    private val _currentSearchList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
     //TODO convert entity to other data object later?
     val currentSearchSongList: LiveData<List<SongEntity>>
@@ -245,12 +245,13 @@ class MainViewModel @Inject constructor(
         _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
     }
 
+    /**
+     * Sets the currentSearchList based on user search.
+     */
     fun querySearchData(search: String) {
         Timber.d("querySearchData: search=$search")
         viewModelScope.launch(Dispatchers.IO) {
-            musicRepo.searchMusic(search)
-            //TODO pass this search data on to the program...
-//            _currentSearchList.postValue(searchResults)
+            _currentSearchList.postValue(musicRepo.searchMusic(search))
         }
     }
 
@@ -864,6 +865,10 @@ class MainViewModel @Inject constructor(
      */
     fun querySongsFromAlbum(album: MediaItem, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
         Timber.d("querySongsFromAlbum: album=$album, queueAddType=$queueAddType")
+
+        //clear the previous album
+        _currentSongGroup.value = SongGroup(type=SongGroupType.ALBUM, songs = listOf(), group = MediaItem.EMPTY)
+
         val albumTitle = album.mediaMetadata.albumTitle.toString()
         viewModelScope.launch {
             val albumSongs = musicRepo.getSongsFromAlbum(albumTitle)

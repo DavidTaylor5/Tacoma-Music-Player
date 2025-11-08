@@ -11,8 +11,11 @@
     <string name="library_animation">library animation</string>
     <string name="playing_animation">playing_animation</string>
     <string name="playlists">Playlists</string>
+    <string name="playlist">Playlist</string>
     <string name="albums">Albums</string>
+    <string name="album">Album</string>
     <string name="songs">Songs</string>
+    <string name="song">Song</string>
     <string name="play_album">Play Album</string>
     <string name="add_to_queue">Add to Queue</string>
     <string name="add_custom_album_image">Add Custom Album Image</string>

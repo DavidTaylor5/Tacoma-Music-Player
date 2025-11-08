@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.databinding.ViewholderSongBinding
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
@@ -26,6 +27,7 @@ class SongListAdapter(
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
     val handleAlbumClick: (album: MediaItem) -> Unit,
+    val handlePlaylistClick: (playlist: MediaItem) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     var songGroupType: SongGroupType,
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
@@ -138,26 +140,48 @@ class SongListAdapter(
         Timber.d("bindSearchHolder: ")
         val searchMetadata = dataSet[position].mediaMetadata
 
-        val songTitle = searchMetadata.title.toString()
-        val songArtist = searchMetadata.artist.toString()
-        val albumTitle = searchMetadata.albumTitle.toString()
+        //TODO determine if it's a song group or an individual song based on if its browsable
+        //That will detert
+
+        var title = "UNKNOWN TITLE"
+        var songArtist = "UNKNOWN ARTIST"
 
         val searchDescription = searchMetadata.description.toString()
-        val searchType = if(searchMetadata.isPlayable == true) "SONG" else "ALBUM"
+        var searchType = "UNKNOWN"
+        var onClick: () -> Unit = {}
 
-        viewHolder.binding.songTitleTextView.text = searchDescription
+        if(searchMetadata.isBrowsable == true && searchMetadata.albumArtist == Const.USER_PLAYLIST) {
+            searchType = viewHolder.itemView.context.getString(R.string.playlist)
+            onClick = {
+                Timber.d("bindSearchHolder: ON PLAYLIST CLICK!")
+                handlePlaylistClick(dataSet[position])
+            }
+            title = searchMetadata.albumTitle.toString()
+            songArtist = searchMetadata.albumArtist.toString()
+        } else if(searchMetadata.isBrowsable == true && searchMetadata.albumArtist != Const.USER_PLAYLIST) {
+            searchType = viewHolder.itemView.context.getString(R.string.album)
+            onClick = {
+                Timber.d("bindSearchHolder: ON ALBUM CLICK!")
+                handleAlbumClick(dataSet[position])
+            }
+            title = searchMetadata.albumTitle.toString()
+            songArtist = searchMetadata.albumArtist.toString()
+        } else {
+            searchType = viewHolder.itemView.context.getString(R.string.song)
+            onClick = {
+                Timber.d("bindSearchHolder: ON SONG CLICK!")
+                handleSongClick(viewHolder.absoluteAdapterPosition)
+            }
+            title = searchMetadata.title.toString()
+            songArtist = searchMetadata.artist.toString()
+        }
+
+        viewHolder.binding.songTitleTextView.text = title
         viewHolder.binding.artistTextView.text = songArtist
         viewHolder.binding.durationTextView.text = searchType
 
-        if(searchMetadata.isPlayable == true) {
-            viewHolder.binding.textVerticalContainer.setOnClickListener {
-                handleSongClick(viewHolder.absoluteAdapterPosition)
-            }
-        } else {
-            viewHolder.binding.textVerticalContainer.setOnClickListener {
-                Timber.d("bindSearchHolder: handleAlbumClick -> ${albumTitle}")
-                handleAlbumClick(dataSet[position])
-            }
+        viewHolder.binding.textVerticalContainer.setOnClickListener {
+            onClick()
         }
     }
 

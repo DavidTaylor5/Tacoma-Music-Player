@@ -98,7 +98,7 @@ class MusicRepositoryImpl @Inject constructor(
                 songGroupType = SongGroupType.PLAYLIST,
                 searchDescription = playlistName,
                 groupDuration = "0",
-                groupArtist = "USER"
+                groupArtist = Const.USER_PLAYLIST
             )
 
             songGroupDao.insertSongGroups(playlist)
