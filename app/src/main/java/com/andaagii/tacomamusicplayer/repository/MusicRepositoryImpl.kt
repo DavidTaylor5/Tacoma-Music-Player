@@ -266,7 +266,7 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAllArtists(): List<MediaItem> = withContext(Dispatchers.IO) {
-        songDao.getAllArtists().map { artist ->
+        songGroupDao.getAllArtists().map { artist ->
             mediaItemUtil.createMediaItemFromArtist(artist)
         }
     }

@@ -23,6 +23,9 @@ interface SongGroupDao {
     @Query("SELECT * FROM song_group_table")
     fun getAllSongGroups(): LiveData<List<SongGroupEntity>>
 
+    @Query("SELECT DISTINCT group_artist FROM song_group_table WHERE song_group_type = :type")
+    suspend fun getAllArtists(type: SongGroupType = SongGroupType.ALBUM): List<String>
+
     @Query("SELECT * FROM song_group_table WHERE song_group_type = :type")
     suspend fun getSongGroupsByType(type: SongGroupType): List<SongGroupEntity>
 

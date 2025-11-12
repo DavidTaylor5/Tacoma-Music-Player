@@ -2,10 +2,17 @@ package com.andaagii.tacomamusicplayer.database.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
-@Entity(tableName = "song_group_table")
+@Entity(
+    tableName = "song_group_table",
+    indices = [
+        Index(value = ["group_artist"]),
+        Index(value = ["group_title"]),
+    ]
+)
 data class SongGroupEntity(
     @PrimaryKey(autoGenerate = true)
     val groupId: Int = 0,

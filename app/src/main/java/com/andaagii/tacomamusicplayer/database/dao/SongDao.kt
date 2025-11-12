@@ -25,9 +25,6 @@ interface SongDao {
     @Query("SELECT * FROM song_table WHERE album_title = :artist")
     suspend fun getAllSongsFromArtist(artist: String): List<SongEntity>
 
-    @Query("SELECT DISTINCT song_artist FROM song_table")
-    suspend fun getAllArtists(): List<String>
-
     @Query("""
         SELECT s.* FROM song_table AS s
         INNER JOIN song_ref_table AS p

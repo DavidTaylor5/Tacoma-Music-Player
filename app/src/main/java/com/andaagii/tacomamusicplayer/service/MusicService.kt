@@ -44,7 +44,11 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO ALLOW USER TO DELETE MULTIPLE SONGS!
 
-//TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE. 
+//TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE.
+
+//TODO Android Auto has a search functionality, is this expected to be apart of my app?
+
+//TODO REMOVE ALL OF THE NON RELEVANT ARTISTS FROM THE ARTIST ANDROID AUTO TAB....
 
 /*
 * TODO add all of Android's expected well-known root IDs
