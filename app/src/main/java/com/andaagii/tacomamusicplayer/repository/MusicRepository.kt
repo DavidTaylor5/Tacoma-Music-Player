@@ -56,9 +56,4 @@ interface MusicRepository: MusicProviderRepository {
      * Tell the repository to cancel the catalog worker in case app is closed before worker is done.
      */
     fun cancelCatalogWorker()
-
-    /**
-     * Searches music database to return 25 relevant songs/albums/playlists
-     */
-    suspend fun searchMusic(search: String): List<MediaItem>
 }

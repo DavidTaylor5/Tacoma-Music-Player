@@ -19,4 +19,9 @@ interface MusicProviderRepository {
     suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem>
 
     suspend fun getSongFromName(songTitle: String): List<MediaItem>
+
+    /**
+     * Searches music database to return 25 relevant songs/albums/playlists
+     */
+    suspend fun searchMusic(search: String): List<MediaItem>
 }

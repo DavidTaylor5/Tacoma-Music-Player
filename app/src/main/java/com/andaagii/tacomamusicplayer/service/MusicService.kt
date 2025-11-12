@@ -48,7 +48,9 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Android Auto has a search functionality, is this expected to be apart of my app?
 
-//TODO REMOVE ALL OF THE NON RELEVANT ARTISTS FROM THE ARTIST ANDROID AUTO TAB....
+//TODO Create custom listings for each country.
+
+//TODO Update the description to maximize ASO
 
 /*
 * TODO add all of Android's expected well-known root IDs
@@ -189,6 +191,12 @@ class MusicService : MediaLibraryService() {
             query: String,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
+            serviceScope.launch {
+                val foundMatches = musicProvider.searchMusic(query)
+                //This code triggers the onGetSearchResult callback
+                session.notifySearchResultChanged(browser, query, foundMatches.size, null)
+            }
+
             return super.onSearch(session, browser, query, params)
         }
 
@@ -202,17 +210,16 @@ class MusicService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
 
+            //TODO This will work for android auto but will it work with google assistant...
+
+            return serviceScope.async {
+                val foundMatches = musicProvider.searchMusic(query)
+                Timber.d("onGetSearchResult: foundMatches=$foundMatches")
+                LibraryResult.ofItemList(foundMatches, params)
+            }.asListenableFuture()
 
 
-            //TODO refer to onGetCHildren below...
-//            return LibraryResult.ofFuture(
-//                coroutineScope.async {
-//                    val results = repository.searchSongsAlbumsArtists(query)
-//                    results.map { it.toMediaItem() }
-//                }.asListenableFuture()
-
-
-            return super.onGetSearchResult(session, browser, query, page, pageSize, params)
+//            return super.onGetSearchResult(session, browser, query, page, pageSize, params)
         }
 
         //Used by Android Auto to browse the user's media
