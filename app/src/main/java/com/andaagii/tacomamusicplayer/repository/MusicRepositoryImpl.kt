@@ -284,16 +284,16 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSongsFromAlbum(albumTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
-        songDao.getAllSongsFromAlbum(albumTitle).map { songEntity ->
-            mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+        songDao.getAllSongsFromAlbum(albumTitle).mapIndexed { position, songEntity ->
+            mediaItemUtil.createMediaItemFromSongEntity(songEntity, position = position, songGroupType = SongGroupType.ALBUM)
         }
     }
 
     override suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
         val playlist = songGroupDao.findSongGroupByName(playlistTitle)
         if(playlist != null) {
-            songDao.selectAllSongsFromPlaylist(playlist.groupId).map { songEntity ->
-                mediaItemUtil.createMediaItemFromSongEntity(songEntity)
+            songDao.selectAllSongsFromPlaylist(playlist.groupId).mapIndexed { position, songEntity ->
+                mediaItemUtil.createMediaItemFromSongEntity(songEntity, position = position, songGroupType = SongGroupType.PLAYLIST, playlistTitle = playlistTitle)
             }
         } else {
             Timber.d("getSongsFromPlaylist: No playlist with playlistTitle=$playlistTitle found.")

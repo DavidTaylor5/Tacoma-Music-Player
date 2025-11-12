@@ -23,6 +23,12 @@
         android:theme="@style/Base.Theme.TacomaMusicPlayer"
         tools:targetApi="31"
         >
+
+        <!-- Points towards file required for android auto -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
+
         <!-- screenOrientation is portrait for now so that the app won't crash -->
         <activity
             android:name=".activity.MainActivity"

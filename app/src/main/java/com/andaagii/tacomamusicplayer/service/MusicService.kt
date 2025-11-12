@@ -22,6 +22,7 @@ import com.andaagii.tacomamusicplayer.constants.Const.Companion.ARTIST_PREFIX
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_ID
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.PLAYLIST_PREFIX
 import com.andaagii.tacomamusicplayer.constants.Const.Companion.ROOT_ID
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
@@ -39,11 +40,11 @@ import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.guava.asListenableFuture
 
-//TODO back this with MusicRepository rather than directly interacting with MediaStore
-
-//TODO also allow "Albums" and "Playlists" to return all albums or playlists, then return content inside albums or playlists
-
 //TODO GET GENRE FROM THE MEDIA ITEM?
+
+//TODO ALLOW USER TO DELETE MULTIPLE SONGS!
+
+//TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE. 
 
 /*
 * TODO add all of Android's expected well-known root IDs
@@ -87,6 +88,12 @@ Key point: Assistant expects these consistent IDs. If your service uses "album" 
  */
 @AndroidEntryPoint
 class MusicService : MediaLibraryService() {
+    /**
+     * In scenarios such as Android Auto, I need a way to communicate with the app to seek
+     * based on which song the user has clicked.
+     */
+    private var pendingSeek: Int? = null
+
     private lateinit var player: ExoPlayer
     private var session:MediaLibrarySession? = null
     @Inject
@@ -116,16 +123,41 @@ class MusicService : MediaLibraryService() {
     // UI queries music from the service.
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
 
-        //Used to add the media items from google assistant search...
+
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
 
-            //Technically this is a security breach... exposes on device uri to mediacontrollers...
-            val updatedMediaItems = mediaItems.map { it -> it.buildUpon().setUri(it.mediaId).build() }.toMutableList()
-            return Futures.immediateFuture(updatedMediaItems)
+            /*
+            * This function can be called in two scenarios, when I manually add songs to the controller,
+            * and in scenario such as android auto, this function will also call with user's click.
+            * 1) Manually add items to controller -> app takes care of the logic
+            * 2) Android Auto click -> sends the mediaItems with just the ID -> query songs and set pending seek.
+            * */
+
+            if(mediaItems.size == 1 && mediaItems[0].mediaId.contains("groupTitle=")) {
+                val androidAutoPlayData = mediaItemUtil.getAndroidAutoPlayDataFromMediaItem(mediaItems[0])
+
+                pendingSeek = androidAutoPlayData.position
+
+                if(androidAutoPlayData.songGroupType == SongGroupType.PLAYLIST) {
+                    return serviceScope.async {
+                        musicProvider.getSongsFromPlaylist(
+                            androidAutoPlayData.groupTitle
+                        ).toMutableList()
+                    }.asListenableFuture()
+                } else if(androidAutoPlayData.songGroupType == SongGroupType.ALBUM) {
+                    return serviceScope.async {
+                        musicProvider.getSongsFromAlbum(
+                            androidAutoPlayData.groupTitle
+                        ).toMutableList()
+                    }.asListenableFuture()
+                }
+            }
+
+            return Futures.immediateFuture(mediaItems)
         }
 
         override fun onCustomCommand(
@@ -194,13 +226,25 @@ class MusicService : MediaLibraryService() {
                         LibraryResult.ofItemList(
                             listOf(
                                 MediaItem.Builder().setMediaId(ARTIST_ID).setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle(ARTIST_ID).build()
+                                    MediaMetadata.Builder()
+                                        .setTitle(ARTIST_ID)
+                                        .setIsBrowsable(true)
+                                        .setIsPlayable(false)
+                                        .build()
                                 ).build(),
                                 MediaItem.Builder().setMediaId(ALBUM_ID).setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle(ALBUM_ID).build()
+                                    MediaMetadata.Builder()
+                                        .setTitle(ALBUM_ID)
+                                        .setIsBrowsable(true)
+                                        .setIsPlayable(false)
+                                        .build()
                                 ).build(),
                                 MediaItem.Builder().setMediaId(PLAYLIST_ID).setMediaMetadata(
-                                    MediaMetadata.Builder().setTitle(PLAYLIST_ID).build()
+                                    MediaMetadata.Builder()
+                                        .setTitle(PLAYLIST_ID)
+                                        .setIsBrowsable(true)
+                                        .setIsPlayable(false)
+                                        .build()
                                 ).build()
                             ),
                             params
@@ -216,7 +260,7 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == ARTIST_ID -> {
                     serviceScope.async {
-                        LibraryResult.ofItemList(musicProvider.getAllArtists(), params)
+                        LibraryResult.ofItemList(musicProvider.getAllArtists(), params) //TODO too many artists!!!
                     }.asListenableFuture()
                 }
                 parentId == PLAYLIST_ID -> {
@@ -226,11 +270,11 @@ class MusicService : MediaLibraryService() {
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
                     }.asListenableFuture()
                 }
-                parentId.contains(ALBUM_PREFIX) -> { //TODO string manipulation SEEMS right, must be an error on listening for the response?
+                parentId.contains(ALBUM_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
-                                mediaItemUtil.removeMediaItemPrefix(parentId)
+                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs ALBUM:ALBUM_TITLE:SONG_TITLE:POSITION
                             ),
                             params
                         )
@@ -250,7 +294,7 @@ class MusicService : MediaLibraryService() {
                     serviceScope.async {
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromPlaylist(
-                                mediaItemUtil.removeMediaItemPrefix(parentId)
+                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs PLAYLIST:PLAYLIST_TITLE_SONG_TITLE:POSITION
                             ),
                             params
                         )
@@ -258,8 +302,12 @@ class MusicService : MediaLibraryService() {
                 }
                 else ->  {
                     serviceScope.async {
+
+                        //TODO get either the album or the playlist...
+                        //TODO set the position=X on all mediaItems so that android auto knows to play song at position.
+
                         LibraryResult.ofItemList(
-                            musicProvider.getSongFromName(parentId),
+                            musicProvider.getSongFromName(parentId), //TODO modify this with a function that returns auto:SONG_TITLE PLAYLIST:PLAYLIST_TITLE:START_POSITION:SONG_TITLE
                             params
                         )
                     }.asListenableFuture()
@@ -317,8 +365,6 @@ class MusicService : MediaLibraryService() {
 
         player = playerBuilder.build()
 
-        val a = player.availableCommands
-
         player.addListener(PlayerEventListener())
         player.playWhenReady = false //this can be a variable
 
@@ -351,10 +397,19 @@ class MusicService : MediaLibraryService() {
     }
 
 
-    private class PlayerEventListener : Player.Listener {
+    private inner class PlayerEventListener : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
             if (playbackState == Player.STATE_ENDED) {
                 //TODO SOMETHING Analytics?
+            }
+        }
+
+        override fun onEvents(player: Player, events: Player.Events) {
+            if(events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                pendingSeek?.let { position ->
+                    player.seekTo(position, 0)
+                    pendingSeek = null
+                }
             }
         }
 

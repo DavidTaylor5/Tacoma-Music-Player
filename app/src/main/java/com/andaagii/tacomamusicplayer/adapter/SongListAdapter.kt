@@ -140,8 +140,8 @@ class SongListAdapter(
         Timber.d("bindSearchHolder: ")
         val searchMetadata = dataSet[position].mediaMetadata
 
-        //TODO determine if it's a song group or an individual song based on if its browsable
-        //That will detert
+        //Don't allow search results to be moved around
+        viewHolder.binding.songHandle.visibility = View.GONE
 
         var title = "UNKNOWN TITLE"
         var songArtist = "UNKNOWN ARTIST"
@@ -203,7 +203,7 @@ class SongListAdapter(
 
             Timber.d("onBindViewHolder artworkUri=$artworkUri")
 
-            val customImage = "album_${dataSet[position].mediaMetadata.albumTitle}"
+            val customImage = if(songMetadata.albumArtist == Const.USER_PLAYLIST) songMetadata.albumTitle.toString() else "album_${dataSet[position].mediaMetadata.albumTitle}"
             UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 artworkUri,

@@ -8,4 +8,17 @@ enum class SongGroupType {
     ALBUM,
     SEARCH_LIST,
     QUEUE,
+    UNKNOWN;
+
+    companion object {
+        fun determineSongGroupTypeFromString(type: String): SongGroupType {
+            return when(type) {
+                PLAYLIST.toString() -> PLAYLIST
+                ALBUM.toString() -> ALBUM
+                SEARCH_LIST.toString() -> SEARCH_LIST
+                QUEUE.toString() -> QUEUE
+                else -> UNKNOWN
+            }
+        }
+    }
 }

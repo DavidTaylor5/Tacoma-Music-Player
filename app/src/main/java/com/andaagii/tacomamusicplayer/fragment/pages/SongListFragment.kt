@@ -132,15 +132,20 @@ class SongListFragment(): Fragment() {
         viewModel.clearMultiSelectSongs()
 
         //If it's a playlist, save the order to the database [it could have changed.]
-        currentSongGroup?.let { songGroup ->
 
-            val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
-
-            if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)
-                && songGroup.type == SongGroupType.PLAYLIST) {
-                songGroup.songs = finalSongOrder
-                parentViewModel.updatePlaylistOrder(songGroup)
+        currentSongGroup?.let {  songGroup ->
+            if(songGroup.type == SongGroupType.PLAYLIST) {
+                savePlaylistChanges(songGroup)
             }
+        }
+    }
+
+    private fun savePlaylistChanges(songGroup: SongGroup) {
+        val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
+
+        if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)) {
+            songGroup.songs = finalSongOrder
+            parentViewModel.updatePlaylistOrder(songGroup)
         }
     }
 
@@ -181,20 +186,6 @@ class SongListFragment(): Fragment() {
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-//            val topSearchData = if(searchItems.isEmpty()) {
-//                listOf()
-//            } else if(searchItems.size > 20) {
-//                searchItems.subList(0, 20)
-//            } else {
-//                searchItems.subList(0, searchItems.size)
-//            }
-
-//            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
-
-            //Save last songgroup that wasn't a search so that I can return to it
-            
-//            Timber.d("onCreateView: currentSearchList updated -> songroup.type=${currentSongGroup?.type}")
-
             currentSongGroup?.let { songGroup ->
                 if(songGroup.type != SongGroupType.SEARCH_LIST) {
                     Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
@@ -240,6 +231,13 @@ class SongListFragment(): Fragment() {
                 removeInformationScreen()
             } else {
                 deactivateSearchMode()
+                //if playlist, try to save order. TODO THERE IS AN ERROR HERE THIS MIGHT BE HAPPENING TOO LATE
+                //TODO ERROR WHERE IF I MODIFY THE ORDER OF MY PLAYLIST AND THEN TURN to search mode, playlist will not be updated...
+                currentSongGroup?.let {  songGroup ->
+                    if(songGroup.type == SongGroupType.PLAYLIST) {
+                        savePlaylistChanges(songGroup)
+                    }
+                }
                 activateDisplayMode()
             }
 

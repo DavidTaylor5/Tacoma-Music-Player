@@ -4,9 +4,12 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.andaagii.tacomamusicplayer.data.AndroidAutoPlayData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType.Companion.determineSongGroupTypeFromString
 import javax.inject.Inject
 
 class MediaItemUtil @Inject constructor() {
@@ -33,6 +36,9 @@ class MediaItemUtil @Inject constructor() {
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setIsBrowsable(true)
+                    .setIsPlayable(false)
+                    .setTitle(artist)
+                    .setSubtitle(artist)
                     .build()
             )
             .build()
@@ -49,7 +55,8 @@ class MediaItemUtil @Inject constructor() {
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
-                    .setIsPlayable(true)
+                    .setIsPlayable(false)
+                    .setTitle(album.groupTitle)
                     .setSubtitle(album.searchDescription)
                     .build()
             )
@@ -66,7 +73,8 @@ class MediaItemUtil @Inject constructor() {
                     .setArtworkUri(playlist.artUri?.toUri())
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
-                    .setIsPlayable(true)
+                    .setIsPlayable(false)
+                    .setTitle(playlist.groupTitle)
                     .setSubtitle(playlist.searchDescription)
                     .build()
             )
@@ -92,11 +100,25 @@ class MediaItemUtil @Inject constructor() {
         )
     }
 
+    /**
+     * Because android auto is going to delete all information except the mediaId, I need to have a descriptive
+     * mediaId when I query albums and playlists from the media library  ex. android auto
+     */
     fun createMediaItemFromSongEntity(
-        song: SongEntity
+        song: SongEntity,
+        position: Int? = null,
+        songGroupType: SongGroupType? = null,
+        playlistTitle: String? = null
     ): MediaItem {
+        val mediaId = if(position != null && songGroupType != null) {
+            "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
+        } else {
+            song.name
+        }
+
         return MediaItem.Builder()
-            .setMediaId(song.uri)
+            .setMediaId(mediaId)
+            .setUri(song.uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setIsBrowsable(false)
@@ -112,6 +134,66 @@ class MediaItemUtil @Inject constructor() {
             )
             .build()
     }
+
+    /**
+     * Android Auto needs to know the position of the song, to add song group to the queue and update player position.
+     * mediaId -> position=SONG_POSITION:SONG_NAME ex. position=3:DNA
+     * Return -1 if position isn't found. Return int if found.
+     */
+    fun checkPositionFromMediaItem(mediaItem: MediaItem): Int {
+
+        //TODO update this to determine  "${songGroupType.name}=${song.albumTitle}, position=$position, song=${song.name}"
+        //I need to return SongGroupType -> which function to call, group title -> query argument, position -> move player position to correct spot.
+
+
+        val positionKey = "position="
+        val positionKeyIndex = mediaItem.mediaId.indexOf(positionKey)
+        val dividerIndex = mediaItem.mediaId.indexOf(":")
+        if(positionKeyIndex > -1 && dividerIndex > -1) {
+            val positionStart = positionKeyIndex + positionKey.length
+            val songPosition = mediaItem.mediaId.substring(positionStart, dividerIndex).toIntOrNull()
+
+            songPosition?.let { position ->
+                return position
+            }
+        }
+
+        return -1
+    }
+
+    fun getAndroidAutoPlayDataFromMediaItem(mediaItem: MediaItem): AndroidAutoPlayData {
+        val songGroupType = determineSongGroupTypeFromString(determineFieldFromMediaId(mediaId = mediaItem.mediaId, field = "songGroupType="))
+        val groupTitle = determineFieldFromMediaId(mediaId = mediaItem.mediaId, field = "groupTitle=")
+        val position = determineFieldFromMediaId(mediaId = mediaItem.mediaId, field = "position=").toIntOrNull() ?: 0
+        val songTitle = determineFieldFromMediaId(mediaId = mediaItem.mediaId, field = "songTitle=")
+
+        return AndroidAutoPlayData(
+            songGroupType = songGroupType,
+            groupTitle = groupTitle,
+            position = position,
+            songTitle = songTitle
+        )
+    }
+
+    /**
+     * Given a mediaId in the form of "songgrouptype=${songGroupType.name}, groupTitle=${song.albumTitle}, position=$position, song=${song.name}"
+     * Determine a certain field.
+     */
+    private fun determineFieldFromMediaId(mediaId: String, field: String): String {
+        val positionField = mediaId.indexOf(field)
+        if(positionField >= 0) {
+            var value = ""
+            val startPosition = positionField + field.length
+            for(i in startPosition until mediaId.length) {
+                if(mediaId[i] == ',') break
+                else value += mediaId[i]
+            }
+            return value
+        } else {
+            return ""
+        }
+    }
+
 
     fun removeMediaItemPrefix(
         mediaItemId: String
