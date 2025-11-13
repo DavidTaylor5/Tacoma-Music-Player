@@ -39,10 +39,7 @@ import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.*
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
@@ -112,6 +109,9 @@ class SongListFragment(): Fragment() {
                     // 3. Tell adapter to render the model update.
                     adapter.notifyItemMoved(from, to)
 
+                    //Save playlist change.
+                    savePlaylistChanges()
+
                     return true
                 }
 
@@ -127,25 +127,22 @@ class SongListFragment(): Fragment() {
 
     override fun onPause() {
         super.onPause()
-
         //Remove multi select when I leave this fragment
         viewModel.clearMultiSelectSongs()
-
-        //If it's a playlist, save the order to the database [it could have changed.]
-
-        currentSongGroup?.let {  songGroup ->
-            if(songGroup.type == SongGroupType.PLAYLIST) {
-                savePlaylistChanges(songGroup)
-            }
-        }
     }
 
-    private fun savePlaylistChanges(songGroup: SongGroup) {
-        val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
+    private fun savePlaylistChanges() {
+        currentSongGroup?.let {  songGroup ->
+            if(songGroup.type == SongGroupType.PLAYLIST) {
+                val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
 
-        if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)) {
-            songGroup.songs = finalSongOrder
-            parentViewModel.updatePlaylistOrder(songGroup)
+                if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)) {
+                    songGroup.songs = finalSongOrder
+                    parentViewModel.updatePlaylistOrder(songGroup)
+                }
+            } else {
+                Timber.d("savePlaylistChanges: songGroup=$songGroup is not of type PLAYLIST, therefore no save.")
+            }
         }
     }
 
@@ -231,13 +228,6 @@ class SongListFragment(): Fragment() {
                 removeInformationScreen()
             } else {
                 deactivateSearchMode()
-                //if playlist, try to save order. TODO THERE IS AN ERROR HERE THIS MIGHT BE HAPPENING TOO LATE
-                //TODO ERROR WHERE IF I MODIFY THE ORDER OF MY PLAYLIST AND THEN TURN to search mode, playlist will not be updated...
-                currentSongGroup?.let {  songGroup ->
-                    if(songGroup.type == SongGroupType.PLAYLIST) {
-                        savePlaylistChanges(songGroup)
-                    }
-                }
                 activateDisplayMode()
             }
 
@@ -322,7 +312,13 @@ class SongListFragment(): Fragment() {
                 R.style.PopupMenuBlack
             )
 
-            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
+            //Different multi-select options for Playlists versus Albums
+            if(currentSongGroup?.type == SongGroupType.PLAYLIST) {
+                menu.menuInflater.inflate(R.menu.multi_select_playlist_options, menu.menu)
+            } else {
+                menu.menuInflater.inflate(R.menu.multi_select_album_options, menu.menu)
+            }
+
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 //I don't need to add any more songs here, already added when selected.
@@ -563,8 +559,7 @@ class SongListFragment(): Fragment() {
             binding.playlistPrompt.updateAddButtonClickability(isClickable)
         }
     }
-
-    //TODO move this logic ?
+    
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>, fromMultiSelect: Boolean = false) {
         Timber.d("handleSongSetting: menuOption=$menuOption, mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
 
@@ -574,11 +569,23 @@ class SongListFragment(): Fragment() {
                 viewModel.prepareSongsForPlaylists()
                 songsToAddToPlaylistPrompt = mediaItems
                 handleAddToPlaylist(mediaItems)
+
+                //TODO there is an edgecase where user can add a song from a playlist to the same playlist and it wont refresh...
             }
-            MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
+            REMOVE_FROM_PLAYLIST -> {
                 if(mediaItems.isNotEmpty()) {
-                    val posOfDeletedSong = (binding.displayRecyclerview.adapter as SongListAdapter).removeSong(mediaItems[0].mediaId)
-                    (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(posOfDeletedSong)
+                    val deletedSongPositions = (binding.displayRecyclerview.adapter as SongListAdapter).removeSongs(mediaItems.map { it.mediaMetadata.title.toString() })
+                    if(deletedSongPositions.size == 1) {
+                        (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(deletedSongPositions.first())
+                    } else {
+                        val sortedDeletedSongPositions = deletedSongPositions.sorted()
+                        (binding.displayRecyclerview.adapter as SongListAdapter).notifyDataSetChanged()
+
+                        savePlaylistChanges()
+                    }
+
+                    ///(adapter as SongListAdapter).clearAllSelected()
+                    viewModel.clearMultiSelectSongs()
                 }
             }
             ADD_TO_QUEUE -> handleAddToQueue(mediaItems)

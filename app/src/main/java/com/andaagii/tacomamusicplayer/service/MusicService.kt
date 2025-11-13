@@ -52,6 +52,8 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Update the description to maximize ASO
 
+//TODO Allow user to remove multiple songs from playlist.
+
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs

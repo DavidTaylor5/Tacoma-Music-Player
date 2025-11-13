@@ -62,9 +62,17 @@ class SongListAdapter(
         this.notifyDataSetChanged()
     }
 
-    fun removeSong(songTitle: String): Int {
+    fun removeSongs(songTitles: List<String>): List<Int> {
+        val modifiedSongPositions = mutableListOf<Int>()
+        for(songTitle in songTitles) {
+            modifiedSongPositions.add(removeSong(songTitle))
+        }
+        return modifiedSongPositions
+    }
+
+    private fun removeSong(songTitle: String): Int {
         val posOfRemovedItem = dataSet.indexOfFirst { song ->
-            song.mediaId == songTitle
+            song.mediaMetadata.title == songTitle
         }
 
         val modDataSet = dataSet.toMutableList()

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/play_song_group"
+        android:title="@string/play_song_group" />
+
+    <item
+        android:id="@+id/playlist_add"
+        android:title="@string/add_to_playlist" />
+
+    <item
+        android:id="@+id/playlist_remove"
+        android:title="@string/remove_from_playlist"
+        android:titleCondensed=""/>
+
+    <item
+        android:id="@+id/queue_add"
+        android:title="@string/add_to_queue"
+        android:titleCondensed=""/>
+
+    <!--    <item-->
+    <!--        android:id="@+id/stats_check"-->
+    <!--        android:title="Check Stats"-->
+    <!--        />-->
+</menu>
