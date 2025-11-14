@@ -58,6 +58,11 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO when the queue is empty and not playing anything, I shouldn't let the user click the play button, mini player shouldn't be present.
 
+//TODO add back information on the playlist songgroup, album songgroup. Can I finally display duration?
+// On SongGroupHeader I want to display "X tracks | 33:02"
+
+//TODO CREATE INITIAL FUNCTIONALITY FOR GOOGLE ASSISTANT!
+
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs
