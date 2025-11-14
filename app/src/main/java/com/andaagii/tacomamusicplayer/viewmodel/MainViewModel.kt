@@ -120,7 +120,6 @@ class MainViewModel @Inject constructor(
         get() = _isPlaylistNameDuplicate
     private val _isPlaylistNameDuplicate: MutableLiveData<Boolean> = MutableLiveData()
 
-    //TODO move the playlist prompt to the overall fragment?
     //TODO move playlist add prompt to the overall fragment?
 
     /**
@@ -684,51 +683,44 @@ class MainViewModel @Inject constructor(
 
     /**
      * Clear queue and play the specified playlist.
+     * @param playlistTitle The groupTitle of a playlist.
      */
     fun playPlaylist(playlistTitle: String) {
         Timber.d("playPlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            //Grab the media items based on the playlistTitle
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlistTitle = playlistTitle)
 
-            //TODO play playlist logic
+            withContext(Dispatchers.Main) {
+                addTracksSaveTrackOrder(
+                    mediaItems = playlistSongs,
+                    clearOriginalSongList = true,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = true
+                )
 
-//            val songs = playlist.songs.songs
-//            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-//
-//            withContext(Dispatchers.Main) {
-//                addTracksSaveTrackOrder(
-//                    mediaItems = playlistMediaItems,
-//                    clearOriginalSongList = true,
-//                    startingSongPosition = 0,
-//                    clearCurrentSongs = true,
-//                    shouldAddToOriginalList = true
-//                )
-//
-//                mediaController.value?.play()
-//            }
+                mediaController.value?.play()
+            }
         }
     }
 
+    /**
+     * Adds all playlist songs to the back of the current queue.
+     * @param playlistTitle The groupTitle of a playlist.
+     */
     fun addPlaylistToBackOfQueue(playlistTitle: String) {
         Timber.d("addPlaylistToBackOfQueue: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            //Grab the media items based on the playlistTitle
-            val playlist =  PlayerDatabase.getDatabase(getApplication<Application>().applicationContext).songGroupDao().findSongGroupByName(playlistTitle)
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlistTitle = playlistTitle)
 
-            //TODO add playlist to back of queue
-
-//            val songs = playlist.songs.songs
-//            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-//
-//            withContext(Dispatchers.Main) {
-//                addTracksSaveTrackOrder(
-//                    mediaItems = playlistMediaItems,
-//                    clearOriginalSongList = false,
-//                    clearCurrentSongs = false,
-//                    shouldAddToOriginalList = true
-//                )
-//            }
+            withContext(Dispatchers.Main) {
+                addTracksSaveTrackOrder(
+                    mediaItems = playlistSongs,
+                    clearOriginalSongList = false,
+                    clearCurrentSongs = false,
+                    shouldAddToOriginalList = true
+                )
+            }
         }
     }
 

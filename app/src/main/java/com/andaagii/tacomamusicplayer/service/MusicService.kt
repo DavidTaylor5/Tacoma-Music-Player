@@ -54,6 +54,10 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Allow user to remove multiple songs from playlist.
 
+//TODO rare bug where app can start on song fragment but botton navigation shows play fragment.
+
+//TODO when the queue is empty and not playing anything, I shouldn't let the user click the play button, mini player shouldn't be present.
+
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs

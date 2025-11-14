@@ -559,7 +559,7 @@ class SongListFragment(): Fragment() {
             binding.playlistPrompt.updateAddButtonClickability(isClickable)
         }
     }
-    
+
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>, fromMultiSelect: Boolean = false) {
         Timber.d("handleSongSetting: menuOption=$menuOption, mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
 

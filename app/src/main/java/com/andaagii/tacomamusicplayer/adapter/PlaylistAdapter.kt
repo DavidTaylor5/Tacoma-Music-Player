@@ -81,7 +81,7 @@ class PlaylistAdapter(
         }
 
         viewHolder.binding.playButton.setOnClickListener {
-            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].mediaId)
+            onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].mediaMetadata.albumTitle.toString())
         }
 
         viewHolder.binding.menuIcon.setOnClickListener {
