@@ -2,6 +2,8 @@ package com.andaagii.tacomamusicplayer.util
 
 import android.content.ContentUris
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -9,6 +11,8 @@ import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.data.SongData
 import timber.log.Timber
 import java.io.File
+import com.mpatric.mp3agic.Mp3File
+import javax.inject.Inject
 
 /**
  * This class handles logic related to the android class MediaStore. MediaStore is an abstraction of
@@ -16,9 +20,9 @@ import java.io.File
  * having applications able to directly access on board storage could be dangerous. By using MediaStore
  * I can request safe permissions from the user and query audio to use in the mp3 app.
  */
-class MediaStoreUtil {
-
-    private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
+class MediaStoreUtil @Inject constructor(
+    private val mediaItemUtil: MediaItemUtil
+) {
 
     /**
      * Query all songs from associated album on device storage.
@@ -92,6 +96,43 @@ class MediaStoreUtil {
 
                 //Some song uris include a "#" or "!" which will error out on exoplayer
                 val fixUrl = Uri.fromFile(File(url))
+
+                val retriever = MediaMetadataRetriever()
+
+                retriever.setDataSource(context, fixUrl)
+
+
+//                val file = UtilImpl.uriToFile(context, fixUrl)
+//                val mp3File = Mp3File(file)
+
+//                if( cursor.getString(0).contains("let-god-sort-em-out")) {
+//                    val artBytes = retriever.embeddedPicture
+//                    if (artBytes != null) {
+//                        Timber.d("querySongsFromAlbum: artBytes are not null!")
+//                    } else {
+//                        Timber.d("querySongsFromAlbum: artBytes are null!")
+//
+//                        Timber.d("querySongsFromAlbum: trying mp3agic!!")
+//                        val file = UtilImpl.uriToFile(context, fixUrl)
+//                        val mp3File = Mp3File(file)
+//
+//                        if(mp3File.hasId3v2Tag()) {
+//
+//                            val tag = mp3File.id3v2Tag
+//                            val imageData = tag.albumImage
+//                            if(imageData != null) {
+//                                val a = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+//                                Timber.d("querySongsFromAlbum: bitmap created from mp3agic!!")
+//                            } else {
+//                                Timber.d("querySongsFromAlbum: imageData is null!")
+//                            }
+//
+//                        } else {
+//                            Timber.d("querySongsFromAlbum: NOT id3v2")
+//                        }
+//
+//                    }
+//                }
 
 
                 val title = cursor.getString(1)
@@ -194,11 +235,18 @@ class MediaStoreUtil {
 
                 val artworkUri = ContentUris.withAppendedId(uriExternal, albumId)
 
+                Timber.d("ALBUMART>>> artworkUri=$artworkUri")
+
                 //Create Media Item from information
                 val albumMediaItem =
                     mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri, releaseYear)
 
-                albumList.add(albumMediaItem)
+                if( albumList.map { it.mediaMetadata.albumTitle }.contains(albumTitle)) {
+                    Timber.d("queryAvailableAlbums: albumTitle found in albumList=${albumList.map { it.mediaMetadata.albumTitle} }")
+                } else {
+                    Timber.d("queryAvailableAlbums: Adding albumTitle=$albumTitle to albumList")
+                    albumList.add(albumMediaItem)
+                }
             }
         }
         Timber.d("queryAvailableAlbums: DONE SEARCHING!")

@@ -3,15 +3,15 @@
 
     <item
         android:id="@+id/play_song_group"
-        android:title="Play Song Group" />
+        android:title="@string/play_song_group" />
 
     <item
         android:id="@+id/playlist_add"
-        android:title="Add to Playlist" />
+        android:title="@string/add_to_playlist" />
 
     <item
         android:id="@+id/queue_add"
-        android:title="Add to Queue"
+        android:title="@string/add_to_queue"
         android:titleCondensed=""/>
 
 <!--    <item-->

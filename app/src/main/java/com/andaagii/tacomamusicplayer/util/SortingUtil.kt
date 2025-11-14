@@ -3,6 +3,7 @@ package com.andaagii.tacomamusicplayer.util
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import timber.log.Timber
 
 class SortingUtil {
@@ -69,29 +70,39 @@ class SortingUtil {
             }
         }
 
-        fun sortPlaylists(playlists: List<Playlist>, sorting: SortingOption): List<Playlist> {
+        fun sortPlaylists(playlists: List<MediaItem>, sorting: SortingOption): List<MediaItem> {
             return when(sorting) {
                 SortingOption.SORTING_TITLE_ALPHABETICAL -> {
                     playlists.sortedBy { playlist ->
-                        playlist.title
+                        playlist.mediaMetadata.albumTitle.toString()
                     }
                 }
                 SortingOption.SORTING_BY_CREATION_DATE -> {
                     playlists.sortedByDescending { playlist ->
-                        playlist.creationTimestamp
+                        getCreationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
                 SortingOption.SORTING_BY_MODIFICATION_DATE -> {
                     playlists.sortedByDescending { playlist ->
-                        playlist.lastModificationTimestamp
+                        getModificationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
                 else -> { //Default to most recently created.
                     playlists.sortedByDescending { playlist ->
-                        playlist.lastModificationTimestamp
+                        getModificationTimestamp(playlist.mediaMetadata.description.toString())
                     }
                 }
             }
+        }
+
+        private fun getCreationTimestamp(playlistDescription: String): String {
+            val timestamps = playlistDescription.split(":")
+            return if(timestamps.isNotEmpty()) timestamps[0] else "Unknown"
+        }
+
+        private fun getModificationTimestamp(playlistDescription: String): String {
+            val timestamps = playlistDescription.split(":")
+            return if(timestamps.size >= 2) timestamps[1] else "Unknown"
         }
 
         fun sortAlbums(albums: List<MediaItem>, sorting: SortingOption): List<MediaItem> {

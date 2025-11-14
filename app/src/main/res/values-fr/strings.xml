@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tacoma Music Player</string>
+    <string name="read_media_audio_denied_explanation">
+        The Read Audio Media Permission has been denied. This permission is required for this app to
+        play local mp3 file.
+        To resolve this issue and use the mp3 player, you will need to go into the app settings
+        and grant the "Music and audio permission" permission.
+    </string>
+    <string name="permission_denied_screen_title">User Notice</string>
+    <string name="library_animation">library animation</string>
+    <string name="playing_animation">playing_animation</string>
+    <string name="playlists">Playlists</string>
+    <string name="playlist">Playlist</string>
+    <string name="albums">Albums</string>
+    <string name="album">Album</string>
+    <string name="songs">Songs</string>
+    <string name="song">Song</string>
+    <string name="play_album">Play Album</string>
+    <string name="add_to_queue">Add to Queue</string>
+    <string name="add_custom_album_image">Add Custom Album Image</string>
+    <string name="play_playlist">Play Playlist</string>
+    <string name="rename_playlist">Rename Playlist</string>
+    <string name="add_playlist_image">Add Playlist Image</string>
+    <string name="remove_playlist">Remove Playlist</string>
+    <string name="clear_queue">Clear Queue</string>
+    <string name="remove_from_queue">Remove from Queue</string>
+    <string name="add_to_playlist">Add to Playlist</string>
+    <string name="remove_from_playlist">Remove from Playlist</string>
+    <string name="play_song_group">Play Song Group</string>
+    <string name="order_by_title_alphabetical">Order by Title Alphabetical</string>
+    <string name="order_by_artist_alphabetical">Order by Artist Alphabetical</string>
+    <string name="order_by_newest_release">Order by Newest Release</string>
+    <string name="order_by_oldest_release">Order by Oldest Release</string>
+    <string name="order_by_creation_date">Order by Creation Date</string>
+    <string name="order_by_recently_modified">Order by Recently Modified</string>
+    <string name="choose_a_playlist_to_view">Choose a playlist to View</string>
+    <string name="choose_an_album_to_view">Choose an album to View</string>
+    <string name="search_for_albums_and_songs">Search for Albums and Songs</string>
+    <string name="queue">Queue</string>
+    <string name="clear">Clear</string>
+    <string name="add_playlist">Add Playlist</string>
+    <string name="song_title_song_artist">Song Title - Song Artist</string>
+</resources>

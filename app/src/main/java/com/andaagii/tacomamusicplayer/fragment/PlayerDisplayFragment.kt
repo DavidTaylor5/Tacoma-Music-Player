@@ -2,7 +2,6 @@ package com.andaagii.tacomamusicplayer.fragment
 
 import android.net.Uri
 import android.os.Bundle
-import android.transition.TransitionInflater
 import android.util.Size
 import android.view.GestureDetector
 import android.view.Gravity
@@ -24,14 +23,16 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class PlayerDisplayFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: PlayerDisplayFragmentBinding
@@ -322,7 +323,7 @@ class PlayerDisplayFragment: Fragment() {
     private fun updateMiniPlayerForCurrentSong(song: SongData) {
         //Set mini player song image
         val customImage = "album_${song.albumTitle}"
-        UtilImpl.drawSongArt(
+        UtilImpl.drawMediaItemArt(
             binding.miniPlayerImage!!,
             Uri.parse(song.artworkUri),
             Size(300, 300),
@@ -354,9 +355,9 @@ class PlayerDisplayFragment: Fragment() {
         removeSearchIcons()
         binding.miniPlayerControls?.visibility = View.VISIBLE
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Queue"
+        binding.pageTitle?.text = getString(R.string.queue)
         binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = "Clear"
+        binding.pageAction?.text = getString(R.string.clear)
         binding.pageAction?.setOnClickListener {
             parentViewModel.clearQueue()
         }
@@ -379,9 +380,9 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForPlaylistPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Playlists"
+        binding.pageTitle?.text = getString(R.string.playlists)
         binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = "Add Playlist"
+        binding.pageAction?.text = getString(R.string.add_playlist)
         binding.pageAction?.setOnClickListener {
             parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
         }
@@ -409,7 +410,7 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForAlbumPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Albums"
+        binding.pageTitle?.text = getString(R.string.albums)
         binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.VISIBLE
         removeSearchIcons()
@@ -434,7 +435,7 @@ class PlayerDisplayFragment: Fragment() {
 
     private fun adjustForSongPage() {
         binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = "Songs"
+        binding.pageTitle?.text = getString(R.string.songs)
         binding.pageAction?.visibility = View.INVISIBLE
         binding.sortingButton?.visibility = View.INVISIBLE
         determineWhichSearchIconToShow()

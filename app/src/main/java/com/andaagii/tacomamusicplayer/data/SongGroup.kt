@@ -1,13 +1,13 @@
 package com.andaagii.tacomamusicplayer.data
 
 import androidx.media3.common.MediaItem
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
 /**
- * Song group representation, ex Playlist or Album.
+ * Song group representation, ex Playlist Album, Search list.
  */
 data class SongGroup(
     val type: SongGroupType = SongGroupType.PLAYLIST,
     var songs: List<MediaItem>,
-    val title: String,
+    val group: MediaItem,
 )

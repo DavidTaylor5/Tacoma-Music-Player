@@ -60,5 +60,16 @@ class Const {
         //SHUFFLE TYPES
         const val NOT_SHUFFLED = "NOT_SHUFFLED"
         const val SHUFFLED = "SHUFFLED"
+
+        const val USER_PLAYLIST = "USER_PLAYLIST"
+
+        // CHILDREN MEDIA IDs
+        const val ROOT_ID = "root"
+        const val ALBUM_ID = "albums"
+        const val PLAYLIST_ID = "playlists"
+        const val ARTIST_ID = "artists"
+        const val ALBUM_PREFIX = "album:"
+        const val PLAYLIST_PREFIX = "playlist:"
+        const val ARTIST_PREFIX = "artist:"
     }
 }

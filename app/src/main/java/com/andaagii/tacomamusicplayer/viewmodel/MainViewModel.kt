@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -17,20 +18,22 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
-import com.andaagii.tacomamusicplayer.database.PlaylistDatabase
-import com.andaagii.tacomamusicplayer.database.SearchDatabase
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.enum.QueueAddType
-import com.andaagii.tacomamusicplayer.enum.ScreenType
-import com.andaagii.tacomamusicplayer.enum.ShuffleType
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.database.PlayerDatabase
+import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
+import com.andaagii.tacomamusicplayer.database.entity.SongEntity
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
+import com.andaagii.tacomamusicplayer.enumtype.ScreenType
+import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
@@ -39,22 +42,42 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.LocalDateTime
-import java.util.concurrent.Executors
+import javax.inject.Inject
 
 /**
  * The MainViewModel of the project, will include information on current screen, logic for handling
  * permissions, and will provide the UI with media related information.
  */
-class MainViewModel(application: Application): AndroidViewModel(application) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    application: Application,
+    private val musicRepo: MusicRepository
+): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-    var availablePlaylists: LiveData<List<Playlist>>
+
+    var availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            listOf()
+        )
+
+    var availableAlbums: StateFlow<List<MediaItem>> = musicRepo.getAllAvailableAlbumsFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            listOf()
+        )
 
     /**
      * Reference to the app's mediaController.
@@ -64,22 +87,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
 
     /**
-     * Livedata observable list of albums on the device.
-     */
-    val albumMediaItemList: LiveData<List<MediaItem>>
-        get() = _albumMediaItemList
-    private val _albumMediaItemList: MutableLiveData<List<MediaItem>> = MutableLiveData()
-
-    /**
      * List of songs to be inspected.
      */
-    val currentSongList: LiveData<SongGroup>
-        get() = _currentSongList
-    private val _currentSongList: MutableLiveData<SongGroup> = MutableLiveData()
+    val currentSongGroup: LiveData<SongGroup>
+        get() = _currentSongGroup
+    private val _currentSongGroup: MutableLiveData<SongGroup> = MutableLiveData()
 
-    val currentSearchList: LiveData<List<SearchData>>
+    val currentSearchList: LiveData<List<MediaItem>>
         get() = _currentSearchList
-    private val _currentSearchList: MutableLiveData<List<SearchData>> = MutableLiveData()
+    private val _currentSearchList: MutableLiveData<List<MediaItem>> = MutableLiveData()
+
+    //TODO convert entity to other data object later?
+    val currentSearchSongList: LiveData<List<SongEntity>>
+        get() = _currentSearchSongList
+    private val _currentSearchSongList: MutableLiveData<List<SongEntity>> = MutableLiveData()
+
+    val currentSearchSongGroupList: LiveData<List<SongGroupEntity>>
+        get() = _currentSearchSongGroupList
+    private val _currentSearchSongGroupList: MutableLiveData<List<SongGroupEntity>> = MutableLiveData()
 
     /**
      * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
@@ -95,7 +120,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _isPlaylistNameDuplicate
     private val _isPlaylistNameDuplicate: MutableLiveData<Boolean> = MutableLiveData()
 
-    //TODO move the playlist prompt to the overall fragment?
     //TODO move playlist add prompt to the overall fragment?
 
     /**
@@ -167,6 +191,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
 
+    val loadingHandler = Handler(Looper.getMainLooper())
+
     val clearQueue: LiveData<Boolean>
         get() = _clearQueue
     private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -174,8 +200,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
     private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
-
-    private val loadingHandler = Handler(Looper.getMainLooper())
 
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -220,68 +244,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
     }
 
-    fun querySearchDatabase(search: String) {
-        Timber.d("querySearchDatabase: search=$search")
-        viewModelScope.launch(Dispatchers.IO) {
-            val searchResults = SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findDescriptionFromSearchStr(search)
-            _currentSearchList.postValue(searchResults)
-        }
-    }
-
     /**
-     * I need to catalog the music library so that I can add search functionality.
+     * Sets the currentSearchList based on user search.
      */
-    private fun catalogMusicLibrary() {
-        Timber.d("catalogMusicLibrary: ")
-        val executor = Executors.newFixedThreadPool(4)
-
-        albumMediaItemList.value?.let { albums ->
-            val updatedSearchData: MutableList<SearchData> = mutableListOf()
-
-            for(album in albums) {
-                val albumSearchData = SearchData(
-                    description = "${album.mediaId} - ${album.mediaMetadata.albumArtist}",
-                    albumTitle = album.mediaId,
-                    artist = album.mediaMetadata.albumArtist.toString(),
-                    artworkUri = album.mediaMetadata.artworkUri.toString(),
-                    isAlbum = true
-                )
-
-                updatedSearchData.add(albumSearchData)
-
-                mediaBrowser?.let { browser ->
-                    val childrenFuture =
-                        browser.getChildren(album.mediaId, 0, Int.MAX_VALUE, null)
-                    childrenFuture.addListener({
-
-                        val songs = childrenFuture.get().value?.toList() ?: listOf()
-
-                        for(song in songs) {
-                            updatedSearchData.add(
-                                SearchData(
-                                    description = "${song.mediaMetadata.title.toString()} - ${song.mediaMetadata.albumTitle}",
-                                    songTitle = song.mediaMetadata.title.toString(),
-                                    artworkUri = song.mediaMetadata.artworkUri.toString(),
-                                    albumTitle = song.mediaMetadata.albumTitle.toString(),
-                                    artist = song.mediaMetadata.artist.toString(),
-                                    songUri = song.mediaId,
-                                    isAlbum = false
-                            ))
-                        }
-                    }, executor)
-                }
-            }
-
-            viewModelScope.launch(Dispatchers.IO) {
-                SearchDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .insertItems(*updatedSearchData.toTypedArray())
-            }
+    fun querySearchData(search: String) {
+        Timber.d("querySearchData: search=$search")
+        viewModelScope.launch(Dispatchers.IO) {
+            _currentSearchList.postValue(musicRepo.searchMusic(search))
         }
-
-        //TODO should this code recursively run?
     }
 
     /**
@@ -474,7 +444,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         return currentPage
     }
 
-    private var mediaBrowser: MediaBrowser? = null
+    private lateinit var mediaBrowser: MediaBrowser
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
 
@@ -486,9 +456,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         //ex. the layout of the albums / playlist fragments
         checkUserPreferences()
-
-        //TODO this should be moved into dependency injection...
-        availablePlaylists = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().getAllPlaylists()
     }
 
     /**
@@ -507,58 +474,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      */
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
-
-        val playlist = Playlist(
-            title = playlistName,
-            artFile = "",
-            songs = PlaylistData(listOf()),
-            creationTimestamp = LocalDateTime.now().toString(),
-            lastModificationTimestamp = LocalDateTime.now().toString()
-        )
-
-        viewModelScope.launch(Dispatchers.IO) {
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().insertPlaylists(
-                playlist
-            )
-        }
-    }
-
-    fun removeSongsFromPlaylist(playlistTitle: String, songs: List<MediaItem>) {
-        Timber.d("removeSongsFromPlaylist: playlistTitle=$playlistTitle, songs=$songs")
-        viewModelScope.launch(Dispatchers.IO) {
-
-            try {
-                val currentPlaylist =
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(playlistTitle)
-
-                val removeSongTitles = MediaItemUtil().createSongDataFromListOfMediaItem(songs).map { removeSong ->
-                    removeSong.songTitle
-                }
-
-                val modSongList = currentPlaylist.songs.songs.toMutableList()
-                modSongList.removeAll { song ->
-                        removeSongTitles.contains(song.songTitle)
-                    }
-
-                val updatePlaylist = Playlist(
-                    id = currentPlaylist.id,
-                    title = currentPlaylist.title,
-                    artFile = currentPlaylist.artFile,
-                    songs = PlaylistData(modSongList),
-                    creationTimestamp = currentPlaylist.creationTimestamp,
-                    lastModificationTimestamp = LocalDateTime.now().toString()
-                )
-
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .updatePlaylists(
-                        updatePlaylist
-                    )
-            } catch (e: Exception) {
-                Timber.d("removeSongsFromPlaylist: Error removing song from playlist, e=$e")
-            }
+        viewModelScope.launch {
+            musicRepo.createPlaylist(playlistName)
         }
     }
 
@@ -568,31 +485,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistOrder(albumSongGroup: SongGroup) {
         Timber.d("updatePlaylistOrder: albumSongGroup=$albumSongGroup")
         if(albumSongGroup.type == SongGroupType.PLAYLIST) {
-
             viewModelScope.launch(Dispatchers.IO) {
-                val currentPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .findPlaylistByName(albumSongGroup.title)
-
-                //Turn the media items into a list of SongData
-                val modifySongData = MediaItemUtil().createSongDataFromListOfMediaItem(albumSongGroup.songs)
-
-                //Modify the original playlist
-                val modifyPlaylist = Playlist(
-                    id = currentPlaylist.id,
-                    title = currentPlaylist.title,
-                    artFile = currentPlaylist.artFile,
-                    songs = PlaylistData(modifySongData),
-                    creationTimestamp = currentPlaylist.creationTimestamp,
-                    lastModificationTimestamp = LocalDateTime.now().toString()
+                musicRepo.updatePlaylistSongOrder(
+                    albumSongGroup.group.mediaMetadata.albumTitle.toString(),
+                    albumSongGroup.songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
                 )
-
-                //Update the database with the updated playlist
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .updatePlaylists(
-                        modifyPlaylist
-                    )
             }
         }
     }
@@ -606,92 +503,43 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     /**
      * Saves the current songs playing in the queue, to be loaded when the app opens next.
-     * TODO I also want to save the position of the last song I was in.
      */
     fun saveQueue() {
         Timber.d("saveQueue: ")
         mediaController.value?.let { controller ->
-
             //Save current Player state
             savePlayerState(controller)
 
             val songs = UtilImpl.getSongListFromMediaController(controller)
 
-            if(!songs.isNullOrEmpty()) {
-
-                val playlistData = PlaylistData(
-                    mediaItemUtil.createSongDataFromListOfMediaItem(songs)
-                )
-
+            if(songs.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.IO) {
-                    val savedQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
+                    //In case queue has never been initialized
+                    musicRepo.createInitialQueueIfEmpty(Const.PLAYLIST_QUEUE_TITLE)
 
-                    //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-                    val updateStoredQueue = if(savedQueue != null) {
-                        Playlist(
-                            id = savedQueue.id,
-                            title = savedQueue.title,
-                            artFile = savedQueue.artFile,
-                            songs = playlistData,
-                            creationTimestamp = savedQueue.creationTimestamp,
-                            lastModificationTimestamp = LocalDateTime.now().toString()
-                        )
-                    } else {
-                        Playlist(
-                            title = Const.PLAYLIST_QUEUE_TITLE,
-                            artFile = "",
-                            songs = playlistData,
-                            creationTimestamp = LocalDateTime.now().toString(),
-                            lastModificationTimestamp = LocalDateTime.now().toString()
-                        )
-                    }
-
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .insertPlaylists(updateStoredQueue)
+                    musicRepo.updatePlaylistSongOrder(
+                        Const.PLAYLIST_QUEUE_TITLE,
+                        songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+                    )
                 }
             }
         }
     }
 
+    /**
+     * When the user exits the app in shuffled mode, give the user the ability to return to ordered mode.
+     */
     fun saveOriginalOrder() {
         Timber.d("saveOriginalOrder: ")
         originalSongOrder.value?.let { originalOrderSongs ->
-            val playlistData = PlaylistData(
-                mediaItemUtil.createSongDataFromListOfMediaItem(originalOrderSongs)
-            )
-
             viewModelScope.launch(Dispatchers.IO) {
-                val savedOriginalOrder =
-                    PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                        .playlistDao()
-                        .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
+                //In case queue has never been initialized
+                musicRepo.createInitialQueueIfEmpty(Const.ORIGINAL_QUEUE_ORDER)
 
-                //Make sure to save the queue with the same id, so there isn't duplicates for queue in datastore
-                val updateStoredQueue = if (savedOriginalOrder != null) {
-                    Playlist(
-                        id = savedOriginalOrder.id,
-                        title = savedOriginalOrder.title,
-                        artFile = savedOriginalOrder.artFile,
-                        songs = playlistData,
-                        creationTimestamp = savedOriginalOrder.creationTimestamp,
-                        lastModificationTimestamp = LocalDateTime.now().toString()
-                    )
-                } else {
-                    Playlist(
-                        title = Const.ORIGINAL_QUEUE_ORDER,
-                        artFile = "",
-                        songs = playlistData,
-                        creationTimestamp = LocalDateTime.now().toString(),
-                        lastModificationTimestamp = LocalDateTime.now().toString()
-                    )
-                }
-
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .insertPlaylists(updateStoredQueue)
+                musicRepo.updatePlaylistSongOrder(
+                    Const.ORIGINAL_QUEUE_ORDER,
+                    originalOrderSongs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+                )
             }
         }
     }
@@ -711,33 +559,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun restoreQueue() {
         Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val oldQueue = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(Const.PLAYLIST_QUEUE_TITLE)
-
             val playbackPosition = DataStoreUtil.getPlaybackPosition(getApplication<Application>().applicationContext).firstOrNull()
             val songPosition = DataStoreUtil.getSongPosition(getApplication<Application>().applicationContext).firstOrNull()
 
-            //oldQueue can be null if this is a fresh install or if there is no previous queue
-            if(oldQueue == null || oldQueue.songs.songs.isEmpty()) {
-                Timber.d("restoreQueue: No queue to restore!")
-
-                //Remove Loading Screen [100ms added to cover image switch]
-                loadingHandler.postDelayed({
-                    _showLoadingScreen.postValue(false)
-                }, 100)
-                return@launch
-            }
+            val queue = musicRepo.getSongsFromPlaylist(Const.PLAYLIST_QUEUE_TITLE)
 
             withContext(Dispatchers.Main) {
+                // Restore Playback State
                 mediaController.value?.let { controller ->
-                    controller.setMediaItems(
-                        mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-                            oldQueue.songs.songs
-                        )
+                    addTracksSaveTrackOrder(
+                        mediaItems = queue,
+                        clearOriginalSongList = false,
+                        clearCurrentSongs = true,
+                        shouldAddToOriginalList = false
                     )
 
-                    // Restore Playback State
                     if(songPosition != null && songPosition < controller.mediaItemCount) {
                         if(playbackPosition != null) {
                             controller.seekTo(songPosition, playbackPosition)
@@ -746,10 +582,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
                         }
                     }
 
-                    //Remove Loading Screen [100ms added to cover image switch]
                     loadingHandler.postDelayed({
                         _showLoadingScreen.postValue(false)
-                    }, 100)
+                    }, 500)
                 }
             }
         }
@@ -758,16 +593,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
-            val originalQueueOrderPlaylist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(Const.ORIGINAL_QUEUE_ORDER)
-
-            originalQueueOrderPlaylist?.let { playlist ->
-                val originalQueueOrderMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(
-                    playlist.songs.songs
-                )
-                _originalSongOrder.postValue(originalQueueOrderMediaItems)
-            }
+            val queueOrdered = musicRepo.getSongsFromPlaylist(Const.ORIGINAL_QUEUE_ORDER)
+            _originalSongOrder.postValue(queueOrdered)
         }
     }
 
@@ -775,7 +602,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Ability to add a list of songs to a list of playlists.
      */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
-        Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songs=$songs")
+        Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songDescriptions=$songs")
         playlistTitles.forEach { playlist ->
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
         }
@@ -784,27 +611,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(currentTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$currentTitle")
-                return@launch
-            }
-
-            val updatedPlaylist = Playlist(
-                id = playlist.id,
-                title = newTitle,
-                artFile = "$newTitle.jpg",
-                songs = playlist.songs,
-                creationTimestamp = playlist.creationTimestamp,
-                lastModificationTimestamp = LocalDateTime.now().toString()
-            )
-
-            //The playlistImage is saved using playlistTitle, update playlist image file name
-           UtilImpl.renamePlaylistImageFile(getApplication<Application>().applicationContext, currentTitle, newTitle)
-
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+            musicRepo.updatePlaylistTitle(currentTitle, newTitle)
         }
     }
 
@@ -814,24 +621,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
         Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
-                return@launch
-            }
-
-            val updatedPlaylist = Playlist(
-                id = playlist.id,
-                title = playlist.title,
-                artFile = artFileName,
-                songs = playlist.songs,
-                creationTimestamp = playlist.creationTimestamp,
-                lastModificationTimestamp = LocalDateTime.now().toString()
-            )
-
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(updatedPlaylist)
+            musicRepo.updatePlaylistImage(playlistTitle, artFileName)
         }
     }
 
@@ -839,24 +629,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * Add a list of songs to the Playlist. Even if adding only one song still use this function.
      */
     private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
-        Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songs.size=${songs.size}")
+        Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songDescriptions.size=${songs.size}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-
-            //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
-                return@launch
-            }
-            
-            val storableSongs = MediaItemUtil().createSongDataFromListOfMediaItem(songs)
-            
-            val modifiedSongList = playlist.songs.songs.toMutableList()
-            modifiedSongList.addAll(storableSongs)
-
-            playlist.songs = PlaylistData(modifiedSongList)
-            playlist.lastModificationTimestamp = LocalDateTime.now().toString()
-            PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().updatePlaylists(playlist)
+            val songDescriptions = songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+            musicRepo.addSongsToPlaylist(playlistTitle, songDescriptions)
         }
     }
 
@@ -866,6 +642,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
         mediaController.value?.let { controller ->
             controller.removeListener(playerListener)
+        }
+
+        //If MainViewModel is closing, that means app is closing and I shouldn't keep cataloging.
+        //Else I should update my catalog logic to allow two parallel workers.
+        musicRepo.cancelCatalogWorker()
+
+        if(this::mediaBrowser.isInitialized) {
+            mediaBrowser.release()
         }
     }
 
@@ -899,18 +683,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     /**
      * Clear queue and play the specified playlist.
+     * @param playlistTitle The groupTitle of a playlist.
      */
     fun playPlaylist(playlistTitle: String) {
         Timber.d("playPlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            //Grab the media items based on the playlistTitle
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-            val songs = playlist.songs.songs
-            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlistTitle = playlistTitle)
 
             withContext(Dispatchers.Main) {
                 addTracksSaveTrackOrder(
-                    mediaItems = playlistMediaItems,
+                    mediaItems = playlistSongs,
                     clearOriginalSongList = true,
                     startingSongPosition = 0,
                     clearCurrentSongs = true,
@@ -922,17 +704,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Adds all playlist songs to the back of the current queue.
+     * @param playlistTitle The groupTitle of a playlist.
+     */
     fun addPlaylistToBackOfQueue(playlistTitle: String) {
         Timber.d("addPlaylistToBackOfQueue: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            //Grab the media items based on the playlistTitle
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistTitle)
-            val songs = playlist.songs.songs
-            val playlistMediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlistTitle = playlistTitle)
 
             withContext(Dispatchers.Main) {
                 addTracksSaveTrackOrder(
-                    mediaItems = playlistMediaItems,
+                    mediaItems = playlistSongs,
                     clearOriginalSongList = false,
                     clearCurrentSongs = false,
                     shouldAddToOriginalList = true
@@ -1039,12 +822,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * @param session The session token associated with this app. [Should only be one]
      */
     private fun setupMediaBrowser(session: SessionToken) {
-        Timber.d("setupMediaBrowser: session=$session")
-
-        val browserFuture = MediaBrowser.Builder(getApplication<Application>().applicationContext, sessionToken).buildAsync()
+        Timber.d("DT>>> setupMediaBrowser: session=$session")
+        val browserFuture = MediaBrowser.Builder(getApplication<Application>().applicationContext, sessionToken)
+            .buildAsync()
         browserFuture.addListener({
+            browserFuture.get().let { browser ->
+                mediaBrowser = browser
+                getRoot()
+                Timber.d("setupMediaBrowser: sessionToken=${mediaBrowser.connectedToken}")
+            }
             mediaBrowser = browserFuture.get()
-            getRoot()
+            //getRoot()
         }, MoreExecutors.directExecutor())
     }
 
@@ -1064,69 +852,45 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     /**
-     * Will return a list of MediaItems associated with albums on device storage.
-     */
-    fun queryAvailableAlbums() {
-        Timber.d("queryAvailableAlbums: ")
-        if(mediaBrowser != null) {
-
-            mediaBrowser?.let { browser ->
-                rootMediaItem?.let { rootItem ->
-                    val childrenFuture =
-                        browser.getChildren(rootItem.mediaId, 0, Int.MAX_VALUE, null)
-                    childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                        _albumMediaItemList.value =  childrenFuture.get().value?.toList() ?: listOf()
-
-                        //Start Cataloging the Songs found in the music library
-                        catalogMusicLibrary()
-                    }, MoreExecutors.directExecutor())
-                }
-            }
-        } else {
-            Timber.d("queryAvailableAlbums: mediaBrowser isn't ready...")
-        }
-    }
-
-    /**
      * High level function that will attempt to set a list of songs (MediaItems) based on album title.
      * @param albumId The title of an album to be queried.
      */
-    fun querySongsFromAlbum(albumId: String, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
-        Timber.d("querySongsFromAlbum: albumId=$albumId, queueAddType=$queueAddType")
-        if(mediaBrowser != null) {
-            mediaBrowser?.let { browser ->
-                val childrenFuture =
-                    browser.getChildren(albumId, 0, Int.MAX_VALUE, null)
-                childrenFuture.addListener({ //OKAY THIS MAKE MORE SENSE AND THIS IS COMING TOGETHER!
-                    val songs = childrenFuture.get().value?.toList() ?: listOf()
-                    val title = albumId
-                    val songGroupType = SongGroupType.ALBUM
-                    _currentSongList.value = SongGroup(songGroupType, songs, title)
+    fun querySongsFromAlbum(album: MediaItem, queueAddType: QueueAddType = QueueAddType.QUEUE_DONT_ADD) {
+        Timber.d("querySongsFromAlbum: album=$album, queueAddType=$queueAddType")
 
-                    //When I query the album, determine if/how album should be played
-                    if(queueAddType == QueueAddType.QUEUE_END_ADD) {
-                        addTracksSaveTrackOrder(
-                            mediaItems = songs,
-                            clearOriginalSongList = false,
-                            startingSongPosition = 0,
-                            clearCurrentSongs = false,
-                            shouldAddToOriginalList = true
-                        )
-                    } else if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
-                        addTracksSaveTrackOrder(
-                            mediaItems = songs,
-                            clearOriginalSongList = true,
-                            startingSongPosition = 0,
-                            clearCurrentSongs = true,
-                            shouldAddToOriginalList = true
-                        )
-                        _mediaController.value?.play()
-                    }
+        //clear the previous album
+        _currentSongGroup.value = SongGroup(type=SongGroupType.ALBUM, songs = listOf(), group = MediaItem.EMPTY)
 
-                }, MoreExecutors.directExecutor())
+        val albumTitle = album.mediaMetadata.albumTitle.toString()
+        viewModelScope.launch {
+            val albumSongs = musicRepo.getSongsFromAlbum(albumTitle)
+            val songGroup = SongGroup(
+                type = SongGroupType.ALBUM,
+                songs = albumSongs,
+                album
+            )
+            _currentSongGroup.postValue(songGroup) //TODO change this to StateFlow
+
+            if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
+                addTracksSaveTrackOrder(
+                    mediaItems = songGroup.songs,
+                    clearOriginalSongList = true,
+                    startingSongPosition = 0,
+                    clearCurrentSongs = true,
+                    shouldAddToOriginalList = false
+                )
+                mediaController.value?.let { controller ->
+                    controller.play()
+                }
+            } else if(queueAddType == QueueAddType.QUEUE_END_ADD) {
+                addTracksSaveTrackOrder(
+                    mediaItems = songGroup.songs,
+                    clearOriginalSongList = false,
+                    startingSongPosition = null,
+                    clearCurrentSongs = false,
+                    shouldAddToOriginalList = true
+                )
             }
-        } else {
-            Timber.d("querySongsFromAlbum: mediaBrowser isn't ready...")
         }
     }
 
@@ -1161,14 +925,24 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             _originalSongOrder.postValue( songOrder ?: mediaItems  )
         }
 
-        if(_shuffleMode.value == ShuffleType.SHUFFLED) {
-            val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
-            _mediaController.value?.addMediaItems(shuffledSongs)
-            _currentlyPlayingSongs.value = shuffledSongs
-        } else {
-            _mediaController.value?.addMediaItems(mediaItems)
-            _currentlyPlayingSongs.value = mediaItems
+        _mediaController.value?.let { controller ->
+            if(_shuffleMode.value == ShuffleType.SHUFFLED) {
+                val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
+                controller.addMediaItems(shuffledSongs)
+                _currentlyPlayingSongs.value = shuffledSongs
+            } else {
+                //TODO update all places where I set / add mediaItems
+                if(controller.mediaItemCount == 0) {
+                    controller.setMediaItems(mediaItems)
+                } else {
+                    controller.addMediaItems(mediaItems)
+                }
+
+                _currentlyPlayingSongs.value = mediaItems
+            }
         }
+
+
 
         startingSongPosition?.let { position ->
             _mediaController.value?.seekTo(position, 0L)
@@ -1239,10 +1013,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Clears the current queue and starts playing the chosen album.
      */
-    fun playAlbum(albumTitle: String) {
-        Timber.d("playAlbum: albumTitle=$albumTitle")
+    fun playAlbum(album: MediaItem) { //TODO I don't think this is working...
+        Timber.d("playAlbum: album=$album")
         querySongsFromAlbum(
-            albumTitle,
+            album,
             queueAddType = QueueAddType.QUEUE_CLEAR_ADD
         )
     }
@@ -1250,10 +1024,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     /**
      * Adds to album to the back of the current queue.
      */
-    fun addAlbumToBackOfQueue(albumTitle: String) {
-        Timber.d("addAlbumToBackOfQueue: albumTitle=$albumTitle")
+    fun addAlbumToBackOfQueue(album: MediaItem) {
+        Timber.d("addAlbumToBackOfQueue: album=$album")
         querySongsFromAlbum(
-            albumTitle,
+            album,
             queueAddType = QueueAddType.QUEUE_END_ADD
         )
     }
@@ -1262,17 +1036,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
      * High level function that will attempt to set a list of songs (MediaItems) based on a playlist.
      * @param albumId The title of an playlist to be queried.
      */
-    fun querySongsFromPlaylist(playlistId: String) {
-        Timber.d("querySongsFromPlaylist: playlistId=$playlistId")
+    fun querySongsFromPlaylist(playlist: MediaItem) {
+        Timber.d("querySongsFromPlaylist: playlistId=${playlist.mediaMetadata.albumTitle}")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist =  PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext).playlistDao().findPlaylistByName(playlistId)
-            val songs = playlist.songs.songs
-            val mediaItems = mediaItemUtil.convertListOfSongDataIntoListOfMediaItem(songs)
-
+            val playlistSongs = musicRepo.getSongsFromPlaylist(playlist.mediaMetadata.albumTitle.toString())
             val songGroupType = SongGroupType.PLAYLIST
-            val title = playlistId
-
-            _currentSongList.postValue(SongGroup(songGroupType, mediaItems, title))
+            _currentSongGroup.postValue(
+                SongGroup(
+                    songGroupType,
+                    playlistSongs,
+                    playlist
+                )
+            )
         }
     }
 
@@ -1293,14 +1068,14 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private fun removePlaylist(playlistTitle: String) {
         Timber.d("removePlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                .playlistDao()
-                .findPlaylistByName(playlistTitle)
+            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                .songGroupDao()
+                .findSongGroupByName(playlistTitle)
 
             if(playlist != null) {
-                PlaylistDatabase.getDatabase(getApplication<Application>().applicationContext)
-                    .playlistDao()
-                    .deletePlaylists(playlist)
+                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                    .songGroupDao()
+                    .deleteSongGroups(playlist)
 
                 //remove associated image
                 deletePicture(getApplication<Application>().applicationContext, "$playlistTitle.jpg")

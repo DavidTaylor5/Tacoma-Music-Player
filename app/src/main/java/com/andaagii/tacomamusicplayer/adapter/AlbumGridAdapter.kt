@@ -23,9 +23,9 @@ import timber.log.Timber
  */
 class AlbumGridAdapter(
     private var albums: List<MediaItem>,
-    private val onAlbumClick: (String) -> Unit,
-    private val onPlayIconClick: (String) -> Unit,
-    private val handleAlbumOption: (MenuOptionUtil.MenuOption, String, String?) -> Unit,
+    private val onAlbumClick: (MediaItem) -> Unit,
+    private val onPlayIconClick: (MediaItem) -> Unit,
+    private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
 ): RecyclerView.Adapter<AlbumGridAdapter.AlbumGridViewHolder>() {
 
     /**
@@ -56,17 +56,17 @@ class AlbumGridAdapter(
         //First check that dataSet has a value for position
         if(position < albums.size) {
             val album = albums[position]
-            val albumMetadata = album.mediaMetadata
-            val customImage = "album_${albumMetadata.albumTitle}"
-            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${albumMetadata.albumTitle}, albumArtist=${albumMetadata.albumArtist}, albumArtUri=${albumMetadata.artworkUri}")
+            //val albumMetadata = album.mediaMetadata
+            val customImage = "album_${album.mediaMetadata.albumTitle}"
+            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
-            val albumTitle = albumMetadata.albumTitle.toString()
-            val albumArtist = albumMetadata.albumArtist.toString()
-            val albumUri = albumMetadata.artworkUri ?: Uri.EMPTY
+            val albumTitle = album.mediaMetadata.albumTitle
+            val albumArtist = album.mediaMetadata.albumArtist
+            val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
 
-            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(albumTitle) }
+            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
-            UtilImpl.drawImageAssociatedWithAlbum(
+            UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 albumUri,
                 Size(400, 400),
@@ -75,7 +75,7 @@ class AlbumGridAdapter(
 
             viewHolder.binding.albumName.text = albumTitle
 
-            albumMetadata.releaseYear?.let { year ->
+            album.mediaMetadata.releaseYear?.let { year ->
                 if(year > 0) {
                     viewHolder.binding.descriptionText.text = "$year | $albumArtist"
                 }
@@ -99,7 +99,7 @@ class AlbumGridAdapter(
                 val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
                 handleAlbumOption(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                    albums[position].mediaId,
+                    albums[position],
                     customImageName
                 )
 

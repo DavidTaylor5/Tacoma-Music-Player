@@ -12,10 +12,15 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
@@ -30,22 +35,20 @@ import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
-import com.andaagii.tacomamusicplayer.enum.PageType
-import com.andaagii.tacomamusicplayer.enum.SongGroupType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.*
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class SongListFragment(
-
-): Fragment() {
+@AndroidEntryPoint
+class SongListFragment(): Fragment() {
     private lateinit var binding: FragmentSonglistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: SongListViewModel by viewModels()
@@ -106,6 +109,9 @@ class SongListFragment(
                     // 3. Tell adapter to render the model update.
                     adapter.notifyItemMoved(from, to)
 
+                    //Save playlist change.
+                    savePlaylistChanges()
+
                     return true
                 }
 
@@ -121,19 +127,21 @@ class SongListFragment(
 
     override fun onPause() {
         super.onPause()
-
         //Remove multi select when I leave this fragment
         viewModel.clearMultiSelectSongs()
+    }
 
-        //If it's a playlist, save the order to the database [it could have changed.]
-        currentSongGroup?.let { songGroup ->
+    private fun savePlaylistChanges() {
+        currentSongGroup?.let {  songGroup ->
+            if(songGroup.type == SongGroupType.PLAYLIST) {
+                val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
 
-            val finalSongOrder = (binding.displayRecyclerview.adapter as SongListAdapter).getSongOrder()
-
-            if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)
-                && songGroup.type == SongGroupType.PLAYLIST) {
-                songGroup.songs = finalSongOrder
-                parentViewModel.updatePlaylistOrder(songGroup)
+                if(determineIfPlaylistSongsHaveChanged(songGroup.songs, finalSongOrder)) {
+                    songGroup.songs = finalSongOrder
+                    parentViewModel.updatePlaylistOrder(songGroup)
+                }
+            } else {
+                Timber.d("savePlaylistChanges: songGroup=$songGroup is not of type PLAYLIST, therefore no save.")
             }
         }
     }
@@ -149,8 +157,10 @@ class SongListFragment(
     ): View {
         binding = FragmentSonglistBinding.inflate(inflater)
 
-        parentViewModel.currentSongList.observe(viewLifecycleOwner) { songGroup ->
-            Timber.d("onCreateView: title=${songGroup.title}, songs.size=${songGroup.songs.size}")
+        parentViewModel.currentSongGroup.observe(viewLifecycleOwner) { songGroup ->
+            Timber.d("onCreateView: title=${songGroup.group.mediaMetadata.albumTitle}")
+
+            //TODO I need to reimplement this code to work!!
 
             currentSongGroup = songGroup
             lastDisplaySongGroup = songGroup
@@ -162,6 +172,7 @@ class SongListFragment(
                 this::handleSongSetting,
                 this::handleSongClicked,
                 this::handleAlbumClicked,
+                this::handlePlaylistClicked,
                 this::handleSongSelected,
                 songGroup.type,
                 this::handleViewHolderHandleDrag
@@ -172,32 +183,23 @@ class SongListFragment(
         }
 
         parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-            val topSearchData = if(searchItems.isEmpty()) {
-                listOf()
-            } else if(searchItems.size > 20) {
-                searchItems.subList(0, 20)
-            } else {
-                searchItems.subList(0, searchItems.size)
+            currentSongGroup?.let { songGroup ->
+                if(songGroup.type != SongGroupType.SEARCH_LIST) {
+                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
+                    lastDisplaySongGroup = songGroup
+                }
             }
 
-            val topTwentySongs =  MediaItemUtil().convertListOfSearchDataIntoListOfMediaItem(topSearchData)
-
-            //Save last songgroup that wasn't a search so that I can return to it
-            
-//            Timber.d("onCreateView: currentSearchList updated -> songroup.type=${currentSongGroup?.type}")
-
-//            currentSongGroup?.let { songGroup ->
-//                if(songGroup.type != SongGroupType.SEARCH_LIST) {
-//                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
-//                    lastDisplaySongGroup = songGroup
-//                }
-//            }
+            val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
+                MediaMetadata.Builder().setTitle("Search").build()
+            ).build()
 
             //if(binding.displayRecyclerview.adapter)
+            //TODO set the currentSongGroup to be the search data...
             currentSongGroup = SongGroup(
                 SongGroupType.SEARCH_LIST,
-                topTwentySongs,
-                "Search Results"
+                searchItems,
+                searchMediaItem
             )
 
             if(binding.displayRecyclerview.adapter == null) {
@@ -207,6 +209,7 @@ class SongListFragment(
                         this::handleSongSetting,
                         this::handleSongClicked,
                         this::handleAlbumClicked,
+                        this::handlePlaylistClicked,
                         this::handleSongSelected,
                         songGroup.type,
                         this::handleViewHolderHandleDrag
@@ -214,7 +217,7 @@ class SongListFragment(
                     determineIfShowingInformationScreen(songGroup)
                 }
             } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(topTwentySongs, SongGroupType.SEARCH_LIST)
+                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(searchItems, SongGroupType.SEARCH_LIST)
             }
         }
 
@@ -234,11 +237,15 @@ class SongListFragment(
             }
         }
 
-        parentViewModel.availablePlaylists.observe(viewLifecycleOwner) { playlists ->
-            val playlistsWithoutQueue = playlists.filter { playlist ->
-                playlist.title != Const.PLAYLIST_QUEUE_TITLE && playlist.title != Const.ORIGINAL_QUEUE_ORDER
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.availablePlaylists.collect { playlists ->
+                    val playlistsWithoutQueue = playlists.filter { playlist ->
+                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+                    }
+                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+                }
             }
-            binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
         }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
@@ -266,11 +273,12 @@ class SongListFragment(
                 R.menu.songlist_songgroup_options,
                 menu.menu
             )
+
             menu.setOnMenuItemClickListener {
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-                    parentViewModel.currentSongList.value?.songs ?: listOf()
+                    parentViewModel.currentSongGroup.value?.songs ?: listOf()
                 )
                 return@setOnMenuItemClickListener true
             }
@@ -304,7 +312,13 @@ class SongListFragment(
                 R.style.PopupMenuBlack
             )
 
-            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
+            //Different multi-select options for Playlists versus Albums
+            if(currentSongGroup?.type == SongGroupType.PLAYLIST) {
+                menu.menuInflater.inflate(R.menu.multi_select_playlist_options, menu.menu)
+            } else {
+                menu.menuInflater.inflate(R.menu.multi_select_album_options, menu.menu)
+            }
+
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 //I don't need to add any more songs here, already added when selected.
@@ -343,7 +357,7 @@ class SongListFragment(
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 Timber.d("onTextChanged: User is typing: $s")
                 if(parentViewModel.isShowingSearchMode.value == true) {
-                    parentViewModel.querySearchDatabase(s.toString())
+                    parentViewModel.querySearchData(s.toString())
                 }
             }
 
@@ -367,13 +381,13 @@ class SongListFragment(
     private fun initializeSongGroupInfo() {
         Timber.d("initializeSongGroupInfo: ")
         currentSongGroup?.let { songGroup ->
-            binding.songGroupInfo.setSongGroupTitleText(songGroup.title)
+            binding.songGroupInfo.setSongGroupTitleText(songGroup.group.mediaMetadata.albumTitle.toString())
 
             // Determine what icon to display for song group
             if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
                 songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
                     val customImage = "album_${songGroup.songs[0].mediaMetadata.albumTitle}"
-                    UtilImpl.drawSongArt(
+                    UtilImpl.drawMediaItemArt(
                         binding.songGroupInfo.getSongGroupImage(),
                         songArt,
                         Size(200, 200),
@@ -385,7 +399,7 @@ class SongListFragment(
                 itemTouchHelper.attachToRecyclerView(null)
 
             } else { // Playlist icon
-                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.title)
+                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.group.mediaMetadata.albumTitle.toString())
 
                 if(!ableToDraw) {
                     binding.songGroupInfo.getSongGroupImage()
@@ -425,6 +439,7 @@ class SongListFragment(
                     this::handleSongSetting,
                     this::handleSongClicked,
                     this::handleAlbumClicked,
+                    this::handlePlaylistClicked,
                     this::handleSongSelected,
                     songGroup.type,
                     this::handleViewHolderHandleDrag
@@ -439,10 +454,16 @@ class SongListFragment(
     private fun activateSearchMode() {
         Timber.d("activateSearchMode: ")
         binding.searchContainer.visibility = View.VISIBLE
+
+        val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
+                MediaMetadata.Builder().setTitle("Search").build()
+            ).build()
+
+
         currentSongGroup = SongGroup(
             type = SongGroupType.SEARCH_LIST,
             songs = listOf(),
-            title = "search..."
+            group = searchMediaItem
         )
     }
 
@@ -539,7 +560,6 @@ class SongListFragment(
         }
     }
 
-    //TODO move this logic ?
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem>, fromMultiSelect: Boolean = false) {
         Timber.d("handleSongSetting: menuOption=$menuOption, mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
 
@@ -549,11 +569,23 @@ class SongListFragment(
                 viewModel.prepareSongsForPlaylists()
                 songsToAddToPlaylistPrompt = mediaItems
                 handleAddToPlaylist(mediaItems)
+
+                //TODO there is an edgecase where user can add a song from a playlist to the same playlist and it wont refresh...
             }
-            MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
+            REMOVE_FROM_PLAYLIST -> {
                 if(mediaItems.isNotEmpty()) {
-                    val posOfDeletedSong = (binding.displayRecyclerview.adapter as SongListAdapter).removeSong(mediaItems[0].mediaId)
-                    (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(posOfDeletedSong)
+                    val deletedSongPositions = (binding.displayRecyclerview.adapter as SongListAdapter).removeSongs(mediaItems.map { it.mediaMetadata.title.toString() })
+                    if(deletedSongPositions.size == 1) {
+                        (binding.displayRecyclerview.adapter as SongListAdapter).notifyItemRemoved(deletedSongPositions.first())
+                    } else {
+                        val sortedDeletedSongPositions = deletedSongPositions.sorted()
+                        (binding.displayRecyclerview.adapter as SongListAdapter).notifyDataSetChanged()
+
+                        savePlaylistChanges()
+                    }
+
+                    ///(adapter as SongListAdapter).clearAllSelected()
+                    viewModel.clearMultiSelectSongs()
                 }
             }
             ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
@@ -575,11 +607,18 @@ class SongListFragment(
     private fun handleSongClicked(position: Int) {
         currentSongGroup?.let { songGroup ->
             parentViewModel.playSongGroupAtPosition(songGroup, position)
+            parentViewModel.removeVirtualKeyboard()
         }
     }
 
-    private fun handleAlbumClicked(albumTitle: String) {
-        parentViewModel.querySongsFromAlbum(albumTitle)
+    private fun handleAlbumClicked(album: MediaItem) {
+        parentViewModel.querySongsFromAlbum(album)
+        parentViewModel.removeVirtualKeyboard()
+        parentViewModel.handleCancelSearchButtonClick()
+    }
+
+    private fun handlePlaylistClicked(playlist: MediaItem) {
+        parentViewModel.querySongsFromPlaylist(playlist)
         parentViewModel.removeVirtualKeyboard()
         parentViewModel.handleCancelSearchButtonClick()
     }
@@ -640,13 +679,17 @@ class SongListFragment(
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         //First Icon will be the playlists
-        binding.songListInformationScreen.setFirstInfo("Choose a playlist to View")
-        binding.songListInformationScreen.setFirstIcon(resources.getDrawable(R.drawable.playlist_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setFirstInfo(getString(R.string.choose_a_playlist_to_view))
+        ResourcesCompat.getDrawable(resources, R.drawable.playlist_icon, null)?.let { drawable ->
+            binding.songListInformationScreen.setFirstIcon(drawable)
+        }
         binding.songListInformationScreen.setFirstIconCallback { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
 
         //Second Icon will be the Albums
-        binding.songListInformationScreen.setSecondInfo("Choose an album to View")
-        binding.songListInformationScreen.setSecondIcon(resources.getDrawable(R.drawable.browse_album_icon)) //TODO add theme here?
+        binding.songListInformationScreen.setSecondInfo(getString(R.string.choose_an_album_to_view))
+        ResourcesCompat.getDrawable(resources, R.drawable.browse_album_icon, null)?.let { drawable ->
+            binding.songListInformationScreen.setSecondIcon(drawable)
+        }
         binding.songListInformationScreen.setSecondIconCallback { parentViewModel.setPage(PageType.ALBUM_PAGE) }
     }
 }

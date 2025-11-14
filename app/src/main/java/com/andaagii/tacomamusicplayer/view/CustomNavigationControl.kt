@@ -7,7 +7,7 @@ import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewCustomNavigationControlBinding
-import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import timber.log.Timber
 
 /**

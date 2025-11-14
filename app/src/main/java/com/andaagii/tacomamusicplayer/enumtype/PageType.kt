@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.enum
+package com.andaagii.tacomamusicplayer.enumtype
 
 /**
  * Pages associated to choosing a song.

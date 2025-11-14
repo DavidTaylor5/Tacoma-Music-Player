@@ -5,12 +5,9 @@ import android.transition.TransitionInflater
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
@@ -24,12 +21,13 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
-import com.andaagii.tacomamusicplayer.enum.ScreenType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class CurrentQueueFragment: Fragment() {
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()

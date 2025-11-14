@@ -16,24 +16,31 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
-import com.andaagii.tacomamusicplayer.enum.ScreenType
+import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 //Preferences DataStore, for storing settings in my app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
@@ -91,34 +98,31 @@ class MainActivity : AppCompatActivity() {
             } else {
                 viewModel.initializeMusicPlaying()
 
-                val handler = Handler(Looper.getMainLooper())
-                musicObserver = MusicContentObserver(
-                    handler = handler,
-                    context = this,
-                    onContentChange = viewModel::queryAvailableAlbums
-                )
-                contentResolver.registerContentObserver(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    true,
-                    musicObserver!!
-                )
+                //TODO add back code for music content observer?
+//                val handler = Handler(Looper.getMainLooper())
+//                musicObserver = MusicContentObserver(
+//                    handler = handler,
+//                    context = this,
+//                    onContentChange = viewModel::queryAvailableAlbums
+//                )
+//                contentResolver.registerContentObserver(
+//                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+//                    true,
+//                    musicObserver!!
+//                )
             }
         }
 
-        viewModel.availablePlaylists.observe(this) { playlists ->
-            Timber.d("AllPlaylistLiveData: playlists has updated size=${playlists.size}  ")
-            if(playlists.isNotEmpty()) {
-                for(playlist in playlists) {
-                    Timber.d("AllPlaylistLiveData: playlist.title=${playlist.title}, songs=${playlist.songs}")
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.availablePlaylists.collect { playlists ->
+                    Timber.d("availablePlaylists: playlists has updated size=${playlists.size}  ")
+                    if(playlists.isNotEmpty()) {
+                        for(playlist in playlists) {
+                            Timber.d("availablePlaylists: playlist.title=${playlist.mediaMetadata.albumTitle}")
+                        }
+                    }
                 }
-            }
-        }
-
-        viewModel.isRootAvailable.observe(this) { isAvailable ->
-            //The root is available, I can now check albums and stuff
-            if(isAvailable) {
-                //query available albums
-                viewModel.queryAvailableAlbums()
             }
         }
 

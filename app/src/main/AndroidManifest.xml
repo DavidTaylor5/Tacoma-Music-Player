@@ -18,10 +18,17 @@
         android:icon="@mipmap/app_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_launcher_round"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.TacomaMusicPlayer"
         tools:targetApi="31"
         >
+
+        <!-- Points towards file required for android auto -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
+
         <!-- screenOrientation is portrait for now so that the app won't crash -->
         <activity
             android:name=".activity.MainActivity"
@@ -47,6 +54,19 @@
 
             </intent-filter>
         </service>
+
+        <!-- Customize the WorkManager configuration, remove default initializer from AndroidManifest.xml.  -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <!-- If you are using androidx.startup to initialize other components -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
     </application>
 

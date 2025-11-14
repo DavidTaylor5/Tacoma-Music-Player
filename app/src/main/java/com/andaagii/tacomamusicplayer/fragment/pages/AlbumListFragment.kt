@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,22 +8,28 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
 import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
-import com.andaagii.tacomamusicplayer.enum.LayoutType
-import com.andaagii.tacomamusicplayer.enum.PageType
+import com.andaagii.tacomamusicplayer.enumtype.LayoutType
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
-import kotlin.math.floor
 
+@AndroidEntryPoint
 class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
@@ -61,36 +66,35 @@ class AlbumListFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentAlbumlistBinding.inflate(inflater)
-        val observer: Observer<List<MediaItem>> =
-            Observer { mediaList ->
-                Timber.d("observe mediaitemlist: mediaList=${mediaList.map { mediaItem -> mediaItem.mediaMetadata.albumTitle }}")
-                currentAlbumList = SortingUtil.sortAlbums(
-                    mediaList,
-                    parentViewModel.sortingForAlbumTab.value
-                        ?: SortingUtil.SortingOption.SORTING_NEWEST_RELEASE
-                )
-
-                Timber.d("onCreateView: found albumList.size=${mediaList.size}")
-
-                if(binding.displayRecyclerview.adapter == null) {
-                    //on initial
-                    binding.displayRecyclerview.adapter = AlbumListAdapter(
-                        mediaList,
-                        this::onAlbumClick,
-                        parentViewModel::playAlbum,
-                        this::handleAlbumSetting
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.availableAlbums.collect { availableAlbums ->
+                    currentAlbumList = SortingUtil.sortAlbums(
+                        availableAlbums,
+                        parentViewModel.sortingForAlbumTab.value
+                            ?: SortingUtil.SortingOption.SORTING_NEWEST_RELEASE
                     )
-                } else {
-                    currentLayoutType?.let {
-                        updateAlbumLayout(it)
+
+                    if(binding.displayRecyclerview.adapter == null) {
+                        //on initial
+                        binding.displayRecyclerview.adapter = AlbumListAdapter(
+                            currentAlbumList,
+                            this@AlbumListFragment::onAlbumClick,
+                            parentViewModel::playAlbum,
+                            this@AlbumListFragment::handleAlbumSetting
+                        )
+                    } else {
+                        currentLayoutType?.let {
+                            updateAlbumLayout(it)
+                        }
+                        currentSortingType?.let {
+                            updateAlbumSorting(it)
+                        }
                     }
-                    currentSortingType?.let {
-                        updateAlbumSorting(it)
-                    }
+
                 }
             }
-
-        parentViewModel.albumMediaItemList.observe(viewLifecycleOwner, observer)
+        }
 
         parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
             updateAlbumLayout(layout)
@@ -157,7 +161,7 @@ class AlbumListFragment: Fragment() {
         }
     }
 
-    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: String, customAlbumImageName: String? = null) {
+    private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: MediaItem, customAlbumImageName: String? = null) {
         when (option) {
             MenuOptionUtil.MenuOption.PLAY_ALBUM ->  {
                 parentViewModel.playAlbum(album)
@@ -176,8 +180,8 @@ class AlbumListFragment: Fragment() {
         }
     }
 
-    private fun onAlbumClick(albumTitle: String) {
-        parentViewModel.querySongsFromAlbum(albumTitle)
+    private fun onAlbumClick(album: MediaItem) {
+        parentViewModel.querySongsFromAlbum(album)
         parentViewModel.setPage(PageType.SONG_PAGE)
     }
 

@@ -3,13 +3,13 @@
 
     <item
         android:id="@+id/order_by_alphabetical"
-        android:title="Order by Title Alphabetical" />
+        android:title="@string/order_by_title_alphabetical" />
 
     <item
         android:id="@+id/order_by_creation_date"
-        android:title="Order by Creation Date" />
+        android:title="@string/order_by_creation_date" />
 
     <item
         android:id="@+id/order_by_recent_mod"
-        android:title="Order by Recently Modified" />
+        android:title="@string/order_by_recently_modified" />
 </menu>

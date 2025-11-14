@@ -2,7 +2,6 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 
 import android.net.Uri
 import android.os.Bundle
-import android.transition.TransitionInflater
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
@@ -16,11 +15,13 @@ import androidx.media3.session.MediaController
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
-import com.andaagii.tacomamusicplayer.enum.ShuffleType
+import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+@AndroidEntryPoint
 class MusicPlayingFragment: Fragment() {
 
     private val parentViewModel: MainViewModel by activityViewModels()
@@ -104,7 +105,7 @@ class MusicPlayingFragment: Fragment() {
         this.context?.resources?.let { res ->
             controller?.mediaMetadata?.let { metadata ->
                 val customImage = "album_${metadata.albumTitle}"
-                UtilImpl.drawSongArt(
+                UtilImpl.drawMediaItemArt(
                     binding.songArt!!,
                     metadata.artworkUri?: Uri.EMPTY,
                     Size(500, 500),

@@ -130,7 +130,7 @@
                     android:layout_height="wrap_content"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="Song Title - Song Artist"
+                    android:text="@string/song_title_song_artist"
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
