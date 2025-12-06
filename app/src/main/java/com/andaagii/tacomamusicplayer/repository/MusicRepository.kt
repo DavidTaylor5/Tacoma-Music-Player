@@ -43,7 +43,7 @@ interface MusicRepository: MusicProviderRepository {
 
     suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
 
-    suspend fun  createInitialQueueIfEmpty(title: String)
+    suspend fun createInitialQueueIfEmpty(title: String)
 
     /**
      * Update the songs in a playlist.
@@ -51,9 +51,4 @@ interface MusicRepository: MusicProviderRepository {
     suspend fun updatePlaylistSongOrder(playlistTitle: String, songDescriptions: List<String>)
 
     suspend fun updatePlaylistTitle(originalTitle: String, newTitle: String)
-
-    /**
-     * Tell the repository to cancel the catalog worker in case app is closed before worker is done.
-     */
-    fun cancelCatalogWorker()
 }

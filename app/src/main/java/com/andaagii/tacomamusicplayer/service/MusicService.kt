@@ -63,6 +63,8 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO CREATE INITIAL FUNCTIONALITY FOR GOOGLE ASSISTANT!
 
+//TODO First install -  I need to make sure that worker is started after user accepts the permission
+
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs

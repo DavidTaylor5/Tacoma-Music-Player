@@ -1,63 +1,29 @@
 package com.andaagii.tacomamusicplayer.repository
 
-import android.content.Context
 import androidx.media3.common.MediaItem
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.SearchData
-import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
-import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
-import com.andaagii.tacomamusicplayer.factory.MediaBrowserFactory
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
-import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
-    @ApplicationContext context: Context,
     private val mediaItemUtil: MediaItemUtil,
-    private val mediaBrowserFactory: MediaBrowserFactory,
     private val songDao: SongDao,
     private val songGroupDao: SongGroupDao
 ): MusicRepository, MusicProviderRepository {
-
-    private lateinit var currentWorkerId: UUID
-    private lateinit var workManager: WorkManager
-
-    init {
-        //Catalog all of the music on the user's device to a database in the background
-        //TODO I also need to run a workrequest everytime I observe a change in the MUSIC folder
-        val catalogWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<CatalogMusicWorker>()
-            .build()
-
-        workManager = WorkManager.getInstance(context)
-        currentWorkerId = catalogWorkRequest.id
-
-        //TODO there is still another parallel execution that is happening, two workers are finishing at the same
-        //time and I need to figure that out...
-
-        //Cancel previous work
-        workManager.cancelAllWork()
-
-        workManager.enqueue(catalogWorkRequest)
-    }
 
     override suspend fun searchMusic(search: String): List<MediaItem> {
         val matchingSongGroups = songGroupDao.findDescriptionFromSearchStr(search)
@@ -75,13 +41,6 @@ class MusicRepositoryImpl @Inject constructor(
         }
 
         return searchData
-    }
-
-    override fun cancelCatalogWorker() {
-        Timber.d("cancelCatalogWorker: onCancel")
-        if(::currentWorkerId.isInitialized) {
-            workManager.cancelWorkById(currentWorkerId)
-        }
     }
 
 //TODO ADD LOGIC TO BLOCK TWO PLAYLISTS WITH THE SAME NAME! Probably using UI
