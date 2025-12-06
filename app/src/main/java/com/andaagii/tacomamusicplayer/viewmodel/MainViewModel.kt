@@ -644,10 +644,6 @@ class MainViewModel @Inject constructor(
             controller.removeListener(playerListener)
         }
 
-        //If MainViewModel is closing, that means app is closing and I shouldn't keep cataloging.
-        //Else I should update my catalog logic to allow two parallel workers.
-        musicRepo.cancelCatalogWorker()
-
         if(this::mediaBrowser.isInitialized) {
             mediaBrowser.release()
         }

@@ -2,9 +2,6 @@ package com.andaagii.tacomamusicplayer.activity
 
 import android.content.Context
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.MediaStore
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -17,7 +14,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -25,17 +21,22 @@ import androidx.navigation.NavController
 import androidx.navigation.createGraph
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
-import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
+import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.UUID
 
 //Preferences DataStore, for storing settings in my app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -46,7 +47,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val permissionManager = AppPermissionUtil()
     private lateinit var navController: NavController
-
+    private lateinit var workManager: WorkManager
+    private lateinit var currentWorkerId: UUID
     private var musicObserver: MusicContentObserver? = null
 
     private val onBackPressedCallback = object: OnBackPressedCallback(true) {
@@ -97,6 +99,9 @@ class MainActivity : AppCompatActivity() {
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
                 viewModel.initializeMusicPlaying()
+
+                // Music Access is allowed, start looking through user library
+                queryMusic()
 
                 //TODO add back code for music content observer?
 //                val handler = Handler(Looper.getMainLooper())
@@ -203,5 +208,27 @@ class MainActivity : AppCompatActivity() {
         Timber.d("onRequestPermissionsResult: requestCode=$requestCode")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         viewModel.handlePermissionResult(requestCode, permissions, grantResults)
+    }
+
+    /**
+     * Start cataloging user's music library using a worker. If a previous worker is running, stop it
+     * and start again. I don't want multiple workers running in parallel.
+     */
+    fun queryMusic() {
+        //Catalog all of the music on the user's device to a database in the background
+        //TODO I also need to run a workrequest everytime I observe a change in the MUSIC folder
+        val catalogWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<CatalogMusicWorker>()
+            .build()
+
+        workManager = WorkManager.getInstance(this)
+        currentWorkerId = catalogWorkRequest.id
+
+        //TODO there is still another parallel execution that is happening, two workers are finishing at the same
+        //time and I need to figure that out...
+
+        //Cancel previous work
+        workManager.cancelAllWork()
+
+        workManager.enqueue(catalogWorkRequest)
     }
 }

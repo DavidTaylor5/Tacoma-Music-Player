@@ -37,9 +37,12 @@ import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
-import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.*
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
+import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
@@ -126,6 +129,7 @@ class SongListFragment(): Fragment() {
     }
 
     override fun onPause() {
+        Timber.d("onPause: ")
         super.onPause()
         //Remove multi select when I leave this fragment
         viewModel.clearMultiSelectSongs()
@@ -159,8 +163,6 @@ class SongListFragment(): Fragment() {
 
         parentViewModel.currentSongGroup.observe(viewLifecycleOwner) { songGroup ->
             Timber.d("onCreateView: title=${songGroup.group.mediaMetadata.albumTitle}")
-
-            //TODO I need to reimplement this code to work!!
 
             currentSongGroup = songGroup
             lastDisplaySongGroup = songGroup
