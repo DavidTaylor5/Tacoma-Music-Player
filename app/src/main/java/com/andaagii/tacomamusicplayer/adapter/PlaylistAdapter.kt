@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
@@ -68,7 +69,7 @@ class PlaylistAdapter(
         //Logic for showing custom playist image
         val artFile = playlists[position].mediaMetadata.artworkUri.toString() //TODO this might need to be fixed
         if(!artFile.isNullOrEmpty()) {
-            val appDir = viewHolder.itemView.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val appDir = viewHolder.itemView.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
             val playlistImageFile = File(appDir, artFile)
             if(playlistImageFile.exists()) {
                 try {

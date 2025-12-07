@@ -40,9 +40,22 @@ import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.guava.asListenableFuture
 
-//TODO GET GENRE FROM THE MEDIA ITEM?
+/*
+* Android Auto fixes
+*
+* TODO REMOVE SUBTITLE FROM ARTIST
+*  TODO Add artists instead of SUBTITLE on ALBUM
+*   TODO Add image for album
+*    TODO add image for song
+*     TODO Make subtitle Album / Artist on song
+*
+* */
 
-//TODO ALLOW USER TO DELETE MULTIPLE SONGS!
+//TODO if no song is playing don't show the mini player...
+
+//TODO Low priority, fix for multi select blocking the bottom song...
+
+//TODO allow user to add album to playlist from album tab
 
 //TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE.
 
@@ -52,18 +65,10 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Update the description to maximize ASO
 
-//TODO Allow user to remove multiple songs from playlist.
-
-//TODO rare bug where app can start on song fragment but botton navigation shows play fragment.
-
 //TODO when the queue is empty and not playing anything, I shouldn't let the user click the play button, mini player shouldn't be present.
 
 //TODO add back information on the playlist songgroup, album songgroup. Can I finally display duration?
 // On SongGroupHeader I want to display "X tracks | 33:02"
-
-//TODO CREATE INITIAL FUNCTIONALITY FOR GOOGLE ASSISTANT!
-
-//TODO First install -  I need to make sure that worker is started after user accepts the permission
 
 /*
 * TODO add all of Android's expected well-known root IDs
@@ -148,7 +153,6 @@ class MusicService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-
             /*
             * This function can be called in two scenarios, when I manually add songs to the controller,
             * and in scenario such as android auto, this function will also call with user's click.

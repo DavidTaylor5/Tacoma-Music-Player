@@ -25,6 +25,7 @@ import kotlin.math.floor
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import androidx.core.graphics.drawable.toDrawable
+import com.andaagii.tacomamusicplayer.constants.Const
 
 class UtilImpl {
 
@@ -147,7 +148,7 @@ class UtilImpl {
 
         private fun loadCustomImage(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false): Boolean {
             val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
-            val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val appDir = view.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
             for(suffix in possibleImageSuffix) {
                 val customAlbumImage = File(appDir, "${customAlbumImageName}$suffix")
                 if(customAlbumImage.exists()) {
@@ -250,7 +251,7 @@ class UtilImpl {
 
         fun deletePicture(context: Context, fileName: String): Boolean {
             return try {
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
                 val file = File(appDir, fileName)
                 if(file.exists()) {
                     file.delete()
@@ -269,7 +270,7 @@ class UtilImpl {
         fun saveImageToFile(context: Context, sourceUri: Uri, fileName: String) {
             try {
                 // Get app-specific directory
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
 
                 appDir?.let { directory ->
                     val fileName = "$fileName.jpg"
@@ -297,7 +298,7 @@ class UtilImpl {
             val playlistFile = "$playlistTitle.jpg"
 
             if(playlistFile.isNotEmpty()) {
-                val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = view.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
                 val imageFile = File(appDir, playlistFile)
                 if(imageFile.exists()) {
                     try {
@@ -324,7 +325,7 @@ class UtilImpl {
             val newPlaylistFileName = "$newPlaylistName.jpg"
 
             if(playlistFileName.isNotEmpty()) {
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
 
                 val currentImageFile = File(appDir, playlistFileName)
                 val updatedNameFile = File(appDir, newPlaylistFileName)

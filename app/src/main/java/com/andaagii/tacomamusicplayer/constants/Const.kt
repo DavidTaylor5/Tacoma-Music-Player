@@ -71,5 +71,9 @@ class Const {
         const val ALBUM_PREFIX = "album:"
         const val PLAYLIST_PREFIX = "playlist:"
         const val ARTIST_PREFIX = "artist:"
+
+        // EXTERNAL IMAGE STORAGE FOLDERS
+        const val ALBUM_ART_FOLDER = "AlbumArt"
+        const val ALBUM_ART_THUMBNAIL_FOLDER = "AlbumArtThumbnail"
     }
 }
