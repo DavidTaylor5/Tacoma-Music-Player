@@ -169,6 +169,7 @@ class SongListFragment(): Fragment() {
 
             parentViewModel.handleCancelSearchButtonClick()
 
+            //TODO pass in just the songGroup
             binding.displayRecyclerview.adapter = SongListAdapter(
                 songGroup.songs,
                 this::handleSongSetting,
@@ -199,9 +200,9 @@ class SongListFragment(): Fragment() {
             //if(binding.displayRecyclerview.adapter)
             //TODO set the currentSongGroup to be the search data...
             currentSongGroup = SongGroup(
-                SongGroupType.SEARCH_LIST,
-                searchItems,
-                searchMediaItem
+                type = SongGroupType.SEARCH_LIST,
+                songs = searchItems,
+                group = searchMediaItem,
             )
 
             if(binding.displayRecyclerview.adapter == null) {
@@ -465,7 +466,7 @@ class SongListFragment(): Fragment() {
         currentSongGroup = SongGroup(
             type = SongGroupType.SEARCH_LIST,
             songs = listOf(),
-            group = searchMediaItem
+            group = searchMediaItem,
         )
     }
 

@@ -855,7 +855,11 @@ class MainViewModel @Inject constructor(
         Timber.d("querySongsFromAlbum: album=$album, queueAddType=$queueAddType")
 
         //clear the previous album
-        _currentSongGroup.value = SongGroup(type=SongGroupType.ALBUM, songs = listOf(), group = MediaItem.EMPTY)
+        _currentSongGroup.value = SongGroup(
+            type=SongGroupType.ALBUM,
+            songs = listOf(),
+            group = MediaItem.EMPTY,
+        )
 
         val albumTitle = album.mediaMetadata.albumTitle.toString()
         viewModelScope.launch {

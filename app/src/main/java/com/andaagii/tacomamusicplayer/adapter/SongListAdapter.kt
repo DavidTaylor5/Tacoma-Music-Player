@@ -30,7 +30,7 @@ class SongListAdapter(
     val handlePlaylistClick: (playlist: MediaItem) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     var songGroupType: SongGroupType,
-    val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit
+    val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
@@ -212,6 +212,10 @@ class SongListAdapter(
             Timber.d("onBindViewHolder artworkUri=$artworkUri")
 
             val customImage = if(songMetadata.albumArtist == Const.USER_PLAYLIST) songMetadata.albumTitle.toString() else "album_${dataSet[position].mediaMetadata.albumTitle}"
+            //TODO Determine if songgroup is using custom image
+//            val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
+//                groupTitle =
+//            )
             UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 artworkUri,

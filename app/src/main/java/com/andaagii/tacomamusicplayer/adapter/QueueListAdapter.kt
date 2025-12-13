@@ -15,9 +15,11 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.ViewholderQueueSongBinding
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -126,7 +128,6 @@ class QueueListAdapter(
 
         //First check that dataSet has a value for position
         if(position < dataSet.size) {
-
             val songData = dataSet[position].mediaItem.mediaMetadata
             Timber.d("onBindViewHolder: CHECKING VALUES songTitle=${songData.title},  songArtist=${songData.artist}, albumTitle=${songData.albumTitle}, albumArtUri=${songData.artworkUri}")
 
@@ -153,7 +154,11 @@ class QueueListAdapter(
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
             }
 
-            val customImage = "album_${dataSet[position].mediaItem.mediaMetadata.albumTitle}"
+            val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
+                groupTitle = songData.albumTitle.toString(),
+                artist = songData.albumArtist.toString(),
+                songGroupType = if(songData.albumArtist == Const.USER_PLAYLIST) SongGroupType.PLAYLIST else SongGroupType.ALBUM
+            )
             UtilImpl.drawMediaItemArt(
                 viewHolder.binding.albumArt,
                 artworkUri,

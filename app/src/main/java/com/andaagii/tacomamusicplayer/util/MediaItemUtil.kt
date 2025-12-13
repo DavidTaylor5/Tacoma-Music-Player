@@ -51,7 +51,7 @@ class MediaItemUtil @Inject constructor() {
                 MediaMetadata.Builder()
                     .setAlbumTitle(album.groupTitle)
                     .setAlbumArtist(album.groupArtist)
-                    .setArtworkUri(album.artUri?.toUri())
+                    //.setArtworkUri(album.artUri?.toUri()) //TODO use fileProvider to get file URI
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
@@ -70,7 +70,7 @@ class MediaItemUtil @Inject constructor() {
                 MediaMetadata.Builder()
                     .setAlbumTitle(playlist.groupTitle)
                     .setAlbumArtist(playlist.groupArtist)
-                    .setArtworkUri(playlist.artUri?.toUri())
+                    //.setArtworkUri(playlist.artUri?.toUri()) //TODO use fileProvider to get file URI
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(false)

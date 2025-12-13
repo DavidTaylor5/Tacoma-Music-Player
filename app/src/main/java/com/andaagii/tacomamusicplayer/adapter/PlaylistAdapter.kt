@@ -2,7 +2,6 @@ package com.andaagii.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -13,9 +12,8 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistBinding
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -66,17 +64,27 @@ class PlaylistAdapter(
         //val playlistDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(playlistDuration)
         //viewHolder.binding.durationTime.text = playlistDurationReadable
 
-        //Logic for showing custom playist image
-        val artFile = playlists[position].mediaMetadata.artworkUri.toString() //TODO this might need to be fixed
-        if(!artFile.isNullOrEmpty()) {
+        //Logic for showing custom playlist image
+        val artFileBaseName = UtilImpl.getImageBaseNameFromExternalStorage(
+            groupTitle = playlists[position].mediaMetadata.albumTitle.toString(),
+            artist = Const.USER_PLAYLIST,
+            songGroupType = SongGroupType.PLAYLIST
+        )
+        if(artFileBaseName.isNotEmpty()) {
             val appDir = viewHolder.itemView.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
-            val playlistImageFile = File(appDir, artFile)
-            if(playlistImageFile.exists()) {
-                try {
-                    val artUri = Uri.fromFile(playlistImageFile)
-                    viewHolder.binding.playlistArt.setImageURI(artUri)
-                } catch(e: Exception) {
-                    Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
+            if(appDir != null) {
+                val playlistImageFile = UtilImpl.findImageByBaseName(
+                    dir = appDir,
+                    baseName = artFileBaseName
+                )
+
+                playlistImageFile?.let { imageFile ->
+                    try {
+                        val artUri = Uri.fromFile(imageFile)
+                        viewHolder.binding.playlistArt.setImageURI(artUri)
+                    } catch(e: Exception) {
+                        Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
+                    }
                 }
             }
         }

@@ -74,6 +74,6 @@ class Const {
 
         // EXTERNAL IMAGE STORAGE FOLDERS
         const val ALBUM_ART_FOLDER = "AlbumArt"
-        const val ALBUM_ART_THUMBNAIL_FOLDER = "AlbumArtThumbnail"
+        const val ALBUM_ART_CUSTOM_FOLDER = "AlbumArtCustom"
     }
 }

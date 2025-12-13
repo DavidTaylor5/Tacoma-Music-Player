@@ -50,8 +50,8 @@ class MusicRepositoryImpl @Inject constructor(
 
             val playlist = SongGroupEntity(
                 groupTitle = playlistName,
-                artFile = "",
-                artUri = "",
+                artFileOriginal = "",
+                artFileCustom = "",
                 creationTimestamp = LocalDateTime.now().toString(),
                 lastModificationTimestamp = LocalDateTime.now().toString(),
                 songGroupType = SongGroupType.PLAYLIST,
@@ -103,7 +103,7 @@ class MusicRepositoryImpl @Inject constructor(
             }
 
             val updatedPlaylist = playlist.copy(
-                artUri = artFileName
+                artFileCustom = artFileName
             )
 
             songGroupDao.updateSongGroups(updatedPlaylist)
@@ -116,8 +116,8 @@ class MusicRepositoryImpl @Inject constructor(
             queue = SongGroupEntity(
                 songGroupType = SongGroupType.QUEUE,
                 groupTitle = title,
-                artFile = null,
-                artUri = null,
+                artFileOriginal = null,
+                artFileCustom = null,
                 groupArtist = "QUEUE",
                 searchDescription = "QUEUE",
                 groupDuration = ""

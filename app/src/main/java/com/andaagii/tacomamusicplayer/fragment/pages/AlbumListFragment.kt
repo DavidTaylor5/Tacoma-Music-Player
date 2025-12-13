@@ -54,7 +54,12 @@ class AlbumListFragment: Fragment() {
         pictureUri?.let { uri ->
             this.context?.let { fragmentContext ->
                 //Save picture to local data
-                UtilImpl.saveImageToFile(fragmentContext, uri, albumCustomImageName)
+                UtilImpl.saveImageToFile(
+                    context = fragmentContext,
+                    sourceUri = uri,
+                    fileName = albumCustomImageName,
+                    isCustom = true
+                )
                 parentViewModel.updatePlaylistImage(albumCustomImageName, "$albumCustomImageName.jpg")
             }
         }
