@@ -5,6 +5,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.data.AndroidAutoPlayData
+import com.andaagii.tacomamusicplayer.data.ArtInfo
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
@@ -108,12 +109,24 @@ class MediaItemUtil @Inject constructor() {
         song: SongEntity,
         position: Int? = null,
         songGroupType: SongGroupType? = null,
-        playlistTitle: String? = null
+        playlistTitle: String? = null,
+        artInfo: ArtInfo? = null
     ): MediaItem {
         val mediaId = if(position != null && songGroupType != null) {
             "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
         } else {
             song.name
+        }
+
+        //TODO... Also update the URI using the fileProvider... Actually I probably don't need this...
+        val artworkUri = if(artInfo != null) {
+            if(artInfo.useCustomArt) {
+                artInfo.artFileCustom.toUri()
+            } else {
+                artInfo.artFileOriginal.toUri() //I might even default just to this
+            }
+        } else {
+            song.artworkUri.toUri()
         }
 
         return MediaItem.Builder()
@@ -126,7 +139,7 @@ class MediaItemUtil @Inject constructor() {
                     .setTitle(song.name)
                     .setAlbumTitle(song.albumTitle)
                     .setArtist(song.artist)
-                    .setArtworkUri(song.artworkUri.toUri())
+                    .setArtworkUri(artworkUri)
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setSubtitle(song.searchDescription)

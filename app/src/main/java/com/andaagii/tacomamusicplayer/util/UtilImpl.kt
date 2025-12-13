@@ -12,6 +12,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
@@ -27,6 +28,9 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import androidx.core.graphics.drawable.toDrawable
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.ArtInfo
+import com.andaagii.tacomamusicplayer.data.SongGroup
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
 class UtilImpl {
@@ -148,17 +152,58 @@ class UtilImpl {
             drawDefault(view)
         }
 
+        fun getArtInfoFromSongGroupEntity(songGroupEntity: SongGroupEntity): ArtInfo {
+            return ArtInfo(
+                artFileOriginal = songGroupEntity.artFileOriginal,
+                artFileCustom = songGroupEntity.artFileCustom,
+                useCustomArt = songGroupEntity.useCustomArt
+            )
+        }
+
+        fun catalogAlbumArtFromMediaStoreUri(
+            context: Context,
+            uri: Uri,
+            fileName: String,
+            fileFolder: String
+        ): Uri {
+            val imageSaved = saveImageFromMediaStoreUri(context, uri, fileName)
+            if(imageSaved) {
+                Timber.d("catalogAlbumArtFromMediaStoreUri: fileName=$fileName is successfully saved!")
+            } else {
+                Timber.d("catalogAlbumArtFromMediaStoreUri: Unable to save fileName=$fileName")
+            }
+            return getFileProviderUri(context, fileName, fileFolder)
+        }
+
+        private fun getFileProviderUri(
+            context: Context,
+            fileName: String,
+            fileFolder: String
+        ): Uri {
+            var contentUri = Uri.EMPTY
+            val imagePath = File(context.getExternalFilesDir(null), fileFolder)
+            val newFile = File(imagePath, fileName)
+            try {
+                contentUri = getUriForFile(context, "com.andaagii.tacomamusicplayer", newFile)
+            } catch (e: Exception) {
+                Timber.d("catalogAlbums: Error generating content URI e=$e")
+            }
+
+            return contentUri
+        }
+
+        //TODO another file to add the file provider content uri
         /**
          * When I query the songs from mediaStore, I save the album art as external app storage files.
          * This allows me to create secure URIs using FileProvider which I can use to send images to
          * Android Auto.
-         * @return The file string which I store in app external storage
+         * @return The true if file is stored in app external storage, false if unable to save file.
          */
-        fun saveImageFromMediaStoreUri(
+        private fun saveImageFromMediaStoreUri(
             context: Context,
             uri: Uri,
-            baseName: String
-        ): String {
+            fileName: String
+        ): Boolean {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(context, uri)
 
@@ -167,10 +212,10 @@ class UtilImpl {
                 try {
                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                     val dir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
-                    val destFile = File(dir, "$baseName.jpg")
+                    val destFile = File(dir, "$fileName.jpg")
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destFile))
 
-                    return destFile.toString()
+                    return true
                 } catch(e: Exception) {
                     Timber.e("saveImageFromMediaStoreUri: Error saving image e=$e")
                 }
@@ -187,8 +232,10 @@ class UtilImpl {
                         val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
 
                         val dir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
-                        val destFile = File(dir, "$baseName.jpg")
+                        val destFile = File(dir, "$fileName.jpg")
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destFile))
+
+                        return true
                     }
                 } catch (e: Exception) {
                     Timber.d("saveImageFromMediaStoreUri: failure on mp3agic file check on path=${uri.path.toString()}, e=$e")
@@ -196,7 +243,7 @@ class UtilImpl {
 
 
             }
-            return "UNKNOWN ALBUM ART"
+            return false
         }
 
         private fun loadCustomImage(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false): Boolean {

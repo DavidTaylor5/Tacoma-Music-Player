@@ -2,10 +2,12 @@ package com.andaagii.tacomamusicplayer.worker
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.hilt.work.HiltWorker
 import androidx.media3.common.MediaItem
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
@@ -14,9 +16,11 @@ import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.catalogAlbumArtFromMediaStoreUri
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
+import java.io.File
 
 /**
  * A class that queries the medialibraryservice, saving found songs and album art into a database.
@@ -62,27 +66,27 @@ class CatalogMusicWorker @AssistedInject constructor(
         //Determine if I need to add any albums
         for(album in albums) {
 
-            //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
-            val firstSongUri = catalogAlbumSongs(album.mediaId, album.mediaMetadata.artworkUri.toString())
-
             val albumInfo = album.mediaMetadata
             val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
 
-            // I need to turn this artworkUri into an actual image first
-            // Write a Util function which can generate the bitmap from this uri?
-            // TODO 1) SAVE IMAGE TO FILE [I need to modify the drawImageUtil...]
-            //TODO I need to save original art file based on first song, not album.... because of mediametadataretriever
+            //TODO first get the firstSongUri
+            val firstSongUri = getFirstSongUri(album.mediaId)
 
-            val artFile = UtilImpl.saveImageFromMediaStoreUri(
+            //TODO then catalogAlbumArtFromMediaStore
+            val contentUri = catalogAlbumArtFromMediaStoreUri(
                 context = appContext,
                 uri = Uri.parse(firstSongUri),
-                baseName = UtilImpl.getImageBaseNameFromExternalStorage(
+                fileName = UtilImpl.getImageBaseNameFromExternalStorage(
                     groupTitle = albumInfo.albumTitle.toString(),
                     artist = albumInfo.albumArtist.toString(),
                     songGroupType = SongGroupType.ALBUM
-                )
+                ),
+                fileFolder = Const.ALBUM_ART_FOLDER
             )
 
+            //TODO then catalogAlbumSongs giving them each the albumArtURI provided by fileprovider
+            //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
+            catalogAlbumSongs(album.mediaId, contentUri.toString())
 
             // Don't need to add album if it already exists
             if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
@@ -94,7 +98,7 @@ class CatalogMusicWorker @AssistedInject constructor(
                 val songGroupEntity = if(savedAlbum != null) {
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} copying album, new info")
                     savedAlbum.copy(
-                        artFileOriginal = artFile, //UPDATE DATE BASE TO BE ART FILE RATHER THAN ART URI
+                        artFileOriginal = contentUri.toString(), //UPDATE DATE BASE TO BE ART FILE RATHER THAN ART URI
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
                         releaseYear = albumInfo.releaseYear.toString()
@@ -103,8 +107,8 @@ class CatalogMusicWorker @AssistedInject constructor(
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} Creating new album entry!")
                     SongGroupEntity(
                         songGroupType = SongGroupType.ALBUM,
-                        artFileOriginal = artFile,
-                        artFileCustom = null,
+                        artFileOriginal = toString(),
+                        artFileCustom = "",
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
                         searchDescription = description,
@@ -114,7 +118,6 @@ class CatalogMusicWorker @AssistedInject constructor(
                         releaseYear = albumInfo.releaseYear.toString()
                     )
                 }
-
 
                 //albumEntityList.add(songGroupEntity)
                 songGroupDao.insertSongGroups(songGroupEntity)
@@ -137,12 +140,24 @@ class CatalogMusicWorker @AssistedInject constructor(
         }
     }
 
+    private fun getFirstSongUri(albumName: String): String {
+        val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
+        var firstSongUri = ""
+
+        if(foundSongs.isNotEmpty()) {
+            val firstSong = foundSongs.first()
+            firstSongUri =  firstSong.mediaId
+        }
+
+        return firstSongUri
+    }
+
     /**
      * Takes an album and adds all of it's songs to the
      * Return the first song, I will use this to get media metadata related to the album from song 1
      * @return Song Uri, which I can use to get further media meta data for the album
      */
-    private suspend fun catalogAlbumSongs(albumName: String, albumArtUri: String): String {
+    private suspend fun catalogAlbumSongs(albumName: String, fileProviderUriStr: String) {
         //Timber.d("catalogAlbumSongs: albumName=$albumName")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
@@ -150,8 +165,6 @@ class CatalogMusicWorker @AssistedInject constructor(
         val dbSongs = songDao.getAllSongsFromAlbum(albumName)
         val dbSongTitles = dbSongs.map { it.name }
         val songEntityList: MutableList<SongEntity> = mutableListOf()
-
-        var firstSongUri = ""
 
         //After parsing all the songs, update album duration
         var albumDuration: Long = 0
@@ -162,11 +175,6 @@ class CatalogMusicWorker @AssistedInject constructor(
             val songInfo = song.mediaMetadata
             val songDescription = mediaItemUtil.getSongSearchDescriptionFromMediaItem(song)
 
-            // Save this so I can extract metadata for the album
-            if(index == 0) {
-                firstSongUri = song.mediaId
-            }
-
             if (!dbSongTitles.contains(songInfo.title)) {
                 val songEntity = SongEntity(
                     albumTitle = songInfo.albumTitle.toString(),
@@ -175,7 +183,7 @@ class CatalogMusicWorker @AssistedInject constructor(
                     name = songInfo.title.toString(),
                     uri = song.mediaId,
                     songDuration = songInfo.description.toString(),
-                    artworkUri = albumArtUri
+                    artworkUri = fileProviderUriStr
                 )
                 songEntityList.add(songEntity)
             }
@@ -190,8 +198,6 @@ class CatalogMusicWorker @AssistedInject constructor(
         if(deleteSongs.isNotEmpty()) {
             songDao.deleteItems(*deleteSongs.toTypedArray())
         }
-
-        return firstSongUri
     }
 }
 
