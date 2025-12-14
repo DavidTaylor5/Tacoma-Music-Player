@@ -828,7 +828,6 @@ class MainViewModel @Inject constructor(
             val rootFuture = browser.getLibraryRoot(null)
             rootFuture.addListener({
                 rootMediaItem = rootFuture.get().value
-                _isRootAvailable.value = true
             }, MoreExecutors.directExecutor())
         }
     }

@@ -229,6 +229,7 @@ class MainActivity : AppCompatActivity() {
         //Cancel previous work
         workManager.cancelAllWork()
 
+        //TODO BRING THIS BACK LATER...
         workManager.enqueue(catalogWorkRequest)
     }
 }

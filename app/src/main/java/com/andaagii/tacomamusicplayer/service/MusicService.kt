@@ -293,10 +293,7 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == PLAYLIST_ID -> {
                     serviceScope.async {
-                        //Also need playlist art uri
-                        val a = musicProvider.getAllPlaylists()
-                        Timber.d("onGetChildren: a=$a")
-                        LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
+                        LibraryResult.ofItemList(musicProvider.getAllPlaylists(true), params)
                     }.asListenableFuture()
                 }
                 parentId.contains(ALBUM_PREFIX) -> {

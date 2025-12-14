@@ -56,20 +56,20 @@ class MediaItemUtil @Inject constructor(
      * of files.
      */
     fun determineArtUri(
-        album: SongGroupEntity,
+        songGroup: SongGroupEntity,
         useFileProviderUri: Boolean = false
     ): Uri {
         return if(useFileProviderUri) {
-            if(album.useCustomArt) {
-                getFileProviderUri(appContext, album.artFileCustom)
+            if(songGroup.useCustomArt) {
+                getFileProviderUri(appContext, songGroup.artFileCustom)
             } else {
-                getFileProviderUri(appContext, album.artFileOriginal)
+                getFileProviderUri(appContext, songGroup.artFileOriginal)
             }
         } else {
-            if(album.useCustomArt) {
-                album.artFileCustom.toUri()
+            if(songGroup.useCustomArt) {
+                songGroup.artFileCustom.toUri()
             } else {
-                album.artFileOriginal.toUri()
+                songGroup.artFileOriginal.toUri()
             }
         }
     }
@@ -88,7 +88,7 @@ class MediaItemUtil @Inject constructor(
                         artUri ?:
                         if(album.useCustomArt) album.artFileCustom.toUri()
                         else album.artFileOriginal.toUri()
-                    ) //TODO use fileProvider to get file URI
+                    )
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
@@ -100,14 +100,17 @@ class MediaItemUtil @Inject constructor(
             .build()
     }
 
-    fun createPlaylistMediaItemFromSongGroupEntity(playlist: SongGroupEntity): MediaItem {
+    fun createPlaylistMediaItemFromSongGroupEntity(
+        playlist: SongGroupEntity,
+        artUri: Uri? = null
+    ): MediaItem {
         return MediaItem.Builder()
             .setMediaId("playlist:${playlist.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setAlbumTitle(playlist.groupTitle)
                     .setAlbumArtist(playlist.groupArtist)
-                    //.setArtworkUri(playlist.artUri?.toUri()) //TODO use fileProvider to get file URI
+                    .setArtworkUri(artUri ?: playlist.artFileCustom.toUri())
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(false)

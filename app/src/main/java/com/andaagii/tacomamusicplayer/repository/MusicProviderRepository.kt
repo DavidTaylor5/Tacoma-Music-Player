@@ -10,7 +10,7 @@ interface MusicProviderRepository {
 
     suspend fun getAllArtists(): List<MediaItem>
 
-    suspend fun getAllPlaylists(): List<MediaItem>
+    suspend fun getAllPlaylists(useFileProviderUri: Boolean = false): List<MediaItem>
 
     suspend fun getAlbumsFromArtist(artist: String): List<MediaItem>
 

@@ -56,6 +56,7 @@ class MusicRepositoryImpl @Inject constructor(
                 groupTitle = playlistName,
                 artFileOriginal = "",
                 artFileCustom = "",
+                useCustomArt = true,
                 creationTimestamp = LocalDateTime.now().toString(),
                 lastModificationTimestamp = LocalDateTime.now().toString(),
                 songGroupType = SongGroupType.PLAYLIST,
@@ -239,9 +240,14 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllPlaylists(): List<MediaItem> = withContext(Dispatchers.IO) {
+    override suspend fun getAllPlaylists(useFileProviderUri: Boolean): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.getSongGroupsByType(SongGroupType.PLAYLIST).map { songGroup ->
-            mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(songGroup)
+            mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(
+                playlist = songGroup,
+                artUri = if(useFileProviderUri)
+                mediaItemUtil.determineArtUri(songGroup, true)
+                else null
+            )
         }
     }
 

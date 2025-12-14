@@ -442,11 +442,14 @@ class UtilImpl {
 
                     // Copy file
                     context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        var bitmap = BitmapFactory.decodeStream(inputStream)
+                        if(bitmap.width >= 700 || bitmap.height >= 700) {
+                            bitmap = cropCenter(bitmap)
+                        }
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destination))
                     }
 
-                    return fileName
+                    return destination.toString()
                 }
             } catch (e: IOException) {
                 Timber.d("saveImageToFile: Error copying file e=$e")
@@ -455,6 +458,23 @@ class UtilImpl {
             }
 
             return "UNKNOWN FILE"
+        }
+
+        fun cropCenter(bitmap: Bitmap, cropSize: Int = 700): Bitmap {
+            require(bitmap.width >= cropSize && bitmap.height >= cropSize) {
+                "Bitmap must be at least $cropSize x $cropSize"
+            }
+
+            val left = (bitmap.width - cropSize) / 2
+            val top = (bitmap.height - cropSize) / 2
+
+            return Bitmap.createBitmap(
+                bitmap,
+                left,
+                top,
+                cropSize,
+                cropSize
+            )
         }
 
 
