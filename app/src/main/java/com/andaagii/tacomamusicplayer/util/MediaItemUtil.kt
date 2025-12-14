@@ -149,23 +149,11 @@ class MediaItemUtil @Inject constructor(
         position: Int? = null,
         songGroupType: SongGroupType? = null,
         playlistTitle: String? = null,
-        artInfo: ArtInfo? = null
     ): MediaItem {
         val mediaId = if(position != null && songGroupType != null) {
             "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
         } else {
             song.name
-        }
-
-        //TODO... Also update the URI using the fileProvider... Actually I probably don't need this...
-        val artworkUri = if(artInfo != null) {
-            if(artInfo.useCustomArt) {
-                artInfo.artFileCustom.toUri()
-            } else {
-                artInfo.artFileOriginal.toUri()
-            }
-        } else {
-            song.artworkUri.toUri()
         }
 
         return MediaItem.Builder()
@@ -178,7 +166,7 @@ class MediaItemUtil @Inject constructor(
                     .setTitle(song.name)
                     .setAlbumTitle(song.albumTitle)
                     .setArtist(song.artist)
-                    .setArtworkUri(artworkUri)
+                    .setArtworkUri(song.artworkUri.toUri())
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setSubtitle(song.searchDescription)

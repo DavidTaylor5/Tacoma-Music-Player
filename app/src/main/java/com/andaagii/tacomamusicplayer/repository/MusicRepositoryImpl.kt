@@ -108,7 +108,7 @@ class MusicRepositoryImpl @Inject constructor(
             }
 
             val updatedPlaylist = playlist.copy(
-                artFileCustom = artFileName
+                artFileCustom = artFileName,
             )
 
             songGroupDao.updateSongGroups(updatedPlaylist)
@@ -262,13 +262,11 @@ class MusicRepositoryImpl @Inject constructor(
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findSongGroupByName(albumTitle)?.let { album ->
             Timber.d("getSongsFromAlbum: album=$album")
-            val albumArtInfo = UtilImpl.getArtInfoFromSongGroupEntity(album)
             songDao.getAllSongsFromAlbum(albumTitle).mapIndexed { position, songEntity ->
                 mediaItemUtil.createMediaItemFromSongEntity(
                     song = songEntity,
                     position = position,
                     songGroupType = SongGroupType.ALBUM,
-                    artInfo = albumArtInfo
                 )
             }
         } ?: listOf()
@@ -278,14 +276,12 @@ class MusicRepositoryImpl @Inject constructor(
         playlistTitle: String
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findSongGroupByName(playlistTitle)?.let { playlist ->
-            val playlistArtInfo = UtilImpl.getArtInfoFromSongGroupEntity(playlist)
             songDao.selectAllSongsFromPlaylist(playlist.groupId).mapIndexed { position, songEntity ->
                 mediaItemUtil.createMediaItemFromSongEntity(
                     song = songEntity,
                     position = position,
                     songGroupType = SongGroupType.PLAYLIST,
                     playlistTitle = playlistTitle,
-                    artInfo = playlistArtInfo
                 )
             }
         } ?: listOf()
