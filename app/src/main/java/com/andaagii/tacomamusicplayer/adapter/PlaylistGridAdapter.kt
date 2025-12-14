@@ -50,6 +50,9 @@ class PlaylistGridAdapter(
     override fun onBindViewHolder(viewHolder: PlaylistGridViewHolder, position: Int) {
         viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
 
+        val playlist = playlists[position]
+        val playlistArtUri = playlist.mediaMetadata.artworkUri
+
         viewHolder.binding.itemContainer.setOnClickListener {
             onPlaylistClick(playlists[position])
         }
@@ -69,29 +72,7 @@ class PlaylistGridAdapter(
 //        viewHolder.binding.descriptionText.text = "$durationTracks | $playlistDurationReadable"
 
         //Logic for showing custom playlist image
-        val artFileBaseName = UtilImpl.getImageBaseNameFromExternalStorage(
-            groupTitle = playlists[position].mediaMetadata.albumTitle.toString(),
-            artist = Const.USER_PLAYLIST,
-            songGroupType = SongGroupType.PLAYLIST
-        )
-        if(artFileBaseName.isNotEmpty()) {
-            val appDir = viewHolder.itemView.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
-            if(appDir != null) {
-                val playlistImageFile = UtilImpl.findImageByBaseName(
-                    dir = appDir,
-                    baseName = artFileBaseName
-                )
-
-                playlistImageFile?.let { imageFile ->
-                    try {
-                        val artUri = Uri.fromFile(imageFile)
-                        viewHolder.binding.playlistArt.setImageURI(artUri)
-                    } catch(e: Exception) {
-                        Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
-                    }
-                }
-            }
-        }
+        viewHolder.binding.playlistArt.setImageURI(playlistArtUri)
 
         viewHolder.binding.itemContainer.setOnLongClickListener {
 
