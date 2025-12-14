@@ -149,6 +149,7 @@ class MediaItemUtil @Inject constructor(
         position: Int? = null,
         songGroupType: SongGroupType? = null,
         playlistTitle: String? = null,
+        useFileProviderUri: Boolean = false
     ): MediaItem {
         val mediaId = if(position != null && songGroupType != null) {
             "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
@@ -166,7 +167,10 @@ class MediaItemUtil @Inject constructor(
                     .setTitle(song.name)
                     .setAlbumTitle(song.albumTitle)
                     .setArtist(song.artist)
-                    .setArtworkUri(song.artworkUri.toUri())
+                    .setArtworkUri(if(useFileProviderUri)
+                        getFileProviderUri(appContext, song.artworkUri)
+                    else song.artworkUri.toUri()
+                    )
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setSubtitle(song.searchDescription)

@@ -301,7 +301,8 @@ class MusicService : MediaLibraryService() {
                         //Need to update all song's artwork as uri
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
-                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs ALBUM:ALBUM_TITLE:SONG_TITLE:POSITION
+                                albumTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
+                                useFileProviderUri = true
                             ),
                             params
                         )

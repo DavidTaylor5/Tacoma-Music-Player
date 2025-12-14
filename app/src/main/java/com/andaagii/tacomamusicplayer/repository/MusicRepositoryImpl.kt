@@ -258,7 +258,8 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSongsFromAlbum(
-        albumTitle: String
+        albumTitle: String,
+        useFileProviderUri: Boolean
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findSongGroupByName(albumTitle)?.let { album ->
             Timber.d("getSongsFromAlbum: album=$album")
@@ -267,9 +268,18 @@ class MusicRepositoryImpl @Inject constructor(
                     song = songEntity,
                     position = position,
                     songGroupType = SongGroupType.ALBUM,
+                    useFileProviderUri = useFileProviderUri
                 )
             }
         } ?: listOf()
+
+
+//        mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
+//            album = songGroup,
+//            artUri = if(useFileProviderUri)
+//                mediaItemUtil.determineArtUri(songGroup, true)
+//            else null
+//        )
     }
 
     override suspend fun getSongsFromPlaylist(
