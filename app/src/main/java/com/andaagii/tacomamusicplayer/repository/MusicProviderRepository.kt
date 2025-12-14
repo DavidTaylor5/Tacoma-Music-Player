@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface MusicProviderRepository {
 
-    suspend fun getAllAlbums(): List<MediaItem>
+    suspend fun getAllAlbums(useFileProviderUri: Boolean = false): List<MediaItem>
 
     suspend fun getAllArtists(): List<MediaItem>
 

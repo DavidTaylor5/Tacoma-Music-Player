@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.util
 
+import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -11,9 +12,13 @@ import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType.Companion.determineSongGroupTypeFromString
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.getFileProviderUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class MediaItemUtil @Inject constructor() {
+class MediaItemUtil @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+) {
 
     /**
      * Convert a list of songdata into mediaItems.
@@ -45,14 +50,45 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
-    fun createAlbumMediaItemFromSongGroupEntity(album: SongGroupEntity): MediaItem {
+    /**
+     * Determine two things, if I'm using a custom or original art, and
+     * if I'm using android auto I need to use a file provider for secure sharing
+     * of files.
+     */
+    fun determineArtUri(
+        album: SongGroupEntity,
+        useFileProviderUri: Boolean = false
+    ): Uri {
+        return if(useFileProviderUri) {
+            if(album.useCustomArt) {
+                getFileProviderUri(appContext, album.artFileCustom)
+            } else {
+                getFileProviderUri(appContext, album.artFileOriginal)
+            }
+        } else {
+            if(album.useCustomArt) {
+                album.artFileCustom.toUri()
+            } else {
+                album.artFileOriginal.toUri()
+            }
+        }
+    }
+
+    fun createAlbumMediaItemFromSongGroupEntity(
+        album: SongGroupEntity,
+        artUri: Uri? = null
+    ): MediaItem {
         return MediaItem.Builder()
             .setMediaId("album:${album.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setAlbumTitle(album.groupTitle)
                     .setAlbumArtist(album.groupArtist)
-                    //.setArtworkUri(album.artUri?.toUri()) //TODO use fileProvider to get file URI
+                    .setArtworkUri(
+                        artUri ?:
+                        if(album.useCustomArt) album.artFileCustom.toUri()
+                        else album.artFileOriginal.toUri()
+                    ) //TODO use fileProvider to get file URI
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
@@ -123,7 +159,7 @@ class MediaItemUtil @Inject constructor() {
             if(artInfo.useCustomArt) {
                 artInfo.artFileCustom.toUri()
             } else {
-                artInfo.artFileOriginal.toUri() //I might even default just to this
+                artInfo.artFileOriginal.toUri()
             }
         } else {
             song.artworkUri.toUri()

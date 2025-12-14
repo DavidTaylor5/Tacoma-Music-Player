@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.repository
 
+import android.content.Context
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
@@ -10,6 +11,7 @@ import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,6 +23,7 @@ import javax.inject.Singleton
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val mediaItemUtil: MediaItemUtil,
     private val songDao: SongDao,
     private val songGroupDao: SongGroupDao
@@ -217,14 +220,21 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {
+    override suspend fun getAllAlbums(useFileProviderUri: Boolean): List<MediaItem> = withContext(Dispatchers.IO) {
          songGroupDao.getSongGroupsByType(SongGroupType.ALBUM).map { songGroup ->
-            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(songGroup)
+            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
+                album = songGroup,
+                artUri = if(useFileProviderUri)
+                    mediaItemUtil.determineArtUri(songGroup, true)
+                else null
+            )
         }
     }
 
     override suspend fun getAllArtists(): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.getAllArtists().map { artist ->
+            //TODO Grab first album from artist, assign it to the artist uri...
+
             mediaItemUtil.createMediaItemFromArtist(artist)
         }
     }
@@ -245,6 +255,7 @@ class MusicRepositoryImpl @Inject constructor(
         albumTitle: String
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findSongGroupByName(albumTitle)?.let { album ->
+            Timber.d("getSongsFromAlbum: album=$album")
             val albumArtInfo = UtilImpl.getArtInfoFromSongGroupEntity(album)
             songDao.getAllSongsFromAlbum(albumTitle).mapIndexed { position, songEntity ->
                 mediaItemUtil.createMediaItemFromSongEntity(

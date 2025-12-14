@@ -60,7 +60,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     application: Application,
-    private val musicRepo: MusicRepository
+    private val musicRepo: MusicRepository,
+    private val mediaItemUtil: MediaItemUtil
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
@@ -97,15 +98,6 @@ class MainViewModel @Inject constructor(
         get() = _currentSearchList
     private val _currentSearchList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
-    //TODO convert entity to other data object later?
-    val currentSearchSongList: LiveData<List<SongEntity>>
-        get() = _currentSearchSongList
-    private val _currentSearchSongList: MutableLiveData<List<SongEntity>> = MutableLiveData()
-
-    val currentSearchSongGroupList: LiveData<List<SongGroupEntity>>
-        get() = _currentSearchSongGroupList
-    private val _currentSearchSongGroupList: MutableLiveData<List<SongGroupEntity>> = MutableLiveData()
-
     /**
      * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
      */
@@ -128,10 +120,6 @@ class MainViewModel @Inject constructor(
     val screenState : LiveData<ScreenData>
         get() = _screenState
     private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
-
-    val isRootAvailable: LiveData<Boolean>
-        get() = _isRootAvailable
-    private val _isRootAvailable: MutableLiveData<Boolean> = MutableLiveData()
 
     val navigateToPage: LiveData<PageType>
         get() = _navigateToPage
@@ -447,8 +435,6 @@ class MainViewModel @Inject constructor(
     private lateinit var mediaBrowser: MediaBrowser
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
-
-    private val mediaItemUtil: MediaItemUtil = MediaItemUtil()
 
     init {
         Timber.d("init: ")

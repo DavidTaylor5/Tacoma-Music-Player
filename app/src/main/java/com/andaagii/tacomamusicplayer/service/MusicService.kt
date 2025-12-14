@@ -281,18 +281,19 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == ALBUM_ID -> {
                     serviceScope.async {
-                        val a = musicProvider.getAllAlbums()
-                        Timber.d("onGetChildren: a=$a")
-                        LibraryResult.ofItemList(musicProvider.getAllAlbums(), params)
+                        //to update the album's artwork to use file provider uri
+                        LibraryResult.ofItemList(musicProvider.getAllAlbums(true), params)
                     }.asListenableFuture()
                 }
                 parentId == ARTIST_ID -> {
                     serviceScope.async {
+                        //Also need first album from an artist's file provider uri
                         LibraryResult.ofItemList(musicProvider.getAllArtists(), params) //TODO too many artists!!!
                     }.asListenableFuture()
                 }
                 parentId == PLAYLIST_ID -> {
                     serviceScope.async {
+                        //Also need playlist art uri
                         val a = musicProvider.getAllPlaylists()
                         Timber.d("onGetChildren: a=$a")
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
@@ -300,6 +301,7 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId.contains(ALBUM_PREFIX) -> {
                     serviceScope.async {
+                        //Need to update all song's artwork as uri
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
                                 mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs ALBUM:ALBUM_TITLE:SONG_TITLE:POSITION
@@ -311,6 +313,7 @@ class MusicService : MediaLibraryService() {
                 parentId.contains(ARTIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
+                            //Update albums from artist with correct artworkuri
                             musicProvider.getAlbumsFromArtist(
                                 mediaItemUtil.removeMediaItemPrefix(parentId)
                             ),
@@ -321,6 +324,7 @@ class MusicService : MediaLibraryService() {
                 parentId.contains(PLAYLIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
+                            //update song's arturi with fileprovider uri
                             musicProvider.getSongsFromPlaylist(
                                 mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs PLAYLIST:PLAYLIST_TITLE_SONG_TITLE:POSITION
                             ),
@@ -335,13 +339,13 @@ class MusicService : MediaLibraryService() {
                         //TODO set the position=X on all mediaItems so that android auto knows to play song at position.
 
                         LibraryResult.ofItemList(
+                            //update artwork uri with fileprovider uri
                             musicProvider.getSongFromName(parentId), //TODO modify this with a function that returns auto:SONG_TITLE PLAYLIST:PLAYLIST_TITLE:START_POSITION:SONG_TITLE
                             params
                         )
                     }.asListenableFuture()
                 }
             }
-
         }
     }
 

@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.media3.common.MediaItem
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.impl.utils.tryDelegateRemoteListenableWorker
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
@@ -16,11 +17,10 @@ import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
-import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.catalogAlbumArtFromMediaStoreUri
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.saveImageFromMediaStoreUri
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
-import java.io.File
 
 /**
  * A class that queries the medialibraryservice, saving found songs and album art into a database.
@@ -58,7 +58,6 @@ class CatalogMusicWorker @AssistedInject constructor(
 
     private suspend fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
-        //val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
 
         val dbAlbumTitles = dbAlbums.map { it.groupTitle }
         val albumTitles = albums.map { it.mediaMetadata.albumTitle }
@@ -69,36 +68,31 @@ class CatalogMusicWorker @AssistedInject constructor(
             val albumInfo = album.mediaMetadata
             val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
 
-            //TODO first get the firstSongUri
             val firstSongUri = getFirstSongUri(album.mediaId)
 
             //TODO then catalogAlbumArtFromMediaStore
-            val contentUri = catalogAlbumArtFromMediaStoreUri(
+            val filePath = saveImageFromMediaStoreUri(
                 context = appContext,
                 uri = Uri.parse(firstSongUri),
                 fileName = UtilImpl.getImageBaseNameFromExternalStorage(
                     groupTitle = albumInfo.albumTitle.toString(),
                     artist = albumInfo.albumArtist.toString(),
                     songGroupType = SongGroupType.ALBUM
-                ),
-                fileFolder = Const.ALBUM_ART_FOLDER
+                )
             )
 
-            //TODO then catalogAlbumSongs giving them each the albumArtURI provided by fileprovider
             //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
-            catalogAlbumSongs(album.mediaId, contentUri.toString())
+            catalogAlbumSongs(album.mediaId, filePath)
 
             // Don't need to add album if it already exists
             if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
                 val savedAlbum = songGroupDao.findSongGroupByDescription(description)
 
-                //TODO update with mediaItemUtil createSongGroupEntityFromMediaItem
-
                 // Because SongGroups are now saved by groupId rather than groupTitle, I need to make sure I'm not saving twice.
                 val songGroupEntity = if(savedAlbum != null) {
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} copying album, new info")
                     savedAlbum.copy(
-                        artFileOriginal = contentUri.toString(), //UPDATE DATE BASE TO BE ART FILE RATHER THAN ART URI
+                        artFileOriginal = filePath,
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
                         releaseYear = albumInfo.releaseYear.toString()
@@ -107,7 +101,7 @@ class CatalogMusicWorker @AssistedInject constructor(
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} Creating new album entry!")
                     SongGroupEntity(
                         songGroupType = SongGroupType.ALBUM,
-                        artFileOriginal = toString(),
+                        artFileOriginal = filePath,
                         artFileCustom = "",
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
