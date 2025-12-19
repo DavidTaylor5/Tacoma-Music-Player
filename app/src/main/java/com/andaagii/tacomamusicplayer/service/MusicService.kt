@@ -72,7 +72,7 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Error on adding some images as playlist covers...
 
-//TODO Allow user to choose the crop
+//TODO Allow user to choose the crop uCrop - github.com/Yalantis/uCrop
 
 /*
 * TODO add all of Android's expected well-known root IDs
