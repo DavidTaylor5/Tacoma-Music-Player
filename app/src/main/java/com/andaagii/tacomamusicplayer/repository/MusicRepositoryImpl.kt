@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.repository
 
+import android.content.Context
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
@@ -9,6 +10,8 @@ import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
+import com.andaagii.tacomamusicplayer.util.UtilImpl
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,6 +23,7 @@ import javax.inject.Singleton
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val mediaItemUtil: MediaItemUtil,
     private val songDao: SongDao,
     private val songGroupDao: SongGroupDao
@@ -50,8 +54,9 @@ class MusicRepositoryImpl @Inject constructor(
 
             val playlist = SongGroupEntity(
                 groupTitle = playlistName,
-                artFile = "",
-                artUri = "",
+                artFileOriginal = "",
+                artFileCustom = "",
+                useCustomArt = true,
                 creationTimestamp = LocalDateTime.now().toString(),
                 lastModificationTimestamp = LocalDateTime.now().toString(),
                 songGroupType = SongGroupType.PLAYLIST,
@@ -103,7 +108,7 @@ class MusicRepositoryImpl @Inject constructor(
             }
 
             val updatedPlaylist = playlist.copy(
-                artUri = artFileName
+                artFileCustom = artFileName,
             )
 
             songGroupDao.updateSongGroups(updatedPlaylist)
@@ -116,8 +121,6 @@ class MusicRepositoryImpl @Inject constructor(
             queue = SongGroupEntity(
                 songGroupType = SongGroupType.QUEUE,
                 groupTitle = title,
-                artFile = null,
-                artUri = null,
                 groupArtist = "QUEUE",
                 searchDescription = "QUEUE",
                 groupDuration = ""
@@ -218,21 +221,33 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllAlbums(): List<MediaItem> = withContext(Dispatchers.IO) {
+    override suspend fun getAllAlbums(useFileProviderUri: Boolean): List<MediaItem> = withContext(Dispatchers.IO) {
          songGroupDao.getSongGroupsByType(SongGroupType.ALBUM).map { songGroup ->
-            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(songGroup)
+            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
+                album = songGroup,
+                artUri = if(useFileProviderUri)
+                    mediaItemUtil.determineArtUri(songGroup, true)
+                else null
+            )
         }
     }
 
     override suspend fun getAllArtists(): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.getAllArtists().map { artist ->
+            //TODO Grab first album from artist, assign it to the artist uri...
+
             mediaItemUtil.createMediaItemFromArtist(artist)
         }
     }
 
-    override suspend fun getAllPlaylists(): List<MediaItem> = withContext(Dispatchers.IO) {
+    override suspend fun getAllPlaylists(useFileProviderUri: Boolean): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.getSongGroupsByType(SongGroupType.PLAYLIST).map { songGroup ->
-            mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(songGroup)
+            mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(
+                playlist = songGroup,
+                artUri = if(useFileProviderUri)
+                mediaItemUtil.determineArtUri(songGroup, true)
+                else null
+            )
         }
     }
 
@@ -242,25 +257,41 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getSongsFromAlbum(albumTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
-        songDao.getAllSongsFromAlbum(albumTitle).mapIndexed { position, songEntity ->
-            mediaItemUtil.createMediaItemFromSongEntity(songEntity, position = position, songGroupType = SongGroupType.ALBUM)
-        }
-    }
-
-    override suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
-        val playlist = songGroupDao.findSongGroupByName(playlistTitle)
-        if(playlist != null) {
-            songDao.selectAllSongsFromPlaylist(playlist.groupId).mapIndexed { position, songEntity ->
-                mediaItemUtil.createMediaItemFromSongEntity(songEntity, position = position, songGroupType = SongGroupType.PLAYLIST, playlistTitle = playlistTitle)
+    override suspend fun getSongsFromAlbum(
+        albumTitle: String,
+        useFileProviderUri: Boolean
+    ): List<MediaItem> = withContext(Dispatchers.IO) {
+        songGroupDao.findSongGroupByName(albumTitle)?.let { album ->
+            Timber.d("getSongsFromAlbum: album=$album")
+            songDao.getAllSongsFromAlbum(albumTitle).mapIndexed { position, songEntity ->
+                mediaItemUtil.createMediaItemFromSongEntity(
+                    song = songEntity,
+                    position = position,
+                    songGroupType = SongGroupType.ALBUM,
+                    useFileProviderUri = useFileProviderUri
+                )
             }
-        } else {
-            Timber.d("getSongsFromPlaylist: No playlist with playlistTitle=$playlistTitle found.")
-            listOf()
-        }
+        } ?: listOf()
     }
 
-    override suspend fun getSongFromName(songTitle: String): List<MediaItem> = withContext(Dispatchers.IO){
+    override suspend fun getSongsFromPlaylist(
+        playlistTitle: String,
+        useFileProviderUri: Boolean
+    ): List<MediaItem> = withContext(Dispatchers.IO) {
+        songGroupDao.findSongGroupByName(playlistTitle)?.let { playlist ->
+            songDao.selectAllSongsFromPlaylist(playlist.groupId).mapIndexed { position, songEntity ->
+                mediaItemUtil.createMediaItemFromSongEntity(
+                    song = songEntity,
+                    position = position,
+                    songGroupType = SongGroupType.PLAYLIST,
+                    playlistTitle = playlistTitle,
+                    useFileProviderUri = useFileProviderUri
+                )
+            }
+        } ?: listOf()
+    }
+
+    override suspend fun getSongFromName(songTitle: String): List<MediaItem> = withContext(Dispatchers.IO) {
         songDao.queryAllSongsWithSongName(songTitle).map { songEntity ->
             mediaItemUtil.createMediaItemFromSongEntity(songEntity)
         }

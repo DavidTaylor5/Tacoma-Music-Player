@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.util
 
+import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -10,20 +11,14 @@ import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType.Companion.determineSongGroupTypeFromString
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.getFileProviderUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import timber.log.Timber
 
-class MediaItemUtil @Inject constructor() {
-
-    /**
-     * Convert a list of songdata into mediaItems.
-     */
-    fun convertListOfSongDataIntoListOfMediaItem(
-        songs: List<SongData>
-    ): List<MediaItem> {
-         return songs.map {data ->
-             createMediaItemFromSongData(data)
-         }
-    }
+class MediaItemUtil @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+) {
     fun getSongSearchDescriptionFromMediaItem(song: MediaItem): String {
         val songInfo = song.mediaMetadata
         val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
@@ -44,14 +39,45 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
-    fun createAlbumMediaItemFromSongGroupEntity(album: SongGroupEntity): MediaItem {
+    /**
+     * Determine two things, if I'm using a custom or original art, and
+     * if I'm using android auto I need to use a file provider for secure sharing
+     * of files.
+     */
+    fun determineArtUri(
+        songGroup: SongGroupEntity,
+        useFileProviderUri: Boolean = false
+    ): Uri {
+        return if(useFileProviderUri) {
+            if(songGroup.useCustomArt) {
+                getFileProviderUri(appContext, songGroup.artFileCustom)
+            } else {
+                getFileProviderUri(appContext, songGroup.artFileOriginal)
+            }
+        } else {
+            if(songGroup.useCustomArt) {
+                songGroup.artFileCustom.toUri()
+            } else {
+                songGroup.artFileOriginal.toUri()
+            }
+        }
+    }
+
+    fun createAlbumMediaItemFromSongGroupEntity(
+        album: SongGroupEntity,
+        artUri: Uri? = null
+    ): MediaItem {
         return MediaItem.Builder()
             .setMediaId("album:${album.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setAlbumTitle(album.groupTitle)
                     .setAlbumArtist(album.groupArtist)
-                    .setArtworkUri(album.artUri?.toUri())
+                    .setArtworkUri(
+                        artUri ?:
+                        if(album.useCustomArt) album.artFileCustom.toUri()
+                        else album.artFileOriginal.toUri()
+                    )
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
@@ -63,14 +89,17 @@ class MediaItemUtil @Inject constructor() {
             .build()
     }
 
-    fun createPlaylistMediaItemFromSongGroupEntity(playlist: SongGroupEntity): MediaItem {
+    fun createPlaylistMediaItemFromSongGroupEntity(
+        playlist: SongGroupEntity,
+        artUri: Uri? = null
+    ): MediaItem {
         return MediaItem.Builder()
             .setMediaId("playlist:${playlist.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setAlbumTitle(playlist.groupTitle)
                     .setAlbumArtist(playlist.groupArtist)
-                    .setArtworkUri(playlist.artUri?.toUri())
+                    .setArtworkUri(artUri ?: playlist.artFileCustom.toUri()) //TODO fix this and add useFileProviderUri...
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
@@ -82,25 +111,6 @@ class MediaItemUtil @Inject constructor() {
     }
 
     /**
-     * Creates a song entity from a mediaItem, don't use this in the worker as I'm adding in album uri there.
-     * TODO I might remove this... Unless I find a use for it.
-     */
-    fun createSongEntityFromMediaItem(mediaItem: MediaItem): SongEntity {
-        val songInfo = mediaItem.mediaMetadata
-        val songDescription = getSongSearchDescriptionFromMediaItem(mediaItem)
-
-        return SongEntity(
-            albumTitle = songInfo.albumTitle.toString(),
-            artist = songInfo.artist.toString(),
-            searchDescription = songDescription,
-            name = songInfo.title.toString(),
-            uri = mediaItem.mediaId,
-            songDuration = songInfo.description.toString(),
-            artworkUri = songInfo.artworkUri.toString()
-        )
-    }
-
-    /**
      * Because android auto is going to delete all information except the mediaId, I need to have a descriptive
      * mediaId when I query albums and playlists from the media library  ex. android auto
      */
@@ -108,10 +118,12 @@ class MediaItemUtil @Inject constructor() {
         song: SongEntity,
         position: Int? = null,
         songGroupType: SongGroupType? = null,
-        playlistTitle: String? = null
+        playlistTitle: String? = null,
+        useFileProviderUri: Boolean = false
     ): MediaItem {
+        Timber.d("createMediaItemFromSongEntity: song=$song, position=$position, playlistTitle=$playlistTitle")
         val mediaId = if(position != null && songGroupType != null) {
-            "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
+            "songGroupType=${songGroupType.name}|||groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}|||position=$position|||songTitle=${song.name}"
         } else {
             song.name
         }
@@ -126,39 +138,16 @@ class MediaItemUtil @Inject constructor() {
                     .setTitle(song.name)
                     .setAlbumTitle(song.albumTitle)
                     .setArtist(song.artist)
-                    .setArtworkUri(song.artworkUri.toUri())
+                    .setArtworkUri(if(useFileProviderUri)
+                        getFileProviderUri(appContext, song.artworkUri)
+                    else song.artworkUri.toUri()
+                    )
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setSubtitle(song.searchDescription)
                     .build()
             )
             .build()
-    }
-
-    /**
-     * Android Auto needs to know the position of the song, to add song group to the queue and update player position.
-     * mediaId -> position=SONG_POSITION:SONG_NAME ex. position=3:DNA
-     * Return -1 if position isn't found. Return int if found.
-     */
-    fun checkPositionFromMediaItem(mediaItem: MediaItem): Int {
-
-        //TODO update this to determine  "${songGroupType.name}=${song.albumTitle}, position=$position, song=${song.name}"
-        //I need to return SongGroupType -> which function to call, group title -> query argument, position -> move player position to correct spot.
-
-
-        val positionKey = "position="
-        val positionKeyIndex = mediaItem.mediaId.indexOf(positionKey)
-        val dividerIndex = mediaItem.mediaId.indexOf(":")
-        if(positionKeyIndex > -1 && dividerIndex > -1) {
-            val positionStart = positionKeyIndex + positionKey.length
-            val songPosition = mediaItem.mediaId.substring(positionStart, dividerIndex).toIntOrNull()
-
-            songPosition?.let { position ->
-                return position
-            }
-        }
-
-        return -1
     }
 
     fun getAndroidAutoPlayDataFromMediaItem(mediaItem: MediaItem): AndroidAutoPlayData {
@@ -176,22 +165,20 @@ class MediaItemUtil @Inject constructor() {
     }
 
     /**
-     * Given a mediaId in the form of "songgrouptype=${songGroupType.name}, groupTitle=${song.albumTitle}, position=$position, song=${song.name}"
+     * Given a mediaId in the form of "songGroupType=${songGroupType.name}||| groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}||| position=$position, songTitle=${song.name}"
      * Determine a certain field.
      */
     private fun determineFieldFromMediaId(mediaId: String, field: String): String {
-        val positionField = mediaId.indexOf(field)
-        if(positionField >= 0) {
-            var value = ""
-            val startPosition = positionField + field.length
-            for(i in startPosition until mediaId.length) {
-                if(mediaId[i] == ',') break
-                else value += mediaId[i]
-            }
-            return value
-        } else {
-            return ""
+        val fields = mediaId.split("|||")
+        val fieldIndex = fields.indexOfFirst { it.contains(field) }
+
+        if(fieldIndex > -1) {
+            val checkField = fields[fieldIndex]
+
+            return checkField.removePrefix(field)
         }
+
+        return ""
     }
 
 
@@ -227,23 +214,6 @@ class MediaItemUtil @Inject constructor() {
                     .build()
                 )
             .build()
-    }
-
-    /**
-     * Used when I have a media item and I want to store it into a playlist!
-     * @param songMediaItem associated with a song.
-     */
-    private fun createSongDataFromMediaItem(
-        songMediaItem: MediaItem
-    ): SongData {
-        return SongData(
-            songUri = songMediaItem.mediaId,
-            songTitle = songMediaItem.mediaMetadata.title.toString(),
-            albumTitle = songMediaItem.mediaMetadata.albumTitle.toString(),
-            artist = songMediaItem.mediaMetadata.artist.toString(),
-            artworkUri = songMediaItem.mediaMetadata.artworkUri.toString(),
-            duration = songMediaItem.mediaMetadata.description.toString()
-        )
     }
 
     /**

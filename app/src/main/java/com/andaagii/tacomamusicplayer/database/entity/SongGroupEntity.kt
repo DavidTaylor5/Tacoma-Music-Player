@@ -17,8 +17,9 @@ data class SongGroupEntity(
     @PrimaryKey(autoGenerate = true)
     val groupId: Int = 0,
     @ColumnInfo(name = "song_group_type") val songGroupType: SongGroupType,
-    @ColumnInfo(name = "art_file") val artFile: String?,
-    @ColumnInfo(name = "art_uri") val artUri: String?,
+    @ColumnInfo(name = "art_file_original") val artFileOriginal: String = "",
+    @ColumnInfo(name = "art_file_custom") val artFileCustom: String = "",
+    @ColumnInfo(name = "use_custom_art") val useCustomArt: Boolean = false,
     @ColumnInfo(name = "group_title") val groupTitle: String,
     @ColumnInfo(name = "group_artist") val groupArtist: String?,
     @ColumnInfo(name = "search_description") val searchDescription: String,

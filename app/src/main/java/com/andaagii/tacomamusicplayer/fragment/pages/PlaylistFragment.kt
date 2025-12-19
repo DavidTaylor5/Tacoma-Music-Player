@@ -54,8 +54,17 @@ class PlaylistFragment: Fragment() {
         pictureUri?.let { uri ->
             this.context?.let { fragmentContext ->
                 //Save picture to local data
-                UtilImpl.saveImageToFile(fragmentContext, uri, playlistThatNeedsNewImage)
-                parentViewModel.updatePlaylistImage(playlistThatNeedsNewImage, "$playlistThatNeedsNewImage.jpg")
+                val artFile = UtilImpl.saveImageToFile(
+                    context = fragmentContext,
+                    sourceUri = uri,
+                    fileName = playlistThatNeedsNewImage,
+                    isCustom = true
+                )
+
+                parentViewModel.updatePlaylistImage(
+                    playlistTitle = playlistThatNeedsNewImage,
+                    artFileName = artFile
+                )
             }
         }
     }

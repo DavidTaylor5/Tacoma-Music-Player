@@ -55,6 +55,17 @@
             </intent-filter>
         </service>
 
+        <!-- TODO finish manifest work for fileProvider -->
+        <provider
+            android:name=".provider.AlbumArtFileProvider"
+            android:authorities="com.andaagii.tacomamusicplayer"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+
         <!-- Customize the WorkManager configuration, remove default initializer from AndroidManifest.xml.  -->
         <provider
             android:name="androidx.startup.InitializationProvider"

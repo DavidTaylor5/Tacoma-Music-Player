@@ -1,16 +1,19 @@
 package com.andaagii.tacomamusicplayer.util
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.util.Size
 import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
@@ -25,6 +28,11 @@ import kotlin.math.floor
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import androidx.core.graphics.drawable.toDrawable
+import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.ArtInfo
+import com.andaagii.tacomamusicplayer.data.SongGroup
+import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 
 class UtilImpl {
 
@@ -145,9 +153,117 @@ class UtilImpl {
             drawDefault(view)
         }
 
+        fun getArtInfoFromSongGroupEntity(songGroupEntity: SongGroupEntity): ArtInfo {
+            return ArtInfo(
+                artFileOriginal = songGroupEntity.artFileOriginal,
+                artFileCustom = songGroupEntity.artFileCustom,
+                useCustomArt = songGroupEntity.useCustomArt
+            )
+        }
+
+//        fun catalogAlbumArtFromMediaStoreUri(
+//            context: Context,
+//            uri: Uri,
+//            fileName: String,
+//            fileFolder: String
+//        ): Uri {
+//            val imageSaved = saveImageFromMediaStoreUri(context, uri, fileName)
+//            if(imageSaved) {
+//                Timber.d("catalogAlbumArtFromMediaStoreUri: fileName=$fileName is successfully saved!")
+//            } else {
+//                Timber.d("catalogAlbumArtFromMediaStoreUri: Unable to save fileName=$fileName")
+//            }
+//            return getFileProviderUri(context, fileName, fileFolder)
+//        }
+
+        fun getFileProviderUri(
+            context: Context,
+            fileName: String,
+        ): Uri {
+            var contentUri = Uri.EMPTY
+            val imageFile = File(fileName)
+            try {
+                contentUri = getUriForFile(
+                    context,
+                    "com.andaagii.tacomamusicplayer",
+                    imageFile
+                )
+
+                //Then grant permission so that Android Auto can read the URI
+                context.grantUriPermission(
+                    "com.google.android.projection.gearhead", // phone Auto app
+                    contentUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+
+                context.grantUriPermission(
+                    "com.google.android.gms", // car side services
+                    contentUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+
+            } catch (e: Exception) {
+                Timber.d("catalogAlbums: Error generating content URI e=$e")
+            }
+
+            return contentUri
+        }
+
+        //TODO another file to add the file provider content uri
+        /**
+         * When I query the songs from mediaStore, I save the album art as external app storage files.
+         * This allows me to create secure URIs using FileProvider which I can use to send images to
+         * Android Auto.
+         * @return The true if file is stored in app external storage, false if unable to save file.
+         */
+        fun saveImageFromMediaStoreUri(
+            context: Context,
+            uri: Uri,
+            fileName: String
+        ): String {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+
+            val bytes = retriever.embeddedPicture
+            if(bytes != null) {
+                try {
+                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    val dir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
+                    val destFile = File(dir, "$fileName.jpg")
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destFile))
+
+                    return destFile.path
+                } catch(e: Exception) {
+                    Timber.e("saveImageFromMediaStoreUri: Error saving image e=$e")
+                }
+            } else {
+                try {
+                    val fixUrl = Uri.fromFile(File(uri.path.toString()))
+                    val file = uriToFile(context, fixUrl)
+                    val mp3File = Mp3File(file)
+
+                    if(mp3File.hasId3v2Tag()) {
+                        val tag = mp3File.id3v2Tag
+                        val imageData = tag.albumImage
+
+                        val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+
+                        val dir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
+                        val destFile = File(dir, "$fileName.jpg")
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destFile))
+
+                        return destFile.path
+                    }
+                } catch (e: Exception) {
+                    Timber.d("saveImageFromMediaStoreUri: failure on mp3agic file check on path=${uri.path.toString()}, e=$e")
+                }
+            }
+            return ""
+        }
+
         private fun loadCustomImage(view: ImageView, uri: Uri, imageSize: Size, customAlbumImageName: String, synchronous: Boolean = false): Boolean {
             val possibleImageSuffix = listOf(".jpg", ".png") //TODO add other options (?) gifs at some point?
-            val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val appDir = view.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
             for(suffix in possibleImageSuffix) {
                 val customAlbumImage = File(appDir, "${customAlbumImageName}$suffix")
                 if(customAlbumImage.exists()) {
@@ -250,7 +366,7 @@ class UtilImpl {
 
         fun deletePicture(context: Context, fileName: String): Boolean {
             return try {
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
                 val file = File(appDir, fileName)
                 if(file.exists()) {
                     file.delete()
@@ -264,27 +380,101 @@ class UtilImpl {
         }
 
         /**
+         * Get's the image name of album art which is stored in external app storage
+         */
+        fun getImageBaseNameFromExternalStorage(groupTitle: String, artist: String, songGroupType: SongGroupType): String {
+            return when(songGroupType) {
+                SongGroupType.ALBUM -> {
+                    sanitizeFileName(if(artist.isEmpty()) "album_$groupTitle" else "album_${groupTitle}_$artist")
+                }
+                SongGroupType.PLAYLIST -> {
+                    sanitizeFileName("playlist_$groupTitle")
+                }
+                else -> "UNKNOWN FILE NAME"
+            }
+        }
+
+        /**
+         * Because I'm going to store an album art's file on external app storage, I need to make
+         * sure that either album or artist doesn't contain an illegal character.
+         */
+        private fun sanitizeFileName(fileName: String): String {
+            return fileName.replace(Regex("[\\\\/:*?\"<>|]"), "_")
+        }
+
+        /**
+         * Grab file from BaseName.
+         * @param dir The directory to be checked.
+         * @param baseName The base name (no extension) for an image.
+         * @return The file which has a baseName in the search directory.
+         */
+        fun findImageByBaseName(dir: File, baseName: String): File? {
+            if (!dir.exists() || !dir.isDirectory) return null
+
+            val supportedExtensions = listOf("png", "jpg", "jpeg", "webp")
+
+            return dir.listFiles()?.firstOrNull { file ->
+                val name = file.nameWithoutExtension
+                val ext = file.extension.lowercase()
+
+                name == baseName && ext in supportedExtensions
+            }
+        }
+
+        /**
          * Save Image to File in app specific storage, taken from Phind.
          */
-        fun saveImageToFile(context: Context, sourceUri: Uri, fileName: String) {
+        fun saveImageToFile(context: Context, sourceUri: Uri, fileName: String, isCustom: Boolean): String {
             try {
                 // Get app-specific directory
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(
+                    if(isCustom) Const.ALBUM_ART_CUSTOM_FOLDER else Const.ALBUM_ART_FOLDER
+                )
 
                 appDir?.let { directory ->
-                    val fileName = "$fileName.jpg"
+
+                    if(!directory.exists()) {
+                        directory.mkdirs()
+                    }
+
+                    val fileName = "${fileName}.jpg"
                     val destination = File(directory, fileName)
 
                     // Copy file
                     context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                        FileOutputStream(destination).use { outputStream ->
-                            inputStream.copyTo(outputStream, bufferSize = 8192)
+                        var bitmap = BitmapFactory.decodeStream(inputStream)
+                        if(bitmap.width >= 700 || bitmap.height >= 700) {
+                            bitmap = cropCenter(bitmap)
                         }
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(destination))
                     }
+
+                    return destination.toString()
                 }
             } catch (e: IOException) {
-                Timber.d("saveImageToFile: Error copying file")
+                Timber.d("saveImageToFile: Error copying file e=$e")
+            } catch (e: Exception) {
+                Timber.d("saveImageToFile: e=$e") //TODO Error on adding some images as playlist covers...
             }
+
+            return "UNKNOWN FILE"
+        }
+
+        fun cropCenter(bitmap: Bitmap, cropSize: Int = 700): Bitmap {
+            require(bitmap.width >= cropSize && bitmap.height >= cropSize) {
+                "Bitmap must be at least $cropSize x $cropSize"
+            }
+
+            val left = (bitmap.width - cropSize) / 2
+            val top = (bitmap.height - cropSize) / 2
+
+            return Bitmap.createBitmap(
+                bitmap,
+                left,
+                top,
+                cropSize,
+                cropSize
+            )
         }
 
 
@@ -297,7 +487,7 @@ class UtilImpl {
             val playlistFile = "$playlistTitle.jpg"
 
             if(playlistFile.isNotEmpty()) {
-                val appDir = view.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = view.context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
                 val imageFile = File(appDir, playlistFile)
                 if(imageFile.exists()) {
                     try {
@@ -324,7 +514,7 @@ class UtilImpl {
             val newPlaylistFileName = "$newPlaylistName.jpg"
 
             if(playlistFileName.isNotEmpty()) {
-                val appDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                val appDir = context.getExternalFilesDir(Const.ALBUM_ART_FOLDER)
 
                 val currentImageFile = File(appDir, playlistFileName)
                 val updatedNameFile = File(appDir, newPlaylistFileName)

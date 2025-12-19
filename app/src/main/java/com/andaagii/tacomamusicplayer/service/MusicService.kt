@@ -40,9 +40,22 @@ import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.guava.asListenableFuture
 
-//TODO GET GENRE FROM THE MEDIA ITEM?
+/*
+* Android Auto fixes
+*
+* TODO REMOVE SUBTITLE FROM ARTIST
+*  TODO Add artists instead of SUBTITLE on ALBUM
+*   TODO Add image for album
+*    TODO add image for song
+*     TODO Make subtitle Album / Artist on song
+*
+* */
 
-//TODO ALLOW USER TO DELETE MULTIPLE SONGS!
+//TODO if no song is playing don't show the mini player...
+
+//TODO Low priority, fix for multi select blocking the bottom song...
+
+//TODO allow user to add album to playlist from album tab
 
 //TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE.
 
@@ -52,18 +65,14 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO Update the description to maximize ASO
 
-//TODO Allow user to remove multiple songs from playlist.
-
-//TODO rare bug where app can start on song fragment but botton navigation shows play fragment.
-
 //TODO when the queue is empty and not playing anything, I shouldn't let the user click the play button, mini player shouldn't be present.
 
 //TODO add back information on the playlist songgroup, album songgroup. Can I finally display duration?
 // On SongGroupHeader I want to display "X tracks | 33:02"
 
-//TODO CREATE INITIAL FUNCTIONALITY FOR GOOGLE ASSISTANT!
+//TODO Error on adding some images as playlist covers...
 
-//TODO First install -  I need to make sure that worker is started after user accepts the permission
+//TODO Allow user to choose the crop uCrop - github.com/Yalantis/uCrop
 
 /*
 * TODO add all of Android's expected well-known root IDs
@@ -148,7 +157,6 @@ class MusicService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-
             /*
             * This function can be called in two scenarios, when I manually add songs to the controller,
             * and in scenario such as android auto, this function will also call with user's click.
@@ -162,15 +170,19 @@ class MusicService : MediaLibraryService() {
                 pendingSeek = androidAutoPlayData.position
 
                 if(androidAutoPlayData.songGroupType == SongGroupType.PLAYLIST) {
+                    Timber.d("onAddMediaItems: Playback for Playlist!")
                     return serviceScope.async {
                         musicProvider.getSongsFromPlaylist(
-                            androidAutoPlayData.groupTitle
+                            androidAutoPlayData.groupTitle,
+                            useFileProviderUri = true
                         ).toMutableList()
                     }.asListenableFuture()
                 } else if(androidAutoPlayData.songGroupType == SongGroupType.ALBUM) {
+                    Timber.d("onAddMediaItems: Playback for Playlist! title=${androidAutoPlayData.groupTitle}")
                     return serviceScope.async {
                         musicProvider.getSongsFromAlbum(
-                            androidAutoPlayData.groupTitle
+                            androidAutoPlayData.groupTitle, //TODO This title isn't coming in correct... good kid,
+                            useFileProviderUri = true
                         ).toMutableList()
                     }.asListenableFuture()
                 }
@@ -277,28 +289,28 @@ class MusicService : MediaLibraryService() {
                 }
                 parentId == ALBUM_ID -> {
                     serviceScope.async {
-                        val a = musicProvider.getAllAlbums()
-                        Timber.d("onGetChildren: a=$a")
-                        LibraryResult.ofItemList(musicProvider.getAllAlbums(), params)
+                        //to update the album's artwork to use file provider uri
+                        LibraryResult.ofItemList(musicProvider.getAllAlbums(true), params)
                     }.asListenableFuture()
                 }
                 parentId == ARTIST_ID -> {
                     serviceScope.async {
+                        //Also need first album from an artist's file provider uri
                         LibraryResult.ofItemList(musicProvider.getAllArtists(), params) //TODO too many artists!!!
                     }.asListenableFuture()
                 }
                 parentId == PLAYLIST_ID -> {
                     serviceScope.async {
-                        val a = musicProvider.getAllPlaylists()
-                        Timber.d("onGetChildren: a=$a")
-                        LibraryResult.ofItemList(musicProvider.getAllPlaylists(), params)
+                        LibraryResult.ofItemList(musicProvider.getAllPlaylists(true), params)
                     }.asListenableFuture()
                 }
                 parentId.contains(ALBUM_PREFIX) -> {
                     serviceScope.async {
+                        //Need to update all song's artwork as uri
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
-                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs ALBUM:ALBUM_TITLE:SONG_TITLE:POSITION
+                                albumTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
+                                useFileProviderUri = true
                             ),
                             params
                         )
@@ -307,6 +319,7 @@ class MusicService : MediaLibraryService() {
                 parentId.contains(ARTIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
+                            //Update albums from artist with correct artworkuri
                             musicProvider.getAlbumsFromArtist(
                                 mediaItemUtil.removeMediaItemPrefix(parentId)
                             ),
@@ -317,8 +330,10 @@ class MusicService : MediaLibraryService() {
                 parentId.contains(PLAYLIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
+                            //update song's arturi with fileprovider uri
                             musicProvider.getSongsFromPlaylist(
-                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs PLAYLIST:PLAYLIST_TITLE_SONG_TITLE:POSITION
+                                playlistTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
+                                useFileProviderUri = true
                             ),
                             params
                         )
@@ -326,18 +341,14 @@ class MusicService : MediaLibraryService() {
                 }
                 else ->  {
                     serviceScope.async {
-
-                        //TODO get either the album or the playlist...
-                        //TODO set the position=X on all mediaItems so that android auto knows to play song at position.
-
                         LibraryResult.ofItemList(
+                            //update artwork uri with fileprovider uri
                             musicProvider.getSongFromName(parentId), //TODO modify this with a function that returns auto:SONG_TITLE PLAYLIST:PLAYLIST_TITLE:START_POSITION:SONG_TITLE
                             params
                         )
                     }.asListenableFuture()
                 }
             }
-
         }
     }
 

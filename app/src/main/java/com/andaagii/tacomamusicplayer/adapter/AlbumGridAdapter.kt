@@ -14,6 +14,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumGridLayoutBinding
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -57,7 +58,11 @@ class AlbumGridAdapter(
         if(position < albums.size) {
             val album = albums[position]
             //val albumMetadata = album.mediaMetadata
-            val customImage = "album_${album.mediaMetadata.albumTitle}"
+            val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
+                groupTitle = album.mediaMetadata.albumTitle.toString(),
+                artist = album.mediaMetadata.albumArtist.toString(),
+                songGroupType = SongGroupType.ALBUM
+            )
             Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
             val albumTitle = album.mediaMetadata.albumTitle
@@ -96,7 +101,11 @@ class AlbumGridAdapter(
                 Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Handle Album Option
-                val customImageName = "album_${albums[position].mediaMetadata.albumTitle}"
+                val customImageName = UtilImpl.getImageBaseNameFromExternalStorage(
+                    groupTitle = albums[position].mediaMetadata.albumTitle.toString(),
+                    artist = albums[position].mediaMetadata.albumArtist.toString(),
+                    songGroupType = SongGroupType.ALBUM
+                )
                 handleAlbumOption(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
                     albums[position],

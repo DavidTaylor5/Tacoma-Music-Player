@@ -1,10 +1,14 @@
 package com.andaagii.tacomamusicplayer.worker
 
 import android.content.Context
+import android.net.Uri
+import androidx.core.content.FileProvider.getUriForFile
 import androidx.hilt.work.HiltWorker
 import androidx.media3.common.MediaItem
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.impl.utils.tryDelegateRemoteListenableWorker
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
@@ -12,9 +16,12 @@ import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.MediaStoreUtil
+import com.andaagii.tacomamusicplayer.util.UtilImpl
+import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.saveImageFromMediaStoreUri
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
+import androidx.core.net.toUri
 
 /**
  * A class that queries the medialibraryservice, saving found songs and album art into a database.
@@ -52,7 +59,6 @@ class CatalogMusicWorker @AssistedInject constructor(
 
     private suspend fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
-        //val albumEntityList: MutableList<SongGroupEntity> = mutableListOf()
 
         val dbAlbumTitles = dbAlbums.map { it.groupTitle }
         val albumTitles = albums.map { it.mediaMetadata.albumTitle }
@@ -60,23 +66,33 @@ class CatalogMusicWorker @AssistedInject constructor(
         //Determine if I need to add any albums
         for(album in albums) {
 
-            //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
-            catalogAlbumSongs(album.mediaId, album.mediaMetadata.artworkUri.toString())
-
             val albumInfo = album.mediaMetadata
             val description = "${albumInfo.albumTitle}_${albumInfo.albumArtist}"
+
+            val firstSongUri = getFirstSongUri(album.mediaId)
+
+            val filePath = saveImageFromMediaStoreUri(
+                context = appContext,
+                uri = firstSongUri.toUri(),
+                fileName = UtilImpl.getImageBaseNameFromExternalStorage(
+                    groupTitle = albumInfo.albumTitle.toString(),
+                    artist = albumInfo.albumArtist.toString(),
+                    songGroupType = SongGroupType.ALBUM
+                )
+            )
+
+            //First catalog the songs in an album, before displaying the album to the user [don't want album to appear but not it's songs]
+            catalogAlbumSongs(album.mediaId, filePath)
 
             // Don't need to add album if it already exists
             if(!dbAlbumTitles.contains(albumInfo.albumTitle)) {
                 val savedAlbum = songGroupDao.findSongGroupByDescription(description)
 
-                //TODO update with mediaItemUtil createSongGroupEntityFromMediaItem
-
                 // Because SongGroups are now saved by groupId rather than groupTitle, I need to make sure I'm not saving twice.
                 val songGroupEntity = if(savedAlbum != null) {
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} copying album, new info")
                     savedAlbum.copy(
-                        artUri = albumInfo.artworkUri.toString(),
+                        artFileOriginal = filePath,
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
                         releaseYear = albumInfo.releaseYear.toString()
@@ -85,8 +101,8 @@ class CatalogMusicWorker @AssistedInject constructor(
                     Timber.d("catalogAlbums: album=${album.mediaMetadata.albumTitle} Creating new album entry!")
                     SongGroupEntity(
                         songGroupType = SongGroupType.ALBUM,
-                        artFile = null,
-                        artUri = albumInfo.artworkUri.toString(),
+                        artFileOriginal = filePath,
+                        artFileCustom = "",
                         groupTitle = albumInfo.albumTitle.toString(),
                         groupArtist = albumInfo.albumArtist.toString(),
                         searchDescription = description,
@@ -96,7 +112,6 @@ class CatalogMusicWorker @AssistedInject constructor(
                         releaseYear = albumInfo.releaseYear.toString()
                     )
                 }
-
 
                 //albumEntityList.add(songGroupEntity)
                 songGroupDao.insertSongGroups(songGroupEntity)
@@ -119,10 +134,24 @@ class CatalogMusicWorker @AssistedInject constructor(
         }
     }
 
+    private fun getFirstSongUri(albumName: String): String {
+        val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
+        var firstSongUri = ""
+
+        if(foundSongs.isNotEmpty()) {
+            val firstSong = foundSongs.first()
+            firstSongUri =  firstSong.mediaId
+        }
+
+        return firstSongUri
+    }
+
     /**
      * Takes an album and adds all of it's songs to the
+     * Return the first song, I will use this to get media metadata related to the album from song 1
+     * @return Song Uri, which I can use to get further media meta data for the album
      */
-    private suspend fun catalogAlbumSongs(albumName: String, albumArtUri: String) {
+    private suspend fun catalogAlbumSongs(albumName: String, fileProviderUriStr: String) {
         //Timber.d("catalogAlbumSongs: albumName=$albumName")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
@@ -136,10 +165,10 @@ class CatalogMusicWorker @AssistedInject constructor(
 
         //TODO update with mediaItemUtil createSongEntityFromMediaItem
 
-        for(song in foundSongs) {
+        for((index, song) in foundSongs.withIndex()) {
             val songInfo = song.mediaMetadata
             val songDescription = mediaItemUtil.getSongSearchDescriptionFromMediaItem(song)
-            //val dbSong = songDao.findSongFromSearchDescription(songDescription)
+
             if (!dbSongTitles.contains(songInfo.title)) {
                 val songEntity = SongEntity(
                     albumTitle = songInfo.albumTitle.toString(),
@@ -148,7 +177,7 @@ class CatalogMusicWorker @AssistedInject constructor(
                     name = songInfo.title.toString(),
                     uri = song.mediaId,
                     songDuration = songInfo.description.toString(),
-                    artworkUri = albumArtUri
+                    artworkUri = fileProviderUriStr
                 )
                 songEntityList.add(songEntity)
             }

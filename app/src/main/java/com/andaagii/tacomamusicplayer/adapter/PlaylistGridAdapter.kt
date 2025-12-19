@@ -3,7 +3,6 @@ package com.andaagii.tacomamusicplayer.adapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -13,9 +12,9 @@ import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
+import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
+import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
@@ -51,6 +50,9 @@ class PlaylistGridAdapter(
     override fun onBindViewHolder(viewHolder: PlaylistGridViewHolder, position: Int) {
         viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
 
+        val playlist = playlists[position]
+        val playlistArtUri = playlist.mediaMetadata.artworkUri
+
         viewHolder.binding.itemContainer.setOnClickListener {
             onPlaylistClick(playlists[position])
         }
@@ -69,20 +71,8 @@ class PlaylistGridAdapter(
 //
 //        viewHolder.binding.descriptionText.text = "$durationTracks | $playlistDurationReadable"
 
-        //Logic for showing custom playist image
-        val artFile = playlists[position].mediaMetadata.artworkUri.toString() //TODO this might need to be updated.
-        if(!artFile.isNullOrEmpty()) {
-            val appDir = viewHolder.itemView.context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            val playlistImageFile = File(appDir, artFile)
-            if(playlistImageFile.exists()) {
-                try {
-                    val artUri = Uri.fromFile(playlistImageFile)
-                    viewHolder.binding.playlistArt.setImageURI(artUri)
-                } catch(e: Exception) {
-                    Timber.d("onBindViewHolder: exception when setting playlist art e=$e")
-                }
-            }
-        }
+        //Logic for showing custom playlist image
+        viewHolder.binding.playlistArt.setImageURI(playlistArtUri)
 
         viewHolder.binding.itemContainer.setOnLongClickListener {
 
