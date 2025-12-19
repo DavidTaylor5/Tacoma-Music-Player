@@ -454,7 +454,7 @@ class UtilImpl {
             } catch (e: IOException) {
                 Timber.d("saveImageToFile: Error copying file e=$e")
             } catch (e: Exception) {
-                Timber.d("saveImageToFile: e=$e")
+                Timber.d("saveImageToFile: e=$e") //TODO Error on adding some images as playlist covers...
             }
 
             return "UNKNOWN FILE"

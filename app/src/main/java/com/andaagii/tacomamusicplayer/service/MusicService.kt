@@ -70,6 +70,10 @@ import kotlinx.coroutines.guava.asListenableFuture
 //TODO add back information on the playlist songgroup, album songgroup. Can I finally display duration?
 // On SongGroupHeader I want to display "X tracks | 33:02"
 
+//TODO Error on adding some images as playlist covers...
+
+//TODO Allow user to choose the crop
+
 /*
 * TODO add all of Android's expected well-known root IDs
 *  2️⃣ Android’s expected well-known root IDs

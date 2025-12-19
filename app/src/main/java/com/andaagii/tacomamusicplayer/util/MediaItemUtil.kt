@@ -19,17 +19,6 @@ import timber.log.Timber
 class MediaItemUtil @Inject constructor(
     @ApplicationContext private val appContext: Context,
 ) {
-
-    /**
-     * Convert a list of songdata into mediaItems.
-     */
-    fun convertListOfSongDataIntoListOfMediaItem(
-        songs: List<SongData>
-    ): List<MediaItem> {
-         return songs.map {data ->
-             createMediaItemFromSongData(data)
-         }
-    }
     fun getSongSearchDescriptionFromMediaItem(song: MediaItem): String {
         val songInfo = song.mediaMetadata
         val songDescription = "${songInfo.title}_${songInfo.albumTitle}_${songInfo.artist}"
@@ -110,7 +99,7 @@ class MediaItemUtil @Inject constructor(
                 MediaMetadata.Builder()
                     .setAlbumTitle(playlist.groupTitle)
                     .setAlbumArtist(playlist.groupArtist)
-                    .setArtworkUri(artUri ?: playlist.artFileCustom.toUri())
+                    .setArtworkUri(artUri ?: playlist.artFileCustom.toUri()) //TODO fix this and add useFileProviderUri...
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
@@ -119,25 +108,6 @@ class MediaItemUtil @Inject constructor(
                     .build()
             )
             .build()
-    }
-
-    /**
-     * Creates a song entity from a mediaItem, don't use this in the worker as I'm adding in album uri there.
-     * TODO I might remove this... Unless I find a use for it.
-     */
-    fun createSongEntityFromMediaItem(mediaItem: MediaItem): SongEntity {
-        val songInfo = mediaItem.mediaMetadata
-        val songDescription = getSongSearchDescriptionFromMediaItem(mediaItem)
-
-        return SongEntity(
-            albumTitle = songInfo.albumTitle.toString(),
-            artist = songInfo.artist.toString(),
-            searchDescription = songDescription,
-            name = songInfo.title.toString(),
-            uri = mediaItem.mediaId,
-            songDuration = songInfo.description.toString(),
-            artworkUri = songInfo.artworkUri.toString()
-        )
     }
 
     /**
@@ -178,32 +148,6 @@ class MediaItemUtil @Inject constructor(
                     .build()
             )
             .build()
-    }
-
-    /**
-     * Android Auto needs to know the position of the song, to add song group to the queue and update player position.
-     * mediaId -> position=SONG_POSITION:SONG_NAME ex. position=3:DNA
-     * Return -1 if position isn't found. Return int if found.
-     */
-    fun checkPositionFromMediaItem(mediaItem: MediaItem): Int {
-
-        //TODO update this to determine  "${songGroupType.name}=${song.albumTitle}, position=$position, song=${song.name}"
-        //I need to return SongGroupType -> which function to call, group title -> query argument, position -> move player position to correct spot.
-
-
-        val positionKey = "position="
-        val positionKeyIndex = mediaItem.mediaId.indexOf(positionKey)
-        val dividerIndex = mediaItem.mediaId.indexOf(":")
-        if(positionKeyIndex > -1 && dividerIndex > -1) {
-            val positionStart = positionKeyIndex + positionKey.length
-            val songPosition = mediaItem.mediaId.substring(positionStart, dividerIndex).toIntOrNull()
-
-            songPosition?.let { position ->
-                return position
-            }
-        }
-
-        return -1
     }
 
     fun getAndroidAutoPlayDataFromMediaItem(mediaItem: MediaItem): AndroidAutoPlayData {
@@ -270,23 +214,6 @@ class MediaItemUtil @Inject constructor(
                     .build()
                 )
             .build()
-    }
-
-    /**
-     * Used when I have a media item and I want to store it into a playlist!
-     * @param songMediaItem associated with a song.
-     */
-    private fun createSongDataFromMediaItem(
-        songMediaItem: MediaItem
-    ): SongData {
-        return SongData(
-            songUri = songMediaItem.mediaId,
-            songTitle = songMediaItem.mediaMetadata.title.toString(),
-            albumTitle = songMediaItem.mediaMetadata.albumTitle.toString(),
-            artist = songMediaItem.mediaMetadata.artist.toString(),
-            artworkUri = songMediaItem.mediaMetadata.artworkUri.toString(),
-            duration = songMediaItem.mediaMetadata.description.toString()
-        )
     }
 
     /**
