@@ -21,6 +21,7 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.saveImageFromMedia
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
+import androidx.core.net.toUri
 
 /**
  * A class that queries the medialibraryservice, saving found songs and album art into a database.
@@ -70,10 +71,9 @@ class CatalogMusicWorker @AssistedInject constructor(
 
             val firstSongUri = getFirstSongUri(album.mediaId)
 
-            //TODO then catalogAlbumArtFromMediaStore
             val filePath = saveImageFromMediaStoreUri(
                 context = appContext,
-                uri = Uri.parse(firstSongUri),
+                uri = firstSongUri.toUri(),
                 fileName = UtilImpl.getImageBaseNameFromExternalStorage(
                     groupTitle = albumInfo.albumTitle.toString(),
                     artist = albumInfo.albumArtist.toString(),

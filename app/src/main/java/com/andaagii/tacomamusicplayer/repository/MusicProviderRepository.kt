@@ -1,8 +1,6 @@
 package com.andaagii.tacomamusicplayer.repository
 
 import androidx.media3.common.MediaItem
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
-import kotlinx.coroutines.flow.Flow
 
 interface MusicProviderRepository {
 
@@ -19,7 +17,10 @@ interface MusicProviderRepository {
         useFileProviderUri: Boolean = false
     ): List<MediaItem>
 
-    suspend fun getSongsFromPlaylist(playlistTitle: String): List<MediaItem>
+    suspend fun getSongsFromPlaylist(
+        playlistTitle: String,
+        useFileProviderUri: Boolean = false
+    ): List<MediaItem>
 
     suspend fun getSongFromName(songTitle: String): List<MediaItem>
 

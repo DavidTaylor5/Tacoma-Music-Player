@@ -159,12 +159,15 @@ class QueueListAdapter(
                 artist = songData.albumArtist.toString(),
                 songGroupType = if(songData.albumArtist == Const.USER_PLAYLIST) SongGroupType.PLAYLIST else SongGroupType.ALBUM
             )
-            UtilImpl.drawMediaItemArt(
-                viewHolder.binding.albumArt,
-                artworkUri,
-                Size(200, 200),
-                customImage
-            )
+
+            artworkUri?.let { uri ->
+                UtilImpl.drawMediaItemArt(
+                    viewHolder.binding.albumArt,
+                    uri,
+                    Size(200, 200),
+                    customImage
+                )
+            }
 
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
 //                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()

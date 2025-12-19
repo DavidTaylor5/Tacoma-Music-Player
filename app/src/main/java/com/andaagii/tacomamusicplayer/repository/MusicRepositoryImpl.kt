@@ -272,18 +272,11 @@ class MusicRepositoryImpl @Inject constructor(
                 )
             }
         } ?: listOf()
-
-
-//        mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
-//            album = songGroup,
-//            artUri = if(useFileProviderUri)
-//                mediaItemUtil.determineArtUri(songGroup, true)
-//            else null
-//        )
     }
 
     override suspend fun getSongsFromPlaylist(
-        playlistTitle: String
+        playlistTitle: String,
+        useFileProviderUri: Boolean
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findSongGroupByName(playlistTitle)?.let { playlist ->
             songDao.selectAllSongsFromPlaylist(playlist.groupId).mapIndexed { position, songEntity ->
@@ -292,6 +285,7 @@ class MusicRepositoryImpl @Inject constructor(
                     position = position,
                     songGroupType = SongGroupType.PLAYLIST,
                     playlistTitle = playlistTitle,
+                    useFileProviderUri = useFileProviderUri
                 )
             }
         } ?: listOf()

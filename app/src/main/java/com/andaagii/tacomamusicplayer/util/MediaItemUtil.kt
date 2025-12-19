@@ -6,7 +6,6 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.data.AndroidAutoPlayData
-import com.andaagii.tacomamusicplayer.data.ArtInfo
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
@@ -15,6 +14,7 @@ import com.andaagii.tacomamusicplayer.enumtype.SongGroupType.Companion.determine
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.getFileProviderUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import timber.log.Timber
 
 class MediaItemUtil @Inject constructor(
     @ApplicationContext private val appContext: Context,
@@ -151,8 +151,9 @@ class MediaItemUtil @Inject constructor(
         playlistTitle: String? = null,
         useFileProviderUri: Boolean = false
     ): MediaItem {
+        Timber.d("createMediaItemFromSongEntity: song=$song, position=$position, playlistTitle=$playlistTitle")
         val mediaId = if(position != null && songGroupType != null) {
-            "songGroupType=${songGroupType.name}, groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}, position=$position, songTitle=${song.name}"
+            "songGroupType=${songGroupType.name}|||groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}|||position=$position|||songTitle=${song.name}"
         } else {
             song.name
         }
@@ -220,22 +221,20 @@ class MediaItemUtil @Inject constructor(
     }
 
     /**
-     * Given a mediaId in the form of "songgrouptype=${songGroupType.name}, groupTitle=${song.albumTitle}, position=$position, song=${song.name}"
+     * Given a mediaId in the form of "songGroupType=${songGroupType.name}||| groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}||| position=$position, songTitle=${song.name}"
      * Determine a certain field.
      */
     private fun determineFieldFromMediaId(mediaId: String, field: String): String {
-        val positionField = mediaId.indexOf(field)
-        if(positionField >= 0) {
-            var value = ""
-            val startPosition = positionField + field.length
-            for(i in startPosition until mediaId.length) {
-                if(mediaId[i] == ',') break
-                else value += mediaId[i]
-            }
-            return value
-        } else {
-            return ""
+        val fields = mediaId.split("|||")
+        val fieldIndex = fields.indexOfFirst { it.contains(field) }
+
+        if(fieldIndex > -1) {
+            val checkField = fields[fieldIndex]
+
+            return checkField.removePrefix(field)
         }
+
+        return ""
     }
 
 

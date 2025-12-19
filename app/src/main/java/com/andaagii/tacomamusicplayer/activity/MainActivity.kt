@@ -230,6 +230,6 @@ class MainActivity : AppCompatActivity() {
         workManager.cancelAllWork()
 
         //TODO BRING THIS BACK LATER...
-        workManager.enqueue(catalogWorkRequest)
+        //workManager.enqueue(catalogWorkRequest)
     }
 }

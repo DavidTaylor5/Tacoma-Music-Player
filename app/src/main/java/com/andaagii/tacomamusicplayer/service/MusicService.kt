@@ -166,15 +166,19 @@ class MusicService : MediaLibraryService() {
                 pendingSeek = androidAutoPlayData.position
 
                 if(androidAutoPlayData.songGroupType == SongGroupType.PLAYLIST) {
+                    Timber.d("onAddMediaItems: Playback for Playlist!")
                     return serviceScope.async {
                         musicProvider.getSongsFromPlaylist(
-                            androidAutoPlayData.groupTitle
+                            androidAutoPlayData.groupTitle,
+                            useFileProviderUri = true
                         ).toMutableList()
                     }.asListenableFuture()
                 } else if(androidAutoPlayData.songGroupType == SongGroupType.ALBUM) {
+                    Timber.d("onAddMediaItems: Playback for Playlist! title=${androidAutoPlayData.groupTitle}")
                     return serviceScope.async {
                         musicProvider.getSongsFromAlbum(
-                            androidAutoPlayData.groupTitle
+                            androidAutoPlayData.groupTitle, //TODO This title isn't coming in correct... good kid,
+                            useFileProviderUri = true
                         ).toMutableList()
                     }.asListenableFuture()
                 }
@@ -324,7 +328,8 @@ class MusicService : MediaLibraryService() {
                         LibraryResult.ofItemList(
                             //update song's arturi with fileprovider uri
                             musicProvider.getSongsFromPlaylist(
-                                mediaItemUtil.removeMediaItemPrefix(parentId) //TODO return a modified list of songs PLAYLIST:PLAYLIST_TITLE_SONG_TITLE:POSITION
+                                playlistTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
+                                useFileProviderUri = true
                             ),
                             params
                         )
@@ -332,10 +337,6 @@ class MusicService : MediaLibraryService() {
                 }
                 else ->  {
                     serviceScope.async {
-
-                        //TODO get either the album or the playlist...
-                        //TODO set the position=X on all mediaItems so that android auto knows to play song at position.
-
                         LibraryResult.ofItemList(
                             //update artwork uri with fileprovider uri
                             musicProvider.getSongFromName(parentId), //TODO modify this with a function that returns auto:SONG_TITLE PLAYLIST:PLAYLIST_TITLE:START_POSITION:SONG_TITLE
