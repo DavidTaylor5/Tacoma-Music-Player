@@ -238,7 +238,10 @@ class MusicService : MediaLibraryService() {
             //TODO This will work for android auto but will it work with google assistant...
 
             return serviceScope.async {
-                val foundMatches = musicProvider.searchMusic(query)
+                val foundMatches = musicProvider.searchMusic(
+                    query,
+                    useFileProviderUri = true
+                )
                 Timber.d("onGetSearchResult: foundMatches=$foundMatches")
                 LibraryResult.ofItemList(foundMatches, params)
             }.asListenableFuture()
