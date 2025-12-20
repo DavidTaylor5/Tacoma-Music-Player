@@ -57,10 +57,6 @@ import kotlinx.coroutines.guava.asListenableFuture
 
 //TODO allow user to add album to playlist from album tab
 
-//TODO CLEAN UP THE ANDROID AUTO IMPLEMENTATION, ADD BITMAPS, FIX TITLE AND SUBTITLE.
-
-//TODO Android Auto has a search functionality, is this expected to be apart of my app?
-
 //TODO Create custom listings for each country.
 
 //TODO Update the description to maximize ASO
