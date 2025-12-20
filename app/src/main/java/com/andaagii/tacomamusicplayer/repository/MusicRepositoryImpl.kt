@@ -29,14 +29,32 @@ class MusicRepositoryImpl @Inject constructor(
     private val songGroupDao: SongGroupDao
 ): MusicRepository, MusicProviderRepository {
 
-    override suspend fun searchMusic(search: String): List<MediaItem> {
+    override suspend fun searchMusic(
+        search: String,
+        useFileProviderUri: Boolean
+    ): List<MediaItem> {
         val matchingSongGroups = songGroupDao.findDescriptionFromSearchStr(search)
         val matchingAlbums = matchingSongGroups.filter { it.songGroupType == SongGroupType.ALBUM }
-            .map { mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(it) }
+            .map {
+                mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
+                    it,
+                    useFileProviderUri = useFileProviderUri
+                )
+            }
         val matchingPlaylists = matchingSongGroups.filter { it.songGroupType == SongGroupType.PLAYLIST }
-            .map { mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(it) }
+            .map {
+                mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(
+                    it,
+                    useFileProviderUri = useFileProviderUri
+                )
+            }
         val matchingSongs = songDao.findDescriptionFromSearchStr(search)
-            .map { mediaItemUtil.createMediaItemFromSongEntity(it) }
+            .map {
+                mediaItemUtil.createMediaItemFromSongEntity(
+                    song = it,
+                    useFileProviderUri = true
+                )
+            }
 
         //TODO now I need to combine the lists, and sort by substring position first, then reduce size to 20 total.
         val combinedData = matchingAlbums + matchingPlaylists + matchingSongs
@@ -225,9 +243,7 @@ class MusicRepositoryImpl @Inject constructor(
          songGroupDao.getSongGroupsByType(SongGroupType.ALBUM).map { songGroup ->
             mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
                 album = songGroup,
-                artUri = if(useFileProviderUri)
-                    mediaItemUtil.determineArtUri(songGroup, true)
-                else null
+                useFileProviderUri = useFileProviderUri
             )
         }
     }
@@ -244,16 +260,17 @@ class MusicRepositoryImpl @Inject constructor(
         songGroupDao.getSongGroupsByType(SongGroupType.PLAYLIST).map { songGroup ->
             mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(
                 playlist = songGroup,
-                artUri = if(useFileProviderUri)
-                mediaItemUtil.determineArtUri(songGroup, true)
-                else null
+                useFileProviderUri = useFileProviderUri
             )
         }
     }
 
     override suspend fun getAlbumsFromArtist(artist: String): List<MediaItem> = withContext(Dispatchers.IO) {
         songGroupDao.findAllSongGroupsByArtist(artist).map { songGroup ->
-            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(songGroup)
+            mediaItemUtil.createAlbumMediaItemFromSongGroupEntity(
+                album = songGroup,
+                useFileProviderUri = true
+            )
         }
     }
 

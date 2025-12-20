@@ -27,5 +27,8 @@ interface MusicProviderRepository {
     /**
      * Searches music database to return 25 relevant songs/albums/playlists
      */
-    suspend fun searchMusic(search: String): List<MediaItem>
+    suspend fun searchMusic(
+        search: String,
+        useFileProviderUri: Boolean = false
+    ): List<MediaItem>
 }

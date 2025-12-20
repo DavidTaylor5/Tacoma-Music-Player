@@ -33,7 +33,7 @@ class MediaItemUtil @Inject constructor(
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .setTitle(artist)
-                    .setSubtitle(artist)
+                    //.setSubtitle(artist) //TODO amount of albums?
                     .build()
             )
             .build()
@@ -65,25 +65,32 @@ class MediaItemUtil @Inject constructor(
 
     fun createAlbumMediaItemFromSongGroupEntity(
         album: SongGroupEntity,
-        artUri: Uri? = null
+        useFileProviderUri: Boolean = false
     ): MediaItem {
+
+        val albumArtUri = if(useFileProviderUri) {
+            if(album.useCustomArt) {
+                getFileProviderUri(appContext, album.artFileCustom)
+            } else {
+                getFileProviderUri(appContext, album.artFileOriginal)
+            }
+        } else {
+            album.artFileOriginal.toUri()
+        }
+
         return MediaItem.Builder()
             .setMediaId("album:${album.groupTitle}")
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setAlbumTitle(album.groupTitle)
                     .setAlbumArtist(album.groupArtist)
-                    .setArtworkUri(
-                        artUri ?:
-                        if(album.useCustomArt) album.artFileCustom.toUri()
-                        else album.artFileOriginal.toUri()
-                    )
+                    .setArtworkUri(albumArtUri)
                     .setReleaseYear(album.releaseYear.toIntOrNull())
                     .setDescription(album.groupDuration)
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .setTitle(album.groupTitle)
-                    .setSubtitle(album.searchDescription)
+                    .setSubtitle(album.groupArtist)
                     .build()
             )
             .build()
@@ -91,7 +98,7 @@ class MediaItemUtil @Inject constructor(
 
     fun createPlaylistMediaItemFromSongGroupEntity(
         playlist: SongGroupEntity,
-        artUri: Uri? = null
+        useFileProviderUri: Boolean = false
     ): MediaItem {
         return MediaItem.Builder()
             .setMediaId("playlist:${playlist.groupTitle}")
@@ -99,12 +106,15 @@ class MediaItemUtil @Inject constructor(
                 MediaMetadata.Builder()
                     .setAlbumTitle(playlist.groupTitle)
                     .setAlbumArtist(playlist.groupArtist)
-                    .setArtworkUri(artUri ?: playlist.artFileCustom.toUri()) //TODO fix this and add useFileProviderUri...
+                    .setArtworkUri(if(useFileProviderUri)
+                        getFileProviderUri(appContext, playlist.artFileCustom)
+                    else playlist.artFileCustom.toUri()
+                    )
                     .setDescription("${playlist.creationTimestamp}:${playlist.lastModificationTimestamp}")
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .setTitle(playlist.groupTitle)
-                    .setSubtitle(playlist.searchDescription)
+                    //.setSubtitle(playlist.searchDescription) //TODO song length?
                     .build()
             )
             .build()
