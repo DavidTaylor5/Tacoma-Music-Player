@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -49,6 +50,7 @@ import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.File
 
 @AndroidEntryPoint
 class SongListFragment(): Fragment() {
@@ -387,28 +389,19 @@ class SongListFragment(): Fragment() {
             binding.songGroupInfo.setSongGroupTitleText(songGroup.group.mediaMetadata.albumTitle.toString())
 
             // Determine what icon to display for song group
-            if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
-                songGroup.songs[0].mediaMetadata.artworkUri?.let { songArt ->
-                    val customImage = "album_${songGroup.songs[0].mediaMetadata.albumTitle}"
-                    UtilImpl.drawMediaItemArt(
-                        binding.songGroupInfo.getSongGroupImage(),
-                        songArt,
-                        Size(200, 200),
-                        customImage
-                    )
-                }
 
+            val artFile = File(songGroup.group.mediaMetadata.artworkUri.toString())
+            if(artFile.exists()) {
+                binding.songGroupInfo.getSongGroupImage().setImageURI(songGroup.group.mediaMetadata.artworkUri)
+            } else {
+                binding.songGroupInfo.getSongGroupImage().setImageDrawable(AppCompatResources.getDrawable(binding.root.context, R.drawable.white_note))
+            }
+
+            // Determine if songs can be dragged
+            if(songGroup.type == SongGroupType.ALBUM && songGroup.songs.isNotEmpty()) {
                 //Remove drag ability from songs in an album.
                 itemTouchHelper.attachToRecyclerView(null)
-
             } else { // Playlist icon
-                val ableToDraw = UtilImpl.setPlaylistImageFromAppStorage(binding.songGroupInfo.getSongGroupImage(), songGroup.group.mediaMetadata.albumTitle.toString())
-
-                if(!ableToDraw) {
-                    binding.songGroupInfo.getSongGroupImage()
-                        .setImageResource(R.drawable.white_note)
-                }
-
                 //Adds drag ability to songs in a playlist.
                 itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
             }

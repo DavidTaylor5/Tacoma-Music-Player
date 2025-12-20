@@ -482,7 +482,10 @@ class UtilImpl {
          * I store images in the app-specific storaage, this function will take a f
          * @return Will return true if there was a playlist image found else false.
          */
-        fun setPlaylistImageFromAppStorage(view: ImageView, playlistTitle: String): Boolean {
+        fun setPlaylistImageFromAppStorage(
+            view: ImageView,
+            playlistTitle: String
+        ): Boolean {
             Timber.d("setPlaylistImageFromAppStorage: playlistTitle=$playlistTitle")
             val playlistFile = "$playlistTitle.jpg"
 

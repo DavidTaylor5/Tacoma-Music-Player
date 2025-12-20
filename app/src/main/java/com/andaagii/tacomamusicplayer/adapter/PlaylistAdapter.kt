@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
@@ -68,7 +69,12 @@ class PlaylistAdapter(
         //viewHolder.binding.durationTime.text = playlistDurationReadable
 
         //Logic for showing custom playlist image
-        viewHolder.binding.playlistArt.setImageURI(playlistArtUri)
+        val artFile = File(playlistArtUri.toString())
+        if(artFile.exists()) {
+            viewHolder.binding.playlistArt.setImageURI(playlistArtUri)
+        } else {
+            viewHolder.binding.playlistArt.setImageDrawable(AppCompatResources.getDrawable(viewHolder.binding.root.context, R.drawable.white_note))
+        }
 
         viewHolder.binding.playButton.setOnClickListener {
             onPlayIconClick(playlists[viewHolder.absoluteAdapterPosition].mediaMetadata.albumTitle.toString())
