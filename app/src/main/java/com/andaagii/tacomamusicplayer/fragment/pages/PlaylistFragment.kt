@@ -1,11 +1,13 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -26,9 +28,11 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.File
 
 @AndroidEntryPoint
 class PlaylistFragment: Fragment() {
@@ -42,6 +46,28 @@ class PlaylistFragment: Fragment() {
     private var currentLayout = LayoutType.LINEAR_LAYOUT
     private var currentPlaylists: List<MediaItem> = listOf()
 
+
+    private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == RESULT_OK) {
+            Timber.d("getCroppedPicture: RESULT_OK")
+            result.data?.let { cropData ->
+                val croppedUri = UCrop.getOutput(cropData)
+
+
+
+                croppedUri?.let { uri ->
+                    parentViewModel.updatePlaylistImage(
+                        playlistTitle = playlistThatNeedsNewImage,
+                        artFileName = uri.path.toString()
+                    )
+                }
+            }
+        } else if(result.resultCode == UCrop.RESULT_ERROR) {
+            val error = result.data
+            Timber.d("getCroppedPicture: RESULT_ERROR cropError=${error?.let { e ->  UCrop.getError(e)} }")
+        }
+    }
+
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         // Handle the returned Uri
@@ -52,20 +78,15 @@ class PlaylistFragment: Fragment() {
         }
 
         pictureUri?.let { uri ->
-            this.context?.let { fragmentContext ->
-                //Save picture to local data
-                val artFile = UtilImpl.saveImageToFile(
-                    context = fragmentContext,
-                    sourceUri = uri,
-                    fileName = playlistThatNeedsNewImage,
-                    isCustom = true
-                )
-
-                parentViewModel.updatePlaylistImage(
-                    playlistTitle = playlistThatNeedsNewImage,
-                    artFileName = artFile
-                )
-            }
+            val saveFileUri = UtilImpl.getSaveFileUri(
+                context = requireContext(),
+                fileName = playlistThatNeedsNewImage,
+                isCustom = true
+            )
+            UCrop.of(uri, saveFileUri)
+                .withAspectRatio(1f, 1f)
+                .withMaxResultSize(700, 700)
+                .start(requireActivity(), getCroppedPicture)
         }
     }
 

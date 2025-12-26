@@ -153,4 +153,7 @@ dependencies {
 
     //Coil
     implementation("io.coil-kt:coil:2.5.0")
+
+    // uCrop - library for cropping images
+    implementation("com.github.yalantis:ucrop:2.2.11")
 }
