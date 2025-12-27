@@ -72,7 +72,7 @@ class PlaylistGridAdapter(
 //
 //        viewHolder.binding.descriptionText.text = "$durationTracks | $playlistDurationReadable"
 
-        //Logic for showing custom playlist image
+        // Show album art based on mediaItem (can either be original or custom)
         val artFile = File(playlistArtUri.toString())
         if(artFile.exists()) {
             viewHolder.binding.playlistArt.setImageURI(playlistArtUri)

@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
@@ -18,6 +19,7 @@ import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
+import java.io.File
 
 /**
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
@@ -58,6 +60,7 @@ class AlbumGridAdapter(
         if(position < albums.size) {
             val album = albums[position]
             //val albumMetadata = album.mediaMetadata
+            val albumArtUri = album.mediaMetadata.artworkUri
             val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
                 groupTitle = album.mediaMetadata.albumTitle.toString(),
                 artist = album.mediaMetadata.albumArtist.toString(),
@@ -71,12 +74,13 @@ class AlbumGridAdapter(
 
             viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
 
-            UtilImpl.drawMediaItemArt(
-                viewHolder.binding.albumArt,
-                albumUri,
-                Size(400, 400),
-                customImage
-            )
+            // Show album art based on mediaItem (can either be original or custom)
+            val artFile = File(albumArtUri.toString())
+            if(artFile.exists()) {
+                viewHolder.binding.albumArt.setImageURI(albumArtUri)
+            } else {
+                viewHolder.binding.albumArt.setImageDrawable(AppCompatResources.getDrawable(viewHolder.binding.root.context, R.drawable.white_note))
+            }
 
             viewHolder.binding.albumName.text = albumTitle
 

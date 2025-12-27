@@ -36,7 +36,7 @@ interface MusicRepository: MusicProviderRepository {
      */
     fun getAllAvailablePlaylistFlow(): Flow<List<MediaItem>>
 
-    suspend fun updateSongGroupImage(playlistTitle: String, artFileName: String)
+    suspend fun updateSongGroupImage(title: String, artFileName: String)
 
     suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
 
