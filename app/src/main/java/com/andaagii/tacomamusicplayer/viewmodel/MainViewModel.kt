@@ -10,7 +10,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -18,15 +17,10 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
-import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
-import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
-import com.andaagii.tacomamusicplayer.database.entity.SongEntity
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
@@ -604,10 +598,10 @@ class MainViewModel @Inject constructor(
     /**
      * Update the playlist image.
      */
-    fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
-        Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
+    fun updateSongGroupImage(title: String, artFileName: String) {
+        Timber.d("updateSongGroupImage: title=$title, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            musicRepo.updatePlaylistImage(playlistTitle, artFileName)
+            musicRepo.updateSongGroupImage(title, artFileName)
         }
     }
 

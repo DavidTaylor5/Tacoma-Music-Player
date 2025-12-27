@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -19,8 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
@@ -32,7 +29,6 @@ import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.File
 
 @AndroidEntryPoint
 class PlaylistFragment: Fragment() {
@@ -56,8 +52,8 @@ class PlaylistFragment: Fragment() {
 
 
                 croppedUri?.let { uri ->
-                    parentViewModel.updatePlaylistImage(
-                        playlistTitle = playlistThatNeedsNewImage,
+                    parentViewModel.updateSongGroupImage(
+                        title = playlistThatNeedsNewImage,
                         artFileName = uri.path.toString()
                     )
                 }

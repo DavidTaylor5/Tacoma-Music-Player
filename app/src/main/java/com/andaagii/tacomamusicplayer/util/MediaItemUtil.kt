@@ -67,7 +67,6 @@ class MediaItemUtil @Inject constructor(
         album: SongGroupEntity,
         useFileProviderUri: Boolean = false
     ): MediaItem {
-
         val albumArtUri = if(useFileProviderUri) {
             if(album.useCustomArt) {
                 getFileProviderUri(appContext, album.artFileCustom)
@@ -75,7 +74,11 @@ class MediaItemUtil @Inject constructor(
                 getFileProviderUri(appContext, album.artFileOriginal)
             }
         } else {
-            album.artFileOriginal.toUri()
+            if(album.useCustomArt && !album.artFileCustom.isEmpty()) {
+                album.artFileCustom.toUri()
+            } else {
+                album.artFileOriginal.toUri()
+            }
         }
 
         return MediaItem.Builder()
@@ -86,7 +89,7 @@ class MediaItemUtil @Inject constructor(
                     .setAlbumArtist(album.groupArtist)
                     .setArtworkUri(albumArtUri)
                     .setReleaseYear(album.releaseYear.toIntOrNull())
-                    .setDescription(album.groupDuration)
+                    .setDescription("${System.currentTimeMillis()}") //TODO set last modification time... //TODO add diff util
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .setTitle(album.groupTitle)

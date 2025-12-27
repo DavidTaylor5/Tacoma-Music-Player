@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
 import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
@@ -25,6 +24,7 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -41,6 +41,25 @@ class AlbumListFragment: Fragment() {
 
     //The name of the most recent playlist that I want to update the image for
     private var albumCustomImageName = "empty"
+    private var selectedAlbumName = "unknown"
+
+    private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == RESULT_OK) {
+            Timber.d("getCroppedPicture: RESULT_OK")
+            result.data?.let { cropData ->
+                val croppedUri = UCrop.getOutput(cropData)
+                croppedUri?.let { uri ->
+                    parentViewModel.updateSongGroupImage(
+                        title = selectedAlbumName,
+                        artFileName = uri.path.toString()
+                    )
+                }
+            }
+        } else if(result.resultCode == UCrop.RESULT_ERROR) {
+            val error = result.data
+            Timber.d("getCroppedPicture: RESULT_ERROR cropError=${error?.let { e ->  UCrop.getError(e)} }")
+        }
+    }
 
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -52,16 +71,15 @@ class AlbumListFragment: Fragment() {
         }
 
         pictureUri?.let { uri ->
-            this.context?.let { fragmentContext ->
-                //Save picture to local data
-                UtilImpl.saveImageToFile(
-                    context = fragmentContext,
-                    sourceUri = uri,
-                    fileName = albumCustomImageName,
-                    isCustom = true
-                )
-                parentViewModel.updatePlaylistImage(albumCustomImageName, "$albumCustomImageName.jpg")
-            }
+            val saveFileUri = UtilImpl.getSaveFileUri(
+                context = requireContext(),
+                fileName = selectedAlbumName,
+                isCustom = true
+            )
+            UCrop.of(uri, saveFileUri)
+                .withAspectRatio(1f, 1f)
+                .withMaxResultSize(700, 700)
+                .start(requireActivity(), getCroppedPicture)
         }
     }
 
@@ -74,6 +92,7 @@ class AlbumListFragment: Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.availableAlbums.collect { availableAlbums ->
+                    Timber.d("onCreateView: availableAlbums updated! size=${availableAlbums.size}")
                     currentAlbumList = SortingUtil.sortAlbums(
                         availableAlbums,
                         parentViewModel.sortingForAlbumTab.value
@@ -116,9 +135,10 @@ class AlbumListFragment: Fragment() {
         return binding.root
     }
 
-    private fun addCustomAlbumImage(customAlbumImageName: String) {
+    private fun addCustomAlbumImage(album:MediaItem, customAlbumImageName: String) {
         //Album that I should update the image for
         albumCustomImageName = customAlbumImageName
+        selectedAlbumName = album.mediaMetadata.albumTitle.toString()
 
         // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
         getPicture.launch("image/*")
@@ -176,7 +196,7 @@ class AlbumListFragment: Fragment() {
             }
             MenuOptionUtil.MenuOption.ADD_ALBUM_IMAGE -> {
                 customAlbumImageName?.let {
-                    addCustomAlbumImage(customAlbumImageName)
+                    addCustomAlbumImage(album, customAlbumImageName)
                 }
             }
             else -> {

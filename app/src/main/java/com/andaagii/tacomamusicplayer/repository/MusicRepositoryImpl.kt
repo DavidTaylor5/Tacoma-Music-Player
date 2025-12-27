@@ -10,7 +10,6 @@ import com.andaagii.tacomamusicplayer.database.entity.SongGroupCrossRefEntity
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
-import com.andaagii.tacomamusicplayer.util.UtilImpl
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -114,22 +113,23 @@ class MusicRepositoryImpl @Inject constructor(
             .map { playlists -> playlists.map { playlist -> mediaItemUtil.createPlaylistMediaItemFromSongGroupEntity(playlist) } }
     }
 
-    override suspend fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
-        Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
+    override suspend fun updateSongGroupImage(title: String, artFileName: String) {
+        Timber.d("updateSongGroupImage: title=$title, artFileName=$artFileName")
         withContext(Dispatchers.IO) {
-            val playlist = songGroupDao.findSongGroupByName(playlistTitle)
+            val songGroup = songGroupDao.findSongGroupByName(title)
 
             //If playlist is null I should create one?
-            if(playlist == null) {
-                Timber.d("addListOfSongMediaItemsToAPlaylist: No playlist found for playlistTitle=$playlistTitle")
+            if(songGroup == null) {
+                Timber.d("updateSongGroupImage: No playlist found for title=$title")
                 return@withContext
             }
 
-            val updatedPlaylist = playlist.copy(
+            val updatedSongGroup = songGroup.copy(
                 artFileCustom = artFileName,
+                useCustomArt = true
             )
 
-            songGroupDao.updateSongGroups(updatedPlaylist)
+            songGroupDao.updateSongGroups(updatedSongGroup)
         }
     }
 
