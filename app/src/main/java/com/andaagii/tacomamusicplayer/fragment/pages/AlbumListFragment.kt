@@ -23,6 +23,7 @@ import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
+import com.andaagii.tacomamusicplayer.viewmodel.AlbumTabViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,10 +35,7 @@ class AlbumListFragment: Fragment() {
     private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
-    private var currentAlbumList: List<MediaItem> = listOf()
-
-    private var currentSortingType: SortingUtil.SortingOption? = null
-    private var currentLayoutType: LayoutType? = null
+    private val viewModel: AlbumTabViewModel by activityViewModels()
 
     //The name of the most recent playlist that I want to update the image for
     private var albumCustomImageName = "empty"
@@ -89,50 +87,73 @@ class AlbumListFragment: Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentAlbumlistBinding.inflate(inflater)
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.availableAlbums.collect { availableAlbums ->
-                    Timber.d("onCreateView: availableAlbums updated! size=${availableAlbums.size}")
-                    currentAlbumList = SortingUtil.sortAlbums(
-                        availableAlbums,
-                        parentViewModel.sortingForAlbumTab.value
-                            ?: SortingUtil.SortingOption.SORTING_NEWEST_RELEASE
+                viewModel.albumTabState.collect { state ->
+
+                    // Sort the albums by user preference
+                    val sortedAlbums = SortingUtil.sortAlbums(
+                        state.albums,
+                        state.sorting
                     )
 
-                    if(binding.displayRecyclerview.adapter == null) {
-                        //on initial
-                        binding.displayRecyclerview.adapter = AlbumListAdapter(
-                            currentAlbumList,
-                            this@AlbumListFragment::onAlbumClick,
-                            parentViewModel::playAlbum,
-                            this@AlbumListFragment::handleAlbumSetting
-                        )
-                    } else {
-                        currentLayoutType?.let {
-                            updateAlbumLayout(it)
+                    // check if adapter is initialized
+                    if(binding.displayRecyclerview.adapter != null) {
+
+                        // check if layout matches expected layout
+                        if(binding.displayRecyclerview.adapter is AlbumListAdapter
+                            && state.layout != LayoutType.LINEAR_LAYOUT) {
+                            initializeGridLayout(albums = sortedAlbums)
+                        } else if(binding.displayRecyclerview.adapter is AlbumGridAdapter
+                            && state.layout != LayoutType.TWO_GRID_LAYOUT) {
+                            initializeLinearLayout(albums = sortedAlbums)
+                        } else {
+                            val adapter = binding.displayRecyclerview.adapter
+                            when(adapter) {
+                                is AlbumListAdapter -> { adapter.submitList(sortedAlbums) }
+                                is AlbumGridAdapter -> { adapter.submitList(sortedAlbums) }
+                                else -> { Timber.e("onCreateView: Error Unable to submit list of unknown adapter type.")}
+                            }
                         }
-                        currentSortingType?.let {
-                            updateAlbumSorting(it)
+                    } else {
+                        //album is not initialized
+                        when(state.layout) {
+                            LayoutType.LINEAR_LAYOUT -> { initializeLinearLayout(sortedAlbums) }
+                            LayoutType.TWO_GRID_LAYOUT -> { initializeGridLayout(sortedAlbums) }
                         }
                     }
-
                 }
             }
         }
 
-        parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
-            updateAlbumLayout(layout)
-            currentLayoutType = layout
-        }
-
-        parentViewModel.sortingForAlbumTab.observe(viewLifecycleOwner) { sortingOption ->
-            updateAlbumSorting(sortingOption)
-            currentSortingType = sortingOption
-        }
-
-        setupPage()
-
         return binding.root
+    }
+
+    private fun initializeLinearLayout(
+        albums: List<MediaItem>
+    ) {
+        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.adapter = AlbumListAdapter(
+            this@AlbumListFragment::onAlbumClick,
+            parentViewModel::playAlbum,
+            this@AlbumListFragment::handleAlbumSetting
+        )
+        (binding.displayRecyclerview.adapter as AlbumListAdapter)
+            .submitList(albums)
+    }
+
+    private fun initializeGridLayout(
+        albums: List<MediaItem>
+    ) {
+        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
+        binding.displayRecyclerview.adapter = AlbumGridAdapter(
+            this@AlbumListFragment::onAlbumClick,
+            parentViewModel::playAlbum,
+            this@AlbumListFragment::handleAlbumSetting
+        )
+        (binding.displayRecyclerview.adapter as AlbumListAdapter)
+            .submitList(albums)
     }
 
     private fun addCustomAlbumImage(album:MediaItem, customAlbumImageName: String) {
@@ -142,48 +163,6 @@ class AlbumListFragment: Fragment() {
 
         // ActivityResultLauncher is able to launch the activity to kick off the request for a result.
         getPicture.launch("image/*")
-    }
-
-    private fun updateAlbumSorting(sorting: SortingUtil.SortingOption) {
-        Timber.d("updateAlbumSorting: sorting=$sorting")
-
-        //Update the currentAlbumList
-        currentAlbumList = SortingUtil.sortAlbums(currentAlbumList, sorting)
-
-        //Set the current album list to be shown
-        binding.displayRecyclerview.adapter.let { adapter ->
-            when(adapter) {
-                is AlbumListAdapter -> {
-                    adapter.updateData(currentAlbumList)
-                }
-                is AlbumGridAdapter -> {
-                    adapter.updateData(currentAlbumList)
-                }
-            }
-        }
-    }
-
-    private fun updateAlbumLayout(layout: LayoutType) {
-        Timber.d("updateAlbumLayout: ")
-
-        //TODO Dangerous, what if I only update one adapter... this is not efficient?
-        if(layout == LayoutType.LINEAR_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            binding.displayRecyclerview.adapter = AlbumListAdapter(
-                currentAlbumList,
-                this::onAlbumClick,
-                parentViewModel::playAlbum,
-                this::handleAlbumSetting
-            )
-        } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
-            binding.displayRecyclerview.adapter = AlbumGridAdapter(
-                currentAlbumList,
-                this::onAlbumClick,
-                parentViewModel::playAlbum,
-                this::handleAlbumSetting
-            )
-        }
     }
 
     private fun handleAlbumSetting(option: MenuOptionUtil.MenuOption, album: MediaItem, customAlbumImageName: String? = null) {
@@ -208,9 +187,5 @@ class AlbumListFragment: Fragment() {
     private fun onAlbumClick(album: MediaItem) {
         parentViewModel.querySongsFromAlbum(album)
         parentViewModel.setPage(PageType.SONG_PAGE)
-    }
-
-    private fun setupPage() {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

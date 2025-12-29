@@ -75,7 +75,7 @@ class UtilImpl {
             }
         }
 
-        private fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+        fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size): Boolean {
             Timber.d("drawMp3agicBitmap: uri=$uri")
             val fixUrl = Uri.fromFile(File("/storage/emulated/0/Music/Clipse/let-god-sort-em-out/11-so-far-ahead-(pharrell-williams).mp3"))
             val file = UtilImpl.uriToFile(view.context, fixUrl)

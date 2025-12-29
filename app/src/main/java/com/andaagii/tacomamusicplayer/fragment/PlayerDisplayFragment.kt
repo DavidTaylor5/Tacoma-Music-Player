@@ -154,24 +154,25 @@ class PlayerDisplayFragment: Fragment() {
                 }
             }
 
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-
-                //Update the Sorting for the tab.
-                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
-                parentViewModel.updateSortingForPage(chosenSortingOption)
-
-                parentViewModel.getCurrentPage()?.let { page ->
-                    if(page == PageType.PLAYLIST_PAGE) {
-                        parentViewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
-                    } else if(page == PageType.ALBUM_PAGE) {
-                        parentViewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
-                    }
-                }
-
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
+            //TODO Bring back sorting UI
+//            menu.setOnMenuItemClickListener {
+//                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+//
+//                //Update the Sorting for the tab.
+//                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+//                parentViewModel.updateSortingForPage(chosenSortingOption)
+//
+//                parentViewModel.getCurrentPage()?.let { page ->
+//                    if(page == PageType.PLAYLIST_PAGE) {
+//                        parentViewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
+//                    } else if(page == PageType.ALBUM_PAGE) {
+//                        parentViewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
+//                    }
+//                }
+//
+//                return@setOnMenuItemClickListener true
+//            }
+//            menu.show()
         }
 
         binding.searchButton?.setOnClickListener {
@@ -263,25 +264,27 @@ class PlayerDisplayFragment: Fragment() {
             }
         }
 
-        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
-            playlistPageCurrentLayout = layout
-            playlistPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
-                R.drawable.baseline_grid_view_24
-            } else {
-                R.drawable.baseline_table_rows_24
-            }
-            binding.layoutButton?.setBackgroundResource(playlistPageCurrentIcon ?: 0)
-        }
+        //TODO Bring back sorting UI
+//        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
+//            playlistPageCurrentLayout = layout
+//            playlistPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
+//                R.drawable.baseline_grid_view_24
+//            } else {
+//                R.drawable.baseline_table_rows_24
+//            }
+//            binding.layoutButton?.setBackgroundResource(playlistPageCurrentIcon ?: 0)
+//        }
 
-        parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
-            albumPageCurrentLayout = layout
-            albumPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
-                R.drawable.baseline_grid_view_24
-            } else {
-                R.drawable.baseline_table_rows_24
-            }
-            binding.layoutButton?.setBackgroundResource(albumPageCurrentIcon ?: 0)
-        }
+        //TODO add back the layout button
+//        parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
+//            albumPageCurrentLayout = layout
+//            albumPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
+//                R.drawable.baseline_grid_view_24
+//            } else {
+//                R.drawable.baseline_table_rows_24
+//            }
+//            binding.layoutButton?.setBackgroundResource(albumPageCurrentIcon ?: 0)
+//        }
 
         binding.miniPlayerPlayButton?.setOnClickListener {
             parentViewModel.flipPlayingState()
@@ -392,15 +395,18 @@ class PlayerDisplayFragment: Fragment() {
         binding.miniPlayerControls?.visibility = View.VISIBLE
 
         binding.layoutButton?.visibility = View.VISIBLE
-        binding.layoutButton?.setOnClickListener {
-            if(playlistPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
-                //Update Layout State / Save to datastore
-                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                //Update Layout State / Save to datastore
-                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-            }
-        }
+
+        //TODO bring back layout UI
+//        binding.layoutButton?.setOnClickListener {
+//            if(playlistPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
+//                //Update Layout State / Save to datastore
+//                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
+//            } else {
+//                //Update Layout State / Save to datastore
+//                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
+//            }
+//        }
+
         playlistPageCurrentIcon?.let { iconResId ->
             binding.layoutButton?.setBackgroundResource(iconResId)
         }
@@ -417,15 +423,17 @@ class PlayerDisplayFragment: Fragment() {
         binding.miniPlayerControls?.visibility = View.VISIBLE
 
         binding.layoutButton?.visibility = View.VISIBLE
-        binding.layoutButton?.setOnClickListener {
-            if(albumPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
-                //Update Layout State / Save to datastore
-                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                //Update Layout State / Save to datastore
-                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-            }
-        }
+
+        //TODO bring back UI / functionality for changing layout
+//        binding.layoutButton?.setOnClickListener {
+//            if(albumPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
+//                //Update Layout State / Save to datastore
+//                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
+//            } else {
+//                //Update Layout State / Save to datastore
+//                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
+//            }
+//        }
         albumPageCurrentIcon?.let { iconResId ->
             binding.layoutButton?.setBackgroundResource(iconResId)
         }

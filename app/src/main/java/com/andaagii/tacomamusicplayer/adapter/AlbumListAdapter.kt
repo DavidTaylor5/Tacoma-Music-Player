@@ -2,7 +2,6 @@ package com.andaagii.tacomamusicplayer.adapter
 
 import android.content.Context
 import android.net.Uri
-import android.util.Size
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -10,8 +9,10 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.adapter.diff.MediaItemDiffCallback
 import com.andaagii.tacomamusicplayer.databinding.ViewholderAlbumBinding
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
@@ -23,12 +24,10 @@ import java.io.File
  * A recyclerview adapter that is able to take a list of Album Media Items and display them.
  */
 class AlbumListAdapter(
-    private var albums: List<MediaItem>,
     private val onAlbumClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (MediaItem) -> Unit,
     private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
-): RecyclerView.Adapter<AlbumListAdapter.AlbumViewHolder>() { //TODO I want to update all of my recyclerview to use Paging3 library
-
+): ListAdapter<MediaItem, AlbumListAdapter.AlbumViewHolder>(MediaItemDiffCallback) {
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
      */
@@ -41,93 +40,73 @@ class AlbumListAdapter(
         return AlbumViewHolder(binding)
     }
 
-    fun updateData(albums: List<MediaItem>) {
-        this.albums = albums
-        this.notifyDataSetChanged()
-    }
-
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: AlbumViewHolder, position: Int) {
         Timber.d("onBindViewHolder: ")
 
-        //First check that dataSet has a value for position
-        if(position < albums.size) {
-            val album = albums[position]
-            //val albumMetadata = album.mediaMetadata
-            val albumArtUri = album.mediaMetadata.artworkUri
-            val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
-                groupTitle = album.mediaMetadata.albumTitle.toString(),
-                artist = album.mediaMetadata.albumArtist.toString(),
-                songGroupType = SongGroupType.ALBUM
+        val album = getItem(position)
+        //val albumMetadata = album.mediaMetadata
+        val albumArtUri = album.mediaMetadata.artworkUri
+        val customImage = UtilImpl.getImageBaseNameFromExternalStorage(
+            groupTitle = album.mediaMetadata.albumTitle.toString(),
+            artist = album.mediaMetadata.albumArtist.toString(),
+            songGroupType = SongGroupType.ALBUM
+        )
+        Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
+
+        val albumTitle = album.mediaMetadata.albumTitle.toString()
+        val albumArtist = album.mediaMetadata.albumArtist.toString()
+        val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
+
+        viewHolder.binding.playButton.setOnClickListener {
+            onPlayIconClick(album)
+        }
+
+        viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
+
+        // Show album art based on mediaItem (can either be original or custom)
+        val artFile = File(albumArtUri.toString())
+        if(artFile.exists()) {
+            viewHolder.binding.albumArt.setImageURI(albumArtUri)
+        } else {
+            viewHolder.binding.albumArt.setImageDrawable(AppCompatResources.getDrawable(viewHolder.binding.root.context, R.drawable.white_note))
+        }
+
+        viewHolder.binding.menuIcon.setOnClickListener {
+            val menu = PopupMenu(
+                viewHolder.itemView.context,
+                viewHolder.binding.menuIcon,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
             )
-            Timber.d("onBindViewHolder: CHECKING VALUES albumTitle=${album.mediaMetadata.albumTitle}, albumArtist=${album.mediaMetadata.albumArtist}, albumArtUri=${album.mediaMetadata.artworkUri}")
 
-            val albumTitle = album.mediaMetadata.albumTitle.toString()
-            val albumArtist = album.mediaMetadata.albumArtist.toString()
-            val albumUri = album.mediaMetadata.artworkUri ?: Uri.EMPTY
+            menu.menuInflater.inflate(R.menu.album_options, menu.menu)
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
-            viewHolder.binding.playButton.setOnClickListener {
-                onPlayIconClick(album)
-            }
-
-            viewHolder.binding.itemContainer.setOnClickListener { onAlbumClick(album) }
-
-            // Show album art based on mediaItem (can either be original or custom)
-            val artFile = File(albumArtUri.toString())
-            if(artFile.exists()) {
-                viewHolder.binding.albumArt.setImageURI(albumArtUri)
-            } else {
-                viewHolder.binding.albumArt.setImageDrawable(AppCompatResources.getDrawable(viewHolder.binding.root.context, R.drawable.white_note))
-            }
-
-            //TODO I have logic to read the mp3agic tag in this function, TODO for some albums...
-//            UtilImpl.drawMediaItemArt(
-//                viewHolder.binding.albumArt,
-//                albumUri,
-//                Size(400, 400),
-//                customImage
-//            )
-
-            viewHolder.binding.menuIcon.setOnClickListener {
-                val menu = PopupMenu(
-                    viewHolder.itemView.context,
-                    viewHolder.binding.menuIcon,
-                    Gravity.START,
-                    0,
-                    R.style.PopupMenuBlack
+                //Handle Album Option
+                val customImageName = UtilImpl.getImageBaseNameFromExternalStorage(
+                    groupTitle = album.mediaMetadata.albumTitle.toString(),
+                    artist = album.mediaMetadata.albumArtist.toString(),
+                    songGroupType = SongGroupType.ALBUM
+                )
+                handleAlbumOption(
+                    MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
+                    getItem(position),
+                    customImageName
                 )
 
-                menu.menuInflater.inflate(R.menu.album_options, menu.menu)
-                menu.setOnMenuItemClickListener {
-                    Toast.makeText(viewHolder.itemView.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-
-                    //Handle Album Option
-                    val customImageName = UtilImpl.getImageBaseNameFromExternalStorage(
-                        groupTitle = album.mediaMetadata.albumTitle.toString(),
-                        artist = album.mediaMetadata.albumArtist.toString(),
-                        songGroupType = SongGroupType.ALBUM
-                    )
-                    handleAlbumOption(
-                        MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                        albums[position],
-                        customImageName
-                    )
-
-                    return@setOnMenuItemClickListener true
-                }
-                menu.show()
+                return@setOnMenuItemClickListener true
             }
+            menu.show()
+        }
 
-            viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
-            album.mediaMetadata.releaseYear?.let { year ->
-                if(year > 0) {
-                    viewHolder.binding.releaseYear.text = year.toString()
-                }
+        viewHolder.binding.albumName.text = "$albumTitle \n $albumArtist"
+        album.mediaMetadata.releaseYear?.let { year ->
+            if(year > 0) {
+                viewHolder.binding.releaseYear.text = year.toString()
             }
         }
-    }
-
-    override fun getItemCount(): Int {
-        return albums.size
     }
 }
