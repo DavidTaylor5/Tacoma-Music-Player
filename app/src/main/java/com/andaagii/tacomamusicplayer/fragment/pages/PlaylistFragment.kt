@@ -3,6 +3,8 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
+import android.text.Layout
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -30,6 +33,8 @@ import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import android.widget.PopupMenu
+import android.widget.Toast
 
 @AndroidEntryPoint
 class PlaylistFragment: Fragment() {
@@ -40,6 +45,8 @@ class PlaylistFragment: Fragment() {
 
     //The name of the most recent playlist that I want to update the image for
     private var playlistThatNeedsNewImage = "empty"
+
+    private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
 
     private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if(result.resultCode == RESULT_OK) {
@@ -98,6 +105,14 @@ class PlaylistFragment: Fragment() {
                         state.sorting
                     )
 
+                    // Adjust Layout button
+                    currLayout = state.layout
+                    if(currLayout == LayoutType.LINEAR_LAYOUT) {
+                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_table_rows_24)
+                    } else {
+                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_grid_view_24)
+                    }
+
                     // check if adapter is initialized
                     if(binding.displayRecyclerview.adapter != null) {
 
@@ -134,6 +149,41 @@ class PlaylistFragment: Fragment() {
                 parentViewModel.showAddPlaylistPromptOnPlaylistPage(false)
             }
         }
+
+        binding.layoutOption.setOnClickListener {
+            if(currLayout == LayoutType.LINEAR_LAYOUT) {
+                viewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
+            } else {
+                viewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
+            }
+        }
+
+        binding.settingsOption.setOnClickListener {
+            val menu = PopupMenu(
+                this.context,
+                binding.settingsOption,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
+            menu.menuInflater.inflate(R.menu.sorting_options_playlist, menu.menu)
+
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+
+                //Update the Sorting for the tab.
+                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+                viewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
+
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
+        }
+
+        binding.addPlaylistBtn.setOnClickListener {
+            parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
+        }
+
         setupCreatePlaylistPrompt()
         return binding.root
     }

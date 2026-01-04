@@ -226,6 +226,18 @@ class SongListFragment(): Fragment() {
             }
         }
 
+        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
+            if(isShowing) {
+                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_off_24)
+            } else {
+                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_24)
+            }
+        }
+
+        binding.searchOption.setOnClickListener {
+            parentViewModel.flipSearchButtonState()
+        }
+
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {
                 activateSearchMode()

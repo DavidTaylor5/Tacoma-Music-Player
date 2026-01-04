@@ -185,20 +185,9 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
-//        binding.menuIcon.setOnClickListener {
-//            val menu = PopupMenu(binding.root.context, binding.menuIcon)
-//
-//            menu.menuInflater.inflate(R.menu.queue_overall_options, menu.menu)
-//            menu.setOnMenuItemClickListener {
-//                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-//                handleSongSetting(
-//                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-//                    parentViewModel.currentSongList.value?.songs ?: listOf()
-//                )
-//                return@setOnMenuItemClickListener true
-//            }
-//            menu.show()
-//        }
+        binding.clearQueue.setOnClickListener {
+            parentViewModel.clearQueue()
+        }
 
         //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
         //TODO Remove this code when I implement coil or glide....

@@ -1,17 +1,14 @@
 package com.andaagii.tacomamusicplayer.fragment
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Size
 import android.view.GestureDetector
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
-import android.widget.PopupMenu
-import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -23,10 +20,8 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
-import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
-import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,11 +31,6 @@ import timber.log.Timber
 class PlayerDisplayFragment: Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: PlayerDisplayFragmentBinding
-
-    private var playlistPageCurrentLayout: LayoutType? = null
-    private var playlistPageCurrentIcon: Int? = null
-    private var albumPageCurrentLayout: LayoutType? = null
-    private var albumPageCurrentIcon: Int? = null
 
     private val parentViewModel: MainViewModel by activityViewModels()
 
@@ -134,100 +124,47 @@ class PlayerDisplayFragment: Fragment() {
 //            gesture.onTouchEvent(event)
 //        }
 
-
-        binding.sortingButton?.setOnClickListener {
-            val menu = PopupMenu(
-                this.context,
-                binding.sortingButton,
-                Gravity.START,
-                0,
-                R.style.PopupMenuBlack
-            )
-
-            parentViewModel.getCurrentPage()?.let {page ->
-                if(page == PageType.PLAYLIST_PAGE) {
-                    menu.menuInflater.inflate(R.menu.sorting_options_playlist, menu.menu)
-                } else if (page == PageType.ALBUM_PAGE) {
-                    menu.menuInflater.inflate(R.menu.sorting_options_album, menu.menu)
-                } else {
-                    Timber.d("onCreateView: not setting sortingButton, currentPage unknown")
-                }
-            }
-
-            //TODO Bring back sorting UI
-//            menu.setOnMenuItemClickListener {
-//                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-//
-//                //Update the Sorting for the tab.
-//                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
-//                parentViewModel.updateSortingForPage(chosenSortingOption)
-//
-//                parentViewModel.getCurrentPage()?.let { page ->
-//                    if(page == PageType.PLAYLIST_PAGE) {
-//                        parentViewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
-//                    } else if(page == PageType.ALBUM_PAGE) {
-//                        parentViewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
-//                    }
-//                }
-//
-//                return@setOnMenuItemClickListener true
-//            }
-//            menu.show()
-        }
-
-        binding.searchButton?.setOnClickListener {
-            Toast.makeText(this.context, "Search Icon Pressed!", Toast.LENGTH_SHORT).show()
-            parentViewModel.handleSearchButtonClick()
-        }
-
-
-
-        binding.cancelSearchButton?.setOnClickListener {
-            Toast.makeText(this.context, "Cancel Search Pressed!", Toast.LENGTH_SHORT).show()
-            parentViewModel.handleCancelSearchButtonClick()
-        }
-
         binding.pager.adapter = pagerAdapter
         binding.pager.offscreenPageLimit = 4
 
         //Start app on player page
         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
         navigateToPlayerPage()
-        adjustForPlayerPage()
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 Timber.d("onPageSelected: position=$position")
                 super.onPageSelected(position)
 
+                // Don't show the mini player on the player page
+                if(position != PageType.PLAYER_PAGE.type()) {
+                    binding.miniPlayerControls?.visibility = View.VISIBLE
+                } else {
+                    binding.miniPlayerControls?.visibility = View.GONE
+                }
+
                 //observe the current page
                 parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
 
                 when (position) {
-
                     PageType.QUEUE_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
-                        adjustForQueuePage()
                     }
 
                     PageType.PLAYER_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-                        adjustForPlayerPage()
                     }
 
                     PageType.PLAYLIST_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
-                        adjustForPlaylistPage()
                     }
 
                     PageType.ALBUM_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
-                        adjustForAlbumPage()
                     }
 
                     PageType.SONG_PAGE.type() -> {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
-                        adjustForSongPage()
                     }
                 }
             }
@@ -264,28 +201,6 @@ class PlayerDisplayFragment: Fragment() {
             }
         }
 
-        //TODO Bring back sorting UI
-//        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
-//            playlistPageCurrentLayout = layout
-//            playlistPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
-//                R.drawable.baseline_grid_view_24
-//            } else {
-//                R.drawable.baseline_table_rows_24
-//            }
-//            binding.layoutButton?.setBackgroundResource(playlistPageCurrentIcon ?: 0)
-//        }
-
-        //TODO add back the layout button
-//        parentViewModel.layoutForAlbumTab.observe(viewLifecycleOwner) { layout ->
-//            albumPageCurrentLayout = layout
-//            albumPageCurrentIcon = if(layout == LayoutType.TWO_GRID_LAYOUT) {
-//                R.drawable.baseline_grid_view_24
-//            } else {
-//                R.drawable.baseline_table_rows_24
-//            }
-//            binding.layoutButton?.setBackgroundResource(albumPageCurrentIcon ?: 0)
-//        }
-
         binding.miniPlayerPlayButton?.setOnClickListener {
             parentViewModel.flipPlayingState()
         }
@@ -300,16 +215,6 @@ class PlayerDisplayFragment: Fragment() {
 
         binding.miniPlayerControls?.setOnClickListener {
             navigateToPlayerPage()
-        }
-
-        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
-            if(isShowing) {
-                binding.cancelSearchButton?.visibility = View.VISIBLE
-                binding.searchButton?.visibility = View.GONE
-            } else {
-                binding.searchButton?.visibility = View.VISIBLE
-                binding.cancelSearchButton?.visibility = View.GONE
-            }
         }
 
         parentViewModel.currentPlayingSongInfo.observe(requireActivity()) { currentSong ->
@@ -328,7 +233,7 @@ class PlayerDisplayFragment: Fragment() {
         val customImage = "album_${song.albumTitle}"
         UtilImpl.drawMediaItemArt(
             binding.miniPlayerImage!!,
-            Uri.parse(song.artworkUri),
+            song.artworkUri.toUri(),
             Size(300, 300),
             customImage,
             synchronous = true
@@ -337,119 +242,5 @@ class PlayerDisplayFragment: Fragment() {
         //Set mini player description
         val songDescription = "${song.songTitle} - ${song.artist}"
         binding.miniPlayerDescription?.text = songDescription
-    }
-
-    private fun determineWhichSearchIconToShow() {
-        if(parentViewModel.isShowingSearchMode.value == true) {
-            binding.cancelSearchButton?.visibility = View.VISIBLE
-            binding.searchButton?.visibility = View.GONE
-        } else {
-            binding.searchButton?.visibility = View.VISIBLE
-            binding.cancelSearchButton?.visibility = View.GONE
-        }
-    }
-
-    private fun removeSearchIcons() {
-        binding.searchButton?.visibility = View.GONE
-        binding.cancelSearchButton?.visibility = View.GONE
-    }
-
-    private fun adjustForQueuePage() {
-        removeSearchIcons()
-        binding.miniPlayerControls?.visibility = View.VISIBLE
-        binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = getString(R.string.queue)
-        binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = getString(R.string.clear)
-        binding.pageAction?.setOnClickListener {
-            parentViewModel.clearQueue()
-        }
-
-        binding.layoutButton?.visibility = View.GONE
-
-        binding.buttonContainer?.visibility = View.GONE
-    }
-
-    private fun adjustForPlayerPage() {
-        binding.pageTitle?.visibility = View.GONE
-        binding.pageAction?.visibility = View.GONE
-        removeSearchIcons()
-        binding.miniPlayerControls?.visibility = View.GONE
-
-        binding.layoutButton?.visibility = View.GONE
-
-        binding.buttonContainer?.visibility = View.GONE
-    }
-
-    private fun adjustForPlaylistPage() {
-        binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = getString(R.string.playlists)
-        binding.pageAction?.visibility = View.VISIBLE
-        binding.pageAction?.text = getString(R.string.add_playlist)
-        binding.pageAction?.setOnClickListener {
-            parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
-        }
-
-        binding.sortingButton?.visibility = View.VISIBLE
-        removeSearchIcons()
-        binding.miniPlayerControls?.visibility = View.VISIBLE
-
-        binding.layoutButton?.visibility = View.VISIBLE
-
-        //TODO bring back layout UI
-//        binding.layoutButton?.setOnClickListener {
-//            if(playlistPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
-//                //Update Layout State / Save to datastore
-//                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-//            } else {
-//                //Update Layout State / Save to datastore
-//                parentViewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-//            }
-//        }
-
-        playlistPageCurrentIcon?.let { iconResId ->
-            binding.layoutButton?.setBackgroundResource(iconResId)
-        }
-
-        binding.buttonContainer?.visibility = View.VISIBLE
-    }
-
-    private fun adjustForAlbumPage() {
-        binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = getString(R.string.albums)
-        binding.pageAction?.visibility = View.INVISIBLE
-        binding.sortingButton?.visibility = View.VISIBLE
-        removeSearchIcons()
-        binding.miniPlayerControls?.visibility = View.VISIBLE
-
-        binding.layoutButton?.visibility = View.VISIBLE
-
-        //TODO bring back UI / functionality for changing layout
-//        binding.layoutButton?.setOnClickListener {
-//            if(albumPageCurrentLayout == LayoutType.LINEAR_LAYOUT) {
-//                //Update Layout State / Save to datastore
-//                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-//            } else {
-//                //Update Layout State / Save to datastore
-//                parentViewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-//            }
-//        }
-        albumPageCurrentIcon?.let { iconResId ->
-            binding.layoutButton?.setBackgroundResource(iconResId)
-        }
-
-        binding.buttonContainer?.visibility = View.VISIBLE
-    }
-
-    private fun adjustForSongPage() {
-        binding.pageTitle?.visibility = View.VISIBLE
-        binding.pageTitle?.text = getString(R.string.songs)
-        binding.pageAction?.visibility = View.INVISIBLE
-        binding.sortingButton?.visibility = View.INVISIBLE
-        determineWhichSearchIconToShow()
-        binding.miniPlayerControls?.visibility = View.VISIBLE
-        binding.layoutButton?.visibility = View.GONE
-
-        binding.buttonContainer?.visibility = View.VISIBLE
     }
 }

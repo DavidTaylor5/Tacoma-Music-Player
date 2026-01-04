@@ -137,7 +137,7 @@ class MainViewModel @Inject constructor(
 
     val isShowingSearchMode: LiveData<Boolean>
         get() = _isShowingSearchMode
-    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData(false)
 
     val notifyHideKeyboard: LiveData<Int>
         get() = _notifyHideKeyboard
@@ -185,9 +185,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun handleSearchButtonClick() {
-        Timber.d("handleSearchButtonClick: ")
-        _isShowingSearchMode.postValue(true)
+    // Flip between search state and non search state
+    fun flipSearchButtonState() {
+        Timber.d("flipSearchButtonState: isSearchMode=${_isShowingSearchMode.value}")
+         _isShowingSearchMode.value?.let { isSearchMode ->
+             _isShowingSearchMode.postValue(!isSearchMode)
+             removeVirtualKeyboard()
+         }
     }
 
     fun handleCancelSearchButtonClick() {
