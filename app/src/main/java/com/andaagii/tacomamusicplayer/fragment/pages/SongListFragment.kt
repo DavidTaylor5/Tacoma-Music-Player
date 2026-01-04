@@ -254,16 +254,16 @@ class SongListFragment(): Fragment() {
             }
         }
 
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                parentViewModel.availablePlaylists.collect { playlists ->
-//                    val playlistsWithoutQueue = playlists.filter { playlist ->
-//                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
-//                    }
-//                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
-//                }
-//            }
-//        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.availablePlaylists.collect { playlists ->
+                    val playlistsWithoutQueue = playlists.filter { playlist ->
+                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+                    }
+                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+                }
+            }
+        }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {

@@ -133,6 +133,30 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateAlbumSongsWithCustomImage(title: String, artFileName: String) {
+        Timber.d("updateSongGroupSongsWithCustomImage: ")
+        withContext(Dispatchers.IO) {
+            val songGroup = songGroupDao.findSongGroupByName(title)
+
+            //If playlist is null I should create one?
+            if(songGroup == null) {
+                Timber.d("updateSongGroupImage: No playlist found for title=$title")
+                return@withContext
+            }
+
+            val songs = songDao.getAllSongsFromAlbum(title)
+
+            val updatedSongs = songs.map {
+                it.copy(
+                    artFileCustom = artFileName,
+                    useCustomArt = true
+                )
+            }
+
+            songDao.updateItems(*updatedSongs.toTypedArray())
+        }
+    }
+
     override suspend fun  createInitialQueueIfEmpty(title: String) {
         var queue = songGroupDao.findSongGroupByName(title)
         if(queue == null) {

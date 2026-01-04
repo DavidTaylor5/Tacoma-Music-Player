@@ -21,7 +21,6 @@ import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
-import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
@@ -29,12 +28,9 @@ import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
-import com.andaagii.tacomamusicplayer.state.AlbumTabState
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil.SortingOption
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
@@ -42,9 +38,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -156,6 +150,13 @@ class MainViewModel @Inject constructor(
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
     private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    val availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            listOf()
+        )
 
     private val playerListener = object: Player.Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -482,10 +483,16 @@ class MainViewModel @Inject constructor(
     /**
      * Update the playlist image.
      */
-    fun updateSongGroupImage(title: String, artFileName: String) {
+    fun updateSongGroupImage(title: String, artFileName: String, updateSongs: Boolean = false) {
         Timber.d("updateSongGroupImage: title=$title, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
+            // Update Song Group
             musicRepo.updateSongGroupImage(title, artFileName)
+
+            // Update an album's songs with it's new custom image
+            if(updateSongs) {
+                musicRepo.updateAlbumSongsWithCustomImage(title, artFileName)
+            }
         }
     }
 

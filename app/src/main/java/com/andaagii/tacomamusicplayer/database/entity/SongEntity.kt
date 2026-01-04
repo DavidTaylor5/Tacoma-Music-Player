@@ -14,8 +14,6 @@ import androidx.room.Index
     ]
 )
 data class SongEntity(
-//    @PrimaryKey(autoGenerate = true)
-//    val id: Int = 0,
     @ColumnInfo(name = "album_title") val albumTitle: String,
     @ColumnInfo(name = "song_artist") val artist: String,
     @PrimaryKey
@@ -23,5 +21,7 @@ data class SongEntity(
     @ColumnInfo(name = "song_name") val name: String,
     @ColumnInfo(name = "song_uri") val uri: String,
     @ColumnInfo(name = "song_duration") val songDuration: String,
-    @ColumnInfo(name = "artwork_uri") val artworkUri: String,
+    @ColumnInfo(name = "art_file_original") val artFileOriginal: String = "",
+    @ColumnInfo(name = "art_file_custom") val artFileCustom: String = "",
+    @ColumnInfo(name = "use_custom_art") val useCustomArt: Boolean = false,
 )

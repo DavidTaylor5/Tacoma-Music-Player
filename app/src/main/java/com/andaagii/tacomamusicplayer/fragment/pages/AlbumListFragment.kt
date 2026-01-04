@@ -55,7 +55,8 @@ class AlbumListFragment: Fragment() {
                 croppedUri?.let { uri ->
                     parentViewModel.updateSongGroupImage(
                         title = selectedAlbumName,
-                        artFileName = uri.path.toString()
+                        artFileName = uri.path.toString(),
+                        updateSongs = true
                     )
                 }
             }
