@@ -34,6 +34,8 @@ class PlayerDisplayFragment: Fragment() {
 
     private val parentViewModel: MainViewModel by activityViewModels()
 
+    private var currPage: Int? = null
+
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
             Timber.d("onDoubleTap: navigate to the music chooser screen!")
@@ -136,8 +138,10 @@ class PlayerDisplayFragment: Fragment() {
                 Timber.d("onPageSelected: position=$position")
                 super.onPageSelected(position)
 
-                // Don't show the mini player on the player page
-                if(position != PageType.PLAYER_PAGE.type()) {
+                currPage = position
+
+                // Don't show the mini player on the player page // Or if the current song is null
+                if(position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
                     binding.miniPlayerControls?.visibility = View.VISIBLE
                 } else {
                     binding.miniPlayerControls?.visibility = View.GONE
@@ -229,6 +233,13 @@ class PlayerDisplayFragment: Fragment() {
     }
 
     private fun updateMiniPlayerForCurrentSong(song: SongData) {
+        val miniPlayerShowing = binding.miniPlayerControls?.visibility ?: View.GONE
+        if(SongData.isNullSong(song)) {
+            binding.miniPlayerControls?.visibility = View.GONE
+        } else if(miniPlayerShowing == View.GONE && currPage != null && currPage != PageType.PLAYER_PAGE.type()) {
+            binding.miniPlayerControls?.visibility = View.VISIBLE
+        }
+
         //Set mini player song image
         val customImage = "album_${song.albumTitle}"
         UtilImpl.drawMediaItemArt(
