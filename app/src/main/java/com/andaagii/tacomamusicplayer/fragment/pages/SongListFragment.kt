@@ -226,6 +226,18 @@ class SongListFragment(): Fragment() {
             }
         }
 
+        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
+            if(isShowing) {
+                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_off_24)
+            } else {
+                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_24)
+            }
+        }
+
+        binding.searchOption.setOnClickListener {
+            parentViewModel.flipSearchButtonState()
+        }
+
         parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {
                 activateSearchMode()
@@ -242,16 +254,16 @@ class SongListFragment(): Fragment() {
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.availablePlaylists.collect { playlists ->
-                    val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
-                    }
-                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
-                }
-            }
-        }
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                parentViewModel.availablePlaylists.collect { playlists ->
+//                    val playlistsWithoutQueue = playlists.filter { playlist ->
+//                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+//                    }
+//                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
+//                }
+//            }
+//        }
 
         viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
             if(isShowing) {

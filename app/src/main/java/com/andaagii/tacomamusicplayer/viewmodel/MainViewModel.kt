@@ -10,7 +10,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -18,15 +17,10 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.PlaylistData
 import com.andaagii.tacomamusicplayer.data.ScreenData
-import com.andaagii.tacomamusicplayer.data.SearchData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
-import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
-import com.andaagii.tacomamusicplayer.database.entity.SongEntity
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
@@ -35,10 +29,12 @@ import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
+import com.andaagii.tacomamusicplayer.state.AlbumTabState
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
+import com.andaagii.tacomamusicplayer.util.SortingUtil.SortingOption
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
@@ -46,7 +42,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,20 +63,6 @@ class MainViewModel @Inject constructor(
 ): AndroidViewModel(application) {
 
     private val permissionManager = AppPermissionUtil()
-
-    var availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            listOf()
-        )
-
-    var availableAlbums: StateFlow<List<MediaItem>> = musicRepo.getAllAvailableAlbumsFlow()
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            listOf()
-        )
 
     /**
      * Reference to the app's mediaController.
@@ -135,22 +119,6 @@ class MainViewModel @Inject constructor(
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
 
-    val layoutForPlaylistTab: LiveData<LayoutType>
-        get() = _layoutForPlaylistTab
-    private val _layoutForPlaylistTab: MutableLiveData<LayoutType> = MutableLiveData()
-
-    val sortingForPlaylistTab: LiveData<SortingUtil.SortingOption>
-        get() = _sortingForPlaylistTab
-    private val _sortingForPlaylistTab: MutableLiveData<SortingUtil.SortingOption> = MutableLiveData()
-
-    val layoutForAlbumTab: LiveData<LayoutType>
-        get() = _layoutForAlbumTab
-    private val _layoutForAlbumTab: MutableLiveData<LayoutType> = MutableLiveData()
-
-    val sortingForAlbumTab: LiveData<SortingUtil.SortingOption>
-        get() = _sortingForAlbumTab
-    private val _sortingForAlbumTab: MutableLiveData<SortingUtil.SortingOption> = MutableLiveData()
-
     val isPlaying: LiveData<Boolean>
         get() = _isPlaying
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
@@ -169,7 +137,7 @@ class MainViewModel @Inject constructor(
 
     val isShowingSearchMode: LiveData<Boolean>
         get() = _isShowingSearchMode
-    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData(false)
 
     val notifyHideKeyboard: LiveData<Int>
         get() = _notifyHideKeyboard
@@ -217,9 +185,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun handleSearchButtonClick() {
-        Timber.d("handleSearchButtonClick: ")
-        _isShowingSearchMode.postValue(true)
+    // Flip between search state and non search state
+    fun flipSearchButtonState() {
+        Timber.d("flipSearchButtonState: isSearchMode=${_isShowingSearchMode.value}")
+         _isShowingSearchMode.value?.let { isSearchMode ->
+             _isShowingSearchMode.postValue(!isSearchMode)
+             removeVirtualKeyboard()
+         }
     }
 
     fun handleCancelSearchButtonClick() {
@@ -286,62 +258,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun setTabLayoutsFromPrefs(context: Context) {
-        Timber.d("setTabLayoutsFromPrefs: ")
-        determinePlaylistTabLayout(context)
-        determineAlbumTabLayout(context)
-    }
-
-    private fun setTabSortingOptionFromPrefs(context: Context) {
-        Timber.d("setTabSortingOptionFromPrefs: ")
-        determinePlaylistTabSorting(context)
-        determineAlbumTabSorting(context)
-    }
-
     private fun setMusicPlayingPrefs(context: Context) {
         Timber.d("setMusicPlayingPrefs: ")
         //determineLoopingPref(context)
         determineShufflePref(context)
-    }
-
-    private fun determinePlaylistTabLayout(context: Context) {
-        Timber.d("determinePlaylistTabLayout: ")
-        viewModelScope.launch {
-            DataStoreUtil.getPlaylistLayoutPreference(context).collect { savedLayoutString ->
-                val layout = LayoutType.determineLayoutFromString(savedLayoutString)
-                _layoutForPlaylistTab.postValue(layout)
-            }
-        }
-    }
-
-    private fun determineAlbumTabLayout(context: Context) {
-        Timber.d("determineAlbumTabLayout: ")
-        viewModelScope.launch {
-            DataStoreUtil.getAlbumLayoutPreference(context).collect { savedLayoutString ->
-                val layout = LayoutType.determineLayoutFromString(savedLayoutString)
-                _layoutForAlbumTab.postValue(layout)
-            }
-        }
-    }
-
-    private fun determinePlaylistTabSorting(context: Context) {
-        Timber.d("determinePlaylistTabSorting: ")
-        viewModelScope.launch {
-            DataStoreUtil.getPlaylistSortingPreference(context).collect { savedSortingString ->
-                val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
-                _sortingForPlaylistTab.postValue(sorting)
-            }
-        }
-    }
-
-    private fun determineAlbumTabSorting(context: Context) {
-        Timber.d("determineAlbumTabSorting: ")
-        viewModelScope.launch {
-            DataStoreUtil.getAlbumSortingPreference(context).collect { savedSortingString ->
-                val sorting = SortingUtil.determineSortingOptionFromTitle(savedSortingString)
-                _sortingForAlbumTab.postValue(sorting)
-            }
-        }
     }
 
     private fun determineLoopingPref(context: Context) {
@@ -361,38 +281,6 @@ class MainViewModel @Inject constructor(
                 _shuffleMode.postValue(shuffleType)
             }
         }
-    }
-
-    fun savePlaylistLayout(context: Context, layout: LayoutType) {
-        Timber.d("savePlaylistLayout: layout=$layout")
-        viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setPlaylistLayoutPreference(context, layout)
-        }
-        _layoutForPlaylistTab.postValue(layout)
-    }
-
-    fun saveAlbumLayout(context: Context, layout: LayoutType) {
-        Timber.d("saveAlbumLayout: layout=$layout")
-        viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setAlbumLayoutPreference(context, layout)
-        }
-        _layoutForAlbumTab.postValue(layout)
-    }
-
-    fun savePlaylistSorting(context: Context, sorting: SortingUtil.SortingOption) {
-        Timber.d("savePlaylistSorting: sorting=$sorting")
-        viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setPlaylistSortingPreference(context, sorting)
-        }
-        _sortingForPlaylistTab.postValue(sorting)
-    }
-
-    fun saveAlbumSorting(context: Context, sorting: SortingUtil.SortingOption) {
-        Timber.d("saveAlbumSorting: sorting=$sorting")
-        viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setAlbumSortingPreference(context, sorting)
-        }
-        _sortingForAlbumTab.postValue(sorting)
     }
 
     private fun saveLoopingPref(context: Context, loopInt: Int) {
@@ -420,14 +308,6 @@ class MainViewModel @Inject constructor(
         currentPage = page
     }
 
-    fun updateSortingForPage(option: SortingUtil.SortingOption) {
-        if(currentPage == PageType.PLAYLIST_PAGE) {
-            _sortingForPlaylistTab.postValue(option)
-        } else if(currentPage == PageType.ALBUM_PAGE) {
-            _sortingForAlbumTab.postValue(option)
-        }
-    }
-
     fun getCurrentPage(): PageType? {
         return currentPage
     }
@@ -449,8 +329,6 @@ class MainViewModel @Inject constructor(
      */
     private fun checkUserPreferences() {
         Timber.d("checkUserPreferences: ")
-        setTabLayoutsFromPrefs(getApplication<Application>().applicationContext)
-        setTabSortingOptionFromPrefs(getApplication<Application>().applicationContext)
         setMusicPlayingPrefs(getApplication<Application>().applicationContext)
     }
 
@@ -604,10 +482,10 @@ class MainViewModel @Inject constructor(
     /**
      * Update the playlist image.
      */
-    fun updatePlaylistImage(playlistTitle: String, artFileName: String) {
-        Timber.d("updatePlaylistImage: playlistTitle=$playlistTitle, artFileName=$artFileName")
+    fun updateSongGroupImage(title: String, artFileName: String) {
+        Timber.d("updateSongGroupImage: title=$title, artFileName=$artFileName")
         viewModelScope.launch(Dispatchers.IO) {
-            musicRepo.updatePlaylistImage(playlistTitle, artFileName)
+            musicRepo.updateSongGroupImage(title, artFileName)
         }
     }
 

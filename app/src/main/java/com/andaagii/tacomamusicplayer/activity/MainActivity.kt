@@ -118,19 +118,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.availablePlaylists.collect { playlists ->
-                    Timber.d("availablePlaylists: playlists has updated size=${playlists.size}  ")
-                    if(playlists.isNotEmpty()) {
-                        for(playlist in playlists) {
-                            Timber.d("availablePlaylists: playlist.title=${playlist.mediaMetadata.albumTitle}")
-                        }
-                    }
-                }
-            }
-        }
-
         viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
             if(showLoadingScreen) {
                 binding.loadingScreen.visibility = View.VISIBLE

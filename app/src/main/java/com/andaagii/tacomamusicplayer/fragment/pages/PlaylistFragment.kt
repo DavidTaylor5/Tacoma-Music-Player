@@ -1,7 +1,10 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
+import android.text.Layout
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,11 +17,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.Playlist
-import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
@@ -26,21 +28,44 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.viewmodel.PlaylistTabViewModel
+import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import android.widget.PopupMenu
+import android.widget.Toast
 
 @AndroidEntryPoint
 class PlaylistFragment: Fragment() {
 
     private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+    private val viewModel: PlaylistTabViewModel by activityViewModels()
 
     //The name of the most recent playlist that I want to update the image for
     private var playlistThatNeedsNewImage = "empty"
 
-    private var currentLayout = LayoutType.LINEAR_LAYOUT
-    private var currentPlaylists: List<MediaItem> = listOf()
+    private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
+
+    private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == RESULT_OK) {
+            Timber.d("getCroppedPicture: RESULT_OK")
+            result.data?.let { cropData ->
+                val croppedUri = UCrop.getOutput(cropData)
+
+                croppedUri?.let { uri ->
+                    parentViewModel.updateSongGroupImage(
+                        title = playlistThatNeedsNewImage,
+                        artFileName = uri.path.toString()
+                    )
+                }
+            }
+        } else if(result.resultCode == UCrop.RESULT_ERROR) {
+            val error = result.data
+            Timber.d("getCroppedPicture: RESULT_ERROR cropError=${error?.let { e ->  UCrop.getError(e)} }")
+        }
+    }
 
     //Callback for when user chooses a playlist Image
     private val getPicture = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -52,42 +77,15 @@ class PlaylistFragment: Fragment() {
         }
 
         pictureUri?.let { uri ->
-            this.context?.let { fragmentContext ->
-                //Save picture to local data
-                val artFile = UtilImpl.saveImageToFile(
-                    context = fragmentContext,
-                    sourceUri = uri,
-                    fileName = playlistThatNeedsNewImage,
-                    isCustom = true
-                )
-
-                parentViewModel.updatePlaylistImage(
-                    playlistTitle = playlistThatNeedsNewImage,
-                    artFileName = artFile
-                )
-            }
-        }
-    }
-
-    private fun updatePlaylistLayout(layout: LayoutType) {
-        Timber.d("updatePlaylistLayout: layout=$layout")
-        currentLayout = layout
-        if(layout == LayoutType.LINEAR_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            binding.displayRecyclerview.adapter = PlaylistAdapter(
-                currentPlaylists,
-                this::onPlaylistClick,
-                parentViewModel::playPlaylist,
-                this::handlePlaylistSetting
+            val saveFileUri = UtilImpl.getSaveFileUri(
+                context = requireContext(),
+                fileName = playlistThatNeedsNewImage,
+                isCustom = true
             )
-        } else if(layout == LayoutType.TWO_GRID_LAYOUT) {
-            binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
-            binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-                currentPlaylists,
-                this::onPlaylistClick,
-                parentViewModel::playPlaylist,
-                this::handlePlaylistSetting
-            )
+            UCrop.of(uri, saveFileUri)
+                .withAspectRatio(1f, 1f)
+                .withMaxResultSize(700, 700)
+                .start(requireActivity(), getCroppedPicture)
         }
     }
 
@@ -98,47 +96,50 @@ class PlaylistFragment: Fragment() {
     ): View {
         binding = FragmentPlaylistBinding.inflate(inflater)
 
-
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.availablePlaylists.collect { playlists ->
-                    Timber.d("onCreateView: availablePlaylists updated! playlists.size=${playlists.size}")
-                                //Queue, QUEUE_ORDERED is saved as a playlist in database, user doesn't need to access it.
-                    val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE &&
-                                playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+                viewModel.playlistTabState.collect { state ->
+                    // Sort the playlists by user preference
+                    val sortedPlaylists = SortingUtil.sortPlaylists(
+                        state.playlists,
+                        state.sorting
+                    )
+
+                    // Adjust Layout button
+                    currLayout = state.layout
+                    if(currLayout == LayoutType.LINEAR_LAYOUT) {
+                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_table_rows_24)
+                    } else {
+                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_grid_view_24)
                     }
 
-                    currentPlaylists = SortingUtil.sortPlaylists(
-                        playlistsWithoutQueue,
-                        parentViewModel.sortingForPlaylistTab.value
-                            ?: SortingUtil.SortingOption.SORTING_BY_MODIFICATION_DATE
-                    )
-                    if(parentViewModel.layoutForPlaylistTab.value == LayoutType.TWO_GRID_LAYOUT) {
-                        binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-                            currentPlaylists,
-                            this@PlaylistFragment::onPlaylistClick,
-                            parentViewModel::playPlaylist,
-                            this@PlaylistFragment::handlePlaylistSetting
-                        )
+                    // check if adapter is initialized
+                    if(binding.displayRecyclerview.adapter != null) {
+
+                        // check if layout matches expected layout
+                        if(binding.displayRecyclerview.adapter is PlaylistAdapter
+                            && state.layout != LayoutType.LINEAR_LAYOUT) {
+                            initializeGridLayout(playlists = sortedPlaylists)
+                        } else if(binding.displayRecyclerview.adapter is PlaylistGridAdapter
+                            && state.layout != LayoutType.TWO_GRID_LAYOUT) {
+                            initializeLinearLayout(playlists = sortedPlaylists)
+                        } else {
+                            val adapter = binding.displayRecyclerview.adapter
+                            when(adapter) {
+                                is PlaylistAdapter -> { adapter.submitList(sortedPlaylists) }
+                                is PlaylistGridAdapter -> { adapter.submitList(sortedPlaylists) }
+                                else -> { Timber.e("onCreateView: Error Unable to submit list of unknown adapter type.")}
+                            }
+                        }
                     } else {
-                        binding.displayRecyclerview.adapter = PlaylistAdapter(
-                            currentPlaylists,
-                            this@PlaylistFragment::onPlaylistClick,
-                            parentViewModel::playPlaylist,
-                            this@PlaylistFragment::handlePlaylistSetting
-                        )
+                        //playlist is not initialized
+                        when(state.layout) {
+                            LayoutType.LINEAR_LAYOUT -> { initializeLinearLayout(sortedPlaylists) }
+                            LayoutType.TWO_GRID_LAYOUT -> { initializeGridLayout(sortedPlaylists) }
+                        }
                     }
                 }
             }
-        }
-
-
-        parentViewModel.layoutForPlaylistTab.observe(viewLifecycleOwner) { layout ->
-            updatePlaylistLayout(layout)
-        }
-        parentViewModel.sortingForPlaylistTab.observe(viewLifecycleOwner) { sorting ->
-            updatePlaylistSorting(sorting)
         }
 
         parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.observe(viewLifecycleOwner) { showPrompt ->
@@ -148,26 +149,69 @@ class PlaylistFragment: Fragment() {
                 parentViewModel.showAddPlaylistPromptOnPlaylistPage(false)
             }
         }
+
+        binding.layoutOption.setOnClickListener {
+            if(currLayout == LayoutType.LINEAR_LAYOUT) {
+                viewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
+            } else {
+                viewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
+            }
+        }
+
+        binding.settingsOption.setOnClickListener {
+            val menu = PopupMenu(
+                this.context,
+                binding.settingsOption,
+                Gravity.START,
+                0,
+                R.style.PopupMenuBlack
+            )
+            menu.menuInflater.inflate(R.menu.sorting_options_playlist, menu.menu)
+
+            menu.setOnMenuItemClickListener {
+                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
+
+                //Update the Sorting for the tab.
+                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+                viewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
+
+                return@setOnMenuItemClickListener true
+            }
+            menu.show()
+        }
+
+        binding.addPlaylistBtn.setOnClickListener {
+            parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
+        }
+
         setupCreatePlaylistPrompt()
-        setupPage()
         return binding.root
     }
 
-    private fun updatePlaylistSorting(sorting: SortingUtil.SortingOption) {
-        Timber.d("updatePlaylistSorting: sorting=$sorting")
-        currentPlaylists = SortingUtil.sortPlaylists(currentPlaylists, sorting)
+    private fun initializeLinearLayout(
+        playlists: List<MediaItem>
+    ) {
+        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.adapter = PlaylistAdapter(
+            this::onPlaylistClick,
+            parentViewModel::playPlaylist,
+            this::handlePlaylistSetting
+        )
+        (binding.displayRecyclerview.adapter as PlaylistAdapter)
+            .submitList(playlists)
+    }
 
-        //Set the current album list to be shown
-        binding.displayRecyclerview.adapter.let { adapter ->
-            when(adapter) {
-                is PlaylistAdapter -> {
-                    adapter.updateData(currentPlaylists)
-                }
-                is PlaylistGridAdapter -> {
-                    adapter.updateData(currentPlaylists)
-                }
-            }
-        }
+    private fun initializeGridLayout(
+        playlists: List<MediaItem>
+    ) {
+        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
+        binding.displayRecyclerview.adapter = PlaylistGridAdapter(
+            this::onPlaylistClick,
+            parentViewModel::playPlaylist,
+            this::handlePlaylistSetting
+        )
+        (binding.displayRecyclerview.adapter as PlaylistGridAdapter)
+            .submitList(playlists)
     }
 
     private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
@@ -269,9 +313,5 @@ class PlaylistFragment: Fragment() {
     private fun onPlaylistClick(playlist: MediaItem) {
         parentViewModel.querySongsFromPlaylist(playlist)
         parentViewModel.setPage(PageType.SONG_PAGE)
-    }
-
-    private fun setupPage() {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

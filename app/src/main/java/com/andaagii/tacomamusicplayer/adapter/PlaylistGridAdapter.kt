@@ -2,7 +2,6 @@ package com.andaagii.tacomamusicplayer.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.Uri
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -11,22 +10,20 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.adapter.diff.MediaItemDiffCallback
 import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistGridLayoutBinding
-import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 import java.io.File
 
 class PlaylistGridAdapter(
-    private var playlists:  List<MediaItem>,
     private val onPlaylistClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
-): RecyclerView.Adapter<PlaylistGridAdapter.PlaylistGridViewHolder>() {
+): ListAdapter<MediaItem, PlaylistGridAdapter.PlaylistGridViewHolder>(MediaItemDiffCallback) {
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -42,20 +39,15 @@ class PlaylistGridAdapter(
         return PlaylistGridViewHolder(binding)
     }
 
-    fun updateData(playlists: List<MediaItem>) {
-        this.playlists = playlists
-        this.notifyDataSetChanged()
-    }
-
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(viewHolder: PlaylistGridViewHolder, position: Int) {
-        viewHolder.binding.playlistName.text = playlists[position].mediaMetadata.albumTitle
+        val playlist = getItem(position)
+        viewHolder.binding.playlistName.text = playlist.mediaMetadata.albumTitle
 
-        val playlist = playlists[position]
         val playlistArtUri = playlist.mediaMetadata.artworkUri
 
         viewHolder.binding.itemContainer.setOnClickListener {
-            onPlaylistClick(playlists[position])
+            onPlaylistClick(playlist)
         }
 
 //        //Determine Playlist Duration Information //TODO how can I update duration and track #
@@ -72,7 +64,7 @@ class PlaylistGridAdapter(
 //
 //        viewHolder.binding.descriptionText.text = "$durationTracks | $playlistDurationReadable"
 
-        //Logic for showing custom playlist image
+        // Show album art based on mediaItem (can either be original or custom)
         val artFile = File(playlistArtUri.toString())
         if(artFile.exists()) {
             viewHolder.binding.playlistArt.setImageURI(playlistArtUri)
@@ -106,16 +98,12 @@ class PlaylistGridAdapter(
     }
 
     private fun handleMenuItem(item: MenuItem, position: Int) {
-        val playlistTitle = playlists[position].mediaMetadata.albumTitle.toString()
+        val playlistTitle = getItem(position).mediaMetadata.albumTitle.toString()
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())
         Timber.d("handleMenuItem: menuOption=$menuOption playlistTitle=$playlistTitle")
         handlePlaylistSetting(
             menuOption,
             listOf(playlistTitle)
         )
-    }
-
-    override fun getItemCount(): Int {
-        return playlists.size
     }
 }

@@ -13,6 +13,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.widget.ImageView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.FileProvider.getUriForFile
 import androidx.core.content.res.ResourcesCompat
 import androidx.media3.common.MediaItem
@@ -28,11 +29,13 @@ import kotlin.math.floor
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.net.toUri
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.ArtInfo
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.yalantis.ucrop.UCrop
 
 class UtilImpl {
 
@@ -72,7 +75,7 @@ class UtilImpl {
             }
         }
 
-        private fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size): Boolean {
+        fun drawMp3agicBitmap(view: ImageView, uri: Uri, imageSize: Size): Boolean {
             Timber.d("drawMp3agicBitmap: uri=$uri")
             val fixUrl = Uri.fromFile(File("/storage/emulated/0/Music/Clipse/let-god-sort-em-out/11-so-far-ahead-(pharrell-williams).mp3"))
             val file = UtilImpl.uriToFile(view.context, fixUrl)
@@ -419,6 +422,26 @@ class UtilImpl {
 
                 name == baseName && ext in supportedExtensions
             }
+        }
+
+        fun getSaveFileUri(
+            context: Context,
+            fileName: String,
+            isCustom: Boolean,
+        ): Uri {
+            // Get app-specific directory
+            val appDir = context.getExternalFilesDir(
+                if(isCustom) Const.ALBUM_ART_CUSTOM_FOLDER else Const.ALBUM_ART_FOLDER
+            )
+
+
+            val saveFile = File(
+                context.getExternalFilesDir(
+                    if(isCustom) Const.ALBUM_ART_CUSTOM_FOLDER else Const.ALBUM_ART_FOLDER),
+                "${fileName}.jpg"
+            )
+
+            return saveFile.toUri()
         }
 
         /**

@@ -43,6 +43,11 @@
             </intent-filter>
         </activity>
 
+        <!-- uCrop required activity -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
         <service android:name=".service.MusicService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
