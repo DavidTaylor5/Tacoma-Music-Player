@@ -12,6 +12,7 @@ import com.andaagii.tacomamusicplayer.data.Playlist
 import com.andaagii.tacomamusicplayer.database.entity.SongGroupEntity
 import com.andaagii.tacomamusicplayer.databinding.ViewCustomPlaylistPromptBinding
 
+//TODO move this so that there only exists one, and it is part of the PlayerDisplayFragment
 class CustomPlaylistPrompt @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,

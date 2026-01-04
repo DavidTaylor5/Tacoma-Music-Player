@@ -14,7 +14,7 @@ import com.andaagii.tacomamusicplayer.database.entity.*
         SongEntity::class,
         SongGroupEntity::class,
         SongGroupCrossRefEntity::class],
-    version = 22,
+    version = 23,
     exportSchema = false
 )
 abstract class PlayerDatabase : RoomDatabase() {

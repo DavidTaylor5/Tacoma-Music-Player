@@ -141,6 +141,8 @@ class MediaItemUtil @Inject constructor(
             song.name
         }
 
+        val artFile = if(song.useCustomArt) song.artFileCustom else song.artFileOriginal
+
         return MediaItem.Builder()
             .setMediaId(mediaId)
             .setUri(song.uri)
@@ -152,8 +154,8 @@ class MediaItemUtil @Inject constructor(
                     .setAlbumTitle(song.albumTitle)
                     .setArtist(song.artist)
                     .setArtworkUri(if(useFileProviderUri)
-                        getFileProviderUri(appContext, song.artworkUri)
-                    else song.artworkUri.toUri()
+                        getFileProviderUri(appContext, artFile)
+                    else artFile.toUri()
                     )
                     .setDescription(song.songDuration)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)

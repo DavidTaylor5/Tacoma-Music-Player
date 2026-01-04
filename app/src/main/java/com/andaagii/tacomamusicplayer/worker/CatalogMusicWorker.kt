@@ -1,14 +1,10 @@
 package com.andaagii.tacomamusicplayer.worker
 
 import android.content.Context
-import android.net.Uri
-import androidx.core.content.FileProvider.getUriForFile
 import androidx.hilt.work.HiltWorker
 import androidx.media3.common.MediaItem
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import androidx.work.impl.utils.tryDelegateRemoteListenableWorker
-import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.database.dao.SongDao
 import com.andaagii.tacomamusicplayer.database.dao.SongGroupDao
 import com.andaagii.tacomamusicplayer.database.entity.SongEntity
@@ -151,8 +147,8 @@ class CatalogMusicWorker @AssistedInject constructor(
      * Return the first song, I will use this to get media metadata related to the album from song 1
      * @return Song Uri, which I can use to get further media meta data for the album
      */
-    private suspend fun catalogAlbumSongs(albumName: String, fileProviderUriStr: String) {
-        //Timber.d("catalogAlbumSongs: albumName=$albumName")
+    private suspend fun catalogAlbumSongs(albumName: String, albumArtFile: String) {
+        Timber.d("catalogAlbumSongs: albumName=$albumName, albumArtFile=$albumArtFile")
 
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
         val foundSongTitles = foundSongs.map { it.mediaMetadata.title }
@@ -177,7 +173,8 @@ class CatalogMusicWorker @AssistedInject constructor(
                     name = songInfo.title.toString(),
                     uri = song.mediaId,
                     songDuration = songInfo.description.toString(),
-                    artworkUri = fileProviderUriStr
+                    artFileOriginal = albumArtFile,
+                    useCustomArt = false
                 )
                 songEntityList.add(songEntity)
             }

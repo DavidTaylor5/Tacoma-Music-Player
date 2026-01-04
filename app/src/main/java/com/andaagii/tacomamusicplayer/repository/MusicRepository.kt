@@ -38,6 +38,8 @@ interface MusicRepository: MusicProviderRepository {
 
     suspend fun updateSongGroupImage(title: String, artFileName: String)
 
+    suspend fun updateAlbumSongsWithCustomImage(title: String, artFileName: String)
+
     suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>)
 
     suspend fun createInitialQueueIfEmpty(title: String)
