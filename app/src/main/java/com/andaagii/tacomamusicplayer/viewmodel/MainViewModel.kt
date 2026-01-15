@@ -26,6 +26,7 @@ import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -53,6 +54,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     application: Application,
     private val musicRepo: MusicRepository,
+    private val musicProvider: MusicProviderRepository,
     private val mediaItemUtil: MediaItemUtil
 ): AndroidViewModel(application) {
 
@@ -770,6 +772,30 @@ class MainViewModel @Inject constructor(
                     shouldAddToOriginalList = true
                 )
             }
+        }
+    }
+
+    /**
+     * Given a song, query the album it's from and start playing from that position.
+     * ex. If user clicks on songs from search, start playing music from that album at position of clicked song.
+     */
+    fun playAlbumAtSongPosition(song: MediaItem) {
+        viewModelScope.launch {
+            val album = musicProvider.getSongsFromAlbum(
+                song.mediaMetadata.albumTitle.toString(), //TODO This title isn't coming in correct... good kid,
+                useFileProviderUri = true
+            ).toMutableList()
+
+            var position = album.indexOfFirst { it.mediaMetadata.title == song.mediaMetadata.title }
+            if(position == -1) position = 0
+
+            addTracksSaveTrackOrder(
+                mediaItems = album,
+                clearOriginalSongList = true,
+                startingSongPosition = position
+            )
+
+            mediaController.value?.play()
         }
     }
 
