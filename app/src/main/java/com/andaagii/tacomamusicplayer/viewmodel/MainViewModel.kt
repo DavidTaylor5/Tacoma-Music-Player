@@ -493,6 +493,8 @@ class MainViewModel @Inject constructor(
             if(updateSongs) {
                 musicRepo.updateAlbumSongsWithCustomImage(title, artFileName)
             }
+
+            //TODO hotfix, refresh the songgroup if updated songgroup == current songGroup
         }
     }
 
