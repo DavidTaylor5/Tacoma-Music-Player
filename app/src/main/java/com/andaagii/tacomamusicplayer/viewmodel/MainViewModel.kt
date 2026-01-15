@@ -394,18 +394,16 @@ class MainViewModel @Inject constructor(
     /**
      * When the user exits the app in shuffled mode, give the user the ability to return to ordered mode.
      */
-    fun saveOriginalOrder() {
+    fun saveOriginalOrder(songs: List<MediaItem>) {
         Timber.d("saveOriginalOrder: ")
-        originalSongOrder.value?.let { originalOrderSongs ->
-            viewModelScope.launch(Dispatchers.IO) {
-                //In case queue has never been initialized
-                musicRepo.createInitialQueueIfEmpty(Const.ORIGINAL_QUEUE_ORDER)
+        viewModelScope.launch(Dispatchers.IO) {
+            //In case queue has never been initialized
+            musicRepo.createInitialQueueIfEmpty(Const.ORIGINAL_QUEUE_ORDER)
 
-                musicRepo.updatePlaylistSongOrder(
-                    Const.ORIGINAL_QUEUE_ORDER,
-                    originalOrderSongs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
-                )
-            }
+            musicRepo.updatePlaylistSongOrder(
+                Const.ORIGINAL_QUEUE_ORDER,
+                songs.map { mediaItemUtil.getSongSearchDescriptionFromMediaItem(it) }
+            )
         }
     }
 
@@ -421,6 +419,9 @@ class MainViewModel @Inject constructor(
 
     }
 
+    /**
+     * Restores what was in the queue last (either ordered or shuffled songs)
+     */
     private fun restoreQueue() {
         Timber.d("restoreQueue: ")
         viewModelScope.launch(Dispatchers.IO) {
@@ -428,6 +429,7 @@ class MainViewModel @Inject constructor(
             val songPosition = DataStoreUtil.getSongPosition(getApplication<Application>().applicationContext).firstOrNull()
 
             val queue = musicRepo.getSongsFromPlaylist(Const.PLAYLIST_QUEUE_TITLE)
+            Timber.d("restoreQueue: queue=${queue.map { it.mediaMetadata.title }}")
 
             withContext(Dispatchers.Main) {
                 // Restore Playback State
@@ -436,7 +438,8 @@ class MainViewModel @Inject constructor(
                         mediaItems = queue,
                         clearOriginalSongList = false,
                         clearCurrentSongs = true,
-                        shouldAddToOriginalList = false
+                        shouldAddToOriginalList = false,
+                        preventShuffle = true
                     )
 
                     if(songPosition != null && songPosition < controller.mediaItemCount) {
@@ -455,10 +458,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Restores the original order before a shuffle. Allowing for unshuffle functionality.
+     */
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
         viewModelScope.launch(Dispatchers.IO) {
             val queueOrdered = musicRepo.getSongsFromPlaylist(Const.ORIGINAL_QUEUE_ORDER)
+            Timber.d("restoreQueueOrder: queueOrdered=${queueOrdered.map { it.mediaMetadata.title }}")
             _originalSongOrder.postValue(queueOrdered)
         }
     }
@@ -749,7 +756,7 @@ class MainViewModel @Inject constructor(
                     clearOriginalSongList = true,
                     startingSongPosition = 0,
                     clearCurrentSongs = true,
-                    shouldAddToOriginalList = false
+                    shouldAddToOriginalList = true
                 )
                 mediaController.value?.let { controller ->
                     controller.play()
@@ -775,7 +782,8 @@ class MainViewModel @Inject constructor(
         clearOriginalSongList: Boolean = false,
         startingSongPosition: Int? = null,
         clearCurrentSongs: Boolean = false,
-        shouldAddToOriginalList: Boolean = false
+        shouldAddToOriginalList: Boolean = false,
+        preventShuffle: Boolean = false
     ) {
         Timber.d("addTracksSaveTrackOrder: originalSongOrder=${_originalSongOrder.value?.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, " +
                 "clearOriginalSongList=$clearOriginalSongList, startingSongPosition=$startingSongPosition, " +
@@ -785,6 +793,7 @@ class MainViewModel @Inject constructor(
         }
 
         if(clearOriginalSongList) {
+            Timber.d("addTracksSaveTrackOrder: Setting Clear Original Song List!")
             _originalSongOrder.value = listOf()
         }
 
@@ -795,10 +804,14 @@ class MainViewModel @Inject constructor(
         if(shouldAddToOriginalList) {
             Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
             _originalSongOrder.postValue( songOrder ?: mediaItems  )
+
+            // Test, save the original order when it changes
+            Timber.d("addTracksSaveTrackOrder: Save Original Order songOrder=${songOrder?.map { it.mediaMetadata.title }}")
+            saveOriginalOrder(songOrder ?: mediaItems)
         }
 
         _mediaController.value?.let { controller ->
-            if(_shuffleMode.value == ShuffleType.SHUFFLED) {
+            if(_shuffleMode.value == ShuffleType.SHUFFLED && !preventShuffle) {
                 val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
                 controller.addMediaItems(shuffledSongs)
                 _currentlyPlayingSongs.value = shuffledSongs
@@ -814,8 +827,6 @@ class MainViewModel @Inject constructor(
             }
         }
 
-
-
         startingSongPosition?.let { position ->
             _mediaController.value?.seekTo(position, 0L)
         }
@@ -830,7 +841,7 @@ class MainViewModel @Inject constructor(
      * Shuffle the given songs, if startingSongPosition is given, that song will be the first in queue.
      */
     private fun shuffleSongs(mediaItems: List<MediaItem>, startingSongPosition: Int? = null): List<MediaItem> {
-        Timber.d("shuffleSongs: mediaItems=$mediaItems startingSongPosition=$startingSongPosition")
+        Timber.d("shuffleSongs: mediaItems=${mediaItems.map { it.mediaMetadata.title }} startingSongPosition=$startingSongPosition")
         if(startingSongPosition == null) {
             return mediaItems.shuffled()
         } else {
@@ -870,7 +881,7 @@ class MainViewModel @Inject constructor(
         Timber.d("unshuffleSongs: ")
         _mediaController.value?.let { controller ->
             _originalSongOrder.value?.let { originalSongs ->
-                Timber.d("restoreOriginalSongOrder: originalSongs.size=${originalSongs.size}")
+                Timber.d("restoreOriginalSongOrder: originalSongs.size=${originalSongs.size}, originalSongs=${originalSongs.map { it.mediaMetadata.title }}")
                 addTracksSaveTrackOrder(
                     mediaItems = originalSongs,
                     clearOriginalSongList = false,

@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         //Saves the current song list in queue
         viewModel.saveQueue()
         //Saves the original song list order [in case the user has shuffled]
-        viewModel.saveOriginalOrder()
+        //viewModel.saveOriginalOrder()
 
         musicObserver?.let {
             contentResolver.unregisterContentObserver(it)
