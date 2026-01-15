@@ -27,6 +27,7 @@ class SongListAdapter(
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
     val handleSongClick: (position:Int) -> Unit,
     val handleAlbumClick: (album: MediaItem) -> Unit,
+    val handleSearchSongClick: (song: MediaItem) -> Unit,
     val handlePlaylistClick: (playlist: MediaItem) -> Unit,
     val handleSongSelected: (mediaItem:MediaItem, isSelected: Boolean) -> Unit,
     var songGroupType: SongGroupType,
@@ -178,7 +179,7 @@ class SongListAdapter(
             searchType = viewHolder.itemView.context.getString(R.string.song)
             onClick = {
                 Timber.d("bindSearchHolder: ON SONG CLICK!")
-                handleSongClick(viewHolder.absoluteAdapterPosition)
+                handleSearchSongClick(dataSet[viewHolder.absoluteAdapterPosition])
             }
             title = searchMetadata.title.toString()
             songArtist = searchMetadata.artist.toString()

@@ -171,16 +171,16 @@ class SongListFragment(): Fragment() {
 
             parentViewModel.handleCancelSearchButtonClick()
 
-            //TODO pass in just the songGroup
             binding.displayRecyclerview.adapter = SongListAdapter(
-                songGroup.songs,
-                this::handleSongSetting,
-                this::handleSongClicked,
-                this::handleAlbumClicked,
-                this::handlePlaylistClicked,
-                this::handleSongSelected,
-                songGroup.type,
-                this::handleViewHolderHandleDrag
+                dataSet = songGroup.songs,
+                handleSongSetting = this::handleSongSetting,
+                handleSongClick = this::handleSongClicked,
+                handleAlbumClick = this::handleAlbumClicked,
+                handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
+                handlePlaylistClick = this::handlePlaylistClicked,
+                handleSongSelected = this::handleSongSelected,
+                songGroupType = songGroup.type,
+                onHandleDrag = this::handleViewHolderHandleDrag
             )
             determineIfShowingInformationScreen(songGroup)
 
@@ -210,14 +210,15 @@ class SongListFragment(): Fragment() {
             if(binding.displayRecyclerview.adapter == null) {
                 currentSongGroup?.let { songGroup ->
                     binding.displayRecyclerview.adapter = SongListAdapter(
-                        songGroup.songs,
-                        this::handleSongSetting,
-                        this::handleSongClicked,
-                        this::handleAlbumClicked,
-                        this::handlePlaylistClicked,
-                        this::handleSongSelected,
-                        songGroup.type,
-                        this::handleViewHolderHandleDrag
+                        dataSet = songGroup.songs,
+                        handleSongSetting = this::handleSongSetting,
+                        handleSongClick = this::handleSongClicked,
+                        handleAlbumClick = this::handleAlbumClicked,
+                        handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
+                        handlePlaylistClick = this::handlePlaylistClicked,
+                        handleSongSelected = this::handleSongSelected,
+                        songGroupType = songGroup.type,
+                        onHandleDrag = this::handleViewHolderHandleDrag
                     )
                     determineIfShowingInformationScreen(songGroup)
                 }
@@ -443,14 +444,15 @@ class SongListFragment(): Fragment() {
         currentSongGroup?.let { songGroup ->
             if(binding.displayRecyclerview.adapter == null) {
                 binding.displayRecyclerview.adapter = SongListAdapter(
-                    songGroup.songs,
-                    this::handleSongSetting,
-                    this::handleSongClicked,
-                    this::handleAlbumClicked,
-                    this::handlePlaylistClicked,
-                    this::handleSongSelected,
-                    songGroup.type,
-                    this::handleViewHolderHandleDrag
+                    dataSet = songGroup.songs,
+                    handleSongSetting = this::handleSongSetting,
+                    handleSongClick = this::handleSongClicked,
+                    handleAlbumClick = this::handleAlbumClicked,
+                    handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
+                    handlePlaylistClick = this::handlePlaylistClicked,
+                    handleSongSelected = this::handleSongSelected,
+                    songGroupType = songGroup.type,
+                    onHandleDrag = this::handleViewHolderHandleDrag
                 )
                 determineIfShowingInformationScreen(songGroup)
             } else {

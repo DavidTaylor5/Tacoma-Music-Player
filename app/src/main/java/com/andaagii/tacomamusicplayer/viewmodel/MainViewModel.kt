@@ -26,6 +26,7 @@ import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -53,6 +54,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     application: Application,
     private val musicRepo: MusicRepository,
+    private val musicProvider: MusicProviderRepository,
     private val mediaItemUtil: MediaItemUtil
 ): AndroidViewModel(application) {
 
@@ -774,6 +776,34 @@ class MainViewModel @Inject constructor(
     }
 
     /**
+     * Given a song, query the album it's from and start playing from that position.
+     * ex. If user clicks on songs from search, start playing music from that album at position of clicked song.
+     */
+    fun playAlbumAtSongPosition(song: MediaItem) {
+        viewModelScope.launch {
+            val album = musicProvider.getSongsFromAlbum(
+                song.mediaMetadata.albumTitle.toString(), //TODO This title isn't coming in correct... good kid,
+                useFileProviderUri = true
+            ).toMutableList()
+
+            var position = album.indexOfFirst { it.mediaMetadata.title == song.mediaMetadata.title }
+            if(position == -1) position = 0
+
+            //TODO error when I try to play song from search list into a shuffled player [idealy chosen song would be at position 0...]
+
+            addTracksSaveTrackOrder(
+                mediaItems = album,
+                clearOriginalSongList = true,
+                clearCurrentSongs = true,
+                startingSongPosition = position,
+                shouldAddToOriginalList = true
+            )
+
+            mediaController.value?.play()
+        }
+    }
+
+    /**
      * Instead of adding songs directly to the mediaController instead, I can track when songs are added
      * allowing for shuffle and restore functionality. [Also track current song list here, also track current song here?, do all player manipulation here to be observed]
      */
@@ -812,8 +842,15 @@ class MainViewModel @Inject constructor(
 
         _mediaController.value?.let { controller ->
             if(_shuffleMode.value == ShuffleType.SHUFFLED && !preventShuffle) {
+
+                //TODO I should add a feature where when I shuffle an entire playlist or album, first song isn't preserved...
                 val shuffledSongs = shuffleSongs(mediaItems, startingSongPosition)
-                controller.addMediaItems(shuffledSongs)
+
+                if(controller.mediaItemCount == 0) {
+                    controller.setMediaItems(shuffledSongs)
+                } else {
+                    controller.addMediaItems(shuffledSongs)
+                }
                 _currentlyPlayingSongs.value = shuffledSongs
             } else {
                 //TODO update all places where I set / add mediaItems
@@ -827,8 +864,11 @@ class MainViewModel @Inject constructor(
             }
         }
 
-        startingSongPosition?.let { position ->
-            _mediaController.value?.seekTo(position, 0L)
+        // No point in jumping to a starting position if the songs are shuffled with chosen song at the top.
+        if(_shuffleMode.value != ShuffleType.SHUFFLED) {
+            startingSongPosition?.let { position ->
+                _mediaController.value?.seekTo(position, 0L)
+            }
         }
 
         //Save the current state of mediaController to a live data of currently playing songs
