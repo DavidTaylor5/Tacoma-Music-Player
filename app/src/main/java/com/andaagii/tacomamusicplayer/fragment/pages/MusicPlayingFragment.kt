@@ -153,6 +153,11 @@ class MusicPlayingFragment: Fragment() {
         }
 
         parentViewModel.currentPlayingSongInfo.observe(this) { currentSong ->
+            // When no currently playing song, don't show active player
+            showActivePlayer(
+                show = !SongData.isNullSong(currentSong)
+            )
+
             if(currentSong != currentSongInfo) {
                 currentSongInfo = currentSong
                 updateUIForCurrentSong()
@@ -249,4 +254,16 @@ class MusicPlayingFragment: Fragment() {
         }
     }
 
+    /**
+     * Determines whether to show the default (no music playing) or active player.
+     */
+    private fun showActivePlayer(show: Boolean) {
+        if(show) {
+            binding.chopperDefault?.visibility = View.GONE
+            binding.activePlayerContent?.visibility =View.VISIBLE
+        } else {
+            binding.chopperDefault?.visibility = View.VISIBLE
+            binding.activePlayerContent?.visibility =View.GONE
+        }
+    }
 }
