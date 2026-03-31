@@ -135,7 +135,7 @@ class MediaItemUtil @Inject constructor(
         useFileProviderUri: Boolean = false
     ): MediaItem {
         Timber.d("createMediaItemFromSongEntity: song=$song, position=$position, playlistTitle=$playlistTitle")
-        val mediaId = if(position != null && songGroupType != null) {
+        val mediaId = if(useFileProviderUri && position != null && songGroupType != null) {
             "songGroupType=${songGroupType.name}|||groupTitle=${ if(playlistTitle != null) playlistTitle else song.albumTitle}|||position=$position|||songTitle=${song.name}"
         } else {
             song.name

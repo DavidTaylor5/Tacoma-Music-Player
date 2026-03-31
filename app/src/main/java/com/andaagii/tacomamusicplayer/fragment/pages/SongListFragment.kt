@@ -52,6 +52,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 
+//TODO fix for clicking add to queue for a single song by updating mediaId
+
 @AndroidEntryPoint
 class SongListFragment(): Fragment() {
     private lateinit var binding: FragmentSonglistBinding
