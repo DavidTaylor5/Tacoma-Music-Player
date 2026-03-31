@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -185,6 +186,13 @@ class MainViewModel @Inject constructor(
             Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
             _loopMode.postValue(repeatMode)
+        }
+
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            super.onTimelineChanged(timeline, reason)
+            _currentlyPlayingSongs.value = mediaController.value?.let { controller ->
+                UtilImpl.getSongListFromMediaController(controller)
+            }
         }
     }
 
@@ -851,7 +859,6 @@ class MainViewModel @Inject constructor(
                 } else {
                     controller.addMediaItems(shuffledSongs)
                 }
-                _currentlyPlayingSongs.value = shuffledSongs
             } else {
                 //TODO update all places where I set / add mediaItems
                 if(controller.mediaItemCount == 0) {
@@ -859,8 +866,6 @@ class MainViewModel @Inject constructor(
                 } else {
                     controller.addMediaItems(mediaItems)
                 }
-
-                _currentlyPlayingSongs.value = mediaItems
             }
         }
 
@@ -869,11 +874,6 @@ class MainViewModel @Inject constructor(
             startingSongPosition?.let { position ->
                 _mediaController.value?.seekTo(position, 0L)
             }
-        }
-
-        //Save the current state of mediaController to a live data of currently playing songs
-        _mediaController.value?.let { controller ->
-            _currentlyPlayingSongs.value = UtilImpl.getSongListFromMediaController(controller)
         }
     }
 
