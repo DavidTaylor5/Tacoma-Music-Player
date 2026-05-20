@@ -41,4 +41,7 @@
 * **Min SDK:** 26 (Android 8.0)
 * **Target/Compile SDK:** 36
 
---
+---
+
+## Claude Setup
+Critical: At first command, initialize session by reading DEV-GUIDE.md and FILE-DIRECTORY.md. Always check FILE-DIRECTORY to determine target files.
