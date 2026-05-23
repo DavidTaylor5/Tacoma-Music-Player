@@ -21,49 +21,36 @@ import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+/**
+ * Full-screen player page hosted at index 1 in `PlayerDisplayFragment`'s `ViewPager2`.
+ *
+ * Observes [MainViewModel] for shuffle mode, loop mode, play/pause state, and song
+ * metadata. The `MediaController` reference is obtained in [onStart] rather than
+ * [onCreateView] because [onStart] fires each time the fragment becomes visible in the
+ * pager, ensuring the controller binding is refreshed after process restoration.
+ *
+ * Swipe/double-tap gestures to collapse the player are handled by the parent
+ * `PlayerDisplayFragment`, not here.
+ */
 @AndroidEntryPoint
-class MusicPlayingFragment: Fragment() {
+class MusicPlayingFragment : Fragment() {
 
     private val parentViewModel: MainViewModel by activityViewModels()
 
     private lateinit var binding: FragmentMusicPlayingBinding
 
+    /**
+     * Cached reference to the active [MediaController]. Stored here so click listeners can
+     * invoke playback commands without hitting the ViewModel on every tap.
+     */
     private var controller: MediaController? = null
-    private var currentSongInfo: SongData? = null
 
-//    private val detector = object : GestureDetector.SimpleOnGestureListener() {
-//        override fun onDoubleTap(e: MotionEvent): Boolean {
-//            Timber.d("onDoubleTap: navigate to the music chooser screen!")
-//
-//            //navigate to the music chooser fragment...
-//            findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-//
-//            return super.onDoubleTap(e)
-//        }
-//
-//        override fun onDown(e: MotionEvent): Boolean {
-//            Timber.d("onDown: ")
-//            return true
-//        }
-//
-//        override fun onFling(
-//            e1: MotionEvent?,
-//            e2: MotionEvent,
-//            velocityX: Float,
-//            velocityY: Float
-//        ): Boolean {
-//            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
-//
-//            if(velocityY < -500) {
-//                Timber.d("onFling: navigate to the music chooser screen!")
-//
-//                //navigate to the music chooser fragment...
-//                findNavController().navigate(ScreenType.MUSIC_CHOOSER_SCREEN.route())
-//            }
-//
-//            return super.onFling(e1, e2, velocityX, velocityY)
-//        }
-//    }
+    /**
+     * The song metadata most recently rendered to the UI. Compared against incoming
+     * [MainViewModel.currentPlayingSongInfo] emissions to skip redundant UI redraws when the
+     * same song data re-emits without an actual track change.
+     */
+    private var currentSongInfo: SongData? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -77,10 +64,6 @@ class MusicPlayingFragment: Fragment() {
     ): View {
         Timber.d("onCreateView: ")
         binding = FragmentMusicPlayingBinding.inflate(inflater)
-
-//        GESTURE DETECTOR CODE
-//        val gesture = GestureDetector(container!!.context, detector)
-
         return binding.root
     }
 
@@ -94,6 +77,11 @@ class MusicPlayingFragment: Fragment() {
         super.onPause()
     }
 
+    /**
+     * Refreshes all player UI elements from the current [MediaController] state.
+     *
+     * Called whenever the controller is first bound or the active song changes.
+     */
     private fun updateUIForCurrentSong() {
         updateCurrentSongArt()
         updateCurrentSongTitle()
@@ -101,13 +89,14 @@ class MusicPlayingFragment: Fragment() {
         updateCurrentAlbumTitle()
     }
 
+    /** Loads and displays the artwork for the currently playing track. */
     private fun updateCurrentSongArt() {
         this.context?.resources?.let { res ->
             controller?.mediaMetadata?.let { metadata ->
                 val customImage = "album_${metadata.albumTitle}"
                 UtilImpl.drawMediaItemArt(
                     binding.songArt!!,
-                    metadata.artworkUri?: Uri.EMPTY,
+                    metadata.artworkUri ?: Uri.EMPTY,
                     Size(500, 500),
                     customImage,
                     synchronous = true
@@ -116,36 +105,42 @@ class MusicPlayingFragment: Fragment() {
         }
     }
 
+    /** Updates the song title text view from the controller's current metadata. */
     private fun updateCurrentSongTitle() {
         controller?.mediaMetadata?.title?.let { title ->
-            binding.songTitleTextview?.text  = title
+            binding.songTitleTextview?.text = title
         }
     }
 
+    /** Updates the artist name text view from the controller's current metadata. */
     private fun updateCurrentSongArtist() {
         controller?.mediaMetadata?.artist?.let { artist ->
-            binding.artistNameTextview?.text  = artist
+            binding.artistNameTextview?.text = artist
         }
     }
 
+    /** Updates the album title text view from the controller's current metadata. */
     private fun updateCurrentAlbumTitle() {
         controller?.mediaMetadata?.albumTitle?.let { albumTitle ->
-            binding.albumTitleTextview?.text  = albumTitle
+            binding.albumTitleTextview?.text = albumTitle
         }
     }
 
-    @OptIn(UnstableApi::class) override fun onStart() {
+    @OptIn(UnstableApi::class)
+    override fun onStart() {
         super.onStart()
 
+        // Observe the controller here in onStart rather than onCreateView so that the
+        // binding is refreshed every time this page becomes visible in the ViewPager2.
         parentViewModel.mediaController.observe(this) { controller ->
             binding.playerView.player = controller
             this.controller = controller
             binding.playerView.showController()
 
-            //Update UI with current song in the controller (this will be called when I first come to this fragment!)
+            // Sync UI with whatever is already loaded in the controller on first attach.
             updateUIForCurrentSong()
 
-            if(controller.isPlaying) {
+            if (controller.isPlaying) {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
             } else {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
@@ -153,12 +148,11 @@ class MusicPlayingFragment: Fragment() {
         }
 
         parentViewModel.currentPlayingSongInfo.observe(this) { currentSong ->
-            // When no currently playing song, don't show active player
-            showActivePlayer(
-                show = !SongData.isNullSong(currentSong)
-            )
+            // Hide the active player controls when no song has been loaded yet.
+            showActivePlayer(show = !SongData.isNullSong(currentSong))
 
-            if(currentSong != currentSongInfo) {
+            // Guard against redundant redraws when metadata re-emits for the same song.
+            if (currentSong != currentSongInfo) {
                 currentSongInfo = currentSong
                 updateUIForCurrentSong()
             }
@@ -166,16 +160,16 @@ class MusicPlayingFragment: Fragment() {
 
         parentViewModel.loopMode.observe(this) { repeatMode ->
             Timber.d("onStart: repeatMode=$repeatMode")
-            when(repeatMode) {
-                Player.REPEAT_MODE_OFF -> {  binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
-                Player.REPEAT_MODE_ONE -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
-                Player.REPEAT_MODE_ALL -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
+            when (repeatMode) {
+                Player.REPEAT_MODE_OFF -> { binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
+                Player.REPEAT_MODE_ONE -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
+                Player.REPEAT_MODE_ALL -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
             }
         }
 
         parentViewModel.shuffleMode.observe(this) { isShuffled ->
             Timber.d("onStart: isShuffled=$isShuffled")
-            if(isShuffled == ShuffleType.SHUFFLED) {
+            if (isShuffled == ShuffleType.SHUFFLED) {
                 binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
             } else {
                 binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
@@ -184,7 +178,7 @@ class MusicPlayingFragment: Fragment() {
 
         parentViewModel.isPlaying.observe(this) { isPlaying ->
             Timber.d("onStart: isPlaying=$isPlaying")
-            if(isPlaying) {
+            if (isPlaying) {
                 binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
             } else {
                 binding.playButton?.setBackgroundResource(R.drawable.white_play_arrow)
@@ -198,9 +192,8 @@ class MusicPlayingFragment: Fragment() {
 
         binding.playButton?.setOnClickListener { button ->
             Timber.d("playButton_onClick: ")
-
             controller?.let {
-                if(!it.isPlaying) {
+                if (!it.isPlaying) {
                     button.setBackgroundResource(R.drawable.baseline_pause_24)
                     it.play()
                 } else {
@@ -208,24 +201,6 @@ class MusicPlayingFragment: Fragment() {
                     it.pause()
                 }
             }
-        }
-
-        binding.songArt?.setOnClickListener {
-//            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_out).also { animation ->
-//                binding.songArt?.startAnimation(animation)
-//            }
-//            AnimationUtils.loadAnimation(this.context, R.anim.fly_up_in).also { animation ->
-//                binding.alternateSongArt?.startAnimation(animation)
-//            }
-
-            //TODO If I want to add advanced Animations I will further investigate this code...
-//            Handler(Looper.getMainLooper()).postDelayed({
-//                //TODO at the end I want the images switched...
-////                binding.songArt.setImageDrawable()
-////                binding.alternateSongArt.setImageDrawable()
-////                binding.songArt?.visibility = View.GONE
-////                binding.alternateSongArt?.visibility = View.VISIBLE
-//            }, 2000)
         }
 
         binding.loopToggle?.setOnClickListener {
@@ -237,15 +212,11 @@ class MusicPlayingFragment: Fragment() {
         }
 
         binding.seekBack?.setOnClickListener {
-            controller?.let {
-                it.seekBack()
-            }
+            controller?.seekBack()
         }
 
         binding.seekForward?.setOnClickListener {
-            controller?.let {
-                it.seekForward()
-            }
+            controller?.seekForward()
         }
 
         binding.nextButton?.setOnClickListener {
@@ -255,15 +226,20 @@ class MusicPlayingFragment: Fragment() {
     }
 
     /**
-     * Determines whether to show the default (no music playing) or active player.
+     * Toggles between the default (no-song) placeholder and the active player UI.
+     *
+     * When [show] is `true`, hides `chopperDefault` and reveals `activePlayerContent`.
+     * When `false`, does the reverse so the placeholder fills the screen.
+     *
+     * @param show `true` to display the active player controls; `false` to show the placeholder.
      */
     private fun showActivePlayer(show: Boolean) {
-        if(show) {
+        if (show) {
             binding.chopperDefault?.visibility = View.GONE
-            binding.activePlayerContent?.visibility =View.VISIBLE
+            binding.activePlayerContent?.visibility = View.VISIBLE
         } else {
             binding.chopperDefault?.visibility = View.VISIBLE
-            binding.activePlayerContent?.visibility =View.GONE
+            binding.activePlayerContent?.visibility = View.GONE
         }
     }
 }

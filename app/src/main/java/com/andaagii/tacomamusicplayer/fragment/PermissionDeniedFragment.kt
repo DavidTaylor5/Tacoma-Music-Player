@@ -7,7 +7,14 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.andaagii.tacomamusicplayer.databinding.FragmentPermissionDeniedBinding
 
-class PermissionDeniedFragment: Fragment() {
+/**
+ * Shown when the `READ_MEDIA_AUDIO` runtime permission has been denied.
+ *
+ * This fragment has no ViewModel — it only inflates its layout. The "Open Settings"
+ * button that deep-links to the app's system settings page is wired entirely in the
+ * XML binding.
+ */
+class PermissionDeniedFragment : Fragment() {
 
     private lateinit var binding: FragmentPermissionDeniedBinding
 
