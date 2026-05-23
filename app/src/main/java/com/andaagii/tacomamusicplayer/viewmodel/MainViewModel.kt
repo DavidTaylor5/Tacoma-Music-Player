@@ -48,8 +48,36 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * The MainViewModel of the project, will include information on current screen, logic for handling
- * permissions, and will provide the UI with media related information.
+ * Central ViewModel for MainActivity. Manages the Media3 controller lifecycle, playback queue,
+ * playback state, screen navigation, search, and runtime permissions.
+ *
+ * Threading: [playerListener] callbacks arrive on the main thread from Media3; all repository
+ * and DataStore reads/writes run on [Dispatchers.IO] via [viewModelScope].
+ *
+ * Injected via Hilt: [MusicRepository], [MusicProviderRepository], [MediaItemUtil].
+ *
+ * Exposed LiveData:
+ * - [mediaController] — the active [MediaController] once connected.
+ * - [currentSongGroup] — album or playlist currently loaded into the song-list view.
+ * - [currentSearchList] — results of the most recent in-app text search.
+ * - [isAudioPermissionGranted] — whether `READ_MEDIA_AUDIO` is granted.
+ * - [isPlaylistNameDuplicate] — one-shot flag for a duplicate-playlist-name error.
+ * - [screenState] — current top-level screen, used for navigation.
+ * - [navigateToPage] — one-shot event to scroll the ViewPager2 to a specific [PageType].
+ * - [currentlyPlayingSongs] — current player queue as a [MediaItem] list.
+ * - [currentPlayingSongInfo] — metadata for the song currently playing.
+ * - [isPlaying] — `true` while the player is actively playing audio.
+ * - [shuffleMode] — current shuffle state ([ShuffleType]).
+ * - [loopMode] — current [Player] repeat mode (one of `Player.REPEAT_MODE_*`).
+ * - [originalSongOrder] — pre-shuffle queue; restored when the user turns shuffle off.
+ * - [isShowingSearchMode] — whether the search bar is visible.
+ * - [notifyHideKeyboard] — incrementing counter used as a one-shot keyboard-dismiss event.
+ * - [showLoadingScreen] — `true` until the persisted queue is restored on startup.
+ * - [clearQueue] — one-shot flag indicating the queue was just cleared.
+ * - [shouldShowAddPlaylistPromptOnPlaylistPage] — controls add-playlist dialog visibility.
+ *
+ * Exposed StateFlow:
+ * - [availablePlaylists] — live list of all user-created playlists.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -59,35 +87,45 @@ class MainViewModel @Inject constructor(
     private val mediaItemUtil: MediaItemUtil
 ): AndroidViewModel(application) {
 
+    /** [AppPermissionUtil] instance used by [checkPermissions] to verify audio access. */
     private val permissionManager = AppPermissionUtil()
 
     /**
-     * Reference to the app's mediaController.
+     * The active [MediaController] used to control [MusicService] playback.
+     *
+     * `null` until [setupMediaController] completes asynchronously after [initializeMusicPlaying]
+     * is called. UI should guard against null before sending playback commands.
      */
     val mediaController: LiveData<MediaController>
         get() = _mediaController
     private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
 
     /**
-     * List of songs to be inspected.
+     * The album or playlist currently displayed in the song-list view.
+     *
+     * Updated by [querySongsFromAlbum] and [querySongsFromPlaylist]. Cleared to an empty
+     * [SongGroup] at the start of each album query so the UI can show a loading state.
      */
     val currentSongGroup: LiveData<SongGroup>
         get() = _currentSongGroup
     private val _currentSongGroup: MutableLiveData<SongGroup> = MutableLiveData()
 
+    /**
+     * Results of the most recent in-app text search, updated by [querySearchData].
+     * Empty until the user performs a search.
+     */
     val currentSearchList: LiveData<List<MediaItem>>
         get() = _currentSearchList
     private val _currentSearchList: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
-    /**
-     * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
-     */
+    /** `true` when the `READ_MEDIA_AUDIO` (or `READ_EXTERNAL_STORAGE`) permission is granted. */
     val isAudioPermissionGranted: LiveData<Boolean>
         get() = _isAudioPermissionGranted
     private val _isAudioPermissionGranted: MutableLiveData<Boolean> = MutableLiveData()
 
     /**
-     * Determines if the user has granted the required Permission to play Audio, READ_MEDIA_AUDIO.
+     * One-shot flag set to `true` when the user tries to create a playlist with a name that
+     * already exists. Reset by [handledPlaylistNameDuplicate] once the UI has shown the error.
      */
     val isPlaylistNameDuplicate: LiveData<Boolean>
         get() = _isPlaylistNameDuplicate
@@ -96,64 +134,149 @@ class MainViewModel @Inject constructor(
     //TODO move playlist add prompt to the overall fragment?
 
     /**
-     * Used to observe the current screen of the app, used for navigation.
+     * The current top-level screen of the app.
+     *
+     * Used by [MainActivity] to navigate between [ScreenType] destinations. Updated by
+     * [setScreenData]; only changes value when the screen actually changes.
      */
     val screenState : LiveData<ScreenData>
         get() = _screenState
     private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
 
+    /**
+     * One-shot event that scrolls the [PlayerDisplayFragment] ViewPager2 to the given [PageType].
+     *
+     * Emitted by [setPage]; consumed once by the UI observer.
+     */
     val navigateToPage: LiveData<PageType>
         get() = _navigateToPage
     private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
 
+    /**
+     * In-memory mirror of the currently visible [PageType].
+     *
+     * Not observed as LiveData; updated via [observeCurrentPage] and queried via [getCurrentPage].
+     */
     private var currentPage: PageType? = null
 
+    /**
+     * The full player queue as a [MediaItem] list.
+     *
+     * Updated by [playerListener.onTimelineChanged] whenever the queue is modified (add, remove,
+     * or reorder). Reflects the live state of the [MediaController]'s queue.
+     */
     val currentlyPlayingSongs: LiveData<List<MediaItem>>
         get() = _currentlyPlayingSongs
     private val _currentlyPlayingSongs: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
+    /**
+     * Metadata for the song currently playing, including title, artist, album, and artwork URI.
+     *
+     * Built from [MediaMetadata] inside [playerListener.onMediaMetadataChanged]. Note that
+     * `songUri` is always set to `"UNKNOWN"` because the playback URI is not available from
+     * metadata callbacks alone.
+     */
     val currentPlayingSongInfo: LiveData<SongData>
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
 
+    /** `true` while the player is actively playing audio; updated by [playerListener.onIsPlayingChanged]. */
     val isPlaying: LiveData<Boolean>
         get() = _isPlaying
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
 
+    /**
+     * Current shuffle state ([ShuffleType.SHUFFLED] or [ShuffleType.NOT_SHUFFLED]).
+     *
+     * Toggled by [flipShuffleState] and persisted to DataStore via [saveShufflePref] on every
+     * change. Restored from DataStore on startup via [determineShufflePref].
+     */
     val shuffleMode: LiveData<ShuffleType>
         get() = _shuffleMode
     private val _shuffleMode: MutableLiveData<ShuffleType> = MutableLiveData()
 
+    /**
+     * Current [Player] repeat mode (`Player.REPEAT_MODE_OFF`, `REPEAT_MODE_ONE`, or
+     * `REPEAT_MODE_ALL`).
+     *
+     * Cycled by [flipLoopMode] and persisted to DataStore via [saveLoopingPref].
+     */
     val loopMode: LiveData<Int>
         get() = _loopMode
     private val _loopMode: MutableLiveData<Int> = MutableLiveData()
 
+    /**
+     * Snapshot of the queue order before the most recent shuffle was applied.
+     *
+     * Populated whenever songs are added with `shouldAddToOriginalList = true` inside
+     * [addTracksSaveTrackOrder] and persisted to the database via [saveOriginalOrder] so it
+     * survives app restarts. Used by [unshuffleSongs] to restore the pre-shuffle order.
+     */
     val originalSongOrder: LiveData<List<MediaItem>>
         get() = _originalSongOrder
     private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
 
+    /**
+     * `true` while the search bar is active.
+     *
+     * Toggled by [flipSearchButtonState] and reset to `false` by [handleCancelSearchButtonClick].
+     */
     val isShowingSearchMode: LiveData<Boolean>
         get() = _isShowingSearchMode
     private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData(false)
 
+    /**
+     * Incrementing integer used as a one-shot keyboard-dismiss event.
+     *
+     * Observers watch for any value change and call `hideSoftInput`; the actual integer value
+     * is meaningless. Incremented by [removeVirtualKeyboard].
+     */
     val notifyHideKeyboard: LiveData<Int>
         get() = _notifyHideKeyboard
     private val _notifyHideKeyboard: MutableLiveData<Int> = MutableLiveData()
 
+    /**
+     * `true` from startup until [restoreQueue] completes (with a 500 ms settling delay).
+     *
+     * Controls the full-screen loading overlay in the UI. Hidden via [loadingHandler] after the
+     * queue and playback position are restored.
+     */
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
 
+    /**
+     * [Handler] used to post a delayed Runnable that hides the loading screen after the queue
+     * restore operation settles.
+     */
     val loadingHandler = Handler(Looper.getMainLooper())
 
+    /**
+     * One-shot flag set to `true` when [clearQueue] empties the player queue.
+     *
+     * Reset to `false` by [handledClearningQueue] once the UI has reacted (e.g., dismissing the
+     * now-playing panel).
+     */
     val clearQueue: LiveData<Boolean>
         get() = _clearQueue
     private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
 
+    /**
+     * Controls whether the add-playlist prompt dialog is displayed on the Playlist tab.
+     *
+     * Toggled via [showAddPlaylistPromptOnPlaylistPage].
+     */
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
     private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
 
+    /**
+     * Live list of all user-created playlists as [MediaItem] objects.
+     *
+     * Backed by a Room [Flow] via [MusicRepository.getAllAvailablePlaylistFlow]; emits a new list
+     * whenever the playlist table changes. Shared with `WhileSubscribed(5_000)` so the query stops
+     * 5 seconds after the last subscriber disappears.
+     */
     val availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
         .stateIn(
             viewModelScope,
@@ -161,7 +284,20 @@ class MainViewModel @Inject constructor(
             listOf()
         )
 
+    /**
+     * [Player.Listener] that bridges ExoPlayer callbacks to this ViewModel's LiveData properties.
+     *
+     * Registered on the [MediaController] in [setupMediaController] and removed in [onCleared].
+     * All callbacks are invoked on the main thread by Media3.
+     */
     private val playerListener = object: Player.Listener {
+        /**
+         * Maps the incoming [MediaMetadata] to a [SongData] and posts it to
+         * [currentPlayingSongInfo].
+         *
+         * Note: [SongData.songUri] is set to `"UNKNOWN"` because the playback URI is not
+         * accessible from metadata callbacks — only the metadata fields are available here.
+         */
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
             _currentPlayingSongInfo.postValue(
@@ -188,6 +324,13 @@ class MainViewModel @Inject constructor(
             _loopMode.postValue(repeatMode)
         }
 
+        /**
+         * Updates [currentlyPlayingSongs] whenever the player queue changes.
+         *
+         * [onTimelineChanged] fires for any structural queue modification (add, remove, reorder,
+         * or clear) — making it the correct place to keep [currentlyPlayingSongs] in sync with the
+         * live queue, not just on track transitions.
+         */
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             super.onTimelineChanged(timeline, reason)
             _currentlyPlayingSongs.value = mediaController.value?.let { controller ->
@@ -196,7 +339,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // Flip between search state and non search state
+    /**
+     * Toggles [isShowingSearchMode] between `true` and `false`.
+     *
+     * Also dismisses the soft keyboard via [removeVirtualKeyboard] to prevent it lingering
+     * after the search bar is hidden.
+     */
     fun flipSearchButtonState() {
         Timber.d("flipSearchButtonState: isSearchMode=${_isShowingSearchMode.value}")
          _isShowingSearchMode.value?.let { isSearchMode ->
@@ -205,11 +353,23 @@ class MainViewModel @Inject constructor(
          }
     }
 
+    /**
+     * Explicitly hides search mode by setting [isShowingSearchMode] to `false`.
+     *
+     * Used when the user taps the "Cancel" button, as opposed to tapping the search icon
+     * which goes through [flipSearchButtonState].
+     */
     fun handleCancelSearchButtonClick() {
         Timber.d("handleCancelSearchButtonClick: ")
         _isShowingSearchMode.postValue(false)
     }
 
+    /**
+     * Posts the next integer to [notifyHideKeyboard] as a one-shot keyboard-dismiss event.
+     *
+     * Observers detect any value change and call `hideSoftInput`; the value itself is
+     * irrelevant — only the change matters.
+     */
     fun removeVirtualKeyboard() {
         Timber.d("removeVirtualKeyboard: ")
         _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
@@ -244,6 +404,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Cycles the repeat mode through `REPEAT_MODE_OFF` → `REPEAT_MODE_ONE` → `REPEAT_MODE_ALL`
+     * → `REPEAT_MODE_OFF` and persists the new value via [saveLoopingPref].
+     *
+     * Updates [loopMode] indirectly via [playerListener.onRepeatModeChanged].
+     */
     fun flipLoopMode() {
         if(_loopMode.value == Player.REPEAT_MODE_OFF) {
             Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_ONE}")
@@ -259,6 +425,11 @@ class MainViewModel @Inject constructor(
         saveLoopingPref(getApplication<Application>().applicationContext, _mediaController.value?.repeatMode ?: Player.REPEAT_MODE_ONE)
     }
 
+    /**
+     * Pauses the [MediaController] if audio is currently playing; plays it if paused.
+     *
+     * [isPlaying] is updated automatically via [playerListener.onIsPlayingChanged].
+     */
     fun flipPlayingState() {
         if(_isPlaying.value == true) {
             _mediaController.value?.pause()
@@ -269,12 +440,28 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Entry point called during [init] to restore all saved playback preferences.
+     *
+     * Currently restores only the shuffle preference; looping is restored later inside
+     * [setupMediaController] once the [MediaController] is connected and can accept a repeat mode.
+     *
+     * @param context Application context used to access DataStore.
+     */
     private fun setMusicPlayingPrefs(context: Context) {
         Timber.d("setMusicPlayingPrefs: ")
         //determineLoopingPref(context)
         determineShufflePref(context)
     }
 
+    /**
+     * Reads the looping preference from DataStore and applies it to the [MediaController].
+     *
+     * Must be called after the controller is connected (inside [setupMediaController]'s callback)
+     * so that `repeatMode` can actually be set on the controller instance.
+     *
+     * @param context Application context used to access DataStore.
+     */
     private fun determineLoopingPref(context: Context) {
         Timber.d("determineLoopingPref: ")
         viewModelScope.launch {
@@ -284,6 +471,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Reads the shuffle preference from DataStore and posts the corresponding [ShuffleType] to
+     * [shuffleMode].
+     *
+     * @param context Application context used to access DataStore.
+     */
     private fun determineShufflePref(context: Context) {
         Timber.d("determineShufflePref: ")
         viewModelScope.launch {
@@ -294,6 +487,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Persists the current [Player] repeat mode integer to DataStore on [Dispatchers.IO].
+     *
+     * @param context Application context used to access DataStore.
+     * @param loopInt One of `Player.REPEAT_MODE_OFF`, `REPEAT_MODE_ONE`, or `REPEAT_MODE_ALL`.
+     */
     private fun saveLoopingPref(context: Context, loopInt: Int) {
         Timber.d("saveLoopingPref: loopInt=$loopInt")
         viewModelScope.launch(Dispatchers.IO) {
@@ -301,6 +500,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Persists the current [ShuffleType] to DataStore on [Dispatchers.IO].
+     *
+     * @param context Application context used to access DataStore.
+     * @param shuffleType The shuffle state to save.
+     */
     private fun saveShufflePref(context: Context, shuffleType: ShuffleType) {
         Timber.d("saveShufflePref: shuffleType=$shuffleType")
         viewModelScope.launch(Dispatchers.IO) {
@@ -309,22 +514,53 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Experimental code, which page for music chooser fragment?
+     * Emits [page] as a one-shot navigation event on [navigateToPage], causing the
+     * [PlayerDisplayFragment] ViewPager2 to scroll to that page.
+     *
+     * @param page The [PageType] to navigate to.
      */
     fun setPage(page: PageType) {
         _navigateToPage.value = page
     }
 
+    /**
+     * Records [page] in the in-memory [currentPage] field so [getCurrentPage] can be queried
+     * synchronously without observing LiveData.
+     *
+     * @param page The [PageType] that has just become visible.
+     */
     fun observeCurrentPage(page: PageType) {
         currentPage = page
     }
 
+    /**
+     * Returns the most recently recorded [PageType], or `null` if [observeCurrentPage] has not
+     * been called yet.
+     */
     fun getCurrentPage(): PageType? {
         return currentPage
     }
 
+    /**
+     * [MediaBrowser] connected to [MusicService] for traversing the browsable media library tree.
+     *
+     * Initialised asynchronously in [setupMediaBrowser]; must not be accessed before that
+     * completes.
+     */
     private lateinit var mediaBrowser: MediaBrowser
+
+    /**
+     * The root node returned by [MusicService.onGetLibraryRoot]; stored for potential future
+     * tree traversal.
+     */
     private var rootMediaItem: MediaItem? = null
+
+    /**
+     * [SessionToken] identifying the [MusicService] instance.
+     *
+     * Created in [createSessionToken] and shared by both [setupMediaController] and
+     * [setupMediaBrowser].
+     */
     private lateinit var sessionToken: SessionToken
 
     init {
@@ -344,8 +580,11 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Creates a playlist in memory.
-     * @param playlistName Name of a new playlist. TODO Don't allow two albums of the same name.
+     * Creates a new empty playlist with the given name in the database.
+     *
+     * [availablePlaylists] updates automatically via the Room → Flow pipeline after creation.
+     *
+     * @param playlistName The display name for the new playlist.
      */
     fun createNamedPlaylist(playlistName: String) {
         Timber.d("createNamedPlaylist: playlistName=$playlistName")
@@ -355,7 +594,12 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * @param albumSongGroup A song group associated with a playlist.
+     * Persists the current song ordering of [albumSongGroup] to the database.
+     *
+     * Only acts when [albumSongGroup] has type [SongGroupType.PLAYLIST]; album orderings are
+     * fixed by the source data and cannot be reordered by the user.
+     *
+     * @param albumSongGroup The [SongGroup] whose song order should be saved.
      */
     fun updatePlaylistOrder(albumSongGroup: SongGroup) {
         Timber.d("updatePlaylistOrder: albumSongGroup=$albumSongGroup")
@@ -417,6 +661,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Persists the current playback position and queue index to DataStore so they can be restored
+     * by [restoreQueue] on the next app launch.
+     *
+     * @param controller The active [MediaController] whose position and index are read.
+     */
     private fun savePlayerState(controller: MediaController) {
         val playbackPosition = controller.currentPosition
         val songPosition = controller.currentMediaItemIndex
@@ -426,11 +676,17 @@ class MainViewModel @Inject constructor(
             DataStoreUtil.setPlaybackPosition(getApplication<Application>().applicationContext, playbackPosition)
             DataStoreUtil.setSongPosition(getApplication<Application>().applicationContext, songPosition)
         }
-
     }
 
     /**
-     * Restores what was in the queue last (either ordered or shuffled songs)
+     * Restores the persisted queue from the previous session and seeks to the saved position.
+     *
+     * Startup restore sequence (runs on [Dispatchers.IO], switches to Main for controller calls):
+     * 1. Read the saved playback position and queue index from DataStore.
+     * 2. Load the persisted queue songs from the database.
+     * 3. Add the songs to the controller via [addTracksSaveTrackOrder].
+     * 4. Seek to the saved index and position.
+     * 5. Hide the loading screen after a 500 ms delay to let the UI settle.
      */
     private fun restoreQueue() {
         Timber.d("restoreQueue: ")
@@ -469,7 +725,10 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Restores the original order before a shuffle. Allowing for unshuffle functionality.
+     * Loads the pre-shuffle song order from the database into [originalSongOrder].
+     *
+     * Called during startup (from [setupMediaController]) so that [unshuffleSongs] has the
+     * original ordering available if the user turns shuffle off in the current session.
      */
     private fun restoreQueueOrder() {
         Timber.d("restoreQueueOrder: ")
@@ -490,6 +749,15 @@ class MainViewModel @Inject constructor(
         }
     }
     
+    /**
+     * Renames a playlist from [currentTitle] to [newTitle] in the database.
+     *
+     * Delegates to [MusicRepository] on [Dispatchers.IO]. [availablePlaylists] updates
+     * automatically via the Room → Flow pipeline.
+     *
+     * @param currentTitle The existing playlist title to rename.
+     * @param newTitle The new title to assign.
+     */
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
@@ -516,7 +784,16 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Add a list of songs to the Playlist. Even if adding only one song still use this function.
+     * Adds [songs] to the playlist identified by [playlistTitle] in the database.
+     *
+     * [MediaItem] objects are mapped to their `searchDescription` string keys before being
+     * passed to the repository, because the database stores song-playlist associations by
+     * the unique search description rather than by URI or media ID.
+     *
+     * Even when adding a single song, use this function to go through the correct mapping path.
+     *
+     * @param playlistTitle The title of the target playlist.
+     * @param songs The [MediaItem] objects to add.
      */
     private fun addListOfSongMediaItemsToAPlaylist(playlistTitle: String, songs: List<MediaItem>) {
         Timber.d("addListOfSongMediaItemsToAPlaylist: playlistTitle=$playlistTitle, songDescriptions.size=${songs.size}")
@@ -526,6 +803,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Cleans up resources when the ViewModel is destroyed.
+     *
+     * Removes [playerListener] from the controller to prevent stale callbacks, then releases
+     * [mediaBrowser] if it was successfully initialised.
+     */
     override fun onCleared() {
         super.onCleared()
         Timber.d("onCleared: ")
@@ -539,6 +822,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Re-checks audio permissions only when the app is currently on the permission-denied screen.
+     *
+     * Prevents redundant permission checks from other screens while still allowing the
+     * permission-denied screen to re-verify after the user grants permission in Settings.
+     */
     fun checkPermissionsIfOnPermissionDeniedScreen() {
         Timber.d("checkPermissionsIfOnPermissionDeniedScreen: ")
 
@@ -637,10 +926,21 @@ class MainViewModel @Inject constructor(
         _clearQueue.value = true
     }
 
+    /**
+     * Resets the [clearQueue] one-shot flag to `false` after the UI has acted on it.
+     *
+     * Call this once the UI has responded to the queue-cleared event (e.g., dismissed the
+     * now-playing panel) to prevent repeat processing.
+     */
     fun handledClearningQueue() {
         _clearQueue.value = false
     }
 
+    /**
+     * Shows or hides the add-playlist prompt dialog on the Playlist tab.
+     *
+     * @param shouldShow `true` to display the dialog; `false` to dismiss it.
+     */
     fun showAddPlaylistPromptOnPlaylistPage(shouldShow: Boolean) {
         _shouldShowAddPlaylistPromptOnPlaylistPage.value = shouldShow
     }
@@ -661,7 +961,11 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Starts music service and sets up the media controller and media browser.
+     * Starts [MusicService] and establishes both the [MediaController] and [MediaBrowser]
+     * connections using a shared [SessionToken].
+     *
+     * Must be called from [MainActivity] after permissions are confirmed. Both connections are
+     * asynchronous; the ViewModel updates [mediaController] and [mediaBrowser] once they resolve.
      */
     fun initializeMusicPlaying() {
         Timber.d("initializeMusicPlaying: ")
@@ -671,7 +975,12 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * A session token is needed to connect to the music service. [And start the service?]
+     * Creates the [SessionToken] that identifies [MusicService] to Media3.
+     *
+     * The token is required to connect both the [MediaController] and [MediaBrowser]. Creating
+     * it also implicitly starts [MusicService] if it is not already running.
+     *
+     * @return A [SessionToken] bound to [MusicService].
      */
     private fun createSessionToken(): SessionToken {
         Timber.d("createSessionToken: ")
@@ -679,8 +988,16 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Returns a mediaController, used to interact with the music session.
-     * @param session The session token associated with this app. [Should only be one]
+     * Asynchronously builds a [MediaController] connected to [session] and performs the startup
+     * restore sequence once the connection succeeds.
+     *
+     * Restore sequence (runs inside the future listener):
+     * 1. Store the controller and apply the saved looping preference.
+     * 2. Restore the persisted queue via [restoreQueue] (which also hides the loading screen).
+     * 3. Restore the pre-shuffle original order via [restoreQueueOrder].
+     * 4. Post the current repeat mode to [loopMode] and register [playerListener].
+     *
+     * @param session The [SessionToken] identifying [MusicService].
      */
     private fun setupMediaController(session: SessionToken) {
         Timber.d("setupMediaController: session=$session")
@@ -692,10 +1009,10 @@ class MainViewModel @Inject constructor(
 
             determineLoopingPref(getApplication<Application>().applicationContext)
 
-            //Add old queue to the mediaController
+            // Restore the persisted queue from the previous session
             restoreQueue()
 
-            //Restore the original ordering for current songs in mediaController
+            // Restore the original (pre-shuffle) ordering so unshuffleSongs has data
             restoreQueueOrder()
 
             _loopMode.postValue(controller.repeatMode)
@@ -704,8 +1021,14 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Sets up the MediaBrowser, which is used to browse music on the app.
-     * @param session The session token associated with this app. [Should only be one]
+     * Asynchronously builds a [MediaBrowser] connected to [sessionToken] and fetches the
+     * library root once the connection succeeds.
+     *
+     * [getRoot] is called inside the listener (after the browser is ready) to ensure the
+     * browser is in the connected state before issuing the root request.
+     *
+     * @param session The [SessionToken] identifying [MusicService] — not used directly here;
+     *   [sessionToken] field is used instead to match the existing build pattern.
      */
     private fun setupMediaBrowser(session: SessionToken) {
         Timber.d("DT>>> setupMediaBrowser: session=$session")
@@ -717,14 +1040,17 @@ class MainViewModel @Inject constructor(
                 getRoot()
                 Timber.d("setupMediaBrowser: sessionToken=${mediaBrowser.connectedToken}")
             }
+            // Duplicate assignment — browserFuture.get() returns the same instance as above
             mediaBrowser = browserFuture.get()
-            //getRoot()
         }, MoreExecutors.directExecutor())
     }
 
     /**
-     * The root is the top most node returned from the MediaLibraryService, media is organized as
-     * a tree of MediaItems.
+     * Fetches the top-level [MediaItem] from [MusicService] via [mediaBrowser] and stores it in
+     * [rootMediaItem].
+     *
+     * The root is the entry point for any future media library tree traversal. Called from
+     * [setupMediaBrowser] once the browser connection is established.
      */
     private fun getRoot() {
         Timber.d("getRoot: ")
@@ -784,8 +1110,14 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Given a song, query the album it's from and start playing from that position.
-     * ex. If user clicks on songs from search, start playing music from that album at position of clicked song.
+     * Loads the album that [song] belongs to and starts playback at that song's position.
+     *
+     * Used when the user taps a song in search results, so playback begins in the context of the
+     * full album rather than just the single result. The song's position is found via
+     * `indexOfFirst` matching on title; if the song is not found in the album list (returns -1),
+     * playback falls back to position 0.
+     *
+     * @param song The [MediaItem] the user tapped.
      */
     fun playAlbumAtSongPosition(song: MediaItem) {
         viewModelScope.launch {
@@ -812,8 +1144,23 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Instead of adding songs directly to the mediaController instead, I can track when songs are added
-     * allowing for shuffle and restore functionality. [Also track current song list here, also track current song here?, do all player manipulation here to be observed]
+     * Central queue-management function that adds [mediaItems] to the player while maintaining
+     * the pre-shuffle [originalSongOrder] snapshot.
+     *
+     * All queue mutations in this ViewModel go through this function so that shuffle and unshuffle
+     * work correctly and the original order is always persisted.
+     *
+     * @param mediaItems The songs to add to the queue.
+     * @param clearOriginalSongList If `true`, resets [originalSongOrder] to empty before appending.
+     *   Use when replacing the queue entirely (e.g., playing a new album).
+     * @param startingSongPosition The queue index to seek to after adding; `null` to stay at the
+     *   current position. Ignored when [shuffleMode] is [ShuffleType.SHUFFLED] (shuffled queues
+     *   always start at index 0 with the chosen song pinned first).
+     * @param clearCurrentSongs If `true`, clears the player queue before adding [mediaItems].
+     * @param shouldAddToOriginalList If `true`, appends [mediaItems] to [originalSongOrder] and
+     *   persists it via [saveOriginalOrder].
+     * @param preventShuffle If `true`, adds items in their original order even when shuffle is
+     *   active. Used during queue restoration to avoid re-shuffling a previously shuffled queue.
      */
     private fun addTracksSaveTrackOrder(
         mediaItems: List<MediaItem>,
@@ -826,16 +1173,19 @@ class MainViewModel @Inject constructor(
         Timber.d("addTracksSaveTrackOrder: originalSongOrder=${_originalSongOrder.value?.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, " +
                 "clearOriginalSongList=$clearOriginalSongList, startingSongPosition=$startingSongPosition, " +
                 "clearCurrentSongs=$clearCurrentSongs, shouldAddToOriginalList=$shouldAddToOriginalList")
+
+        // 1. Clear the existing queue if requested
         if(clearCurrentSongs) {
             _mediaController.value?.clearMediaItems()
         }
 
+        // 2. Reset the original-order snapshot if requested
         if(clearOriginalSongList) {
             Timber.d("addTracksSaveTrackOrder: Setting Clear Original Song List!")
             _originalSongOrder.value = listOf()
         }
 
-        //save songs to the original song order
+        // 3. Append the new items to the original-order snapshot and persist it
         val songOrder = originalSongOrder.value?.toMutableList()
         songOrder?.addAll(mediaItems)
 
@@ -843,11 +1193,11 @@ class MainViewModel @Inject constructor(
             Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
             _originalSongOrder.postValue( songOrder ?: mediaItems  )
 
-            // Test, save the original order when it changes
             Timber.d("addTracksSaveTrackOrder: Save Original Order songOrder=${songOrder?.map { it.mediaMetadata.title }}")
             saveOriginalOrder(songOrder ?: mediaItems)
         }
 
+        // 4. Add items to the controller — shuffle if active, preserve order otherwise
         _mediaController.value?.let { controller ->
             if(_shuffleMode.value == ShuffleType.SHUFFLED && !preventShuffle) {
 
@@ -869,7 +1219,8 @@ class MainViewModel @Inject constructor(
             }
         }
 
-        // No point in jumping to a starting position if the songs are shuffled with chosen song at the top.
+        // 5. Seek to the starting position (only when not shuffled; shuffled queues pin the chosen
+        //    song at index 0 via shuffleSongs, so a separate seek is unnecessary)
         if(_shuffleMode.value != ShuffleType.SHUFFLED) {
             startingSongPosition?.let { position ->
                 _mediaController.value?.seekTo(position, 0L)
@@ -878,7 +1229,16 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Shuffle the given songs, if startingSongPosition is given, that song will be the first in queue.
+     * Returns [mediaItems] in a shuffled order.
+     *
+     * When [startingSongPosition] is provided, the song at that index is placed first in the
+     * result and the remaining songs are shuffled behind it — preserving the user's
+     * "play this song now" intent while randomising the rest of the queue.
+     *
+     * @param mediaItems The songs to shuffle.
+     * @param startingSongPosition The index of the song that should remain at position 0 in the
+     *   shuffled result; `null` to shuffle all songs with no pinned starting song.
+     * @return A new list with the songs in shuffled order.
      */
     private fun shuffleSongs(mediaItems: List<MediaItem>, startingSongPosition: Int? = null): List<MediaItem> {
         Timber.d("shuffleSongs: mediaItems=${mediaItems.map { it.mediaMetadata.title }} startingSongPosition=$startingSongPosition")
@@ -898,6 +1258,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Shuffles the current live player queue in-place.
+     *
+     * Reads the current queue from the [MediaController], shuffles it via [shuffleSongs], then
+     * replaces the queue using [addTracksSaveTrackOrder] with `shouldAddToOriginalList = false`
+     * so that [originalSongOrder] is not overwritten by the shuffled order.
+     */
     private fun shuffleSongsInMediaController() {
         Timber.d("shuffleSongsInMediaController: ")
         _mediaController.value?.let { controller ->
@@ -917,6 +1284,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Replaces the current queue with [originalSongOrder] starting at position 0, effectively
+     * reversing the most recent shuffle.
+     *
+     * Uses `shouldAddToOriginalList = false` inside [addTracksSaveTrackOrder] so that the
+     * original order list is not modified during the restore.
+     */
     private fun unshuffleSongs() {
         Timber.d("unshuffleSongs: ")
         _mediaController.value?.let { controller ->
