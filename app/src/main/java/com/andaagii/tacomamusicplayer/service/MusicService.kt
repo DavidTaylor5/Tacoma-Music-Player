@@ -108,29 +108,98 @@ Key point: Assistant expects these consistent IDs. If your service uses "album" 
 * */
 
 /**
- * MusicService serves up a way to query albums and songs for the UI.
+ * Foreground [MediaLibraryService] that owns the [ExoPlayer] instance and exposes the app's
+ * media library to Android Auto, Google Assistant, and the in-app UI via a [MediaLibrarySession].
+ *
+ * Responsibilities:
+ * - Creates and manages the [ExoPlayer] and [MediaLibrarySession] lifecycle.
+ * - Serves the browsable hierarchy (Root → Artists/Albums/Playlists → songs) through
+ *   [librarySessionCallback].
+ * - Handles the Android Auto playback-initiation flow via the [pendingSeek] mechanism.
+ * - Executes all repository calls on [Dispatchers.IO] via [serviceScope].
+ *
+ * Lifecycle: created by the Android OS when the first controller binds or the notification
+ * is shown; destroyed after [onTaskRemoved] when no playback is active. All coroutine work is
+ * tied to [serviceJob], which is cancelled in [onDestroy].
+ *
+ * Threading: [librarySessionCallback] overrides are invoked on the main thread by Media3;
+ * blocking work is always dispatched to [serviceScope] and returned as a [ListenableFuture].
+ *
+ * Injected via Hilt: [MediaStoreUtil], [MusicProviderRepository], [MediaItemUtil].
  */
 @AndroidEntryPoint
 class MusicService : MediaLibraryService() {
     /**
-     * In scenarios such as Android Auto, I need a way to communicate with the app to seek
-     * based on which song the user has clicked.
+     * Queue index to seek to after the next [Player.EVENT_MEDIA_ITEM_TRANSITION] event fires.
+     *
+     * Android Auto triggers [onAddMediaItems] before the new queue is loaded into [player].
+     * Because [ExoPlayer.seekTo] requires the queue to be populated first, the desired index is
+     * stored here and consumed in [PlayerEventListener.onEvents] on the first item-transition
+     * event after the queue is set. Reset to `null` immediately after the seek to prevent
+     * re-seeking on subsequent transitions.
+     *
+     * Must only be written from the main thread (Media3 callback thread).
      */
     private var pendingSeek: Int? = null
 
+    /**
+     * The [ExoPlayer] instance responsible for all audio decoding and playback.
+     *
+     * Initialised in [initializePlayer] during [onCreate]; released in [onDestroy]. Must not be
+     * accessed before [onCreate] completes.
+     */
     private lateinit var player: ExoPlayer
-    private var session:MediaLibrarySession? = null
+
+    /**
+     * The active [MediaLibrarySession] that connects [player] to all Media3 controllers.
+     *
+     * `null` before [initializeMediaSession] runs and after [onDestroy] cleans up. The session
+     * is registered with the service via [addSession] so the OS can route controller connections.
+     */
+    private var session: MediaLibrarySession? = null
+
+    /** Queries on-device audio via [MediaStore]; used by [getListOfSongMediaItemsFromAlbum]. */
     @Inject
     lateinit var mediaStoreUtil: MediaStoreUtil
+
+    /**
+     * Repository that fetches albums, artists, playlists, and songs as [MediaItem] lists for
+     * use by [librarySessionCallback] and Android Auto / Google Assistant browsing.
+     */
     @Inject
     lateinit var musicProvider: MusicProviderRepository
+
+    /**
+     * Builds and parses [MediaItem] instances, including decoding the encoded Android Auto
+     * media-ID format used by [pendingSeek] resolution.
+     */
     @Inject
     lateinit var mediaItemUtil: MediaItemUtil
 
-    // Gives my service the ability to run coroutines
+    /**
+     * Root [SupervisorJob] that scopes all coroutines to the service lifetime.
+     *
+     * Cancelled in [onDestroy] so that in-flight repository calls are abandoned when the
+     * service is torn down without leaking coroutines into the process.
+     */
     private val serviceJob = SupervisorJob()
+
+    /**
+     * Coroutine scope for all asynchronous repository and search operations.
+     *
+     * Uses [Dispatchers.IO] because every operation involves either database queries or
+     * [MediaStore] cursor reads — both are blocking I/O that must not run on Main.
+     */
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
+    /**
+     * Root [MediaItem] returned by [onGetLibraryRoot] to all browsing controllers.
+     *
+     * Not browsable and not playable; it exists only as the logical top of the tree required
+     * by the [MediaLibrarySession] protocol. The title is an internal sentinel value — it is
+     * never displayed to users. Controllers use the media ID `"root"` ([ROOT_ID]) to request
+     * children via [onGetChildren].
+     */
     val rootItem = MediaItem.Builder()
         .setMediaId("root")
         .setMediaMetadata(
@@ -143,30 +212,62 @@ class MusicService : MediaLibraryService() {
         )
         .build()
 
-    // MediaLibrarySession callback determines what information is going to be returned when
-    // UI queries music from the service.
+    /**
+     * [MediaLibrarySession.Callback] implementation that serves the browsing hierarchy and
+     * handles playback initiation from Android Auto and Google Assistant.
+     *
+     * All override methods are invoked on the main thread by Media3. Blocking repository calls
+     * are dispatched to [serviceScope] and returned as a [ListenableFuture] via
+     * `async { }.asListenableFuture()`. Synchronous responses use [Futures.immediateFuture].
+     *
+     * Browse hierarchy served:
+     * - Root → Artists (`artists`), Albums (`albums`), Playlists (`playlists`)
+     * - `artist:<name>` → albums belonging to that artist
+     * - `album:<title>` → songs belonging to that album
+     * - `playlist:<title>` → songs belonging to that playlist
+     */
     private val librarySessionCallback: MediaLibrarySession.Callback = object : MediaLibrarySession.Callback {
 
 
+        /**
+         * Resolves incoming [MediaItem] requests into fully-populated items before they are
+         * added to [player]'s queue.
+         *
+         * Called in two distinct scenarios:
+         *
+         * 1. **In-app queue management** — the UI sends complete [MediaItem] objects already
+         *    containing URIs. These are returned unchanged via [Futures.immediateFuture].
+         * 2. **Android Auto tap** — Auto sends a single [MediaItem] containing only the encoded
+         *    media ID (format: `songGroupType=…|||groupTitle=…|||position=…|||songTitle=…`).
+         *    The service decodes the ID via [MediaItemUtil.getAndroidAutoPlayDataFromMediaItem],
+         *    stores the target queue index in [pendingSeek], then fetches the full song list from
+         *    [MusicProviderRepository] asynchronously. The seek is applied once
+         *    [PlayerEventListener.onEvents] fires [Player.EVENT_MEDIA_ITEM_TRANSITION].
+         *
+         * All async work runs on [serviceScope] and is returned as a [ListenableFuture].
+         *
+         * @param mediaSession The active [MediaSession].
+         * @param controller The controller that issued the add-items request.
+         * @param mediaItems Items to resolve; may be partial (ID-only) in the Android Auto scenario.
+         * @return A future that resolves to the fully-populated item list for the player queue.
+         */
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            /*
-            * This function can be called in two scenarios, when I manually add songs to the controller,
-            * and in scenario such as android auto, this function will also call with user's click.
-            * 1) Manually add items to controller -> app takes care of the logic
-            * 2) Android Auto click -> sends the mediaItems with just the ID -> query songs and set pending seek.
-            * */
-
+            // Android Auto encodes playback context in the media ID using the "groupTitle=" marker.
+            // A plain in-app add passes fully-populated items that do not use this encoding.
             if(mediaItems.size == 1 && mediaItems[0].mediaId.contains("groupTitle=")) {
                 val androidAutoPlayData = mediaItemUtil.getAndroidAutoPlayDataFromMediaItem(mediaItems[0])
 
+                // Store the desired queue index; the actual seek happens in PlayerEventListener.onEvents
+                // after the new queue is committed to the player.
                 pendingSeek = androidAutoPlayData.position
 
                 if(androidAutoPlayData.songGroupType == SongGroupType.PLAYLIST) {
                     Timber.d("onAddMediaItems: Playback for Playlist!")
+                    // Fetch playlist songs with file-provider URIs so Android Auto can read artwork
                     return serviceScope.async {
                         musicProvider.getSongsFromPlaylist(
                             androidAutoPlayData.groupTitle,
@@ -174,7 +275,8 @@ class MusicService : MediaLibraryService() {
                         ).toMutableList()
                     }.asListenableFuture()
                 } else if(androidAutoPlayData.songGroupType == SongGroupType.ALBUM) {
-                    Timber.d("onAddMediaItems: Playback for Playlist! title=${androidAutoPlayData.groupTitle}")
+                    Timber.d("onAddMediaItems: Playback for Album! title=${androidAutoPlayData.groupTitle}")
+                    // Fetch album songs with file-provider URIs so Android Auto can read artwork
                     return serviceScope.async {
                         musicProvider.getSongsFromAlbum(
                             androidAutoPlayData.groupTitle, //TODO This title isn't coming in correct... good kid,
@@ -187,6 +289,20 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(mediaItems)
         }
 
+        /**
+         * Handles custom [SessionCommand] requests sent by any bound controller.
+         *
+         * Currently delegates entirely to the default Media3 implementation. Override this
+         * method to add application-specific commands (for example, triggering shuffle from
+         * a widget).
+         *
+         * @param session The active [MediaLibrarySession].
+         * @param controller The controller issuing the command.
+         * @param customCommand The command identifier and any extra data.
+         * @param args Optional arguments bundle accompanying the command.
+         * @return A [SessionResult] future; returns [SessionResult.RESULT_ERROR_NOT_SUPPORTED]
+         *   by default.
+         */
         override fun onCustomCommand(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -197,6 +313,16 @@ class MusicService : MediaLibraryService() {
         }
 
 
+        /**
+         * Returns the root [MediaItem] of the browsable tree to any connecting controller.
+         *
+         * Responds synchronously with [rootItem], which has media ID `"root"`. Controllers
+         * then call [onGetChildren] with `"root"` to retrieve the top-level categories.
+         *
+         * @param browser The controller requesting the root.
+         * @param params Optional hints about browsing intent (offline mode, etc.) — not used here.
+         * @return An immediate future wrapping [rootItem].
+         */
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -205,7 +331,22 @@ class MusicService : MediaLibraryService() {
             return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
         }
 
-        //Usually used to start async search
+        /**
+         * Begins an asynchronous music search and notifies the browser when results are ready.
+         *
+         * Media3 separates search into two phases: this method fires the query on [serviceScope]
+         * and calls [MediaLibrarySession.notifySearchResultChanged] when complete, which in turn
+         * triggers [onGetSearchResult] on the browser side to retrieve the actual items.
+         *
+         * The search runs on [Dispatchers.IO] inside [serviceScope] because
+         * [MusicProviderRepository.searchMusic] performs a database query.
+         *
+         * @param browser The controller that issued the search.
+         * @param query Free-text search string (e.g., "GNX Kendrick Lamar").
+         * @param params Optional search hints — passed through to [notifySearchResultChanged] unchanged.
+         * @return The default super result (always [LibraryResult.ofVoid]); the real result arrives
+         *   asynchronously via the notify callback.
+         */
         override fun onSearch(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -214,25 +355,40 @@ class MusicService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<Void>> {
             serviceScope.launch {
                 val foundMatches = musicProvider.searchMusic(query)
-                //This code triggers the onGetSearchResult callback
+                // Triggers the onGetSearchResult callback on the browser side
                 session.notifySearchResultChanged(browser, query, foundMatches.size, null)
             }
 
             return super.onSearch(session, browser, query, params)
         }
 
-        //Used by Google assistant to get the result of a search
+        /**
+         * Returns the search results previously computed by [onSearch] to the requesting controller.
+         *
+         * Called by Google Assistant and Android Auto after [onSearch] emits
+         * [MediaLibrarySession.notifySearchResultChanged]. Results use file-provider URIs so
+         * that external processes (Assistant, Auto) can securely access artwork files.
+         *
+         * Note: [page] and [pageSize] are currently ignored — the full result set is returned
+         * in one response. Pagination should be implemented if search results grow large.
+         *
+         * Runs on [serviceScope] ([Dispatchers.IO]) because the repository performs a database query.
+         *
+         * @param browser The controller requesting results.
+         * @param query The same query string that was passed to [onSearch].
+         * @param page Requested result page (0-indexed) — not yet honoured.
+         * @param pageSize Maximum items per page — not yet honoured.
+         * @param params Optional browsing hints.
+         * @return A future resolving to the full list of matching [MediaItem] objects.
+         */
         override fun onGetSearchResult(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
-            query: String, //ex GNX Kendrick Lamar
+            query: String,
             page: Int,
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-
-            //TODO This will work for android auto but will it work with google assistant...
-
             return serviceScope.async {
                 val foundMatches = musicProvider.searchMusic(
                     query,
@@ -241,12 +397,39 @@ class MusicService : MediaLibraryService() {
                 Timber.d("onGetSearchResult: foundMatches=$foundMatches")
                 LibraryResult.ofItemList(foundMatches, params)
             }.asListenableFuture()
-
-
-//            return super.onGetSearchResult(session, browser, query, page, pageSize, params)
         }
 
-        //Used by Android Auto to browse the user's media
+        /**
+         * Returns the children of a given [parentId] node in the media browse tree.
+         *
+         * Called by Android Auto (and any Media3 browser) to populate each level of the
+         * browsable hierarchy. The [parentId] string encodes both the node type and — for
+         * non-root nodes — the item identifier using the prefix constants from [Const]:
+         *
+         * | parentId value         | Content returned                            |
+         * |------------------------|---------------------------------------------|
+         * | `"root"`               | Category nodes: Artists, Albums, Playlists  |
+         * | `"artists"`            | All artist [MediaItem] objects              |
+         * | `"albums"`             | All album [MediaItem] objects               |
+         * | `"playlists"`          | All playlist [MediaItem] objects            |
+         * | `"artist:<name>"`      | Albums belonging to the named artist        |
+         * | `"album:<title>"`      | Songs belonging to the named album          |
+         * | `"playlist:<title>"`   | Songs belonging to the named playlist       |
+         * | anything else          | Single-song lookup by title                 |
+         *
+         * All non-root responses pass `useFileProviderUri = true` to [MusicProviderRepository]
+         * so that Android Auto — which runs in a separate process — can read artwork via the
+         * app's [AlbumArtFileProvider] content provider.
+         *
+         * Async branches run on [serviceScope] ([Dispatchers.IO]); the root branch is synchronous.
+         *
+         * @param browser The controller browsing the library.
+         * @param parentId ID of the node whose children are requested.
+         * @param page Result page (0-indexed) — not currently used; full lists are returned.
+         * @param pageSize Maximum items per page — not currently used.
+         * @param params Optional browsing hints from the controller.
+         * @return A future resolving to the children list for the given node.
+         */
         override fun onGetChildren(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -256,6 +439,7 @@ class MusicService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             return when {
+                // Top-level categories — synchronous, no I/O needed
                 parentId == ROOT_ID -> {
                     Futures.immediateFuture(
                         LibraryResult.ofItemList(
@@ -286,26 +470,27 @@ class MusicService : MediaLibraryService() {
                         )
                     )
                 }
+                // All albums with file-provider artwork URIs for cross-process image access
                 parentId == ALBUM_ID -> {
                     serviceScope.async {
-                        //to update the album's artwork to use file provider uri
                         LibraryResult.ofItemList(musicProvider.getAllAlbums(true), params)
                     }.asListenableFuture()
                 }
+                // All artists; artwork URI is derived from the first album found for that artist
                 parentId == ARTIST_ID -> {
                     serviceScope.async {
-                        //Also need first album from an artist's file provider uri
                         LibraryResult.ofItemList(musicProvider.getAllArtists(), params) //TODO too many artists!!!
                     }.asListenableFuture()
                 }
+                // All user-created playlists with file-provider artwork URIs
                 parentId == PLAYLIST_ID -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(musicProvider.getAllPlaylists(true), params)
                     }.asListenableFuture()
                 }
+                // Songs within a specific album; strip the "album:" prefix before querying
                 parentId.contains(ALBUM_PREFIX) -> {
                     serviceScope.async {
-                        //Need to update all song's artwork as uri
                         LibraryResult.ofItemList(
                             musicProvider.getSongsFromAlbum(
                                 albumTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
@@ -315,10 +500,10 @@ class MusicService : MediaLibraryService() {
                         )
                     }.asListenableFuture()
                 }
+                // Albums for a specific artist; strip the "artist:" prefix before querying
                 parentId.contains(ARTIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
-                            //Update albums from artist with correct artworkuri
                             musicProvider.getAlbumsFromArtist(
                                 mediaItemUtil.removeMediaItemPrefix(parentId)
                             ),
@@ -326,10 +511,10 @@ class MusicService : MediaLibraryService() {
                         )
                     }.asListenableFuture()
                 }
+                // Songs within a specific playlist; strip the "playlist:" prefix before querying
                 parentId.contains(PLAYLIST_PREFIX) -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
-                            //update song's arturi with fileprovider uri
                             musicProvider.getSongsFromPlaylist(
                                 playlistTitle = mediaItemUtil.removeMediaItemPrefix(parentId),
                                 useFileProviderUri = true
@@ -338,10 +523,10 @@ class MusicService : MediaLibraryService() {
                         )
                     }.asListenableFuture()
                 }
-                else ->  {
+                // Fallback: treat parentId as a song title for direct single-song lookup
+                else -> {
                     serviceScope.async {
                         LibraryResult.ofItemList(
-                            //update artwork uri with fileprovider uri
                             musicProvider.getSongFromName(parentId), //TODO modify this with a function that returns auto:SONG_TITLE PLAYLIST:PLAYLIST_TITLE:START_POSITION:SONG_TITLE
                             params
                         )
@@ -351,10 +536,27 @@ class MusicService : MediaLibraryService() {
         }
     }
 
+    /**
+     * Returns a list of [MediaItem] objects for every song in the given album, sourced directly
+     * from [MediaStore] rather than the app's Room database.
+     *
+     * Used by the UI layer to populate an album's song queue without requiring a database lookup.
+     * Performs a synchronous [MediaStore] cursor query — callers should invoke this off the main
+     * thread.
+     *
+     * @param albumTitle The album title as stored in [MediaStore]; must match exactly.
+     * @return All songs in the album as [MediaItem] objects, or an empty list if none are found.
+     */
     fun getListOfSongMediaItemsFromAlbum(albumTitle: String): List<MediaItem> {
         return mediaStoreUtil.querySongsFromAlbum(this, albumTitle)
     }
 
+    /**
+     * Initialises the service by building [player] then [session], in that order.
+     *
+     * [initializeMediaSession] requires [player] to already exist, so the call order must not
+     * be reversed. Called once by the Android OS when the first controller binds.
+     */
     override fun onCreate() {
         Timber.d("onCreate: ")
         super.onCreate()
@@ -362,55 +564,100 @@ class MusicService : MediaLibraryService() {
         initializeMediaSession()
     }
 
+    /**
+     * Stops the service when the user swipes the app away from Recents, unless audio is
+     * actively playing.
+     *
+     * If [player] is paused or the queue is empty, there is no reason to keep the service
+     * alive, so [stopSelf] is called. If playback is active, the service continues running
+     * as a foreground service until the user explicitly pauses or the queue ends.
+     *
+     * @param rootIntent The intent that launched the task being removed — not used here.
+     */
     override fun onTaskRemoved(rootIntent: Intent?) {
         if(!player.playWhenReady || player.mediaItemCount == 0)
             stopSelf()
         super.onTaskRemoved(rootIntent)
     }
 
+    /**
+     * Releases all resources in reverse-initialisation order.
+     *
+     * Cancels [serviceJob] first to abort any in-flight coroutines before releasing [player],
+     * preventing callbacks from firing on a released player. Sets [session] to `null` after
+     * release so that [onGetSession] returns `null` and no new controllers can bind during
+     * teardown.
+     */
     override fun onDestroy() {
         Timber.d("onDestroy: ")
+        // Cancel coroutines before releasing the player to prevent post-release callbacks
         serviceJob.cancel()
         session?.run {
             player.release()
+            // Null out session so onGetSession returns null during teardown
             session = null
         }
         super.onDestroy()
     }
 
 
+    /**
+     * Returns the [MediaLibrarySession] for incoming controller connections.
+     *
+     * Returns `null` after [onDestroy] has set [session] to `null`, which prevents new
+     * controllers from binding during service teardown. Media3 requires this override to
+     * route controllers to the correct session when a service hosts multiple sessions.
+     *
+     * @param controllerInfo Metadata about the connecting controller — not inspected here.
+     * @return The active [session], or `null` if the service is being destroyed.
+     */
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
         Timber.d("onGetSession: session=$session, session.token=${session?.token}")
         return session
     }
 
     /**
-     * Setups up the exoplayer instance that is core to the mp3 functionality. UI classes will
-     * use the mediacontroller to request changes to music content.
+     * Constructs the [ExoPlayer] instance with audio-focus and noise-transition handling,
+     * then prepares it with an empty queue so it is ready to accept items from the UI.
+     *
+     * Must be called before [initializeMediaSession] because the session requires an existing
+     * player reference. Attaches [PlayerEventListener] to handle [pendingSeek] resolution
+     * and future playback-state events.
+     *
+     * @return `true` unconditionally (return value reserved for future error reporting).
      */
     private fun initializePlayer(): Boolean {
         Timber.d("initializePlayer: ")
 
-        var playerBuilder: ExoPlayer.Builder = ExoPlayer.Builder(this)
+        val playerBuilder: ExoPlayer.Builder = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this))
-            .setAudioAttributes(AudioAttributes.DEFAULT, true) //coordinate audio //fade out other audio from other apps
-            .setHandleAudioBecomingNoisy(true) // disconnect headphones , switch to speakers mode
-            //.setWakeMode(C.WAKE_MODE_LOCAL) //device doesn't sleep when playing audio with screen off. //TODO wake lock is running error...
+            // Request audio focus and duck other apps' audio when playback starts
+            .setAudioAttributes(AudioAttributes.DEFAULT, true)
+            // Pause playback automatically when headphones are unplugged
+            .setHandleAudioBecomingNoisy(true)
 
         player = playerBuilder.build()
 
         player.addListener(PlayerEventListener())
-        player.playWhenReady = false //this can be a variable
+        // Default to paused; the UI controls when playback begins
+        player.playWhenReady = false
 
-        //Test code that sets media Items with three of the same -> ui should choose music instead.
+        // Prepare with an empty queue so the player is in STATE_READY before the UI adds items
         player.setMediaItems(listOf())
         player.prepare()
         return true
     }
 
     /**
-     * A media session is required for mp3 functionality, this will generate the default music
-     * notification.
+     * Creates the [MediaLibrarySession] that connects [player] to all Media3 controllers
+     * and registers it with the service.
+     *
+     * Requires [player] to be fully initialised before calling. Uses a random ID via
+     * [generateRandomStringId] to avoid a crash caused by duplicate session IDs when the
+     * service is restarted without being fully destroyed. Calls [addSession] so the OS can
+     * discover and route controller connections to this session.
+     *
+     * @return `true` unconditionally (return value reserved for future error reporting).
      */
     private fun initializeMediaSession(): Boolean {
         Timber.d("initializeMediaSession: ")
@@ -423,14 +670,29 @@ class MusicService : MediaLibraryService() {
     }
 
     /**
-     * Create a random string for the session id, previously I'm getting a crash because the service
-     * doesn't have a unique id.
+     * Generates a unique session ID for each [MediaLibrarySession] instance.
+     *
+     * Media3 requires session IDs to be unique within a process. Reusing a fixed ID across
+     * service restarts (where the old session may not yet be fully released) causes an
+     * [IllegalStateException]. A random suffix ensures uniqueness without requiring a
+     * counter or timestamp.
+     *
+     * @return A string in the form `"Tacoma Music Player: <random double>"`.
      */
     private fun generateRandomStringId(): String {
         return "Tacoma Music Player: ${Random.nextDouble()}"
     }
 
 
+    /**
+     * [Player.Listener] that handles playback events for [MusicService].
+     *
+     * Declared as an inner class so it can access [pendingSeek] directly. All callbacks are
+     * invoked on the main thread by Media3.
+     *
+     * Key responsibility: consumes [pendingSeek] on the first [Player.EVENT_MEDIA_ITEM_TRANSITION]
+     * after Android Auto loads a new queue, ensuring the player jumps to the correct song.
+     */
     private inner class PlayerEventListener : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
             if (playbackState == Player.STATE_ENDED) {
@@ -438,10 +700,25 @@ class MusicService : MediaLibraryService() {
             }
         }
 
+        /**
+         * Consumes [pendingSeek] on the item-transition event that follows an Android Auto
+         * queue load.
+         *
+         * After [onAddMediaItems] populates the queue with Android Auto's chosen album or
+         * playlist, the first [Player.EVENT_MEDIA_ITEM_TRANSITION] signals that the new queue
+         * is committed. At that point [pendingSeek] holds the index of the tapped song, and
+         * [ExoPlayer.seekTo] is safe to call. The seek position is cleared immediately to
+         * prevent re-seeking on any subsequent natural track transitions.
+         *
+         * @param player The player that fired the events.
+         * @param events The batch of events that occurred in this player update cycle.
+         */
         override fun onEvents(player: Player, events: Player.Events) {
             if(events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                // Apply the deferred Android Auto seek now that the new queue is loaded
                 pendingSeek?.let { position ->
                     player.seekTo(position, 0)
+                    // Clear immediately so natural track transitions do not re-trigger the seek
                     pendingSeek = null
                 }
             }
