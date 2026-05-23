@@ -30,6 +30,7 @@
 ---
 
 ## 📦 Code Style & Quality Standards
+Critical: Before writing any comments or kDocs, refer to the guide APP-COMMENTS.md.
 * **Null Safety:** Leverage Kotlin's null safety fully. Avoid `!!` (double bang) assertions at all costs; use safe calls `?.`, the Elvis operator `?:`, or explicit error handling.
 * **Extensions:** Use Kotlin extension functions to keep core classes clean and readable.
 * **Testing:** 
