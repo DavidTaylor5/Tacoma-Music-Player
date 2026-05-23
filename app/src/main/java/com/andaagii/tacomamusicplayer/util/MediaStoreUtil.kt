@@ -2,33 +2,52 @@ package com.andaagii.tacomamusicplayer.util
 
 import android.content.ContentUris
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.data.SongData
 import timber.log.Timber
 import java.io.File
-import com.mpatric.mp3agic.Mp3File
 import javax.inject.Inject
 
 /**
- * This class handles logic related to the android class MediaStore. MediaStore is an abstraction of
- * the on device files in android. Newer versions of the android sdk has an emphasis on security, and
- * having applications able to directly access on board storage could be dangerous. By using MediaStore
- * I can request safe permissions from the user and query audio to use in the mp3 app.
+ * Queries [android.provider.MediaStore] for audio content on the device.
+ *
+ * MediaStore is the Android-recommended abstraction layer for on-device media files. Using
+ * it instead of direct file-system access lets the app request only the scoped permissions
+ * required (`READ_MEDIA_AUDIO` on API ≥ 33, `READ_EXTERNAL_STORAGE` on older devices) while
+ * remaining compliant with Android's storage security model.
+ *
+ * Two public query methods are exposed:
+ * - [querySongsFromAlbum] — fetches the track list for a specific album title.
+ * - [queryAvailableAlbums] — fetches every distinct album available on the device.
+ *
+ * **Permission prerequisite:** the calling context must already hold the appropriate read
+ * permission before calling either method; no permission checks are performed internally.
  */
 class MediaStoreUtil @Inject constructor(
     private val mediaItemUtil: MediaItemUtil
 ) {
 
     /**
-     * Query all songs from associated album on device storage.
-     * @param context Context associated with the application. Context needs permission READ_MEDIA_AUDIO.
-     * @param album The title of an album.
-     * @return A list of MediaItems songs associated with the given album title.
+     * Returns all tracks belonging to [album] as playable [MediaItem] objects.
+     *
+     * The query is a two-phase operation:
+     * 1. The `Albums` table is queried first to resolve the numeric `ALBUM_ID` for [album].
+     *    MediaStore's `Audio.Media` table stores artwork under a per-album `content://` URI
+     *    constructed from this ID, so the album-level query is needed to obtain it.
+     * 2. The `Audio.Media` table is queried with `ALBUM = ?` to retrieve the actual tracks.
+     *
+     * Song URIs are normalised via `Uri.fromFile(File(url))` rather than using the raw path
+     * string. Paths containing `#` or `!` characters cause ExoPlayer to misparse the URI,
+     * treating them as fragment or authority delimiters; `fromFile` percent-encodes these
+     * characters, producing a safe `file://` URI.
+     *
+     * @param context Application context; must hold `READ_MEDIA_AUDIO` or
+     *   `READ_EXTERNAL_STORAGE` permission.
+     * @param album The exact album title as stored in MediaStore.
+     * @return A list of playable [MediaItem] objects for each track in the album.
      */
     fun querySongsFromAlbum(context: Context, album: String): List<MediaItem> {
         Timber.d("querySongsFromAlbum: ")
@@ -36,40 +55,38 @@ class MediaStoreUtil @Inject constructor(
         val albumSongs = mutableListOf<MediaItem>()
 
         val uriExternal: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-
         val uriAlbum = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI
 
         var albumIdCheck = 0L
 
-        val proj2: Array<String?> = arrayOf(
+        // Phase 1 — resolve the album's numeric ID from the Albums table.
+        // This ID is used later to build the per-album artwork content URI.
+        val albumIdProjection: Array<String?> = arrayOf(
             MediaStore.Audio.Albums.ALBUM_ID,
         )
 
         context.contentResolver.query(
             uriAlbum,
-            proj2,
+            albumIdProjection,
             "${MediaStore.Audio.Albums.ALBUM} = ?",
             arrayOf(album),
             null
-        )?.use {cursor ->
-            while(cursor.moveToNext()) {
-                val albumId = cursor.getLong(0)
-                albumIdCheck = albumId
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                albumIdCheck = cursor.getLong(0)
             }
-
         }
 
-        val b = "what"
-
+        // Phase 2 — fetch all tracks whose ALBUM column matches the requested album title.
         val projection: Array<String?> = arrayOf(
-            MediaStore.Audio.AudioColumns.DATA,     //0 -> url
-            MediaStore.Audio.AudioColumns.TITLE,    //1 -> song title
-            MediaStore.Audio.AudioColumns.ALBUM,    //2 -> album title
-            MediaStore.Audio.ArtistColumns.ARTIST,  //3 -> artist
-            MediaStore.Audio.AudioColumns.DURATION, //4 -> duration in  milliseconds
-            MediaStore.Audio.AudioColumns.TRACK,    //5 -> track # in album
-            MediaStore.Audio.AudioColumns._ID,      //6 id
-            MediaStore.Audio.AudioColumns.ALBUM_ID,
+            MediaStore.Audio.AudioColumns.DATA,     // 0 → file path (used to build safe URI)
+            MediaStore.Audio.AudioColumns.TITLE,    // 1 → song title
+            MediaStore.Audio.AudioColumns.ALBUM,    // 2 → album title
+            MediaStore.Audio.ArtistColumns.ARTIST,  // 3 → artist
+            MediaStore.Audio.AudioColumns.DURATION, // 4 → duration in milliseconds
+            MediaStore.Audio.AudioColumns.TRACK,    // 5 → track number within the album
+            MediaStore.Audio.AudioColumns._ID,      // 6 → song row ID
+            MediaStore.Audio.AudioColumns.ALBUM_ID, // 7 → album row ID
         )
 
         context.contentResolver.query(
@@ -81,72 +98,26 @@ class MediaStoreUtil @Inject constructor(
         )?.use { cursor ->
             while (cursor.moveToNext()) {
                 Timber.d(
-                    "querySongsFromAlbum: ${cursor.getString(0)}, ${cursor.getString(1)}, ${
-                        cursor.getString(
-                            2
-                        )
-                    }, ${cursor.getString(3)}, ${cursor.getString(4)}, ${cursor.getString(5)}, ${
-                        cursor.getString(
-                            6
-                        )
-                    }"
+                    "querySongsFromAlbum: ${cursor.getString(0)}, ${cursor.getString(1)}, " +
+                    "${cursor.getString(2)}, ${cursor.getString(3)}, ${cursor.getString(4)}, " +
+                    "${cursor.getString(5)}, ${cursor.getString(6)}"
                 )
 
                 val url = cursor.getString(0)
 
-                //Some song uris include a "#" or "!" which will error out on exoplayer
+                // Normalise the path to a safe file:// URI — raw paths with '#' or '!'
+                // cause ExoPlayer to misparse the URI, skipping or corrupting the audio source.
                 val fixUrl = Uri.fromFile(File(url))
 
                 val retriever = MediaMetadataRetriever()
-
                 retriever.setDataSource(context, fixUrl)
 
-
-//                val file = UtilImpl.uriToFile(context, fixUrl)
-//                val mp3File = Mp3File(file)
-
-//                if( cursor.getString(0).contains("let-god-sort-em-out")) {
-//                    val artBytes = retriever.embeddedPicture
-//                    if (artBytes != null) {
-//                        Timber.d("querySongsFromAlbum: artBytes are not null!")
-//                    } else {
-//                        Timber.d("querySongsFromAlbum: artBytes are null!")
-//
-//                        Timber.d("querySongsFromAlbum: trying mp3agic!!")
-//                        val file = UtilImpl.uriToFile(context, fixUrl)
-//                        val mp3File = Mp3File(file)
-//
-//                        if(mp3File.hasId3v2Tag()) {
-//
-//                            val tag = mp3File.id3v2Tag
-//                            val imageData = tag.albumImage
-//                            if(imageData != null) {
-//                                val a = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
-//                                Timber.d("querySongsFromAlbum: bitmap created from mp3agic!!")
-//                            } else {
-//                                Timber.d("querySongsFromAlbum: imageData is null!")
-//                            }
-//
-//                        } else {
-//                            Timber.d("querySongsFromAlbum: NOT id3v2")
-//                        }
-//
-//                    }
-//                }
-
-
                 val title = cursor.getString(1)
-                val album = cursor.getString(2)
+                val albumTitle = cursor.getString(2)
                 val artist = cursor.getString(3)
                 val duration = cursor.getString(4)
-                val track = cursor.getInt(5)
                 val songId = cursor.getLong(6)
                 val albumId = cursor.getLong(7)
-
-                val albumUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    albumId
-                )
 
                 val artworkUri = ContentUris.withAppendedId(uriExternal, songId)
 
@@ -154,7 +125,7 @@ class MediaStoreUtil @Inject constructor(
                     SongData(
                         songUri = fixUrl.toString(),
                         songTitle = title,
-                        albumTitle = album,
+                        albumTitle = albumTitle,
                         artist = artist,
                         artworkUri = artworkUri.toString(),
                         duration = duration
@@ -169,11 +140,21 @@ class MediaStoreUtil @Inject constructor(
     }
 
     /**
-     * Query all available albums on device storage.
-     * @param context Context associated with the application. Context needs permission READ_MEDIA_AUDIO.
-     * @return A list of mediaItems associated with albums on device.
+     * Returns every distinct album on the device as browsable [MediaItem] objects.
+     *
+     * Each field is extracted inside its own `try/catch` block because MediaStore rows can
+     * return `null` for any column (e.g., a ripped file may have no artist metadata). Swallowing
+     * per-field exceptions ensures one corrupt row does not abort the entire scan.
+     *
+     * After all rows are processed, duplicate album titles are filtered: MediaStore can return
+     * multiple rows for the same album title (e.g., different disc numbers or variant releases).
+     * Only the first occurrence is added so each album appears exactly once in the UI.
+     *
+     * @param context Application context; must hold `READ_MEDIA_AUDIO` or
+     *   `READ_EXTERNAL_STORAGE` permission.
+     * @return A mutable list of browsable [MediaItem] objects, one per distinct album title.
      */
-    fun queryAvailableAlbums(context: Context): MutableList<MediaItem> { //TODO should probably be AlbumModel
+    fun queryAvailableAlbums(context: Context): MutableList<MediaItem> {
         Timber.d("queryAvailableAlbums: ")
 
         val albumList: MutableList<MediaItem> = mutableListOf()
@@ -196,11 +177,8 @@ class MediaStoreUtil @Inject constructor(
         )?.use { cursor ->
             while (cursor.moveToNext()) {
                 Timber.d(
-                    "queryAvailableAlbums: ${cursor.getString(0)}, ${cursor.getString(1)}, ${
-                        cursor.getString(
-                            2
-                        )
-                    }"
+                    "queryAvailableAlbums: ${cursor.getString(0)}, ${cursor.getString(1)}, " +
+                    "${cursor.getString(2)}"
                 )
 
                 var albumId = 0L
@@ -208,6 +186,8 @@ class MediaStoreUtil @Inject constructor(
                 var artist = ""
                 var releaseYear = 0
 
+                // Each field is wrapped individually — a null or malformed value in one column
+                // must not prevent the remaining fields from being extracted for this row.
                 try {
                     albumId = cursor.getLong(0)
                 } catch (e: Exception) {
@@ -237,12 +217,14 @@ class MediaStoreUtil @Inject constructor(
 
                 Timber.d("ALBUMART>>> artworkUri=$artworkUri")
 
-                //Create Media Item from information
                 val albumMediaItem =
                     mediaItemUtil.createAlbumMediaItem(albumTitle, artist, artworkUri, releaseYear)
 
-                if( albumList.map { it.mediaMetadata.albumTitle }.contains(albumTitle)) {
-                    Timber.d("queryAvailableAlbums: albumTitle found in albumList=${albumList.map { it.mediaMetadata.albumTitle} }")
+                // Skip duplicate album titles — MediaStore can list the same album multiple
+                // times (e.g., different disc numbers). Only the first occurrence is kept so
+                // each album appears exactly once in the UI.
+                if (albumList.map { it.mediaMetadata.albumTitle }.contains(albumTitle)) {
+                    Timber.d("queryAvailableAlbums: albumTitle found in albumList, skipping duplicate.")
                 } else {
                     Timber.d("queryAvailableAlbums: Adding albumTitle=$albumTitle to albumList")
                     albumList.add(albumMediaItem)
@@ -256,13 +238,13 @@ class MediaStoreUtil @Inject constructor(
 }
 
 /*
-I have added some examples of selection and selection args that can be used in media store for
-reference.
+Reference: MediaStore selection examples
 
-This code works as a selector -> will return 3 gza songs that are greater than 5 minutes long
-"${MediaStore.Audio.AudioColumns.DURATION} >= ?",
-        arrayOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES).toString()),*/
+This selector returns songs by duration (e.g., tracks ≥ 5 minutes):
+    "${MediaStore.Audio.AudioColumns.DURATION} >= ?",
+    arrayOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES).toString())
 
-/*        This code works as a selector -> will return all songs with associated title Liquid Swords [Explicit]
-        "${MediaStore.Audio.AudioColumns.ALBUM} = ?",
-        arrayOf("Liquid Swords [Explicit]"),*/
+This selector returns all songs on a specific album:
+    "${MediaStore.Audio.AudioColumns.ALBUM} = ?",
+    arrayOf("Liquid Swords [Explicit]")
+*/
