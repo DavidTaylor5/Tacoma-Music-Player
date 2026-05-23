@@ -27,22 +27,40 @@ import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+/**
+ * Host fragment for the main `ViewPager2` swipe layout.
+ *
+ * Wires [ScreenSlidePagerAdapter], `CustomNavigationControl`, edge-to-edge window insets,
+ * mini-player controls, and page-change callbacks. Observes [MainViewModel] for playback
+ * state (to drive the mini-player) and navigation events (to programmatically scroll the pager).
+ *
+ * The mini-player overlay is shown on all pages except [PageType.PLAYER_PAGE] and when no song
+ * is currently loaded. Tapping the mini-player scrolls to [PageType.PLAYER_PAGE].
+ *
+ * Double-tap or swipe-down on the player area navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
+ */
 @AndroidEntryPoint
-class PlayerDisplayFragment: Fragment() {
+class PlayerDisplayFragment : Fragment() {
     private lateinit var pagerAdapter: ScreenSlidePagerAdapter
     private lateinit var binding: PlayerDisplayFragmentBinding
 
     private val parentViewModel: MainViewModel by activityViewModels()
 
+    /**
+     * The currently visible ViewPager2 page index. Cached here so [updateMiniPlayerForCurrentSong]
+     * can decide whether to show the mini-player without querying the pager on every metadata emit.
+     */
     private var currPage: Int? = null
 
+    /**
+     * Gesture detector that handles two interactions on the player area:
+     * - **Double-tap** — navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
+     * - **Swipe-down** (vertical velocity > 500 px/s) — navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
+     */
     private val detector = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: navigate to the music chooser screen!")
-
-            //navigate to the music chooser fragment...
+            Timber.d("onDoubleTap: navigate to the music playing screen!")
             findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-
             return super.onDoubleTap(e)
         }
 
@@ -59,10 +77,10 @@ class PlayerDisplayFragment: Fragment() {
         ): Boolean {
             Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
 
-            if(velocityY > 500) {
-                Timber.d("onFling: navigate to the music chooser screen!")
-
-                //navigate to the music chooser fragment...
+            // Threshold of 500 px/s distinguishes an intentional downward swipe from an
+            // accidental brush while scrolling horizontally between pages.
+            if (velocityY > 500) {
+                Timber.d("onFling: navigate to the music playing screen!")
                 findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
             }
 
@@ -73,21 +91,12 @@ class PlayerDisplayFragment: Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
         super.onCreate(savedInstanceState)
-        pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
+        pagerAdapter = ScreenSlidePagerAdapter(requireActivity())
     }
 
     override fun onStart() {
         super.onStart()
-        //TODO add code to add to controller new music...
     }
-
-
-
-//    private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
-//        binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
-//        val frameAnimation = binding.playingAnimation.background as AnimationDrawable
-//        frameAnimation.start()
-//    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -96,109 +105,79 @@ class PlayerDisplayFragment: Fragment() {
     ): View {
         binding = PlayerDisplayFragmentBinding.inflate(inflater)
 
+        // Apply status-bar inset as a top margin on the inset spacer view so the pager
+        // content sits below the system status bar. Returning CONSUMED prevents descendant
+        // views from applying the same inset a second time.
         ViewCompat.setOnApplyWindowInsetsListener(binding.statusBarInset!!) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())
-
             v.updateLayoutParams<MarginLayoutParams> {
                 topMargin = insets.top
             }
-
-            //Return consumed if you don't want the window insets to keep passing down to descendant views
             WindowInsetsCompat.CONSUMED
         }
 
+        // Apply navigation-bar inset as a bottom margin on the tab control so it clears
+        // the gesture handle / home indicator on edge-to-edge displays.
         ViewCompat.setOnApplyWindowInsetsListener(binding.navigationControl) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
-
             v.updateLayoutParams<MarginLayoutParams> {
                 bottomMargin = insets.bottom
             }
-
-            //Return consumed if you don't want the window insets to keep passing down to descendant views
             WindowInsetsCompat.CONSUMED
         }
 
-        //val gesture = GestureDetector(container!!.context, detector)
-
-        //setupPlayingAnimation(binding)
-
-//        binding.playingAnimation!!.setOnTouchListener { v, event ->
-//            gesture.onTouchEvent(event)
-//        }
-
         binding.pager.adapter = pagerAdapter
+        // Keep all 5 pages alive simultaneously so swipes between non-adjacent pages don't
+        // trigger Fragment recreation and lose transient UI state.
         binding.pager.offscreenPageLimit = 4
 
-        //Start app on player page
+        // Land on the player page at app launch.
         binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
         navigateToPlayerPage()
 
-        val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
+        val onPageChangedCallback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 Timber.d("onPageSelected: position=$position")
                 super.onPageSelected(position)
 
                 currPage = position
 
-                // Don't show the mini player on the player page // Or if the current song is null
-                if(position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
+                // Show the mini-player on every page except the full player, and only when
+                // a song is actually loaded.
+                if (position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
                     binding.miniPlayerControls?.visibility = View.VISIBLE
                 } else {
                     binding.miniPlayerControls?.visibility = View.GONE
                 }
 
-                //observe the current page
                 parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
 
                 when (position) {
-                    PageType.QUEUE_PAGE.type() -> {
-                        binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
-                    }
-
-                    PageType.PLAYER_PAGE.type() -> {
-                        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-                    }
-
-                    PageType.PLAYLIST_PAGE.type() -> {
-                        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
-                    }
-
-                    PageType.ALBUM_PAGE.type() -> {
-                        binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
-                    }
-
-                    PageType.SONG_PAGE.type() -> {
-                        binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
-                    }
+                    PageType.QUEUE_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
+                    PageType.PLAYER_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
+                    PageType.PLAYLIST_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
+                    PageType.ALBUM_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
+                    PageType.SONG_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
                 }
             }
         }
 
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
-        binding.navigationControl.setQueueButtonOnClick {
-            parentViewModel.setPage(PageType.QUEUE_PAGE)
-        }
+        binding.navigationControl.setQueueButtonOnClick { parentViewModel.setPage(PageType.QUEUE_PAGE) }
+        binding.navigationControl.setPlayerButtonOnClick { parentViewModel.setPage(PageType.PLAYER_PAGE) }
+        binding.navigationControl.setPlaylistButtonOnClick { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
+        binding.navigationControl.setBrowseAlbumButtonOnClick { parentViewModel.setPage(PageType.ALBUM_PAGE) }
+        binding.navigationControl.setAlbumButtonOnClick { parentViewModel.setPage(PageType.SONG_PAGE) }
 
-        binding.navigationControl.setPlayerButtonOnClick {
-            parentViewModel.setPage(PageType.PLAYER_PAGE)
-        }
-
-        binding.navigationControl.setPlaylistButtonOnClick {
-            parentViewModel.setPage(PageType.PLAYLIST_PAGE)
-        }
-        binding.navigationControl.setBrowseAlbumButtonOnClick {
-            parentViewModel.setPage(PageType.ALBUM_PAGE)
-        }
-        binding.navigationControl.setAlbumButtonOnClick {
-            parentViewModel.setPage(PageType.SONG_PAGE)
-        }
-        parentViewModel.navigateToPage.observe(requireActivity()) { page -> //todo test this, odd that activity instead of fragment is passed here...
+        // Observe on requireActivity() rather than viewLifecycleOwner so navigation events
+        // posted while the Fragment's view is being recreated are not missed.
+        parentViewModel.navigateToPage.observe(requireActivity()) { page ->
             binding.pager.currentItem = page.type()
         }
 
         parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if(isPlaying) {
+            if (isPlaying) {
                 binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
             } else {
                 binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
@@ -221,6 +200,8 @@ class PlayerDisplayFragment: Fragment() {
             navigateToPlayerPage()
         }
 
+        // Observe on requireActivity() so artwork and title update even if the Fragment's
+        // view is briefly torn down during a configuration change.
         parentViewModel.currentPlayingSongInfo.observe(requireActivity()) { currentSong ->
             updateMiniPlayerForCurrentSong(currentSong)
         }
@@ -228,19 +209,29 @@ class PlayerDisplayFragment: Fragment() {
         return binding.root
     }
 
+    /** Scrolls the pager to the player page (index 1). */
     private fun navigateToPlayerPage() {
         binding.pager.currentItem = 1
     }
 
+    /**
+     * Updates the mini-player strip for [song].
+     *
+     * First resolves whether the container should be visible — hidden when [song] is null/empty,
+     * or when the user is already on the player page. Then loads the artwork thumbnail and
+     * sets the title + artist description text.
+     *
+     * @param song The currently playing track's metadata snapshot.
+     */
     private fun updateMiniPlayerForCurrentSong(song: SongData) {
         val miniPlayerShowing = binding.miniPlayerControls?.visibility ?: View.GONE
-        if(SongData.isNullSong(song)) {
+        if (SongData.isNullSong(song)) {
             binding.miniPlayerControls?.visibility = View.GONE
-        } else if(miniPlayerShowing == View.GONE && currPage != null && currPage != PageType.PLAYER_PAGE.type()) {
+        } else if (miniPlayerShowing == View.GONE && currPage != null && currPage != PageType.PLAYER_PAGE.type()) {
             binding.miniPlayerControls?.visibility = View.VISIBLE
         }
 
-        //Set mini player song image
+        // Load the album artwork thumbnail into the mini-player image view.
         val customImage = "album_${song.albumTitle}"
         UtilImpl.drawMediaItemArt(
             binding.miniPlayerImage!!,
@@ -250,7 +241,7 @@ class PlayerDisplayFragment: Fragment() {
             synchronous = true
         )
 
-        //Set mini player description
+        // Compose the "Song Title - Artist" description line.
         val songDescription = "${song.songTitle} - ${song.artist}"
         binding.miniPlayerDescription?.text = songDescription
     }

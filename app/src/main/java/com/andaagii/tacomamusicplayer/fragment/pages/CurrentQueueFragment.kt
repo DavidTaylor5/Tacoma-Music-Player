@@ -27,78 +27,83 @@ import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
+/**
+ * Current playback queue page hosted at index 0 in `PlayerDisplayFragment`'s `ViewPager2`.
+ *
+ * Displays the queue as a draggable list using [QueueListAdapter] with [ItemTouchHelper].
+ * Two observers drive adapter rebuilds:
+ * - [MainViewModel.showLoadingScreen] — initialises the adapter after the music service
+ *   has finished loading on first launch.
+ * - [MainViewModel.currentlyPlayingSongs] — re-syncs the list whenever the queue changes
+ *   externally (e.g., from Android Auto or a ViewModel operation).
+ *
+ * A third observer on [MainViewModel.currentPlayingSongInfo] updates the playing indicator
+ * on the active row without rebuilding the entire adapter.
+ */
 @AndroidEntryPoint
-class CurrentQueueFragment: Fragment() {
+class CurrentQueueFragment : Fragment() {
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
 
-    //Adds functionality for moving items around the recyclerview.
+    /**
+     * Provides drag-to-reorder behaviour for the queue RecyclerView.
+     *
+     * 1. All four directions (UP, DOWN, START, END) are enabled so dragging feels organic —
+     *    START/END allow the item to track diagonal finger movements naturally.
+     * 2. While dragging, the item's alpha is reduced to 0.5 to indicate it is being moved.
+     * 3. On drop ([onMove]), the adapter's backing model and the [MediaController][androidx.media3.session.MediaController]
+     *    queue are both updated, then [QueueListAdapter.notifyItemMoved] triggers the
+     *    visual animation.
+     * 4. Horizontal swipe ([onSwiped]) is intentionally a no-op — swiping is not used for
+     *    removal in the queue.
+     */
     private val itemTouchHelper by lazy {
-        /*
-        1. Specify all 4 directions, specifying START and END also allows more organic dragging
-        than just specifying UP and DOWN.
-         */
         val simpleItemTouchCallback =
-        object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
+            object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
 
-            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                super.onSelectedChanged(viewHolder, actionState)
+                override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                    super.onSelectedChanged(viewHolder, actionState)
+                    if (actionState == ACTION_STATE_DRAG) {
+                        viewHolder?.itemView?.alpha = 0.5f
+                    }
+                }
 
-                //When an item is being dragged, I set alpha to .5
-                if(actionState == ACTION_STATE_DRAG) {
-                    viewHolder?.itemView?.alpha = 0.5f
+                override fun clearView(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder
+                ) {
+                    super.clearView(recyclerView, viewHolder)
+                    viewHolder.itemView.alpha = 1.0f
+                }
+
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    val adapter = recyclerView.adapter as QueueListAdapter
+                    val from = viewHolder.bindingAdapterPosition
+                    val to = target.bindingAdapterPosition
+
+                    Timber.d("onMove: from=$from, to=$to")
+
+                    adapter.moveItem(from, to)
+                    parentViewModel.mediaController.value?.moveMediaItem(from, to)
+                    adapter.notifyItemMoved(from, to)
+
+                    return true
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    // Horizontal swipe is not used for queue row removal; intentionally ignored.
                 }
             }
-
-            override fun clearView(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder
-            ) {
-                super.clearView(recyclerView, viewHolder)
-                viewHolder.itemView.alpha = 1.0f
-            }
-
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                val adapter = recyclerView.adapter as QueueListAdapter
-                val from = viewHolder.bindingAdapterPosition
-                val to = target.bindingAdapterPosition
-
-                Timber.d("onMove: from=$from, to=$to")
-
-                /*
-                2. Update the backing model. Custom implementation in SongListAdapter. You need to
-                implement reordering of the backing model inside the method.
-                 */
-                adapter.moveItem(from, to)
-
-                // Update the mediaController playlist
-                parentViewModel.mediaController.value?.moveMediaItem(from, to)
-
-                // 3. Tell adapter to render the model update.
-                adapter.notifyItemMoved(from, to)
-
-                return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                /*
-                4. Code block for horizontal swipe. ItemTouchHelper handles horizontal swipes
-                as well, but it is not relevant to reordering. Ignore
-                 */
-            }
-        }
         ItemTouchHelper(simpleItemTouchCallback)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
-
         super.onCreate(savedInstanceState)
-
         val inflater = TransitionInflater.from(requireContext())
         enterTransition = inflater.inflateTransition(R.transition.slide_down)
     }
@@ -108,29 +113,18 @@ class CurrentQueueFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentCurrentQueueBinding.inflate(inflater)
 
+        // Initial load — build the adapter once the music service has finished initialising.
         parentViewModel.showLoadingScreen.observe(viewLifecycleOwner) { loadingMusic ->
             Timber.d("onCreateView: loadingMusic=$loadingMusic")
-            if(!loadingMusic) {
+            if (!loadingMusic) {
                 parentViewModel.mediaController.value?.let { controller ->
                     val songs = UtilImpl.getSongListFromMediaController(controller)
                     Timber.d("onCreateView: queueSongs=$songs")
-                    val displaySongs = songs.map {song ->
-                        if(song == controller.currentMediaItem) {
-                            DisplaySong(
-                                song,
-                                true
-                            )
-                        } else {
-                            DisplaySong(
-                                song,
-                                false
-                            )
-                        }
+                    val displaySongs = songs.map { song ->
+                        DisplaySong(song, song == controller.currentMediaItem)
                     }
-
                     binding.displayRecyclerview.adapter = QueueListAdapter(
                         displaySongs,
                         this::handleSongSetting,
@@ -143,24 +137,15 @@ class CurrentQueueFragment: Fragment() {
             }
         }
 
-        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { currSongs ->
+        // Subsequent updates — re-sync the adapter whenever the queue changes externally
+        // (e.g., Android Auto adds tracks, or a ViewModel operation replaces the queue).
+        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { _ ->
             parentViewModel.mediaController.value?.let { controller ->
                 val songs = UtilImpl.getSongListFromMediaController(controller)
                 Timber.d("onCreateView: queueSongs=$songs")
-                val displaySongs = songs.map {song ->
-                    if(song == controller.currentMediaItem) {
-                        DisplaySong(
-                            song,
-                            true
-                        )
-                    } else {
-                        DisplaySong(
-                            song,
-                            false
-                        )
-                    }
+                val displaySongs = songs.map { song ->
+                    DisplaySong(song, song == controller.currentMediaItem)
                 }
-
                 binding.displayRecyclerview.adapter = QueueListAdapter(
                     displaySongs,
                     this::handleSongSetting,
@@ -179,7 +164,7 @@ class CurrentQueueFragment: Fragment() {
         }
 
         parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
-            if(shouldClear) {
+            if (shouldClear) {
                 (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
                 parentViewModel.handledClearningQueue()
             }
@@ -189,8 +174,8 @@ class CurrentQueueFragment: Fragment() {
             parentViewModel.clearQueue()
         }
 
-        //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
-        //TODO Remove this code when I implement coil or glide....
+        // Cache 30 off-screen ViewHolders to reduce bind calls during fast scrolling.
+        // This trades a small amount of memory for significantly smoother list performance.
         binding.displayRecyclerview.setItemViewCacheSize(30)
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
 
@@ -201,10 +186,13 @@ class CurrentQueueFragment: Fragment() {
 
     override fun onResume() {
         super.onResume()
-
-
     }
 
+    /**
+     * Removes the track at [songPosition] from both the adapter and the [MediaController] queue.
+     *
+     * @param songPosition The adapter position of the song to remove.
+     */
     private fun handleRemoveSong(songPosition: Int) {
         binding.displayRecyclerview.adapter?.let { adapter ->
             adapter.notifyItemRemoved(songPosition)
@@ -213,29 +201,46 @@ class CurrentQueueFragment: Fragment() {
     }
 
     /**
-     * Shows a prompt for the user to choose a playlist or album.
-     * Should show when there is no songs in the current song list, not an empty playlist.
+     * Shows or hides the empty-state message based on whether the queue has any tracks.
+     *
+     * Displayed when the queue is empty (e.g., on first launch before any song is played);
+     * hidden as soon as at least one track is present.
+     *
+     * @param songs The current list of tracks in the queue.
      */
     private fun determineIfShowingEmptyPlaylistScreen(songs: List<MediaItem>) {
-        if(songs.isEmpty()){
+        if (songs.isEmpty()) {
             binding.noMusicAddedText.visibility = View.VISIBLE
         } else {
             binding.noMusicAddedText.visibility = View.GONE
         }
     }
 
+    /**
+     * Seeks the [MediaController] to [position] and begins playback.
+     *
+     * @param position The zero-based queue index to seek to.
+     */
     private fun playSongAtPosition(position: Int) {
-        parentViewModel.mediaController.value?.let {controller ->
+        parentViewModel.mediaController.value?.let { controller ->
             controller.seekTo(position, 0L)
             controller.play()
         }
     }
 
+    /** Initiates a drag operation for [viewHolder] via [itemTouchHelper]. */
     private fun handleViewHolderHandleDrag(viewHolder: ViewHolder) {
         itemTouchHelper.startDrag(viewHolder)
     }
 
-    //TODO update this later...
+    /**
+     * Routes queue-level menu actions to the appropriate handler.
+     *
+     * Note: [MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST] is not yet implemented for the queue page.
+     *
+     * @param menuOption The action selected from the popup menu.
+     * @param mediaItems The media items associated with the action (may be empty).
+     */
     private fun handleSongSetting(menuOption: MenuOptionUtil.MenuOption, mediaItems: List<MediaItem> = listOf()) {
         when (menuOption) {
             MenuOptionUtil.MenuOption.CLEAR_QUEUE -> {
@@ -243,15 +248,14 @@ class CurrentQueueFragment: Fragment() {
                 (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
             }
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
-                //TODO ADD to playlist code
+                // Not yet implemented for the queue page.
             }
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
 
+    /** Initialises the RecyclerView with a vertical [LinearLayoutManager]. */
     private fun setupPage() {
-        //binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
-
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }
