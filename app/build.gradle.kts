@@ -5,6 +5,7 @@ import java.util.Date
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
@@ -75,6 +76,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 }
 
@@ -156,4 +158,16 @@ dependencies {
 
     // uCrop - library for cropping images
     implementation("com.github.yalantis:ucrop:2.2.11")
+
+    // Jetpack Compose — BOM pins all compose.* versions together
+    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    implementation(composeBom)
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // Coil Compose — AsyncImage support (version matches existing coil dependency above)
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }

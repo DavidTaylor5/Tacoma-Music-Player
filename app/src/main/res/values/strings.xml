@@ -40,4 +40,12 @@
     <string name="clear">Clear</string>
     <string name="add_playlist">Add Playlist</string>
     <string name="song_title_song_artist">Song Title - Song Artist</string>
+
+    <!-- Composable prompt button labels -->
+    <string name="create_new_playlist">Create New Playlist</string>
+    <string name="close_button">CLOSE</string>
+    <string name="add_button">ADD</string>
+    <string name="apply_button">APPLY</string>
+    <string name="sorting_options_title">Sorting Options</string>
+    <string name="set_alternate_art">Set alternate Art</string>
 </resources>
