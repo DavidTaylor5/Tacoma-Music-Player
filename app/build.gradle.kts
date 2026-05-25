@@ -3,11 +3,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -81,93 +81,76 @@ android {
 }
 
 dependencies {
-//    kapt("groupId:artifactId:version")
-
 
     // Preferences DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.3")
+    implementation(libs.androidx.datastore.preferences)
 
-    //ROOM
-    val room_version = "2.7.0"
-    implementation("androidx.room:room-runtime:$room_version")
-    annotationProcessor("androidx.room:room-compiler:$room_version")
+    // Room
+    implementation(libs.bundles.room)
+    ksp(libs.androidx.room.compiler)
 
-////    // To use Kotlin Symbol Processing (KSP) This isn't building / syncing...
-    ksp("androidx.room:room-compiler:$room_version")
-
-    // optional - Kotlin Extensions and Coroutines support for Room
-    implementation("androidx.room:room-ktx:$room_version")
-
-    // Moshi for Json
-    implementation("com.squareup.moshi:moshi:1.12.0")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    // Moshi for JSON + Retrofit
+    implementation(libs.squareup.moshi)
+    implementation(libs.squareup.retrofit)
+    ksp(libs.squareup.moshi.kotlin.codegen)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1")
+    implementation(libs.bundles.coroutines)
 
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // AndroidX Core
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
+    implementation(libs.androidx.constraintlayout)
 
-    //Timber logs
-    implementation("com.jakewharton.timber:timber:4.7.1")
+    // Timber logs
+    implementation(libs.timber)
 
     // mp3agic
-    implementation("com.mpatric:mp3agic:0.9.1")
+    implementation(libs.mp3agic)
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.10.5")
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Allows await for MediaBrowser.buildAsync()
-    implementation("androidx.concurrent:concurrent-futures-ktx:1.3.0")
+    implementation(libs.androidx.concurrent.futures.ktx)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.2")
-    ksp("com.google.dagger:hilt-android-compiler:2.57.2")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
 
-    // Hilt work
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    // Hilt WorkManager integration
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
-    //media3, all modules need to be the same version //I tried version 1.4.1 however I found it wouldn't show music art on notification.
-    implementation("androidx.media3:media3-exoplayer:1.2.1")
-    implementation("androidx.media3:media3-exoplayer-dash:1.2.1")
-    implementation("androidx.media3:media3-ui:1.2.1")
-    implementation("androidx.media3:media3-session:1.2.1")
-    implementation("androidx.media3:media3-common:1.2.1")
+    // Media3 — all modules must stay on the same version
+    // Note: kept at 1.2.1; 1.4.1+ does not show album art on the notification
+    implementation(libs.bundles.media3)
 
-    //adding viewmodel functionality
-    implementation ("androidx.activity:activity-ktx:1.8.2")
-    implementation ("androidx.fragment:fragment-ktx:1.6.2")
+    // ViewModel / Fragment extensions
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.fragment.ktx)
 
-    //Add Navigation Component to Project
-    val navigationVersion = "2.7.7"
-    implementation("androidx.navigation:navigation-fragment-ktx:$navigationVersion")
-    implementation("androidx.navigation:navigation-ui-ktx:$navigationVersion")
+    // Navigation Component
+    implementation(libs.bundles.navigation)
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit.ext)
+    androidTestImplementation(libs.androidx.espresso.core)
 
-    //Coil
-    implementation("io.coil-kt:coil:2.5.0")
+    // Coil — image loading
+    implementation(libs.coil)
+    implementation(libs.coil.compose)
 
-    // uCrop - library for cropping images
-    implementation("com.github.yalantis:ucrop:2.2.11")
+    // uCrop — image cropping
+    implementation(libs.ucrop)
 
     // Jetpack Compose — BOM pins all compose.* versions together
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
-    implementation(composeBom)
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-
-    // Coil Compose — AsyncImage support (version matches existing coil dependency above)
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
