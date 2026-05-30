@@ -45,6 +45,7 @@ import timber.log.Timber
 class CurrentQueueFragment : Fragment() {
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+    private var queueAdapter: QueueListAdapter? = null
 
     /**
      * Provides drag-to-reorder behaviour for the queue RecyclerView.
@@ -70,8 +71,9 @@ class CurrentQueueFragment : Fragment() {
                     if (actionState == ACTION_STATE_DRAG) {
                         viewHolder?.itemView?.alpha = 0.5f
                     } else if(actionState == ACTION_STATE_IDLE) {
-                        //update the current queue because it's been modified
-                        parentViewModel.mediaController.value?.moveMediaItem(startDrag, endDrag)
+                        if (startDrag != -1) {
+                            parentViewModel.mediaController.value?.moveMediaItem(startDrag, endDrag)
+                        }
                         startDrag = -1
                         endDrag = -1
                     }
@@ -104,7 +106,6 @@ class CurrentQueueFragment : Fragment() {
                     Timber.d("onMove: from=$from, to=$to")
 
                     adapter.moveItem(from, to)
-                    adapter.notifyItemMoved(from, to)
 
                     return true
                 }
@@ -137,16 +138,8 @@ class CurrentQueueFragment : Fragment() {
                 parentViewModel.mediaController.value?.let { controller ->
                     val songs = UtilImpl.getSongListFromMediaController(controller)
                     Timber.d("onCreateView: queueSongs=$songs")
-                    val displaySongs = songs.map { song ->
-                        DisplaySong(song, song == controller.currentMediaItem)
-                    }
-                    binding.displayRecyclerview.adapter = QueueListAdapter(
-                        displaySongs,
-                        this::handleSongSetting,
-                        this::handleViewHolderHandleDrag,
-                        this::handleRemoveSong,
-                        this::playSongAtPosition
-                    )
+                    val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
+                    getOrCreateQueueAdapter().submitList(displaySongs)
                     determineIfShowingEmptyPlaylistScreen(songs)
                 }
             }
@@ -158,29 +151,19 @@ class CurrentQueueFragment : Fragment() {
             parentViewModel.mediaController.value?.let { controller ->
                 val songs = UtilImpl.getSongListFromMediaController(controller)
                 Timber.d("onCreateView: queueSongs=$songs")
-                val displaySongs = songs.map { song ->
-                    DisplaySong(song, song == controller.currentMediaItem)
-                }
-                binding.displayRecyclerview.adapter = QueueListAdapter(
-                    displaySongs,
-                    this::handleSongSetting,
-                    this::handleViewHolderHandleDrag,
-                    this::handleRemoveSong,
-                    this::playSongAtPosition
-                )
+                val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
+                getOrCreateQueueAdapter().submitList(displaySongs)
                 determineIfShowingEmptyPlaylistScreen(songs)
             }
         }
 
         parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currSong ->
-            binding.displayRecyclerview.adapter?.let {
-                (it as QueueListAdapter).updateCurrentSongIndicator(currSong)
-            }
+            queueAdapter?.updateCurrentSongIndicator(currSong)
         }
 
         parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
             if (shouldClear) {
-                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
+                queueAdapter?.clearQueue()
                 parentViewModel.handledClearningQueue()
             }
         }
@@ -204,15 +187,13 @@ class CurrentQueueFragment : Fragment() {
     }
 
     /**
-     * Removes the track at [songPosition] from both the adapter and the [MediaController] queue.
+     * Syncs the [MediaController] queue after the adapter has already removed the item at
+     * [songPosition] via [submitList].
      *
-     * @param songPosition The adapter position of the song to remove.
+     * @param songPosition The former adapter position of the removed track.
      */
     private fun handleRemoveSong(songPosition: Int) {
-        binding.displayRecyclerview.adapter?.let { adapter ->
-            adapter.notifyItemRemoved(songPosition)
-            parentViewModel.mediaController.value?.removeMediaItem(songPosition)
-        }
+        parentViewModel.mediaController.value?.removeMediaItem(songPosition)
     }
 
     /**
@@ -260,7 +241,7 @@ class CurrentQueueFragment : Fragment() {
         when (menuOption) {
             MenuOptionUtil.MenuOption.CLEAR_QUEUE -> {
                 parentViewModel.clearQueue()
-                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
+                queueAdapter?.clearQueue()
             }
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
                 // Not yet implemented for the queue page.
@@ -268,6 +249,18 @@ class CurrentQueueFragment : Fragment() {
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
+
+    /** Returns the existing [QueueListAdapter], creating and attaching it to the RecyclerView if needed. */
+    private fun getOrCreateQueueAdapter(): QueueListAdapter =
+        queueAdapter ?: QueueListAdapter(
+            this::handleSongSetting,
+            this::handleViewHolderHandleDrag,
+            this::handleRemoveSong,
+            this::playSongAtPosition
+        ).also {
+            queueAdapter = it
+            binding.displayRecyclerview.adapter = it
+        }
 
     /** Initialises the RecyclerView with a vertical [LinearLayoutManager]. */
     private fun setupPage() {
