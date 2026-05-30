@@ -18,15 +18,26 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import timber.log.Timber
 import java.io.File
 
+/**
+ * [ListAdapter] for displaying playlists in a single-column linear list.
+ *
+ * Inflates `viewholder_playlist.xml` for each row. All interaction events are forwarded to the
+ * host Fragment via constructor lambdas — the adapter contains no business logic.
+ *
+ * Uses [MediaItemDiffCallback] for efficient DiffUtil-based list updates.
+ *
+ * @param onPlaylistClick Invoked when the user taps a row to drill into the playlist's track list.
+ * @param onPlayIconClick Invoked when the user taps the play icon; receives the playlist title.
+ * @param handlePlaylistSetting Invoked when the user selects an item from the popup menu. Receives
+ *   the resolved [MenuOptionUtil.MenuOption] and a list containing the playlist title string.
+ */
 class PlaylistAdapter(
     private val onPlaylistClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit,
 ): ListAdapter<MediaItem, PlaylistAdapter.PlaylistViewHolder>(MediaItemDiffCallback) {
 
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+    /** ViewHolder that holds the inflated [ViewholderPlaylistBinding] for a single playlist row. */
     class PlaylistViewHolder(val binding: ViewholderPlaylistBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
@@ -91,6 +102,10 @@ class PlaylistAdapter(
         }
     }
 
+    /**
+     * Translates the selected popup [item] at [position] into a [MenuOptionUtil.MenuOption] and
+     * forwards it to [handlePlaylistSetting] alongside the playlist's title.
+     */
     private fun handleMenuItem(item: MenuItem, position: Int) {
         val playlistTitle = getItem(position).mediaMetadata.albumTitle.toString()
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())

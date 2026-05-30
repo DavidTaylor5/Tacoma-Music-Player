@@ -23,7 +23,18 @@ import timber.log.Timber
 import java.io.File
 
 /**
- * A recyclerview adapter that is able to take a list of Album Media Items and display them.
+ * [ListAdapter] for displaying albums in a two-column grid layout.
+ *
+ * Inflates `viewholder_album_grid_layout.xml` for each cell. The popup menu is triggered by a
+ * long-press on the cell rather than a dedicated menu icon, matching the compact grid aesthetic.
+ *
+ * Uses [MediaItemDiffCallback] for efficient DiffUtil-based list updates.
+ *
+ * @param onAlbumClick Invoked when the user taps a grid cell to drill into its track list.
+ * @param onPlayIconClick Reserved for future use — not wired in the current grid layout.
+ * @param handleAlbumOption Invoked when the user selects an item from the long-press popup menu.
+ *   Receives the resolved [MenuOptionUtil.MenuOption], the tapped [MediaItem], and an optional
+ *   custom image file name for the album.
  */
 class AlbumGridAdapter(
     private val onAlbumClick: (MediaItem) -> Unit,
@@ -31,9 +42,7 @@ class AlbumGridAdapter(
     private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
 ): ListAdapter<MediaItem, AlbumGridAdapter.AlbumGridViewHolder>(MediaItemDiffCallback) {
 
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+    /** ViewHolder that holds the inflated [ViewholderAlbumGridLayoutBinding] for a single grid cell. */
     class AlbumGridViewHolder(val binding : ViewholderAlbumGridLayoutBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumGridViewHolder {

@@ -13,18 +13,25 @@ import com.andaagii.tacomamusicplayer.databinding.ViewholderPlaylistPromptBindin
 import timber.log.Timber
 
 /**
- * A recyclerview adapter that is able to take a list of Playlist Items and displays them.
+ * [RecyclerView.Adapter] for the add-to-playlist dialog, showing each playlist with a checkbox.
+ *
+ * Unlike the main playlist adapters, this adapter is a plain [RecyclerView.Adapter] rather than
+ * a [androidx.recyclerview.widget.ListAdapter] because the playlist list is fixed at construction
+ * time and the checkmark state is managed internally.
+ *
+ * @param playlists The fixed list of available playlists to display.
+ * @param onPlaylistChecked Callback invoked when a checkbox is toggled. Receives the playlist
+ *   title and the new checked state (`true` = checked).
  */
 class PlaylistPromptAdapter(
     private val playlists: List<MediaItem>,
     private val onPlaylistChecked: (String, Boolean) -> Unit,
 ): RecyclerView.Adapter<PlaylistPromptAdapter.PlaylistPromptViewHolder>() {
 
+    // Shadow list tracking each playlist's checkbox state; indices mirror [playlists]
     private var playlistsWithCheckmarks = playlists.map { _ -> false }
 
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+    /** ViewHolder that holds the inflated [ViewholderPlaylistPromptBinding] for a single row. */
     class PlaylistPromptViewHolder(val binding : ViewholderPlaylistPromptBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistPromptViewHolder {
@@ -54,7 +61,12 @@ class PlaylistPromptAdapter(
         }
     }
 
-    //Rebind all of the playlists to remove the checks
+    /**
+     * Resets all checkboxes to unchecked and triggers a full rebind.
+     *
+     * Called by [com.andaagii.tacomamusicplayer.view.CustomPlaylistPrompt] after the user
+     * confirms their selection so the dialog is clean on the next open.
+     */
     fun removeAllChecks() {
         playlistsWithCheckmarks = playlists.map { false }
         notifyDataSetChanged()

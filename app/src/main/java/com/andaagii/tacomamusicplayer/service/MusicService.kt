@@ -694,6 +694,14 @@ class MusicService : MediaLibraryService() {
      * after Android Auto loads a new queue, ensuring the player jumps to the correct song.
      */
     private inner class PlayerEventListener : Player.Listener {
+        /**
+         * Called when the player transitions between playback states (buffering, ready, ended, idle).
+         *
+         * Currently a no-op beyond a placeholder for end-of-stream analytics.
+         *
+         * @param playbackState One of [Player.STATE_IDLE], [Player.STATE_BUFFERING],
+         *   [Player.STATE_READY], or [Player.STATE_ENDED].
+         */
         override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
             if (playbackState == Player.STATE_ENDED) {
                 //TODO SOMETHING Analytics?
@@ -724,6 +732,14 @@ class MusicService : MediaLibraryService() {
             }
         }
 
+        /**
+         * Called when the player encounters a fatal playback error.
+         *
+         * Currently a placeholder; future implementations should log the error, notify the UI,
+         * and optionally attempt recovery (e.g., seek past a corrupt frame for live streams).
+         *
+         * @param error The exception describing the playback failure.
+         */
         override fun onPlayerError(error: PlaybackException) {
             if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
                 //TODO type of error
@@ -732,6 +748,14 @@ class MusicService : MediaLibraryService() {
             }
         }
 
+        /**
+         * Called when the set of available tracks changes (e.g., switching between media items).
+         *
+         * Currently a placeholder for future track-switching logic such as subtitle selection
+         * or audio track switching.
+         *
+         * @param tracks The new [Tracks] snapshot describing available and selected tracks.
+         */
         override fun onTracksChanged(tracks: Tracks) {
             //TODO a track has changed....
         }

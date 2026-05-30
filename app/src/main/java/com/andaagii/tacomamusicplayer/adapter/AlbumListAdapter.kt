@@ -21,16 +21,26 @@ import timber.log.Timber
 import java.io.File
 
 /**
- * A recyclerview adapter that is able to take a list of Album Media Items and display them.
+ * [ListAdapter] for displaying albums in a single-column linear list.
+ *
+ * Inflates `viewholder_album.xml` for each row. All interaction events are forwarded to the
+ * host Fragment via constructor lambdas — the adapter contains no business logic.
+ *
+ * Uses [MediaItemDiffCallback] for efficient DiffUtil-based list updates.
+ *
+ * @param onAlbumClick Invoked when the user taps the album row to drill into its track list.
+ * @param onPlayIconClick Invoked when the user taps the play icon to start playback immediately.
+ * @param handleAlbumOption Invoked when the user selects an item from the popup menu. Receives
+ *   the resolved [MenuOptionUtil.MenuOption], the tapped [MediaItem], and an optional custom
+ *   image file name for the album.
  */
 class AlbumListAdapter(
     private val onAlbumClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (MediaItem) -> Unit,
     private val handleAlbumOption: (MenuOptionUtil.MenuOption, MediaItem, String?) -> Unit,
 ): ListAdapter<MediaItem, AlbumListAdapter.AlbumViewHolder>(MediaItemDiffCallback) {
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+
+    /** ViewHolder that holds the inflated [ViewholderAlbumBinding] for a single album row. */
     class AlbumViewHolder(val binding : ViewholderAlbumBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumViewHolder {

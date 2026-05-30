@@ -7,6 +7,13 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import com.andaagii.tacomamusicplayer.databinding.ViewCustomInformationScreenBinding
 
+/**
+ * Empty-state / informational screen displayed when a list has no content to show.
+ *
+ * Supports up to two icon+label pairs, each with an optional click callback. The host fragment
+ * configures the icons, labels, and callbacks via the `set*` functions based on the specific
+ * empty-state context (e.g., no songs, no playlists).
+ */
 class CustomInformationScreen @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -22,30 +29,36 @@ class CustomInformationScreen @JvmOverloads constructor(
         }
     }
 
+    /** Sets the drawable for the first icon slot. */
     fun setFirstIcon(imageDrawable: Drawable) {
         binding.firstIcon.setImageDrawable(imageDrawable)
     }
 
+    /** Registers [callback] as the click listener for the first icon's tappable area. */
     fun setFirstIconCallback(callback: () -> Unit) {
         binding.firstClickable.setOnClickListener {
             callback()
         }
     }
 
+    /** Sets the drawable for the second icon slot. */
     fun setSecondIcon(imageDrawable: Drawable) {
         binding.secondIcon.setImageDrawable(imageDrawable)
     }
 
+    /** Registers [callback] as the click listener for the second icon's tappable area. */
     fun setSecondIconCallback(callback: () -> Unit) {
         binding.secondClickable.setOnClickListener {
             callback()
         }
     }
 
+    /** Sets the label text below the first icon. */
     fun setFirstInfo(info: String) {
         binding.firstInfo.text = info
     }
 
+    /** Sets the label text below the second icon. */
     fun setSecondInfo(info: String) {
         binding.secondInfo.text = info
     }

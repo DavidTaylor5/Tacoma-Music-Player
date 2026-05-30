@@ -11,7 +11,14 @@ import com.andaagii.tacomamusicplayer.enumtype.PageType
 import timber.log.Timber
 
 /**
- * CustomNavigationControl is used to move between music chooser fragments, playlists, albums, songs.
+ * Tab bar at the bottom of [com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment] for
+ * navigating between the five main pages (Queue, Player, Playlists, Albums, Songs).
+ *
+ * Icon drawables and click callbacks are wired via XML attributes and the `set*ButtonOnClick`
+ * functions. The active tab is highlighted by [setFocusOnNavigationButton], which changes the
+ * button background to its page-specific accent colour; all other tabs are reset to grey first.
+ *
+ * The default focused page at construction time is [PageType.PLAYLIST_PAGE].
  */
 class CustomNavigationControl @JvmOverloads constructor(
     context: Context,
@@ -51,26 +58,32 @@ class CustomNavigationControl @JvmOverloads constructor(
 
     }
 
+    /** Registers [callback] as the click listener for the queue tab button. */
     fun setQueueButtonOnClick(callback: () -> Unit) {
         binding.queueButton?.setOnClickListener { callback() }
     }
 
+    /** Registers [callback] as the click listener for the player (mini-player) tab button. */
     fun setPlayerButtonOnClick(callback: () -> Unit) {
         binding.playerButton?.setOnClickListener { callback() }
     }
 
+    /** Registers [callback] as the click listener for the playlists tab button. */
     fun setPlaylistButtonOnClick(callback: () -> Unit) {
         binding.playlistButton.setOnClickListener { callback() }
     }
 
+    /** Registers [callback] as the click listener for the albums tab button. */
     fun setBrowseAlbumButtonOnClick(callback: () -> Unit) {
         binding.albumlistButton.setOnClickListener { callback() }
     }
 
+    /** Registers [callback] as the click listener for the songs tab button. */
     fun setAlbumButtonOnClick(callback: () -> Unit) {
         binding.songlistButton.setOnClickListener { callback() }
     }
 
+    /** Resets all five tab button backgrounds to the unfocused grey colour. */
     fun setAllIconBackgroundsGrey() {
         binding.queueButton?.setBackgroundColor(ContextCompat.getColor(context, R.color.unfocused_button))
         binding.playerButton?.setBackgroundColor(ContextCompat.getColor(context, R.color.unfocused_button))
@@ -80,6 +93,15 @@ class CustomNavigationControl @JvmOverloads constructor(
     }
 
 
+    /**
+     * Highlights the tab button corresponding to [page] with its accent colour and resets all
+     * others to grey.
+     *
+     * Called by [com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment] whenever the
+     * [androidx.viewpager2.widget.ViewPager2] page changes.
+     *
+     * @param page The page that is now active.
+     */
     fun setFocusOnNavigationButton(page: PageType) {
         Timber.d("setFocusOnNavigationButton: page=$page")
         setAllIconBackgroundsGrey()

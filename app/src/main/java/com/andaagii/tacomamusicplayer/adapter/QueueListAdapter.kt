@@ -24,6 +24,22 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
+/**
+ * [RecyclerView.Adapter] for the current playback queue with drag-to-reorder support.
+ *
+ * Displays each track as a [DisplaySong] row, highlighting the currently playing item with a
+ * green stroke. Drag handles are set up in [onCreateViewHolder] and attached to the host
+ * fragment's [androidx.recyclerview.widget.ItemTouchHelper] via [onHandleDrag].
+ *
+ * @param dataSet The initial list of songs to display. Mutated internally by [moveItem] and
+ *   [clearQueue].
+ * @param handleSongSetting Invoked when the user selects a popup menu option on a row.
+ * @param onHandleDrag Called when the user touches the drag handle, so the host can start an
+ *   [androidx.recyclerview.widget.ItemTouchHelper] drag.
+ * @param onRemoveSong Invoked after a track is removed from [dataSet], passing its former index
+ *   so the host ViewModel can sync the queue.
+ * @param playSongAtPosition Invoked when the user taps a row to jump playback to that position.
+ */
 class QueueListAdapter(
     private var dataSet:  List<DisplaySong>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
@@ -34,10 +50,15 @@ class QueueListAdapter(
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
 
+    /** ViewHolder that holds the inflated [ViewholderQueueSongBinding] for a single queue row. */
     class QueueSongViewHolder(val binding: ViewholderQueueSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
     /**
-     * Move Items in the recyclerview to adjacent positions
+     * Swaps the items at [from] and [to] within the local [dataSet].
+     *
+     * Called by the host fragment's [androidx.recyclerview.widget.ItemTouchHelper] callback
+     * after the drag gesture completes. The host is responsible for calling [notifyItemMoved]
+     * and persisting the new order.
      */
     fun moveItem(from: Int, to: Int) {
         val modData = dataSet.toMutableList()
@@ -69,6 +90,7 @@ class QueueListAdapter(
         return viewHolder
     }
 
+    /** Removes the play-indicator stroke from whichever row was previously highlighted. */
     private fun clearPreviousSongIndicator() {
         val currSongPos = dataSet.indexOfFirst {song ->
             song.showPlayIndicator
@@ -82,13 +104,25 @@ class QueueListAdapter(
     }
 
     /**
-     * Clear all songs out of recyclerview.
+     * Replaces the current dataset with an empty list and triggers a full rebind.
+     *
+     * Called when the user selects "Clear Queue" from the queue header menu.
      */
     fun clearQueue() {
         dataSet = listOf()
         this.notifyDataSetChanged()
     }
 
+    /**
+     * Updates the play-indicator highlight to reflect [updatedSong] as the currently playing track.
+     *
+     * Clears the previous indicator before setting the new one. If the currently indicated song
+     * already matches [updatedSong], no rebind is performed. The indicator is only set when the
+     * song is found at a positive index (index 0 is skipped to avoid a false-positive on the
+     * first item when no match is found).
+     *
+     * @param updatedSong The track that is now actively playing.
+     */
     fun updateCurrentSongIndicator(updatedSong: SongData) {
         try {
             val currSong = dataSet.first {  song ->
@@ -226,6 +260,7 @@ class QueueListAdapter(
         }
     }
 
+    /** Dispatches the selected popup [item] for the row at [position] to the appropriate handler. */
     private fun handleMenuItem(item: MenuItem, position: Int) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> handleAddToPlaylist(position)
@@ -239,6 +274,10 @@ class QueueListAdapter(
         handleSongSetting(MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST, listOf(dataSet[position].mediaItem))
     }
 
+    /**
+     * Removes the track at [position] from [dataSet] and notifies the host via [onRemoveSong]
+     * so the ViewModel can sync the persistent queue.
+     */
     private fun handleRemoveFromQueue(position: Int) {
         val modData = dataSet.toMutableList()
         modData.removeAt(position)

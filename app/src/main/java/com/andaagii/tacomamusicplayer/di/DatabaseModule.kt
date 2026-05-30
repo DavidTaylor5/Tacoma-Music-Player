@@ -12,6 +12,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Hilt module that provides the Room database and its DAOs as injectable singletons.
+ *
+ * The [PlayerDatabase] instance is created once per process via
+ * [PlayerDatabase.getDatabase]; the DAOs are extracted from it and provided
+ * individually so injection sites only depend on the interface they actually need.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 class DatabaseModule {
