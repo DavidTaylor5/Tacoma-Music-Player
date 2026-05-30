@@ -1,5 +1,11 @@
 package com.andaagii.tacomamusicplayer.constants
 
+/**
+ * App-wide string and integer constants shared across multiple classes.
+ *
+ * All values are in the [companion object] so they can be referenced as `Const.FOO` without
+ * instantiating the class. Constants are grouped by feature area with inline section comments.
+ */
 class Const {
     companion object {
         const val PLAYLIST_QUEUE_TITLE: String = "03_NOV_2025_F22_0906_LN7"

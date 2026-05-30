@@ -20,6 +20,22 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Singleton implementation of [MusicRepository] and [MusicProviderRepository].
+ *
+ * Coordinates [SongDao] and [SongGroupDao] to satisfy all library queries and mutations.
+ * Converts raw Room entities to [MediaItem]s via [MediaItemUtil] before returning them to callers.
+ *
+ * All suspend functions use [Dispatchers.IO] for database access. Reactive queries are returned
+ * as [Flow]s backed by Room's built-in change notification.
+ *
+ * Bound to both interfaces as a singleton by [com.andaagii.tacomamusicplayer.di.AppModule].
+ *
+ * @param appContext Application context passed to [MediaItemUtil] for URI resolution.
+ * @param mediaItemUtil Converts Room entities to [MediaItem]s, including artwork URI selection.
+ * @param songDao DAO for individual track queries and updates.
+ * @param songGroupDao DAO for album, playlist, and queue group queries and updates.
+ */
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
     @ApplicationContext private val appContext: Context,
@@ -32,6 +48,7 @@ class MusicRepositoryImpl @Inject constructor(
         search: String,
         useFileProviderUri: Boolean
     ): List<MediaItem> {
+        // 1. Query song groups once and partition into albums vs playlists
         val matchingSongGroups = songGroupDao.findDescriptionFromSearchStr(search)
         val matchingAlbums = matchingSongGroups.filter { it.songGroupType == SongGroupType.ALBUM }
             .map {
@@ -47,6 +64,8 @@ class MusicRepositoryImpl @Inject constructor(
                     useFileProviderUri = useFileProviderUri
                 )
             }
+
+        // 2. Query individual tracks separately (different DAO/table)
         val matchingSongs = songDao.findDescriptionFromSearchStr(search)
             .map {
                 mediaItemUtil.createMediaItemFromSongEntity(
@@ -55,6 +74,7 @@ class MusicRepositoryImpl @Inject constructor(
                 )
             }
 
+        // 3. Merge all three result sets and rank by how early the query appears in the subtitle
         //TODO now I need to combine the lists, and sort by substring position first, then reduce size to 20 total.
         val combinedData = matchingAlbums + matchingPlaylists + matchingSongs
         val searchData = combinedData.sortedBy {
@@ -215,6 +235,7 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun addSongsToPlaylist(playlistTitle: String, songDescriptions: List<String>) {
         withContext(Dispatchers.IO) {
+            // 1. Resolve the target playlist; bail out if it no longer exists
             val playlist = songGroupDao.findSongGroupByName(playlistTitle) //TODO playlist is showing up as null
             
             if(playlist == null) {
@@ -236,6 +257,7 @@ class MusicRepositoryImpl @Inject constructor(
             }
 
             val durationAdded = songs.map { it.songDuration.toLongOrNull() ?:0 }.reduce { acc, l -> acc+l }
+            // Start positions after the last existing track; gap of 100 avoids full re-ordering for later insertions
             val nextPosition = if(currentPlaylistSongs.isNotEmpty()) currentPlaylistSongs.last().position + 100 else 0
 
             if(playlist == null) {
@@ -243,13 +265,14 @@ class MusicRepositoryImpl @Inject constructor(
                 return@withContext
             }
 
-            //update playlist group duration
+            // 4. Update the group's cumulative duration
             songGroupDao.updateSongGroups(
                 playlist.copy(
                     groupDuration = playlist.groupDuration + durationAdded
                 )
             )
 
+            // 5. Build and insert cross-ref rows with spaced positions
             val playlistRefs = songs.mapIndexed { index, song ->
                 SongGroupCrossRefEntity(
                     groupId = playlist.groupId,
@@ -258,7 +281,6 @@ class MusicRepositoryImpl @Inject constructor(
                 )
             }
 
-            //Update the playlist refs
             songGroupDao.insertPlaylistSongs(*playlistRefs.toTypedArray())
         }
     }

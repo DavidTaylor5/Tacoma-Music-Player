@@ -22,6 +22,31 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import timber.log.Timber
 
+/**
+ * [RecyclerView.Adapter] for the all-songs list and song-group detail views.
+ *
+ * Handles three distinct display modes determined by [songGroupType]:
+ * - **Album / Playlist**: shows track rows with song title, artist, and duration. Playlist rows
+ *   show a drag handle for reordering; album rows do not.
+ * - **Search list** ([SongGroupType.SEARCH_LIST]): shows mixed song/album/playlist results
+ *   with a type label in place of the duration field. Tap targets route to the appropriate
+ *   detail handler.
+ *
+ * The album-art area doubles as a multi-select toggle (animated via [AnimationDrawable]).
+ * Selected state is tracked in [favoriteList] and reported via [handleSongSelected].
+ *
+ * @param dataSet Initial list of items to display. Mutated internally by [setSongs], [removeSongs], and [moveItem].
+ * @param handleSongSetting Invoked when the user selects a popup menu option on a row.
+ * @param handleSongClick Invoked when the user taps the text area of a song row; receives the adapter position.
+ * @param handleAlbumClick Invoked from search results when the user taps an album result.
+ * @param handleSearchSongClick Invoked from search results when the user taps a song result.
+ * @param handlePlaylistClick Invoked from search results when the user taps a playlist result.
+ * @param handleSongSelected Invoked when the user taps the album-art area to toggle multi-select;
+ *   receives the [MediaItem] and `true` if it is now selected.
+ * @param songGroupType Controls which display mode and drag-handle visibility is active.
+ * @param onHandleDrag Called when the user touches the drag handle so the host can start an
+ *   [androidx.recyclerview.widget.ItemTouchHelper] drag.
+ */
 class SongListAdapter(
     private var dataSet:  List<MediaItem>,
     val handleSongSetting: (MenuOptionUtil.MenuOption, List<MediaItem>) -> Unit,
@@ -34,12 +59,17 @@ class SongListAdapter(
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
 ): RecyclerView.Adapter<SongListAdapter.SongViewHolder>() {
 
+    // Shadow list tracking multi-select state for each row; indices mirror [dataSet]
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
 
+    /** ViewHolder that holds the inflated [ViewholderSongBinding] for a single song row. */
     class SongViewHolder(val binding: ViewholderSongBinding, var isFavorited: Boolean = false): RecyclerView.ViewHolder(binding.root)
 
     /**
-     * Move Items in the recyclerview to adjacent positions
+     * Swaps the items at [from] and [to] within the local [dataSet].
+     *
+     * Called by the host fragment's [androidx.recyclerview.widget.ItemTouchHelper] callback
+     * during a drag gesture. The host is responsible for calling [notifyItemMoved].
      */
     fun moveItem(from: Int, to: Int) {
         val modData = dataSet.toMutableList()
@@ -51,11 +81,22 @@ class SongListAdapter(
         dataSet = modData
     }
 
+    /**
+     * Resets all multi-select checkmarks and triggers a full rebind.
+     *
+     * Called by the host fragment when the user exits multi-select mode.
+     */
     fun clearAllSelected() {
         favoriteList = dataSet.map { false }.toMutableList()
         this.notifyDataSetChanged()
     }
 
+    /**
+     * Replaces the current dataset with [searchItems] and updates [songGroupType], then triggers
+     * a full rebind.
+     *
+     * Used when switching between album, playlist, search, and queue display contexts.
+     */
     fun setSongs(searchItems: List<MediaItem>, songGroupType: SongGroupType) {
         Timber.d("setSongs: searchItems=$searchItems, songGroupType=$songGroupType")
         this.dataSet = searchItems
@@ -63,6 +104,14 @@ class SongListAdapter(
         this.notifyDataSetChanged()
     }
 
+    /**
+     * Removes all tracks in [songTitles] from the dataset and returns their former positions.
+     *
+     * Positions are returned so the host can call [notifyItemRemoved] for each one.
+     *
+     * @param songTitles List of track title strings to remove (matched by [MediaItem] title).
+     * @return The adapter positions that were removed, in the order they were processed.
+     */
     fun removeSongs(songTitles: List<String>): List<Int> {
         val modifiedSongPositions = mutableListOf<Int>()
         for(songTitle in songTitles) {
@@ -71,6 +120,11 @@ class SongListAdapter(
         return modifiedSongPositions
     }
 
+    /**
+     * Removes the first track whose title matches [songTitle] from [dataSet].
+     *
+     * @return The adapter position of the removed item.
+     */
     private fun removeSong(songTitle: String): Int {
         val posOfRemovedItem = dataSet.indexOfFirst { song ->
             song.mediaMetadata.title == songTitle
@@ -82,6 +136,11 @@ class SongListAdapter(
         return posOfRemovedItem
     }
 
+    /**
+     * Returns the current ordered list of [MediaItem]s in the adapter.
+     *
+     * Used by the host fragment to persist a reordered playlist after a drag-and-drop session.
+     */
     fun getSongOrder(): List<MediaItem> {
         return dataSet
     }
@@ -310,6 +369,7 @@ class SongListAdapter(
     }
 
     //TODO move out of adapters?
+    /** Dispatches the selected popup [item] for [mediaItem] to the appropriate handler. */
     private fun handleMenuItem(item: MenuItem, mediaItem: MediaItem) {
         when(MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())) {
             MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {

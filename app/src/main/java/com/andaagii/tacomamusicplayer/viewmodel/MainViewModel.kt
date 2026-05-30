@@ -740,7 +740,13 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Ability to add a list of songs to a list of playlists.
+     * Adds [songs] to every playlist in [playlistTitles].
+     *
+     * Iterates over each title and delegates to [addListOfSongMediaItemsToAPlaylist], which
+     * runs the database write on [Dispatchers.IO]. Multiple playlists are processed sequentially.
+     *
+     * @param playlistTitles The titles of the playlists to add songs to.
+     * @param songs The [MediaItem]s to append to each playlist.
      */
     fun addSongsToAPlaylist(playlistTitles: List<String>, songs: List<MediaItem>) {
         Timber.d("addSongsToAPlaylist: playlistTitles=$playlistTitles, songDescriptions=$songs")
@@ -1381,7 +1387,10 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Check if necessary permissions are granted.
+     * Checks whether `READ_MEDIA_AUDIO` is currently granted and updates [isAudioPermissionGranted].
+     *
+     * Only updates the LiveData when the state has actually changed to avoid redundant observer
+     * callbacks. Called at startup and after returning from the permission denied screen.
      */
     private fun checkPermissions() {
         val isAudioPermissionGranted = permissionManager.verifyReadMediaAudioPermission(getApplication<Application>().applicationContext)

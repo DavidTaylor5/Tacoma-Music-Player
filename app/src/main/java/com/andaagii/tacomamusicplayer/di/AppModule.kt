@@ -10,6 +10,14 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Hilt module that binds repository interfaces to their single concrete implementation.
+ *
+ * Both [MusicRepository] and [MusicProviderRepository] resolve to the same
+ * [MusicRepositoryImpl] singleton, so callers that only need read access (e.g.
+ * [com.andaagii.tacomamusicplayer.service.MusicService]) receive a narrower type without
+ * exposing write operations.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AppModule {

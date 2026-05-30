@@ -41,6 +41,24 @@ import java.util.UUID
 //Preferences DataStore, for storing settings in my app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
+/**
+ * The sole [AppCompatActivity] in the app.
+ *
+ * Responsibilities:
+ * - Sets up the programmatic [NavController] nav graph with two destinations:
+ *   [PlayerDisplayFragment] (main browsing screen) and [PermissionDeniedFragment].
+ * - Handles the `READ_MEDIA_AUDIO` permission request lifecycle: observes
+ *   [MainViewModel.isAudioPermissionGranted], requests the permission if not yet granted,
+ *   and initialises music playback + cataloging once permission is confirmed.
+ * - Enqueues [CatalogMusicWorker] via [WorkManager] to scan and catalog the device library.
+ * - Delegates back-press handling to [onBackPressedCallback] so the nav stack is consumed
+ *   before the activity finishes.
+ * - Hides system UI chrome in [onResume] via [UtilImpl.hideNavigationUI].
+ * - Persists the playback queue to the database in [onPause].
+ *
+ * The [dataStore] extension property is a top-level DataStore instance that backs
+ * [com.andaagii.tacomamusicplayer.util.DataStoreUtil] preferences.
+ */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -136,6 +154,12 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(onBackPressedCallback)
     }
 
+    /**
+     * Builds the programmatic nav graph and wires the [NavController] from the [NavHostFragment].
+     *
+     * The graph has two destinations: [PlayerDisplayFragment] (start destination) and
+     * [PermissionDeniedFragment]. Navigation between them is driven by [MainViewModel.screenState].
+     */
     private fun setupNavigation() {
         //Retrieve the NavController [will instantiate the fragment before grabbing it's navController]
         navController = binding.navHostFragment.getFragment<NavHostFragment>().navController
@@ -164,6 +188,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         Timber.d("onResume: ")
 
+        // Re-hide system bars on every resume in case the OS restored them (e.g. after a dialog)
         UtilImpl.hideNavigationUI(window)
 
         viewModel.checkPermissionsIfOnPermissionDeniedScreen()
@@ -182,11 +207,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Hides the soft keyboard by clearing the window token's input focus. */
     private fun removeVirtualKeyboard() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(window.decorView.rootView.windowToken, 0)
     }
 
+    /**
+     * Receives the result of a runtime permission request and forwards it to [MainViewModel].
+     *
+     * [MainViewModel.handlePermissionResult] updates [MainViewModel.isAudioPermissionGranted],
+     * which this activity observes to initiate playback and library scanning if granted.
+     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -198,8 +230,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Start cataloging user's music library using a worker. If a previous worker is running, stop it
-     * and start again. I don't want multiple workers running in parallel.
+     * Enqueues [CatalogMusicWorker] to scan and catalog the device music library.
+     *
+     * Cancels any previously running catalog work first to prevent parallel executions that
+     * could produce duplicate database entries. Called once after audio permission is granted.
      */
     fun queryMusic() {
         //Catalog all of the music on the user's device to a database in the background

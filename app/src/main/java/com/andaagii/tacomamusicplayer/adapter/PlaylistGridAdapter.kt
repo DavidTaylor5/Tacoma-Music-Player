@@ -19,15 +19,26 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import timber.log.Timber
 import java.io.File
 
+/**
+ * [ListAdapter] for displaying playlists in a two-column grid layout.
+ *
+ * Inflates `viewholder_playlist_grid_layout.xml` for each cell. The popup menu is triggered by a
+ * long-press on the cell, consistent with [AlbumGridAdapter].
+ *
+ * Uses [MediaItemDiffCallback] for efficient DiffUtil-based list updates.
+ *
+ * @param onPlaylistClick Invoked when the user taps a grid cell to drill into its track list.
+ * @param onPlayIconClick Reserved for future use — not wired in the current grid layout.
+ * @param handlePlaylistSetting Invoked when the user selects an item from the long-press popup
+ *   menu. Receives the resolved [MenuOptionUtil.MenuOption] and a list containing the playlist title.
+ */
 class PlaylistGridAdapter(
     private val onPlaylistClick: (MediaItem) -> Unit,
     private val onPlayIconClick: (String) -> Unit,
     val handlePlaylistSetting: (MenuOptionUtil.MenuOption, List<String>) -> Unit
 ): ListAdapter<MediaItem, PlaylistGridAdapter.PlaylistGridViewHolder>(MediaItemDiffCallback) {
 
-    /**
-     * Provide a reference to the type of views that you are using (custom ViewHolder)
-     */
+    /** ViewHolder that holds the inflated [ViewholderPlaylistGridLayoutBinding] for a single grid cell. */
     class PlaylistGridViewHolder(val binding: ViewholderPlaylistGridLayoutBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistGridViewHolder {
@@ -97,6 +108,10 @@ class PlaylistGridAdapter(
         }
     }
 
+    /**
+     * Translates the selected popup [item] at [position] into a [MenuOptionUtil.MenuOption] and
+     * forwards it to [handlePlaylistSetting] alongside the playlist's title.
+     */
     private fun handleMenuItem(item: MenuItem, position: Int) {
         val playlistTitle = getItem(position).mediaMetadata.albumTitle.toString()
         val menuOption = MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString())

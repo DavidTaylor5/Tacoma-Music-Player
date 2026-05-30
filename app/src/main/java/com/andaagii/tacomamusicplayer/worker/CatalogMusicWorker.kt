@@ -20,7 +20,21 @@ import timber.log.Timber
 import androidx.core.net.toUri
 
 /**
- * A class that queries the medialibraryservice, saving found songs and album art into a database.
+ * [CoroutineWorker] that scans device storage via [MediaStoreUtil] and upserts discovered songs
+ * and albums into Room.
+ *
+ * Enqueued by [com.andaagii.tacomamusicplayer.activity.MainActivity] as a one-time [androidx.work.WorkRequest]
+ * on first launch and on manual refresh. Any previously running catalog work is cancelled first to
+ * prevent parallel executions from producing duplicate database entries.
+ *
+ * Processing steps in [doWork]:
+ * 1. Query all albums from MediaStore via [catalogMusic].
+ * 2. For each album, extract cover art from the first track and cache it to external storage.
+ * 3. Catalog all tracks within the album into [SongEntity] rows.
+ * 4. Insert/update the [SongGroupEntity] row for the album if it doesn't already exist.
+ * 5. Delete any database albums or tracks that are no longer present in MediaStore.
+ *
+ * Uses `@HiltWorker` + `@AssistedInject` so Hilt can satisfy the DAOs and util dependencies.
  */
 @HiltWorker
 class CatalogMusicWorker @AssistedInject constructor(
@@ -43,7 +57,10 @@ class CatalogMusicWorker @AssistedInject constructor(
     }
 
     /**
-     * Catalog all of the music on a user's phone
+     * Entry point for the catalog scan.
+     *
+     * Queries all albums from MediaStore, loads the current database state, and delegates
+     * per-album processing (art extraction, song cataloging, upsert) to [catalogAlbums].
      */
     private suspend fun catalogMusic() {
         Timber.d("catalogMusic: ")
@@ -53,6 +70,16 @@ class CatalogMusicWorker @AssistedInject constructor(
         catalogAlbums(albums, dbAlbums)
     }
 
+    /**
+     * Syncs the Room database with the [albums] returned by MediaStore.
+     *
+     * For each album: extracts cover art, catalogs its tracks, then upserts the album's
+     * [SongGroupEntity] row if it doesn't already exist. Albums present in the database but
+     * absent from [albums] are deleted.
+     *
+     * @param albums Albums discovered from MediaStore.
+     * @param dbAlbums Albums currently stored in Room.
+     */
     private suspend fun catalogAlbums(albums: List<MediaItem>, dbAlbums: List<SongGroupEntity>) {
         Timber.d("catalogAlbums: album amount=${albums.size}")
 
@@ -130,6 +157,16 @@ class CatalogMusicWorker @AssistedInject constructor(
         }
     }
 
+    /**
+     * Returns the MediaStore URI of the first track in [albumName], or an empty string if the
+     * album has no tracks.
+     *
+     * Used to extract cover art from the first track's embedded artwork before the album entity
+     * is inserted into the database.
+     *
+     * @param albumName The album name as it appears in MediaStore.
+     * @return The media ID (content URI string) of the first track, or `""` if none found.
+     */
     private fun getFirstSongUri(albumName: String): String {
         val foundSongs = mediaStoreUtil.querySongsFromAlbum(appContext, albumName)
         var firstSongUri = ""
@@ -143,9 +180,13 @@ class CatalogMusicWorker @AssistedInject constructor(
     }
 
     /**
-     * Takes an album and adds all of it's songs to the
-     * Return the first song, I will use this to get media metadata related to the album from song 1
-     * @return Song Uri, which I can use to get further media meta data for the album
+     * Syncs the Room database with the tracks in [albumName] as reported by MediaStore.
+     *
+     * Inserts [SongEntity] rows for tracks not yet in the database and deletes rows for tracks
+     * that are no longer found. Skips tracks that already exist to avoid unnecessary writes.
+     *
+     * @param albumName The album name used to query MediaStore and Room.
+     * @param albumArtFile The file path of the cached cover art to associate with new song rows.
      */
     private suspend fun catalogAlbumSongs(albumName: String, albumArtFile: String) {
         Timber.d("catalogAlbumSongs: albumName=$albumName, albumArtFile=$albumArtFile")
