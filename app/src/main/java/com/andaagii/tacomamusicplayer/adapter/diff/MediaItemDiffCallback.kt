@@ -22,7 +22,7 @@ object MediaItemDiffCallback: DiffUtil.ItemCallback<MediaItem>() {
         oldItem: MediaItem,
         newItem: MediaItem
     ): Boolean {
-        return oldItem.mediaMetadata.albumTitle == newItem.mediaMetadata.albumTitle
+        return oldItem.mediaMetadata.description == newItem.mediaMetadata.description
     }
 
     /**

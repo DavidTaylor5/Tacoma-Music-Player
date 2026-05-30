@@ -13,8 +13,11 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter.QueueSongViewHolder
+import com.andaagii.tacomamusicplayer.adapter.diff.MediaItemDiffCallback
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
@@ -46,7 +49,7 @@ class QueueListAdapter(
     val onHandleDrag: (viewHolder: RecyclerView.ViewHolder) -> Unit,
     val onRemoveSong: (Int) -> Unit,
     val playSongAtPosition: (Int) -> Unit,
-): RecyclerView.Adapter<QueueListAdapter.QueueSongViewHolder>() {
+): ListAdapter<MediaItem, QueueSongViewHolder>(MediaItemDiffCallback) {
 
     private var favoriteList: MutableList<Boolean> = dataSet.map { false }.toMutableList()
 

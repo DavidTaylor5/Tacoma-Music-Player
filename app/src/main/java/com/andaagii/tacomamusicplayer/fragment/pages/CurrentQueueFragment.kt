@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
+import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
@@ -57,14 +58,22 @@ class CurrentQueueFragment : Fragment() {
      * 4. Horizontal swipe ([onSwiped]) is intentionally a no-op — swiping is not used for
      *    removal in the queue.
      */
+    private var startDrag = -1
+    private var endDrag = -1
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
             object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
 
                 override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                     super.onSelectedChanged(viewHolder, actionState)
+                    Timber.d("onSelectedChanged: actionState=$actionState")
                     if (actionState == ACTION_STATE_DRAG) {
                         viewHolder?.itemView?.alpha = 0.5f
+                    } else if(actionState == ACTION_STATE_IDLE) {
+                        //update the current queue because it's been modified
+                        parentViewModel.mediaController.value?.moveMediaItem(startDrag, endDrag)
+                        startDrag = -1
+                        endDrag = -1
                     }
                 }
 
@@ -81,14 +90,20 @@ class CurrentQueueFragment : Fragment() {
                     viewHolder: RecyclerView.ViewHolder,
                     target: RecyclerView.ViewHolder
                 ): Boolean {
+
                     val adapter = recyclerView.adapter as QueueListAdapter
                     val from = viewHolder.bindingAdapterPosition
                     val to = target.bindingAdapterPosition
 
+                    if(startDrag == -1) {
+                        startDrag = from
+                    }
+
+                    endDrag = to
+
                     Timber.d("onMove: from=$from, to=$to")
 
                     adapter.moveItem(from, to)
-                    parentViewModel.mediaController.value?.moveMediaItem(from, to)
                     adapter.notifyItemMoved(from, to)
 
                     return true
