@@ -38,9 +38,12 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -146,11 +149,11 @@ class MainViewModel @Inject constructor(
     /**
      * One-shot event that scrolls the [PlayerDisplayFragment] ViewPager2 to the given [PageType].
      *
-     * Emitted by [setPage]; consumed once by the UI observer.
+     * Backed by a [Channel] so each emission is consumed exactly once and is not re-delivered
+     * on Fragment view recreation (unlike plain [MutableLiveData]).
      */
-    val navigateToPage: LiveData<PageType>
-        get() = _navigateToPage
-    private val _navigateToPage: MutableLiveData<PageType> = MutableLiveData()
+    private val _navigateToPage = Channel<PageType>(Channel.BUFFERED)
+    val navigateToPage: Flow<PageType> = _navigateToPage.receiveAsFlow()
 
     /**
      * In-memory mirror of the currently visible [PageType].
@@ -520,7 +523,7 @@ class MainViewModel @Inject constructor(
      * @param page The [PageType] to navigate to.
      */
     fun setPage(page: PageType) {
-        _navigateToPage.value = page
+        _navigateToPage.trySend(page)
     }
 
     /**
@@ -826,6 +829,8 @@ class MainViewModel @Inject constructor(
         if(this::mediaBrowser.isInitialized) {
             mediaBrowser.release()
         }
+
+        _navigateToPage.close()
     }
 
     /**
