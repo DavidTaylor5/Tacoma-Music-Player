@@ -1,10 +1,10 @@
 package com.andaagii.tacomamusicplayer.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
 
 /**
@@ -27,42 +27,42 @@ import timber.log.Timber
 class SongListViewModel: ViewModel() {
 
     /** `true` while the add-to-playlist bottom sheet is displayed. */
-    val isShowingPlaylistPrompt: LiveData<Boolean>
+    val isShowingPlaylistPrompt: StateFlow<Boolean>
         get() = _isShowingPlaylistPrompt
-    private val _isShowingPlaylistPrompt: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _isShowingPlaylistPrompt = MutableStateFlow(false)
 
     /**
      * `true` while at least one song is selected and the multi-select action bar should be shown.
      * Set to `false` automatically when all songs are deselected via [unselectSong] or
      * [clearMultiSelectSongs].
      */
-    val isShowingMultiSelectPrompt: LiveData<Boolean>
+    val isShowingMultiSelectPrompt: StateFlow<Boolean>
         get() = _isShowingMultiSelectPrompt
-    private val _isShowingMultiSelectPrompt: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _isShowingMultiSelectPrompt = MutableStateFlow(false)
 
     /**
      * Titles of playlists ticked by the user in the add-to-playlist prompt.
      * Reset to an empty list by [prepareSongsForPlaylists] at the start of each add flow.
      */
-    val checkedPlaylists: LiveData<List<String>>
+    val checkedPlaylists: StateFlow<List<String>>
         get() = _checkedPlaylists
-    private val _checkedPlaylists: MutableLiveData<List<String>> = MutableLiveData(listOf())
+    private val _checkedPlaylists = MutableStateFlow<List<String>>(emptyList())
 
     /**
      * Accumulates [MediaItem] objects as the user long-presses songs.
      * Cleared by [clearMultiSelectSongs].
      */
-    val currentlySelectedSongs: LiveData<List<MediaItem>>
+    val currentlySelectedSongs: StateFlow<List<MediaItem>>
         get() = _currentlySelectedSongs
-    private val _currentlySelectedSongs: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
+    private val _currentlySelectedSongs = MutableStateFlow<List<MediaItem>>(emptyList())
 
     /**
      * `true` when at least one playlist is checked in the prompt; controls the enabled state of
      * the "Add" button. Updated by [updatePlaylistPromptAddClickability].
      */
-    val isPlaylistPromptAddClickable: LiveData<Boolean>
+    val isPlaylistPromptAddClickable: StateFlow<Boolean>
         get() = _isPlaylistPromptAddClickable
-    private val _isPlaylistPromptAddClickable: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _isPlaylistPromptAddClickable = MutableStateFlow(false)
 
     /**
      * Resets [checkedPlaylists] to empty and disables the Add button in preparation for a fresh
@@ -74,10 +74,10 @@ class SongListViewModel: ViewModel() {
     fun prepareSongsForPlaylists() {
         Timber.d("prepareSongsForPlaylists: ")
 
-        val resetCheckedPlaylists = mutableListOf<String>()
+        val resetCheckedPlaylists = emptyList<String>()
 
         // No playlist selected yet at the start of a new add flow
-        _checkedPlaylists.postValue(resetCheckedPlaylists)
+        _checkedPlaylists.value = resetCheckedPlaylists
 
         updatePlaylistPromptAddClickability(resetCheckedPlaylists)
     }
@@ -90,14 +90,14 @@ class SongListViewModel: ViewModel() {
      *   action bar via [isShowingMultiSelectPrompt].
      */
     fun selectSongs(songs: List<MediaItem>, showPrompt: Boolean) {
-        val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
-        Timber.d("selectSongs: songs=${songs.map { it.mediaMetadata.title }}, _currentlySelectedSongs=${_currentlySelectedSongs.value?.map { it.mediaMetadata.title }}")
+        val currentSongs = _currentlySelectedSongs.value.toMutableList()
+        Timber.d("selectSongs: songs=${songs.map { it.mediaMetadata.title }}, _currentlySelectedSongs=${_currentlySelectedSongs.value.map { it.mediaMetadata.title }}")
 
         currentSongs.addAll(songs)
         if(currentSongs.isNotEmpty() && showPrompt) {
-            _isShowingMultiSelectPrompt.postValue(true)
+            _isShowingMultiSelectPrompt.value = true
         }
-        _currentlySelectedSongs.postValue(currentSongs)
+        _currentlySelectedSongs.value = currentSongs
     }
 
     /**
@@ -111,14 +111,14 @@ class SongListViewModel: ViewModel() {
     fun unselectSong(song: MediaItem) {
         Timber.d("unselectSong: song=${ song.mediaMetadata.title }")
 
-        val currentSongs = _currentlySelectedSongs.value?.toMutableList() ?: mutableListOf()
+        val currentSongs = _currentlySelectedSongs.value.toMutableList()
         currentSongs.removeAll {
             it.mediaId == song.mediaId
         }
         if(currentSongs.isEmpty()) {
-            _isShowingMultiSelectPrompt.postValue(false)
+            _isShowingMultiSelectPrompt.value = false
         }
-        _currentlySelectedSongs.postValue(currentSongs)
+        _currentlySelectedSongs.value = currentSongs
     }
 
     /**
@@ -129,8 +129,8 @@ class SongListViewModel: ViewModel() {
     fun clearMultiSelectSongs() {
         Timber.d("clearMultiSelectSongs: ")
 
-        _currentlySelectedSongs.postValue(listOf())
-        _isShowingMultiSelectPrompt.postValue(false)
+        _currentlySelectedSongs.value = emptyList()
+        _isShowingMultiSelectPrompt.value = false
     }
 
     /**
@@ -143,29 +143,27 @@ class SongListViewModel: ViewModel() {
     fun updateCheckedPlaylists(playlistTitle: String, isChecked: Boolean ) {
         Timber.d("updateCheckedPlaylists: ")
 
-        // Maintain a local copy to pass to clickability update after the LiveData post
+        // Maintain a local copy to pass to clickability update after the StateFlow update
         var updatedPlaylistsWithCheckmarks = mutableListOf<String>()
 
         if(isChecked) {
             // Add the playlist if it isn't already in the checked list
-            _checkedPlaylists.value?.let { checkedPlaylists ->
-                if(!checkedPlaylists.contains(playlistTitle)) {
-                    updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
-                    updatedPlaylistsWithCheckmarks.add(playlistTitle)
-                    _checkedPlaylists.postValue(updatedPlaylistsWithCheckmarks)
-                }
+            val checkedPlaylists = _checkedPlaylists.value
+            if(!checkedPlaylists.contains(playlistTitle)) {
+                updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
+                updatedPlaylistsWithCheckmarks.add(playlistTitle)
+                _checkedPlaylists.value = updatedPlaylistsWithCheckmarks
             }
 
         } else {
             // Remove the playlist if it is currently checked
-            _checkedPlaylists.value?.let { checkedPlaylists ->
-                if(checkedPlaylists.contains(playlistTitle)) {
-                    updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
-                    updatedPlaylistsWithCheckmarks.removeAll {
-                        it == playlistTitle
-                    }
-                    _checkedPlaylists.postValue(updatedPlaylistsWithCheckmarks)
+            val checkedPlaylists = _checkedPlaylists.value
+            if(checkedPlaylists.contains(playlistTitle)) {
+                updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
+                updatedPlaylistsWithCheckmarks.removeAll {
+                    it == playlistTitle
                 }
+                _checkedPlaylists.value = updatedPlaylistsWithCheckmarks
             }
         }
 
@@ -178,11 +176,7 @@ class SongListViewModel: ViewModel() {
      *
      * @param checkedPlaylists The current list of ticked playlist titles.
      */
-    private fun updatePlaylistPromptAddClickability(checkedPlaylists: MutableList<String>) {
-        if(checkedPlaylists.isEmpty()) {
-            _isPlaylistPromptAddClickable.postValue(false)
-        } else {
-            _isPlaylistPromptAddClickable.postValue(true)
-        }
+    private fun updatePlaylistPromptAddClickability(checkedPlaylists: List<String>) {
+        _isPlaylistPromptAddClickable.value = checkedPlaylists.isNotEmpty()
     }
 }

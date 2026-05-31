@@ -106,7 +106,8 @@ class PlayerDisplayFragment : Fragment() {
 
                 // Show the mini-player on every page except the full player, and only when
                 // a song is actually loaded.
-                if (position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
+                val songInfo = parentViewModel.currentPlayingSongInfo.value
+                if (position != PageType.PLAYER_PAGE.type() && songInfo != null && !SongData.isNullSong(songInfo)) {
                     binding.miniPlayerControls?.visibility = View.VISIBLE
                 } else {
                     binding.miniPlayerControls?.visibility = View.GONE
@@ -144,11 +145,15 @@ class PlayerDisplayFragment : Fragment() {
             }
         }
 
-        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if (isPlaying) {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.isPlaying.collect { isPlaying ->
+                    if (isPlaying) {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                    }
+                }
             }
         }
 
@@ -168,8 +173,12 @@ class PlayerDisplayFragment : Fragment() {
             navigateToPlayerPage()
         }
 
-        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currentSong ->
-            updateMiniPlayerForCurrentSong(currentSong)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentPlayingSongInfo.collect { currentSong ->
+                    currentSong?.let { updateMiniPlayerForCurrentSong(it) }
+                }
+            }
         }
 
         return binding.root

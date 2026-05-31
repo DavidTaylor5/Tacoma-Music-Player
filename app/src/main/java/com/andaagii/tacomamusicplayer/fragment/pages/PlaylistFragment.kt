@@ -162,11 +162,12 @@ class PlaylistFragment : Fragment() {
 
         // Driven by MainViewModel so that SongListFragment can trigger the create-playlist
         // prompt on this page after the user selects "Create playlist" from the song list.
-        parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.observe(viewLifecycleOwner) { showPrompt ->
-            if (showPrompt) {
-                binding.playlistPrompt.resetUserInput()
-                binding.playlistPrompt.visibility = View.VISIBLE
-                parentViewModel.showAddPlaylistPromptOnPlaylistPage(false)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.collect {
+                    binding.playlistPrompt.resetUserInput()
+                    binding.playlistPrompt.visibility = View.VISIBLE
+                }
             }
         }
 
@@ -197,7 +198,7 @@ class PlaylistFragment : Fragment() {
         }
 
         binding.addPlaylistBtn.setOnClickListener {
-            parentViewModel.showAddPlaylistPromptOnPlaylistPage(true)
+            parentViewModel.showAddPlaylistPromptOnPlaylistPage()
         }
 
         setupCreatePlaylistPrompt()

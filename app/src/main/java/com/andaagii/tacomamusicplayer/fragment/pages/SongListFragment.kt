@@ -206,77 +206,91 @@ class SongListFragment : Fragment() {
 
         // Rebuild the adapter and header view every time the displayed group changes
         // (e.g., user taps an album from AlbumListFragment or a playlist from PlaylistFragment).
-        parentViewModel.currentSongGroup.observe(viewLifecycleOwner) { songGroup ->
-            Timber.d("onCreateView: title=${songGroup.group.mediaMetadata.albumTitle}")
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentSongGroup.collect { songGroup ->
+                    songGroup ?: return@collect
+                    Timber.d("onCreateView: title=${songGroup.group.mediaMetadata.albumTitle}")
 
-            currentSongGroup = songGroup
-            lastDisplaySongGroup = songGroup
+                    currentSongGroup = songGroup
+                    lastDisplaySongGroup = songGroup
 
-            parentViewModel.handleCancelSearchButtonClick()
+                    parentViewModel.handleCancelSearchButtonClick()
 
-            binding.displayRecyclerview.adapter = SongListAdapter(
-                dataSet = songGroup.songs,
-                handleSongSetting = this::handleSongSetting,
-                handleSongClick = this::handleSongClicked,
-                handleAlbumClick = this::handleAlbumClicked,
-                handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
-                handlePlaylistClick = this::handlePlaylistClicked,
-                handleSongSelected = this::handleSongSelected,
-                songGroupType = songGroup.type,
-                onHandleDrag = this::handleViewHolderHandleDrag
-            )
-            determineIfShowingInformationScreen(songGroup)
-            initializeSongGroupInfo()
+                    binding.displayRecyclerview.adapter = SongListAdapter(
+                        dataSet = songGroup.songs,
+                        handleSongSetting = this@SongListFragment::handleSongSetting,
+                        handleSongClick = this@SongListFragment::handleSongClicked,
+                        handleAlbumClick = this@SongListFragment::handleAlbumClicked,
+                        handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
+                        handlePlaylistClick = this@SongListFragment::handlePlaylistClicked,
+                        handleSongSelected = this@SongListFragment::handleSongSelected,
+                        songGroupType = songGroup.type,
+                        onHandleDrag = this@SongListFragment::handleViewHolderHandleDrag
+                    )
+                    determineIfShowingInformationScreen(songGroup)
+                    initializeSongGroupInfo()
+                }
+            }
         }
 
         // Update the adapter with search results as the user types. Save the pre-search group
         // to lastDisplaySongGroup the first time a non-search group is active, so it can be
         // restored when search mode ends.
-        parentViewModel.currentSearchList.observe(viewLifecycleOwner) { searchItems ->
-            currentSongGroup?.let { songGroup ->
-                if (songGroup.type != SongGroupType.SEARCH_LIST) {
-                    Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
-                    lastDisplaySongGroup = songGroup
-                }
-            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentSearchList.collect { searchItems ->
+                    searchItems ?: return@collect
+                    currentSongGroup?.let { songGroup ->
+                        if (songGroup.type != SongGroupType.SEARCH_LIST) {
+                            Timber.d("onCreateView: saving currentSongGroup to lastDisplaySongGroup")
+                            lastDisplaySongGroup = songGroup
+                        }
+                    }
 
-            val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
-                MediaMetadata.Builder().setTitle("Search").build()
-            ).build()
+                    val searchMediaItem = MediaItem.Builder().setMediaId("Search").setMediaMetadata(
+                        MediaMetadata.Builder().setTitle("Search").build()
+                    ).build()
 
-            currentSongGroup = SongGroup(
-                type = SongGroupType.SEARCH_LIST,
-                songs = searchItems,
-                group = searchMediaItem,
-            )
-
-            if (binding.displayRecyclerview.adapter == null) {
-                currentSongGroup?.let { songGroup ->
-                    binding.displayRecyclerview.adapter = SongListAdapter(
-                        dataSet = songGroup.songs,
-                        handleSongSetting = this::handleSongSetting,
-                        handleSongClick = this::handleSongClicked,
-                        handleAlbumClick = this::handleAlbumClicked,
-                        handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
-                        handlePlaylistClick = this::handlePlaylistClicked,
-                        handleSongSelected = this::handleSongSelected,
-                        songGroupType = songGroup.type,
-                        onHandleDrag = this::handleViewHolderHandleDrag
+                    currentSongGroup = SongGroup(
+                        type = SongGroupType.SEARCH_LIST,
+                        songs = searchItems,
+                        group = searchMediaItem,
                     )
-                    determineIfShowingInformationScreen(songGroup)
+
+                    if (binding.displayRecyclerview.adapter == null) {
+                        currentSongGroup?.let { songGroup ->
+                            binding.displayRecyclerview.adapter = SongListAdapter(
+                                dataSet = songGroup.songs,
+                                handleSongSetting = this@SongListFragment::handleSongSetting,
+                                handleSongClick = this@SongListFragment::handleSongClicked,
+                                handleAlbumClick = this@SongListFragment::handleAlbumClicked,
+                                handleSearchSongClick = parentViewModel::playAlbumAtSongPosition,
+                                handlePlaylistClick = this@SongListFragment::handlePlaylistClicked,
+                                handleSongSelected = this@SongListFragment::handleSongSelected,
+                                songGroupType = songGroup.type,
+                                onHandleDrag = this@SongListFragment::handleViewHolderHandleDrag
+                            )
+                            determineIfShowingInformationScreen(songGroup)
+                        }
+                    } else {
+                        (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(searchItems, SongGroupType.SEARCH_LIST)
+                    }
                 }
-            } else {
-                (binding.displayRecyclerview.adapter as SongListAdapter).setSongs(searchItems, SongGroupType.SEARCH_LIST)
             }
         }
 
-        // Observed on requireActivity() so the search icon drawable updates even if the
-        // Fragment's view is briefly torn down during a configuration change.
-        parentViewModel.isShowingSearchMode.observe(requireActivity()) { isShowing ->
-            if (isShowing) {
-                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_off_24)
-            } else {
-                binding.searchOption.setBackgroundResource(R.drawable.baseline_search_24)
+        // StateFlow always re-emits to new collectors, so viewLifecycleOwner is sufficient
+        // to keep the search icon in sync even after configuration changes.
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.isShowingSearchMode.collect { isShowing ->
+                    if (isShowing) {
+                        binding.searchOption.setBackgroundResource(R.drawable.baseline_search_off_24)
+                    } else {
+                        binding.searchOption.setBackgroundResource(R.drawable.baseline_search_24)
+                    }
+                }
             }
         }
 
@@ -284,21 +298,23 @@ class SongListFragment : Fragment() {
             parentViewModel.flipSearchButtonState()
         }
 
-        // Separate viewLifecycleOwner observation handles the search-mode UI transitions —
-        // these affect views and must stop when the Fragment view is destroyed.
-        parentViewModel.isShowingSearchMode.observe(viewLifecycleOwner) { isShowing ->
-            if (isShowing) {
-                activateSearchMode()
-                deactivateDisplayMode()
-                removeInformationScreen()
-            } else {
-                deactivateSearchMode()
-                activateDisplayMode()
-            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.isShowingSearchMode.collect { isShowing ->
+                    if (isShowing) {
+                        activateSearchMode()
+                        deactivateDisplayMode()
+                        removeInformationScreen()
+                    } else {
+                        deactivateSearchMode()
+                        activateDisplayMode()
+                    }
 
-            // Clear any selected rows when toggling search mode to avoid stale highlights.
-            binding.displayRecyclerview.adapter?.let { adapter ->
-                (adapter as SongListAdapter).clearAllSelected()
+                    // Clear any selected rows when toggling search mode to avoid stale highlights.
+                    binding.displayRecyclerview.adapter?.let { adapter ->
+                        (adapter as SongListAdapter).clearAllSelected()
+                    }
+                }
             }
         }
 
@@ -316,11 +332,15 @@ class SongListFragment : Fragment() {
             }
         }
 
-        viewModel.isShowingPlaylistPrompt.observe(viewLifecycleOwner) { isShowing ->
-            if (isShowing) {
-                binding.playlistPrompt.visibility = View.VISIBLE
-            } else {
-                binding.playlistPrompt.visibility = View.GONE
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isShowingPlaylistPrompt.collect { isShowing ->
+                    if (isShowing) {
+                        binding.playlistPrompt.visibility = View.VISIBLE
+                    } else {
+                        binding.playlistPrompt.visibility = View.GONE
+                    }
+                }
             }
         }
 
@@ -348,22 +368,26 @@ class SongListFragment : Fragment() {
             menu.show()
         }
 
-        viewModel.currentlySelectedSongs.observe(viewLifecycleOwner) { currentlySelectedSongs ->
-            binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.currentlySelectedSongs.collect { currentlySelectedSongs ->
+                    binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
 
-            if (currentlySelectedSongs.isEmpty()) {
-                Timber.d("onCreateView: set multiselectPrompt to GONE")
-                // INVISIBLE rather than GONE because custom views can exhibit layout glitches
-                // when re-adding a GONE view to the hierarchy mid-animation.
-                binding.multiSelectPrompt.visibility = View.INVISIBLE
-            } else {
-                Timber.d("onCreateView: set multiselectPrompt to VISIBLE")
-                binding.multiSelectPrompt.visibility = View.VISIBLE
-            }
+                    if (currentlySelectedSongs.isEmpty()) {
+                        Timber.d("onCreateView: set multiselectPrompt to GONE")
+                        // INVISIBLE rather than GONE because custom views can exhibit layout glitches
+                        // when re-adding a GONE view to the hierarchy mid-animation.
+                        binding.multiSelectPrompt.visibility = View.INVISIBLE
+                    } else {
+                        Timber.d("onCreateView: set multiselectPrompt to VISIBLE")
+                        binding.multiSelectPrompt.visibility = View.VISIBLE
+                    }
 
-            binding.displayRecyclerview.adapter?.let { adapter ->
-                if (currentlySelectedSongs.isEmpty()) {
-                    (adapter as SongListAdapter).clearAllSelected()
+                    binding.displayRecyclerview.adapter?.let { adapter ->
+                        if (currentlySelectedSongs.isEmpty()) {
+                            (adapter as SongListAdapter).clearAllSelected()
+                        }
+                    }
                 }
             }
         }
@@ -387,7 +411,7 @@ class SongListFragment : Fragment() {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
                     MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                    viewModel.currentlySelectedSongs.value ?: listOf()
+                    viewModel.currentlySelectedSongs.value
                 )
                 return@setOnMenuItemClickListener true
             }
@@ -419,7 +443,7 @@ class SongListFragment : Fragment() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 Timber.d("onTextChanged: User is typing: $s")
-                if (parentViewModel.isShowingSearchMode.value == true) {
+                if (parentViewModel.isShowingSearchMode.value) {
                     parentViewModel.querySearchData(s.toString())
                 }
             }
@@ -601,7 +625,7 @@ class SongListFragment : Fragment() {
      */
     private fun setupPlaylistPrompt() {
         binding.playlistPrompt.onAddButtonClick {
-            val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value ?: listOf()
+            val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value
             val playlistAddSongs: List<MediaItem> = songsToAddToPlaylistPrompt ?: listOf()
 
             parentViewModel.addSongsToAPlaylist(checkedPlaylists, playlistAddSongs)
@@ -622,8 +646,12 @@ class SongListFragment : Fragment() {
             viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
         }
 
-        viewModel.isPlaylistPromptAddClickable.observe(viewLifecycleOwner) { isClickable ->
-            binding.playlistPrompt.updateAddButtonClickability(isClickable)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isPlaylistPromptAddClickable.collect { isClickable ->
+                    binding.playlistPrompt.updateAddButtonClickability(isClickable)
+                }
+            }
         }
     }
 

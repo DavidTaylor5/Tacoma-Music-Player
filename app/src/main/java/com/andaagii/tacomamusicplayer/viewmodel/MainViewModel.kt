@@ -7,8 +7,6 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -18,7 +16,6 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
@@ -40,6 +37,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
@@ -59,14 +57,11 @@ import javax.inject.Inject
  *
  * Injected via Hilt: [MusicRepository], [MusicProviderRepository], [MediaItemUtil].
  *
- * Exposed LiveData:
- * - [mediaController] — the active [MediaController] once connected.
+ * Exposed StateFlow (continuous state):
+ * - [mediaController] — the active [MediaController] once connected; `null` until connected.
  * - [currentSongGroup] — album or playlist currently loaded into the song-list view.
  * - [currentSearchList] — results of the most recent in-app text search.
  * - [isAudioPermissionGranted] — whether `READ_MEDIA_AUDIO` is granted.
- * - [isPlaylistNameDuplicate] — one-shot flag for a duplicate-playlist-name error.
- * - [screenState] — current top-level screen, used for navigation.
- * - [navigateToPage] — one-shot event to scroll the ViewPager2 to a specific [PageType].
  * - [currentlyPlayingSongs] — current player queue as a [MediaItem] list.
  * - [currentPlayingSongInfo] — metadata for the song currently playing.
  * - [isPlaying] — `true` while the player is actively playing audio.
@@ -74,13 +69,16 @@ import javax.inject.Inject
  * - [loopMode] — current [Player] repeat mode (one of `Player.REPEAT_MODE_*`).
  * - [originalSongOrder] — pre-shuffle queue; restored when the user turns shuffle off.
  * - [isShowingSearchMode] — whether the search bar is visible.
- * - [notifyHideKeyboard] — incrementing counter used as a one-shot keyboard-dismiss event.
  * - [showLoadingScreen] — `true` until the persisted queue is restored on startup.
- * - [clearQueue] — one-shot flag indicating the queue was just cleared.
- * - [shouldShowAddPlaylistPromptOnPlaylistPage] — controls add-playlist dialog visibility.
- *
- * Exposed StateFlow:
  * - [availablePlaylists] — live list of all user-created playlists.
+ *
+ * Exposed Flow/Channel (one-shot events):
+ * - [navigateToPage] — one-shot event to scroll the ViewPager2 to a specific [PageType].
+ * - [isPlaylistNameDuplicate] — one-shot event for a duplicate-playlist-name error.
+ * - [screenState] — one-shot navigation event to a [ScreenType] destination.
+ * - [notifyHideKeyboard] — one-shot keyboard-dismiss trigger.
+ * - [clearQueue] — one-shot event indicating the queue was just cleared.
+ * - [shouldShowAddPlaylistPromptOnPlaylistPage] — one-shot trigger to show the add-playlist dialog.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -99,9 +97,9 @@ class MainViewModel @Inject constructor(
      * `null` until [setupMediaController] completes asynchronously after [initializeMusicPlaying]
      * is called. UI should guard against null before sending playback commands.
      */
-    val mediaController: LiveData<MediaController>
+    val mediaController: StateFlow<MediaController?>
         get() = _mediaController
-    private val _mediaController: MutableLiveData<MediaController> = MutableLiveData()
+    private val _mediaController = MutableStateFlow<MediaController?>(null)
 
     /**
      * The album or playlist currently displayed in the song-list view.
@@ -109,42 +107,48 @@ class MainViewModel @Inject constructor(
      * Updated by [querySongsFromAlbum] and [querySongsFromPlaylist]. Cleared to an empty
      * [SongGroup] at the start of each album query so the UI can show a loading state.
      */
-    val currentSongGroup: LiveData<SongGroup>
+    val currentSongGroup: StateFlow<SongGroup?>
         get() = _currentSongGroup
-    private val _currentSongGroup: MutableLiveData<SongGroup> = MutableLiveData()
+    private val _currentSongGroup = MutableStateFlow<SongGroup?>(null)
 
     /**
      * Results of the most recent in-app text search, updated by [querySearchData].
      * Empty until the user performs a search.
      */
-    val currentSearchList: LiveData<List<MediaItem>>
+    val currentSearchList: StateFlow<List<MediaItem>?>
         get() = _currentSearchList
-    private val _currentSearchList: MutableLiveData<List<MediaItem>> = MutableLiveData()
+    private val _currentSearchList = MutableStateFlow<List<MediaItem>?>(null)
 
     /** `true` when the `READ_MEDIA_AUDIO` (or `READ_EXTERNAL_STORAGE`) permission is granted. */
-    val isAudioPermissionGranted: LiveData<Boolean>
+    val isAudioPermissionGranted: StateFlow<Boolean?>
         get() = _isAudioPermissionGranted
-    private val _isAudioPermissionGranted: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isAudioPermissionGranted = MutableStateFlow<Boolean?>(null)
 
     /**
-     * One-shot flag set to `true` when the user tries to create a playlist with a name that
-     * already exists. Reset by [handledPlaylistNameDuplicate] once the UI has shown the error.
+     * One-shot event emitted when the user tries to create a playlist with a name that
+     * already exists.
      */
-    val isPlaylistNameDuplicate: LiveData<Boolean>
-        get() = _isPlaylistNameDuplicate
-    private val _isPlaylistNameDuplicate: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isPlaylistNameDuplicate = Channel<Boolean>(Channel.BUFFERED)
+    val isPlaylistNameDuplicate: Flow<Boolean> = _isPlaylistNameDuplicate.receiveAsFlow()
 
     //TODO move playlist add prompt to the overall fragment?
 
     /**
-     * The current top-level screen of the app.
+     * In-memory record of the current top-level screen.
      *
-     * Used by [MainActivity] to navigate between [ScreenType] destinations. Updated by
-     * [setScreenData]; only changes value when the screen actually changes.
+     * Updated by [setScreenData] alongside [screenState] so callers can check the current screen
+     * synchronously without consuming the one-shot Channel event.
      */
-    val screenState : LiveData<ScreenData>
-        get() = _screenState
-    private val _screenState: MutableLiveData<ScreenData> = MutableLiveData()
+    private var currentScreenType: ScreenType? = null
+
+    /**
+     * One-shot navigation event that directs [MainActivity] to navigate to a [ScreenType].
+     *
+     * Backed by a [Channel] so each destination is delivered exactly once and is not re-delivered
+     * on Activity recreation (unlike plain StateFlow, which would replay the last screen).
+     */
+    private val _screenState = Channel<ScreenType>(Channel.BUFFERED)
+    val screenState: Flow<ScreenType> = _screenState.receiveAsFlow()
 
     /**
      * One-shot event that scrolls the [PlayerDisplayFragment] ViewPager2 to the given [PageType].
@@ -168,9 +172,9 @@ class MainViewModel @Inject constructor(
      * Updated by [playerListener.onTimelineChanged] whenever the queue is modified (add, remove,
      * or reorder). Reflects the live state of the [MediaController]'s queue.
      */
-    val currentlyPlayingSongs: LiveData<List<MediaItem>>
+    val currentlyPlayingSongs: StateFlow<List<MediaItem>>
         get() = _currentlyPlayingSongs
-    private val _currentlyPlayingSongs: MutableLiveData<List<MediaItem>> = MutableLiveData()
+    private val _currentlyPlayingSongs = MutableStateFlow<List<MediaItem>>(emptyList())
 
     /**
      * Metadata for the song currently playing, including title, artist, album, and artwork URI.
@@ -179,14 +183,14 @@ class MainViewModel @Inject constructor(
      * `songUri` is always set to `"UNKNOWN"` because the playback URI is not available from
      * metadata callbacks alone.
      */
-    val currentPlayingSongInfo: LiveData<SongData>
+    val currentPlayingSongInfo: StateFlow<SongData?>
         get() = _currentPlayingSongInfo
-    private val _currentPlayingSongInfo: MutableLiveData<SongData> = MutableLiveData()
+    private val _currentPlayingSongInfo = MutableStateFlow<SongData?>(null)
 
     /** `true` while the player is actively playing audio; updated by [playerListener.onIsPlayingChanged]. */
-    val isPlaying: LiveData<Boolean>
+    val isPlaying: StateFlow<Boolean>
         get() = _isPlaying
-    private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isPlaying = MutableStateFlow(false)
 
     /**
      * Current shuffle state ([ShuffleType.SHUFFLED] or [ShuffleType.NOT_SHUFFLED]).
@@ -194,9 +198,9 @@ class MainViewModel @Inject constructor(
      * Toggled by [flipShuffleState] and persisted to DataStore via [saveShufflePref] on every
      * change. Restored from DataStore on startup via [determineShufflePref].
      */
-    val shuffleMode: LiveData<ShuffleType>
+    val shuffleMode: StateFlow<ShuffleType?>
         get() = _shuffleMode
-    private val _shuffleMode: MutableLiveData<ShuffleType> = MutableLiveData()
+    private val _shuffleMode = MutableStateFlow<ShuffleType?>(null)
 
     /**
      * Current [Player] repeat mode (`Player.REPEAT_MODE_OFF`, `REPEAT_MODE_ONE`, or
@@ -204,9 +208,9 @@ class MainViewModel @Inject constructor(
      *
      * Cycled by [flipLoopMode] and persisted to DataStore via [saveLoopingPref].
      */
-    val loopMode: LiveData<Int>
+    val loopMode: StateFlow<Int?>
         get() = _loopMode
-    private val _loopMode: MutableLiveData<Int> = MutableLiveData()
+    private val _loopMode = MutableStateFlow<Int?>(null)
 
     /**
      * Snapshot of the queue order before the most recent shuffle was applied.
@@ -215,28 +219,25 @@ class MainViewModel @Inject constructor(
      * [addTracksSaveTrackOrder] and persisted to the database via [saveOriginalOrder] so it
      * survives app restarts. Used by [unshuffleSongs] to restore the pre-shuffle order.
      */
-    val originalSongOrder: LiveData<List<MediaItem>>
+    val originalSongOrder: StateFlow<List<MediaItem>>
         get() = _originalSongOrder
-    private val _originalSongOrder: MutableLiveData<List<MediaItem>> = MutableLiveData()
+    private val _originalSongOrder = MutableStateFlow<List<MediaItem>>(emptyList())
 
     /**
      * `true` while the search bar is active.
      *
      * Toggled by [flipSearchButtonState] and reset to `false` by [handleCancelSearchButtonClick].
      */
-    val isShowingSearchMode: LiveData<Boolean>
+    val isShowingSearchMode: StateFlow<Boolean>
         get() = _isShowingSearchMode
-    private val _isShowingSearchMode: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _isShowingSearchMode = MutableStateFlow(false)
 
     /**
-     * Incrementing integer used as a one-shot keyboard-dismiss event.
-     *
-     * Observers watch for any value change and call `hideSoftInput`; the actual integer value
-     * is meaningless. Incremented by [removeVirtualKeyboard].
+     * One-shot keyboard-dismiss event. Emitted by [removeVirtualKeyboard]; collectors call
+     * `hideSoftInput` in response.
      */
-    val notifyHideKeyboard: LiveData<Int>
-        get() = _notifyHideKeyboard
-    private val _notifyHideKeyboard: MutableLiveData<Int> = MutableLiveData()
+    private val _notifyHideKeyboard = Channel<Unit>(Channel.BUFFERED)
+    val notifyHideKeyboard: Flow<Unit> = _notifyHideKeyboard.receiveAsFlow()
 
     /**
      * `true` from startup until [restoreQueue] completes (with a 500 ms settling delay).
@@ -244,9 +245,9 @@ class MainViewModel @Inject constructor(
      * Controls the full-screen loading overlay in the UI. Hidden via [loadingHandler] after the
      * queue and playback position are restored.
      */
-    val showLoadingScreen: LiveData<Boolean>
+    val showLoadingScreen: StateFlow<Boolean>
         get() = _showLoadingScreen
-    private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
+    private val _showLoadingScreen = MutableStateFlow(true)
 
     /**
      * [Handler] used to post a delayed Runnable that hides the loading screen after the queue
@@ -255,23 +256,18 @@ class MainViewModel @Inject constructor(
     val loadingHandler = Handler(Looper.getMainLooper())
 
     /**
-     * One-shot flag set to `true` when [clearQueue] empties the player queue.
-     *
-     * Reset to `false` by [handledClearningQueue] once the UI has reacted (e.g., dismissing the
-     * now-playing panel).
+     * One-shot event emitted when [clearQueue] empties the player queue, signalling the UI to
+     * dismiss the now-playing panel.
      */
-    val clearQueue: LiveData<Boolean>
-        get() = _clearQueue
-    private val _clearQueue: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _clearQueue = Channel<Unit>(Channel.BUFFERED)
+    val clearQueue: Flow<Unit> = _clearQueue.receiveAsFlow()
 
     /**
-     * Controls whether the add-playlist prompt dialog is displayed on the Playlist tab.
-     *
-     * Toggled via [showAddPlaylistPromptOnPlaylistPage].
+     * One-shot trigger to show the add-playlist prompt dialog on the Playlist tab.
      */
-    val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
-        get() = _shouldShowAddPlaylistPromptOnPlaylistPage
-    private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _shouldShowAddPlaylistPromptOnPlaylistPage = Channel<Unit>(Channel.BUFFERED)
+    val shouldShowAddPlaylistPromptOnPlaylistPage: Flow<Unit> =
+        _shouldShowAddPlaylistPromptOnPlaylistPage.receiveAsFlow()
 
     /**
      * Live list of all user-created playlists as [MediaItem] objects.
@@ -303,28 +299,26 @@ class MainViewModel @Inject constructor(
          */
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             Timber.d("onMediaMetadataChanged: artist=${mediaMetadata.artist}, title=${mediaMetadata.title}, albumTitle=${mediaMetadata.albumTitle}")
-            _currentPlayingSongInfo.postValue(
-                SongData(
-                    songUri = "UNKNOWN",
-                    songTitle = mediaMetadata.title.toString(),
-                    albumTitle = mediaMetadata.albumTitle.toString(),
-                    artist = mediaMetadata.artist.toString(),
-                    artworkUri = mediaMetadata.artworkUri.toString(),
-                    duration = mediaMetadata.description.toString()
-                )
+            _currentPlayingSongInfo.value = SongData(
+                songUri = "UNKNOWN",
+                songTitle = mediaMetadata.title.toString(),
+                albumTitle = mediaMetadata.albumTitle.toString(),
+                artist = mediaMetadata.artist.toString(),
+                artworkUri = mediaMetadata.artworkUri.toString(),
+                duration = mediaMetadata.description.toString()
             )
             super.onMediaMetadataChanged(mediaMetadata)
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            _isPlaying.postValue(isPlaying)
+            _isPlaying.value = isPlaying
         }
 
         override fun onRepeatModeChanged(repeatMode: Int) {
             Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
-            _loopMode.postValue(repeatMode)
+            _loopMode.value = repeatMode
         }
 
         /**
@@ -338,7 +332,7 @@ class MainViewModel @Inject constructor(
             super.onTimelineChanged(timeline, reason)
             _currentlyPlayingSongs.value = mediaController.value?.let { controller ->
                 UtilImpl.getSongListFromMediaController(controller)
-            }
+            } ?: emptyList()
         }
     }
 
@@ -350,10 +344,8 @@ class MainViewModel @Inject constructor(
      */
     fun flipSearchButtonState() {
         Timber.d("flipSearchButtonState: isSearchMode=${_isShowingSearchMode.value}")
-         _isShowingSearchMode.value?.let { isSearchMode ->
-             _isShowingSearchMode.postValue(!isSearchMode)
-             removeVirtualKeyboard()
-         }
+        _isShowingSearchMode.value = !_isShowingSearchMode.value
+        removeVirtualKeyboard()
     }
 
     /**
@@ -364,7 +356,7 @@ class MainViewModel @Inject constructor(
      */
     fun handleCancelSearchButtonClick() {
         Timber.d("handleCancelSearchButtonClick: ")
-        _isShowingSearchMode.postValue(false)
+        _isShowingSearchMode.value = false
     }
 
     /**
@@ -375,7 +367,7 @@ class MainViewModel @Inject constructor(
      */
     fun removeVirtualKeyboard() {
         Timber.d("removeVirtualKeyboard: ")
-        _notifyHideKeyboard.postValue(_notifyHideKeyboard.value?.inc() ?: 0)
+        _notifyHideKeyboard.trySend(Unit)
     }
 
     /**
@@ -384,7 +376,7 @@ class MainViewModel @Inject constructor(
     fun querySearchData(search: String) {
         Timber.d("querySearchData: search=$search")
         viewModelScope.launch(Dispatchers.IO) {
-            _currentSearchList.postValue(musicRepo.searchMusic(search))
+            _currentSearchList.value = musicRepo.searchMusic(search)
         }
     }
 
@@ -434,7 +426,7 @@ class MainViewModel @Inject constructor(
      * [isPlaying] is updated automatically via [playerListener.onIsPlayingChanged].
      */
     fun flipPlayingState() {
-        if(_isPlaying.value == true) {
+        if(_isPlaying.value) {
             _mediaController.value?.pause()
             Timber.d("flipPlayingState: Pausing!")
         } else {
@@ -485,7 +477,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             DataStoreUtil.getShufflePreference(context).collect { shufflePref ->
                 val shuffleType = ShuffleType.determineShuffleTypeFromString(shufflePref)
-                _shuffleMode.postValue(shuffleType)
+                _shuffleMode.value = shuffleType
             }
         }
     }
@@ -617,13 +609,6 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Call when playlistNameDuplicate has occurred and has been handled.
-     */
-    fun handledPlaylistNameDuplicate() {
-        _isPlaylistNameDuplicate.postValue(false)
-    }
-
-    /**
      * Saves the current songs playing in the queue, to be loaded when the app opens next.
      */
     fun saveQueue() {
@@ -720,7 +705,7 @@ class MainViewModel @Inject constructor(
                     }
 
                     loadingHandler.postDelayed({
-                        _showLoadingScreen.postValue(false)
+                        _showLoadingScreen.value = false
                     }, 500)
                 }
             }
@@ -738,7 +723,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val queueOrdered = musicRepo.getSongsFromPlaylist(Const.ORIGINAL_QUEUE_ORDER)
             Timber.d("restoreQueueOrder: queueOrdered=${queueOrdered.map { it.mediaMetadata.title }}")
-            _originalSongOrder.postValue(queueOrdered)
+            _originalSongOrder.value = queueOrdered
         }
     }
 
@@ -831,6 +816,11 @@ class MainViewModel @Inject constructor(
         }
 
         _navigateToPage.close()
+        _isPlaylistNameDuplicate.close()
+        _screenState.close()
+        _notifyHideKeyboard.close()
+        _clearQueue.close()
+        _shouldShowAddPlaylistPromptOnPlaylistPage.close()
     }
 
     /**
@@ -841,10 +831,8 @@ class MainViewModel @Inject constructor(
      */
     fun checkPermissionsIfOnPermissionDeniedScreen() {
         Timber.d("checkPermissionsIfOnPermissionDeniedScreen: ")
-
-        screenState.value?.let { data ->
-            if(data.currentScreen == ScreenType.PERMISSION_DENIED_SCREEN)
-                checkPermissions()
+        if (currentScreenType == ScreenType.PERMISSION_DENIED_SCREEN) {
+            checkPermissions()
         }
     }
 
@@ -934,26 +922,14 @@ class MainViewModel @Inject constructor(
             clearCurrentSongs = true,
             shouldAddToOriginalList = false
         )
-        _clearQueue.value = true
+        _clearQueue.trySend(Unit)
     }
 
     /**
-     * Resets the [clearQueue] one-shot flag to `false` after the UI has acted on it.
-     *
-     * Call this once the UI has responded to the queue-cleared event (e.g., dismissed the
-     * now-playing panel) to prevent repeat processing.
+     * Triggers the add-playlist prompt dialog on the Playlist tab.
      */
-    fun handledClearningQueue() {
-        _clearQueue.value = false
-    }
-
-    /**
-     * Shows or hides the add-playlist prompt dialog on the Playlist tab.
-     *
-     * @param shouldShow `true` to display the dialog; `false` to dismiss it.
-     */
-    fun showAddPlaylistPromptOnPlaylistPage(shouldShow: Boolean) {
-        _shouldShowAddPlaylistPromptOnPlaylistPage.value = shouldShow
+    fun showAddPlaylistPromptOnPlaylistPage() {
+        _shouldShowAddPlaylistPromptOnPlaylistPage.trySend(Unit)
     }
 
     /**
@@ -962,12 +938,9 @@ class MainViewModel @Inject constructor(
      */
     private fun setScreenData(nextScreen: ScreenType) {
         Timber.d("setScreenData: nextScreen=$nextScreen")
-        if(screenState.value == null) {
-            _screenState.value = ScreenData(nextScreen)
-        } else {
-            screenState.value?.let {
-                if(it.currentScreen != nextScreen) _screenState.value = ScreenData(nextScreen)
-            }
+        if (currentScreenType != nextScreen) {
+            currentScreenType = nextScreen
+            _screenState.trySend(nextScreen)
         }
     }
 
@@ -1026,7 +999,7 @@ class MainViewModel @Inject constructor(
             // Restore the original (pre-shuffle) ordering so unshuffleSongs has data
             restoreQueueOrder()
 
-            _loopMode.postValue(controller.repeatMode)
+            _loopMode.value = controller.repeatMode
             controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())
     }
@@ -1095,7 +1068,7 @@ class MainViewModel @Inject constructor(
                 songs = albumSongs,
                 album
             )
-            _currentSongGroup.postValue(songGroup) //TODO change this to StateFlow
+            _currentSongGroup.value = songGroup
 
             if(queueAddType == QueueAddType.QUEUE_CLEAR_ADD) {
                 addTracksSaveTrackOrder(
@@ -1181,7 +1154,7 @@ class MainViewModel @Inject constructor(
         shouldAddToOriginalList: Boolean = false,
         preventShuffle: Boolean = false
     ) {
-        Timber.d("addTracksSaveTrackOrder: originalSongOrder=${_originalSongOrder.value?.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, " +
+        Timber.d("addTracksSaveTrackOrder: originalSongOrder=${_originalSongOrder.value.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, " +
                 "clearOriginalSongList=$clearOriginalSongList, startingSongPosition=$startingSongPosition, " +
                 "clearCurrentSongs=$clearCurrentSongs, shouldAddToOriginalList=$shouldAddToOriginalList")
 
@@ -1193,19 +1166,19 @@ class MainViewModel @Inject constructor(
         // 2. Reset the original-order snapshot if requested
         if(clearOriginalSongList) {
             Timber.d("addTracksSaveTrackOrder: Setting Clear Original Song List!")
-            _originalSongOrder.value = listOf()
+            _originalSongOrder.value = emptyList()
         }
 
         // 3. Append the new items to the original-order snapshot and persist it
-        val songOrder = originalSongOrder.value?.toMutableList()
-        songOrder?.addAll(mediaItems)
+        val songOrder = originalSongOrder.value.toMutableList()
+        songOrder.addAll(mediaItems)
 
         if(shouldAddToOriginalList) {
-            Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder?.map { it -> it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it -> it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
-            _originalSongOrder.postValue( songOrder ?: mediaItems  )
+            Timber.d("addTracksSaveTrackOrder: songOrder=${songOrder.map { it.mediaMetadata.title }}, mediaItems=${mediaItems.map { it.mediaMetadata.title }}, clearOriginalSongList=$clearOriginalSongList")
+            _originalSongOrder.value = songOrder
 
-            Timber.d("addTracksSaveTrackOrder: Save Original Order songOrder=${songOrder?.map { it.mediaMetadata.title }}")
-            saveOriginalOrder(songOrder ?: mediaItems)
+            Timber.d("addTracksSaveTrackOrder: Save Original Order songOrder=${songOrder.map { it.mediaMetadata.title }}")
+            saveOriginalOrder(songOrder)
         }
 
         // 4. Add items to the controller — shuffle if active, preserve order otherwise
@@ -1304,17 +1277,16 @@ class MainViewModel @Inject constructor(
      */
     private fun unshuffleSongs() {
         Timber.d("unshuffleSongs: ")
-        _mediaController.value?.let { controller ->
-            _originalSongOrder.value?.let { originalSongs ->
-                Timber.d("restoreOriginalSongOrder: originalSongs.size=${originalSongs.size}, originalSongs=${originalSongs.map { it.mediaMetadata.title }}")
-                addTracksSaveTrackOrder(
-                    mediaItems = originalSongs,
-                    clearOriginalSongList = false,
-                    startingSongPosition = 0,
-                    clearCurrentSongs = true,
-                    shouldAddToOriginalList = false
-                )
-            }
+        val originalSongs = _originalSongOrder.value
+        if (_mediaController.value != null && originalSongs.isNotEmpty()) {
+            Timber.d("restoreOriginalSongOrder: originalSongs.size=${originalSongs.size}, originalSongs=${originalSongs.map { it.mediaMetadata.title }}")
+            addTracksSaveTrackOrder(
+                mediaItems = originalSongs,
+                clearOriginalSongList = false,
+                startingSongPosition = 0,
+                clearCurrentSongs = true,
+                shouldAddToOriginalList = false
+            )
         }
     }
 
@@ -1349,12 +1321,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val playlistSongs = musicRepo.getSongsFromPlaylist(playlist.mediaMetadata.albumTitle.toString())
             val songGroupType = SongGroupType.PLAYLIST
-            _currentSongGroup.postValue(
-                SongGroup(
-                    songGroupType,
-                    playlistSongs,
-                    playlist
-                )
+            _currentSongGroup.value = SongGroup(
+                songGroupType,
+                playlistSongs,
+                playlist
             )
         }
     }
