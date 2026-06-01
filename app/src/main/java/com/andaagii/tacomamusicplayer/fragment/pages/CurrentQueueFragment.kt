@@ -7,7 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
+import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE
@@ -132,39 +136,52 @@ class CurrentQueueFragment : Fragment() {
         binding = FragmentCurrentQueueBinding.inflate(inflater)
 
         // Initial load — build the adapter once the music service has finished initialising.
-        parentViewModel.showLoadingScreen.observe(viewLifecycleOwner) { loadingMusic ->
-            Timber.d("onCreateView: loadingMusic=$loadingMusic")
-            if (!loadingMusic) {
-                parentViewModel.mediaController.value?.let { controller ->
-                    val songs = UtilImpl.getSongListFromMediaController(controller)
-                    Timber.d("onCreateView: queueSongs=$songs")
-                    val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
-                    getOrCreateQueueAdapter().submitList(displaySongs)
-                    determineIfShowingEmptyPlaylistScreen(songs)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.showLoadingScreen.collect { loadingMusic ->
+                    Timber.d("onCreateView: loadingMusic=$loadingMusic")
+                    if (!loadingMusic) {
+                        parentViewModel.mediaController.value?.let { controller ->
+                            val songs = UtilImpl.getSongListFromMediaController(controller)
+                            Timber.d("onCreateView: queueSongs=$songs")
+                            val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
+                            getOrCreateQueueAdapter().submitList(displaySongs)
+                            determineIfShowingEmptyPlaylistScreen(songs)
+                        }
+                    }
                 }
             }
         }
 
         // Subsequent updates — re-sync the adapter whenever the queue changes externally
         // (e.g., Android Auto adds tracks, or a ViewModel operation replaces the queue).
-        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { _ ->
-            parentViewModel.mediaController.value?.let { controller ->
-                val songs = UtilImpl.getSongListFromMediaController(controller)
-                Timber.d("onCreateView: queueSongs=$songs")
-                val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
-                getOrCreateQueueAdapter().submitList(displaySongs)
-                determineIfShowingEmptyPlaylistScreen(songs)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentlyPlayingSongs.collect {
+                    parentViewModel.mediaController.value?.let { controller ->
+                        val songs = UtilImpl.getSongListFromMediaController(controller)
+                        Timber.d("onCreateView: queueSongs=$songs")
+                        val displaySongs = songs.map { song -> DisplaySong(song, song == controller.currentMediaItem) }
+                        getOrCreateQueueAdapter().submitList(displaySongs)
+                        determineIfShowingEmptyPlaylistScreen(songs)
+                    }
+                }
             }
         }
 
-        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currSong ->
-            queueAdapter?.updateCurrentSongIndicator(currSong)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentPlayingSongInfo.collect { currSong ->
+                    currSong?.let { queueAdapter?.updateCurrentSongIndicator(it) }
+                }
+            }
         }
 
-        parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
-            if (shouldClear) {
-                queueAdapter?.clearQueue()
-                parentViewModel.handledClearningQueue()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.clearQueue.collect {
+                    queueAdapter?.clearQueue()
+                }
             }
         }
 

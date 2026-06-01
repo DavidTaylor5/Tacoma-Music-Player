@@ -107,46 +107,52 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.notifyHideKeyboard.observe(this) { _ ->
-            removeVirtualKeyboard()
-        }
-
-        viewModel.isAudioPermissionGranted.observe(this) { isGranted ->
-            if(!isGranted) {
-                Timber.d("onCreate: isGranted=$isGranted")
-                permissionManager.requestReadMediaAudioPermission(this)
-            } else {
-                viewModel.initializeMusicPlaying()
-
-                // Music Access is allowed, start looking through user library
-                queryMusic()
-
-                //TODO add back code for music content observer?
-//                val handler = Handler(Looper.getMainLooper())
-//                musicObserver = MusicContentObserver(
-//                    handler = handler,
-//                    context = this,
-//                    onContentChange = viewModel::queryAvailableAlbums
-//                )
-//                contentResolver.registerContentObserver(
-//                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-//                    true,
-//                    musicObserver!!
-//                )
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.notifyHideKeyboard.collect {
+                    removeVirtualKeyboard()
+                }
             }
         }
 
-        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
-            if(showLoadingScreen) {
-                binding.loadingScreen.visibility = View.VISIBLE
-            } else {
-                binding.loadingScreen.visibility = View.INVISIBLE
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isAudioPermissionGranted.collect { isGranted ->
+                    isGranted ?: return@collect
+                    if (!isGranted) {
+                        Timber.d("onCreate: isGranted=$isGranted")
+                        permissionManager.requestReadMediaAudioPermission(this@MainActivity)
+                    } else {
+                        viewModel.initializeMusicPlaying()
+
+                        // Music Access is allowed, start looking through user library
+                        queryMusic()
+
+                        //TODO add back code for music content observer?
+                    }
+                }
             }
         }
 
-        viewModel.screenState.observe(this) {data ->
-            Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
-            navController.navigate(data.currentScreen.route())
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.showLoadingScreen.collect { showLoadingScreen ->
+                    if (showLoadingScreen) {
+                        binding.loadingScreen.visibility = View.VISIBLE
+                    } else {
+                        binding.loadingScreen.visibility = View.INVISIBLE
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.screenState.collect { screenType ->
+                    Timber.d("onCreate: screenState screenType.route=${screenType.route()}")
+                    navController.navigate(screenType.route())
+                }
+            }
         }
 
         setupNavigation()

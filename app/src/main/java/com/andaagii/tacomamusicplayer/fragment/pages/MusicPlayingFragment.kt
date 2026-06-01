@@ -9,9 +9,13 @@ import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import kotlinx.coroutines.launch
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
@@ -24,10 +28,9 @@ import timber.log.Timber
 /**
  * Full-screen player page hosted at index 1 in `PlayerDisplayFragment`'s `ViewPager2`.
  *
- * Observes [MainViewModel] for shuffle mode, loop mode, play/pause state, and song
- * metadata. The `MediaController` reference is obtained in [onStart] rather than
- * [onCreateView] because [onStart] fires each time the fragment becomes visible in the
- * pager, ensuring the controller binding is refreshed after process restoration.
+ * Collects [MainViewModel] StateFlows for shuffle mode, loop mode, play/pause state, and song
+ * metadata in [onCreateView] with `repeatOnLifecycle(STARTED)`, which restarts collection each
+ * time the page becomes visible in the ViewPager2.
  *
  * Swipe/double-tap gestures to collapse the player are handled by the parent
  * `PlayerDisplayFragment`, not here.
@@ -57,6 +60,7 @@ class MusicPlayingFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -64,6 +68,75 @@ class MusicPlayingFragment : Fragment() {
     ): View {
         Timber.d("onCreateView: ")
         binding = FragmentMusicPlayingBinding.inflate(inflater)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.mediaController.collect { controller ->
+                    controller ?: return@collect
+                    binding.playerView.player = controller
+                    this@MusicPlayingFragment.controller = controller
+                    binding.playerView.showController()
+                    updateUIForCurrentSong()
+                    if (controller.isPlaying) {
+                        binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
+                    }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentPlayingSongInfo.collect { currentSong ->
+                    showActivePlayer(show = currentSong != null && !SongData.isNullSong(currentSong))
+                    if (currentSong != null && currentSong != currentSongInfo) {
+                        currentSongInfo = currentSong
+                        updateUIForCurrentSong()
+                    }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.loopMode.collect { repeatMode ->
+                    Timber.d("onCreateView: repeatMode=$repeatMode")
+                    when (repeatMode) {
+                        Player.REPEAT_MODE_OFF -> { binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
+                        Player.REPEAT_MODE_ONE -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
+                        Player.REPEAT_MODE_ALL -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
+                    }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.shuffleMode.collect { isShuffled ->
+                    Timber.d("onCreateView: isShuffled=$isShuffled")
+                    if (isShuffled == ShuffleType.SHUFFLED) {
+                        binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
+                    } else {
+                        binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
+                    }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.isPlaying.collect { isPlaying ->
+                    Timber.d("onCreateView: isPlaying=$isPlaying")
+                    if (isPlaying) {
+                        binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.playButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                    }
+                }
+            }
+        }
+
         return binding.root
     }
 
@@ -126,64 +199,8 @@ class MusicPlayingFragment : Fragment() {
         }
     }
 
-    @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
-
-        // Observe the controller here in onStart rather than onCreateView so that the
-        // binding is refreshed every time this page becomes visible in the ViewPager2.
-        parentViewModel.mediaController.observe(this) { controller ->
-            binding.playerView.player = controller
-            this.controller = controller
-            binding.playerView.showController()
-
-            // Sync UI with whatever is already loaded in the controller on first attach.
-            updateUIForCurrentSong()
-
-            if (controller.isPlaying) {
-                binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
-            }
-        }
-
-        parentViewModel.currentPlayingSongInfo.observe(this) { currentSong ->
-            // Hide the active player controls when no song has been loaded yet.
-            showActivePlayer(show = !SongData.isNullSong(currentSong))
-
-            // Guard against redundant redraws when metadata re-emits for the same song.
-            if (currentSong != currentSongInfo) {
-                currentSongInfo = currentSong
-                updateUIForCurrentSong()
-            }
-        }
-
-        parentViewModel.loopMode.observe(this) { repeatMode ->
-            Timber.d("onStart: repeatMode=$repeatMode")
-            when (repeatMode) {
-                Player.REPEAT_MODE_OFF -> { binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
-                Player.REPEAT_MODE_ONE -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
-                Player.REPEAT_MODE_ALL -> { binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
-            }
-        }
-
-        parentViewModel.shuffleMode.observe(this) { isShuffled ->
-            Timber.d("onStart: isShuffled=$isShuffled")
-            if (isShuffled == ShuffleType.SHUFFLED) {
-                binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
-            } else {
-                binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
-            }
-        }
-
-        parentViewModel.isPlaying.observe(this) { isPlaying ->
-            Timber.d("onStart: isPlaying=$isPlaying")
-            if (isPlaying) {
-                binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.playButton?.setBackgroundResource(R.drawable.white_play_arrow)
-            }
-        }
 
         binding.prevButton?.setOnClickListener {
             Timber.d("prevButton_onClick: ")

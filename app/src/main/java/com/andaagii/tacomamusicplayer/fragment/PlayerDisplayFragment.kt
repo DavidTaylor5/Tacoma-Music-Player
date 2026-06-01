@@ -2,9 +2,7 @@ package com.andaagii.tacomamusicplayer.fragment
 
 import android.os.Bundle
 import android.util.Size
-import android.view.GestureDetector
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
@@ -14,17 +12,19 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
 import com.andaagii.tacomamusicplayer.enumtype.PageType
-import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -36,8 +36,6 @@ import timber.log.Timber
  *
  * The mini-player overlay is shown on all pages except [PageType.PLAYER_PAGE] and when no song
  * is currently loaded. Tapping the mini-player scrolls to [PageType.PLAYER_PAGE].
- *
- * Double-tap or swipe-down on the player area navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
  */
 @AndroidEntryPoint
 class PlayerDisplayFragment : Fragment() {
@@ -51,42 +49,6 @@ class PlayerDisplayFragment : Fragment() {
      * can decide whether to show the mini-player without querying the pager on every metadata emit.
      */
     private var currPage: Int? = null
-
-    /**
-     * Gesture detector that handles two interactions on the player area:
-     * - **Double-tap** — navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
-     * - **Swipe-down** (vertical velocity > 500 px/s) — navigates to [ScreenType.MUSIC_PLAYING_SCREEN].
-     */
-    private val detector = object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: navigate to the music playing screen!")
-            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-            return super.onDoubleTap(e)
-        }
-
-        override fun onDown(e: MotionEvent): Boolean {
-            Timber.d("onDown: ")
-            return true
-        }
-
-        override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent,
-            velocityX: Float,
-            velocityY: Float
-        ): Boolean {
-            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
-
-            // Threshold of 500 px/s distinguishes an intentional downward swipe from an
-            // accidental brush while scrolling horizontally between pages.
-            if (velocityY > 500) {
-                Timber.d("onFling: navigate to the music playing screen!")
-                findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-            }
-
-            return super.onFling(e1, e2, velocityX, velocityY)
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -144,7 +106,8 @@ class PlayerDisplayFragment : Fragment() {
 
                 // Show the mini-player on every page except the full player, and only when
                 // a song is actually loaded.
-                if (position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
+                val songInfo = parentViewModel.currentPlayingSongInfo.value
+                if (position != PageType.PLAYER_PAGE.type() && songInfo != null && !SongData.isNullSong(songInfo)) {
                     binding.miniPlayerControls?.visibility = View.VISIBLE
                 } else {
                     binding.miniPlayerControls?.visibility = View.GONE
@@ -164,23 +127,33 @@ class PlayerDisplayFragment : Fragment() {
 
         binding.pager.registerOnPageChangeCallback(onPageChangedCallback)
 
+        // Seed the cached page so mini-player visibility is correct before the first user swipe.
+        currPage = binding.pager.currentItem
+        parentViewModel.observeCurrentPage(PageType.PLAYER_PAGE)
+
         binding.navigationControl.setQueueButtonOnClick { parentViewModel.setPage(PageType.QUEUE_PAGE) }
         binding.navigationControl.setPlayerButtonOnClick { parentViewModel.setPage(PageType.PLAYER_PAGE) }
         binding.navigationControl.setPlaylistButtonOnClick { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
         binding.navigationControl.setBrowseAlbumButtonOnClick { parentViewModel.setPage(PageType.ALBUM_PAGE) }
         binding.navigationControl.setAlbumButtonOnClick { parentViewModel.setPage(PageType.SONG_PAGE) }
 
-        // Observe on requireActivity() rather than viewLifecycleOwner so navigation events
-        // posted while the Fragment's view is being recreated are not missed.
-        parentViewModel.navigateToPage.observe(requireActivity()) { page ->
-            binding.pager.currentItem = page.type()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.navigateToPage.collect { page ->
+                    binding.pager.currentItem = page.type()
+                }
+            }
         }
 
-        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if (isPlaying) {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.isPlaying.collect { isPlaying ->
+                    if (isPlaying) {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                    }
+                }
             }
         }
 
@@ -200,10 +173,12 @@ class PlayerDisplayFragment : Fragment() {
             navigateToPlayerPage()
         }
 
-        // Observe on requireActivity() so artwork and title update even if the Fragment's
-        // view is briefly torn down during a configuration change.
-        parentViewModel.currentPlayingSongInfo.observe(requireActivity()) { currentSong ->
-            updateMiniPlayerForCurrentSong(currentSong)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.currentPlayingSongInfo.collect { currentSong ->
+                    currentSong?.let { updateMiniPlayerForCurrentSong(it) }
+                }
+            }
         }
 
         return binding.root

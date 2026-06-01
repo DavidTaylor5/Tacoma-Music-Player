@@ -1,6 +1,5 @@
 package com.andaagii.tacomamusicplayer.database.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -16,22 +15,11 @@ import kotlinx.coroutines.flow.Flow
  * DAO for [SongGroupEntity] (albums and playlists) and [SongGroupCrossRefEntity] (playlist
  * track membership) operations against `song_group_table` and `song_ref_table`.
  *
- * Reactive queries are available in two forms: [getAllSongGroups] returns a [LiveData] for
- * legacy observers, while [getSongGroupsByTypeFlow] returns a [Flow] for coroutine-based
- * collectors. One-shot reads use `suspend` functions.
+ * Reactive queries return a [Flow] via [getSongGroupsByTypeFlow]; one-shot reads use `suspend`
+ * functions.
  */
 @Dao
 interface SongGroupDao {
-
-    /**
-     * Returns a [LiveData] that emits the full list of all groups (albums and playlists)
-     * whenever the table changes.
-     *
-     * Observed by legacy `LiveData` observers; prefer [getSongGroupsByTypeFlow] for new
-     * coroutine-based callers.
-     */
-    @Query("SELECT * FROM song_group_table")
-    fun getAllSongGroups(): LiveData<List<SongGroupEntity>>
 
     /**
      * Returns a deduplicated list of artist names for groups of the given [type].
