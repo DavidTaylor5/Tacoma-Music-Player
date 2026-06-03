@@ -6,6 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,6 +22,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
+import com.andaagii.tacomamusicplayer.composables.NavigationControl
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
 import com.andaagii.tacomamusicplayer.enumtype.PageType
@@ -30,7 +35,7 @@ import timber.log.Timber
 /**
  * Host fragment for the main `ViewPager2` swipe layout.
  *
- * Wires [ScreenSlidePagerAdapter], `CustomNavigationControl`, edge-to-edge window insets,
+ * Wires [ScreenSlidePagerAdapter], [com.andaagii.tacomamusicplayer.composables.NavigationControl], edge-to-edge window insets,
  * mini-player controls, and page-change callbacks. Observes [MainViewModel] for playback
  * state (to drive the mini-player) and navigation events (to programmatically scroll the pager).
  *
@@ -49,6 +54,9 @@ class PlayerDisplayFragment : Fragment() {
      * can decide whether to show the mini-player without querying the pager on every metadata emit.
      */
     private var currPage: Int? = null
+
+    /** Drives the active-tab highlight in [NavigationControl]. Updated on every page change. */
+    private var currentNavPage by mutableStateOf(PageType.PLAYER_PAGE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -94,7 +102,7 @@ class PlayerDisplayFragment : Fragment() {
         binding.pager.offscreenPageLimit = 4
 
         // Land on the player page at app launch.
-        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
+        currentNavPage = PageType.PLAYER_PAGE
         navigateToPlayerPage()
 
         val onPageChangedCallback = object : ViewPager2.OnPageChangeCallback() {
@@ -114,14 +122,7 @@ class PlayerDisplayFragment : Fragment() {
                 }
 
                 parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
-
-                when (position) {
-                    PageType.QUEUE_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.QUEUE_PAGE)
-                    PageType.PLAYER_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-                    PageType.PLAYLIST_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYLIST_PAGE)
-                    PageType.ALBUM_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.ALBUM_PAGE)
-                    PageType.SONG_PAGE.type() -> binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
-                }
+                currentNavPage = PageType.determinePageFromPosition(position)
             }
         }
 
@@ -131,11 +132,20 @@ class PlayerDisplayFragment : Fragment() {
         currPage = binding.pager.currentItem
         parentViewModel.observeCurrentPage(PageType.PLAYER_PAGE)
 
-        binding.navigationControl.setQueueButtonOnClick { parentViewModel.setPage(PageType.QUEUE_PAGE) }
-        binding.navigationControl.setPlayerButtonOnClick { parentViewModel.setPage(PageType.PLAYER_PAGE) }
-        binding.navigationControl.setPlaylistButtonOnClick { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
-        binding.navigationControl.setBrowseAlbumButtonOnClick { parentViewModel.setPage(PageType.ALBUM_PAGE) }
-        binding.navigationControl.setAlbumButtonOnClick { parentViewModel.setPage(PageType.SONG_PAGE) }
+        binding.navigationControl.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                NavigationControl(
+                    currentPage = currentNavPage,
+                    queueIconRes = R.drawable.queue_icon,
+                    playerIconRes = R.drawable.play_circle_outline,
+                    playlistIconRes = R.drawable.playlist_icon,
+                    albumIconRes = R.drawable.browse_album_icon,
+                    songIconRes = R.drawable.album_icon,
+                    onPageSelected = { page -> parentViewModel.setPage(page) }
+                )
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {

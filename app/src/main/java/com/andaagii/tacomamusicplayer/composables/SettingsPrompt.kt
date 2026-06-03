@@ -21,8 +21,8 @@ import com.andaagii.tacomamusicplayer.R
 /**
  * Settings/options dialog shell.
  *
- * Stateless — this composable is a shell matching the existing [com.andaagii.tacomamusicplayer.view.CustomSettingsPrompt]
- * stub. The only functional element is "Set alternate Art". Additional options should be
+ * Stateless — shell for future settings options. The only functional element is "Set alternate Art".
+ * Additional options should be
  * added here as the settings feature is fleshed out.
  *
  * @param modifier Modifier applied to the root [Column].

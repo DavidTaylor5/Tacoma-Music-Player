@@ -7,7 +7,14 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -19,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
 import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
+import com.andaagii.tacomamusicplayer.composables.InputTextPrompt
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
@@ -32,15 +40,13 @@ import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import android.widget.PopupMenu
-import android.widget.Toast
 
 /**
  * Playlists browsing page hosted at index 2 in `PlayerDisplayFragment`'s `ViewPager2`.
  *
  * Mirrors [AlbumListFragment] for playlists: collects [PlaylistTabViewModel.playlistTabState]
  * to react to layout and sort changes, and swaps between [PlaylistAdapter] (linear) and
- * [PlaylistGridAdapter] (grid). Additionally hosts the `CustomInputTextPrompt` overlay for
+ * [PlaylistGridAdapter] (grid). Additionally hosts the [com.andaagii.tacomamusicplayer.composables.InputTextPrompt] overlay for
  * creating and renaming playlists.
  *
  * Custom playlist art uses the same two-step async flow as albums:
@@ -62,6 +68,14 @@ class PlaylistFragment : Fragment() {
 
     /** Tracks the current layout so the toggle button icon can be updated reactively. */
     private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
+
+    private enum class PromptMode { CREATE, RENAME }
+
+    /** Controls which mode [InputTextPrompt] is in. Changing this resets the text field via key(). */
+    private var promptMode by mutableStateOf(PromptMode.CREATE)
+
+    /** Title of the playlist being renamed; set before switching to [PromptMode.RENAME]. */
+    private var renameTargetTitle = ""
 
     /**
      * Receives the cropped image result from uCrop.
@@ -117,6 +131,33 @@ class PlaylistFragment : Fragment() {
     ): View {
         binding = FragmentPlaylistBinding.inflate(inflater)
 
+        binding.playlistPrompt.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                key(promptMode) {
+                    InputTextPrompt(
+                        hint = if (promptMode == PromptMode.CREATE) Const.NEW_PLAYLIST_HINT else Const.RENAME_PLAYLIST_HINT,
+                        option1Text = Const.CANCEL,
+                        option2Text = if (promptMode == PromptMode.CREATE) Const.ADD else Const.UPDATE,
+                        onOption1Click = { _ ->
+                            parentViewModel.removeVirtualKeyboard()
+                            binding.playlistPrompt.visibility = View.GONE
+                        },
+                        onOption2Click = { text ->
+                            parentViewModel.removeVirtualKeyboard()
+                            binding.playlistPrompt.visibility = View.GONE
+                            if (promptMode == PromptMode.CREATE) {
+                                parentViewModel.createNamedPlaylist(text)
+                            } else {
+                                parentViewModel.updatePlaylistTitle(renameTargetTitle, text)
+                                promptMode = PromptMode.CREATE
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
         // Collect with STARTED lifecycle so the flow pauses while the fragment is off-screen
         // in the ViewPager2, matching when the RecyclerView is actually visible.
         viewLifecycleOwner.lifecycleScope.launch {
@@ -165,7 +206,7 @@ class PlaylistFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.collect {
-                    binding.playlistPrompt.resetUserInput()
+                    promptMode = PromptMode.CREATE
                     binding.playlistPrompt.visibility = View.VISIBLE
                 }
             }
@@ -290,7 +331,6 @@ class PlaylistFragment : Fragment() {
      */
     private fun renamePlaylist(playlistTitle: String) {
         setupRenamePlaylistPrompt(playlistTitle)
-        binding.playlistPrompt.resetUserInput()
         binding.playlistPrompt.visibility = View.VISIBLE
     }
 
@@ -328,45 +368,12 @@ class PlaylistFragment : Fragment() {
      *   the "old" name to be replaced.
      */
     private fun setupRenamePlaylistPrompt(playlistTitle: String) {
-        binding.playlistPrompt.setTextInputHint(Const.RENAME_PLAYLIST_HINT)
-
-        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
-        binding.playlistPrompt.setOption1ButtonOnClick {
-            parentViewModel.removeVirtualKeyboard()
-            binding.playlistPrompt.visibility = View.GONE
-        }
-
-        binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
-        binding.playlistPrompt.setOption2ButtonOnClick {
-            parentViewModel.removeVirtualKeyboard()
-            binding.playlistPrompt.visibility = View.GONE
-            parentViewModel.updatePlaylistTitle(playlistTitle, binding.playlistPrompt.getUserInputtedText())
-            // Reset so the next time the prompt opens it is in "create" mode, not "rename" mode.
-            setupCreatePlaylistPrompt()
-        }
+        renameTargetTitle = playlistTitle
+        promptMode = PromptMode.RENAME
     }
 
-    /**
-     * Wires the text prompt for the create-playlist flow.
-     *
-     * Option 1 (Cancel) dismisses the prompt. Option 2 (Add) calls
-     * [MainViewModel.createNamedPlaylist] with the user-entered name and dismisses the prompt.
-     */
     private fun setupCreatePlaylistPrompt() {
-        binding.playlistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
-
-        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
-        binding.playlistPrompt.setOption1ButtonOnClick {
-            parentViewModel.removeVirtualKeyboard()
-            binding.playlistPrompt.visibility = View.GONE
-        }
-
-        binding.playlistPrompt.setOption2ButtonText(Const.ADD)
-        binding.playlistPrompt.setOption2ButtonOnClick {
-            parentViewModel.removeVirtualKeyboard()
-            binding.playlistPrompt.visibility = View.GONE
-            parentViewModel.createNamedPlaylist(binding.playlistPrompt.getUserInputtedText())
-        }
+        promptMode = PromptMode.CREATE
     }
 
     /**

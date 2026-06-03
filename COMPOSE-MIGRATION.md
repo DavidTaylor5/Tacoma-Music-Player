@@ -345,25 +345,25 @@ Follow `APP-COMMENTS.md` Section 5 for all new composable KDoc. Key points:
 Track deleted files here as migration progresses. A file in this list should not exist in the repo once the corresponding phase is complete.
 
 ### Phase 1
-- [ ] `view/CustomNavigationControl.kt`
-- [ ] `res/layout/view_custom_navigation_control.xml`
-- [ ] `res/layout-land/view_custom_navigation_control.xml`
-- [ ] `view/CustomSongGroupInfoView.kt`
-- [ ] `res/layout/custom_song_group_info_view.xml`
-- [ ] `view/CustomInputTextPrompt.kt`
-- [ ] `res/layout/view_custom_input_text_prompt.xml`
-- [ ] `view/CustomMultiSelectPrompt.kt`
-- [ ] `res/layout/view_custom_multi_select_prompt.xml`
-- [ ] `view/CustomSortingPrompt.kt`
-- [ ] `res/layout/view_custom_sorting_prompt.xml`
-- [ ] `view/CustomSettingsPrompt.kt`
-- [ ] `res/layout/view_custom_settings_prompt.xml`
-- [ ] `view/CustomPlaylistPrompt.kt`
-- [ ] `res/layout/view_custom_playlist_prompt.xml`
-- [ ] `view/CustomInformationScreen.kt`
-- [ ] `res/layout/view_custom_information_screen.xml`
-- [ ] `res/layout-land/view_custom_information_screen.xml`
-- [ ] `view/CustomPlaylistModPrompt.kt`
+- [x] `view/CustomNavigationControl.kt`
+- [x] `res/layout/view_custom_navigation_control.xml`
+- [x] `res/layout-land/view_custom_navigation_control.xml`
+- [x] `view/CustomSongGroupInfoView.kt`
+- [x] `res/layout/custom_song_group_info_view.xml`
+- [x] `view/CustomInputTextPrompt.kt`
+- [x] `res/layout/view_custom_input_text_prompt.xml`
+- [x] `view/CustomMultiSelectPrompt.kt`
+- [x] `res/layout/view_custom_multi_select_prompt.xml`
+- [x] `view/CustomSortingPrompt.kt`
+- [x] `res/layout/view_custom_sorting_prompt.xml`
+- [x] `view/CustomSettingsPrompt.kt`
+- [x] `res/layout/view_custom_settings_prompt.xml`
+- [x] `view/CustomPlaylistPrompt.kt`
+- [x] `res/layout/view_custom_playlist_prompt.xml`
+- [x] `view/CustomInformationScreen.kt`
+- [x] `res/layout/view_custom_information_screen.xml`
+- [x] `res/layout-land/view_custom_information_screen.xml`
+- [x] `view/CustomPlaylistModPrompt.kt`
 
 ### Phase 2
 - [ ] `res/layout/fragment_permission_denied.xml`

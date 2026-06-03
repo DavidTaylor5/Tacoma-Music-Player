@@ -40,11 +40,11 @@
         android:layout_width="match_parent"
         android:layout_height="80dp">
 
-        <com.andaagii.tacomamusicplayer.view.CustomSongGroupInfoView
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/song_group_info"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/search_container"
@@ -91,13 +91,12 @@
             app:layout_constraintTop_toBottomOf="parent"
             />
 
-        <com.andaagii.tacomamusicplayer.view.CustomInformationScreen
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/songListInformationScreen"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
+            android:layout_height="match_parent" />
 
-        <com.andaagii.tacomamusicplayer.view.CustomPlaylistPrompt
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/playlist_prompt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -106,23 +105,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:visibility="gone"
-            android:layout_marginBottom="50dp"
-            />
+            android:layout_marginBottom="50dp" />
 
-        <com.andaagii.tacomamusicplayer.view.CustomInputTextPrompt
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/create_playlist_prompt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="invisible"/>
+            android:visibility="invisible" />
 
-        <com.andaagii.tacomamusicplayer.view.CustomMultiSelectPrompt
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/multi_select_prompt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="30dp"/>
+            android:layout_marginBottom="30dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>
