@@ -952,6 +952,7 @@ class MainViewModel @Inject constructor(
      * asynchronous; the ViewModel updates [mediaController] and [mediaBrowser] once they resolve.
      */
     fun initializeMusicPlaying() {
+        if (_mediaController.value != null) return
         Timber.d("initializeMusicPlaying: ")
         sessionToken = createSessionToken()
         setupMediaController(sessionToken)
