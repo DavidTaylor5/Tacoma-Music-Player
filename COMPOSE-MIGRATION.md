@@ -366,8 +366,8 @@ Track deleted files here as migration progresses. A file in this list should not
 - [x] `view/CustomPlaylistModPrompt.kt`
 
 ### Phase 2
-- [ ] `res/layout/fragment_permission_denied.xml`
-- [ ] `res/layout-land/fragment_permission_denied.xml`
+- [x] `res/layout/fragment_permission_denied.xml`
+- [x] `res/layout-land/fragment_permission_denied.xml`
 - [ ] `res/layout/fragment_music_playing.xml`
 - [ ] `res/layout-land/fragment_music_playing.xml`
 - [ ] `res/layout/fragment_current_queue.xml`

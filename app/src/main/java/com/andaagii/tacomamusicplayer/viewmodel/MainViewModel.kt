@@ -1393,6 +1393,7 @@ class MainViewModel @Inject constructor(
             } else {
                 Timber.d("handlePermissionResult: read audio NOT granted!")
                 setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
+                _showLoadingScreen.value = false
             }
         } else if(requestCode == AppPermissionUtil.readExternalStorageCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -1401,6 +1402,7 @@ class MainViewModel @Inject constructor(
             } else {
                 Timber.d("handlePermissionResult: read audio NOT granted!")
                 setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
+                _showLoadingScreen.value = false
             }
         }
     }
