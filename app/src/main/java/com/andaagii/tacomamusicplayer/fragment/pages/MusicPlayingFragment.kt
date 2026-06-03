@@ -77,11 +77,6 @@ class MusicPlayingFragment : Fragment() {
                     this@MusicPlayingFragment.controller = controller
                     binding.playerView.showController()
                     updateUIForCurrentSong()
-                    if (controller.isPlaying) {
-                        binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-                    } else {
-                        binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
-                    }
                 }
             }
         }
