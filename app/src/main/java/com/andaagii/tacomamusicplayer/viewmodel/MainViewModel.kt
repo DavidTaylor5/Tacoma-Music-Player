@@ -1371,8 +1371,13 @@ class MainViewModel @Inject constructor(
     private fun checkPermissions() {
         val isAudioPermissionGranted = permissionManager.verifyReadMediaAudioPermission(getApplication<Application>().applicationContext)
         Timber.d("checkPermissions: isAudioPermissionGranted=$isAudioPermissionGranted")
-        if(_isAudioPermissionGranted.value != isAudioPermissionGranted)
+        if (_isAudioPermissionGranted.value != isAudioPermissionGranted) {
             _isAudioPermissionGranted.value = isAudioPermissionGranted
+            // When returning from system settings with permission now granted, navigate home
+            if (isAudioPermissionGranted && currentScreenType == ScreenType.PERMISSION_DENIED_SCREEN) {
+                setScreenData(ScreenType.MUSIC_CHOOSER_SCREEN)
+            }
+        }
     }
 
     /**
