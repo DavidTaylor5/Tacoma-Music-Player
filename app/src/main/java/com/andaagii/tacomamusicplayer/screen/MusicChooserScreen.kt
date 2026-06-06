@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import android.app.Activity.RESULT_OK
 import android.net.Uri
@@ -30,6 +30,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.composables.MiniPlayer
+import com.andaagii.tacomamusicplayer.composables.NavigationControl
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
@@ -46,11 +48,11 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 /**
- * Full-screen container that hosts the five-page [HorizontalPager] and the [NavigationControl]
+ * Full-screen container that hosts the five-page [HorizontalPager] and the [com.andaagii.tacomamusicplayer.composables.NavigationControl]
  * tab bar. Replaces [com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment] and
  * [com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter].
  *
- * Stateful — receives the three Activity-scoped ViewModels from [TacomaMusicPlayerApp] so
+ * Stateful — receives the three Activity-scoped ViewModels from [com.andaagii.tacomamusicplayer.composables.TacomaMusicPlayerApp] so
  * that it shares the same [MainViewModel] instance that owns the [MediaController]. Page
  * navigation events from [MainViewModel.navigateToPage] are consumed via [LaunchedEffect] to
  * call [androidx.compose.foundation.pager.PagerState.animateScrollToPage]. Album and playlist

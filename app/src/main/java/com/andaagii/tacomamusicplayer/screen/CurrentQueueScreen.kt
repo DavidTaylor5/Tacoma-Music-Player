@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,6 +34,7 @@ import androidx.media3.common.MediaMetadata
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.composables.QueueSongItem
 
 /**
  * Full-screen page for the current playback queue, hosted at [PageType.QUEUE_PAGE] in
@@ -130,17 +131,18 @@ fun CurrentQueueScreen(
                 itemsIndexed(localSongs, key = { _, item -> item.mediaId }) { index, song ->
                     ReorderableItem(reorderState, key = song.mediaId) { _ ->
                         QueueSongItem(
-                            title              = song.mediaMetadata.title?.toString().orEmpty(),
-                            artist             = song.mediaMetadata.artist?.toString().orEmpty(),
-                            duration           = song.mediaMetadata.description?.toString().orEmpty(),
-                            artworkUri         = song.mediaMetadata.artworkUri,
+                            title = song.mediaMetadata.title?.toString().orEmpty(),
+                            artist = song.mediaMetadata.artist?.toString().orEmpty(),
+                            duration = song.mediaMetadata.description?.toString().orEmpty(),
+                            artworkUri = song.mediaMetadata.artworkUri,
                             isCurrentlyPlaying = song.mediaMetadata.title?.toString() == currentlyPlayingTitle,
-                            onSongClick        = { onSongClick(index) },
-                            onMenuClick        = { menuOpenIndex = index },
+                            onSongClick = { onSongClick(index) },
+                            onMenuClick = { menuOpenIndex = index },
                             dragHandleModifier = Modifier.draggableHandle(
                                 onDragStarted = { dragStartIndex = index },
                                 onDragStopped = {
-                                    val finalIndex = localSongs.indexOfFirst { it.mediaId == song.mediaId }
+                                    val finalIndex =
+                                        localSongs.indexOfFirst { it.mediaId == song.mediaId }
                                     if (dragStartIndex >= 0 && finalIndex >= 0) {
                                         onMoveItem(dragStartIndex, finalIndex)
                                     }

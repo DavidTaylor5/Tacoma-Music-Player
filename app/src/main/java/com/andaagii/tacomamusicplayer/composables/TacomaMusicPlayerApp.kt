@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +36,8 @@ import coil.compose.AsyncImage
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.activity.MainActivity
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
+import com.andaagii.tacomamusicplayer.screen.MusicChooserScreen
+import com.andaagii.tacomamusicplayer.screen.PermissionDeniedScreen
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.viewmodel.AlbumTabViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel

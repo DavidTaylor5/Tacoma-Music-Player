@@ -8,7 +8,7 @@ import com.andaagii.tacomamusicplayer.util.SortingUtil
  * Single [StateFlow] payload for the playlists browsing page.
  *
  * Mirrors [com.andaagii.tacomamusicplayer.state.AlbumTabState] for playlists: bundling the list,
- * sort order, and layout together means [com.andaagii.tacomamusicplayer.composables.PlaylistScreen]
+ * sort order, and layout together means [com.andaagii.tacomamusicplayer.screen.PlaylistScreen]
  * always receives a consistent snapshot and redraws exactly once per state change.
  *
  * @param playlists The current sorted list of playlist [MediaItem]s to display.

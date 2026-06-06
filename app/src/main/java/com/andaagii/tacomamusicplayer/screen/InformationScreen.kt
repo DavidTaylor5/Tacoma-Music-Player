@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

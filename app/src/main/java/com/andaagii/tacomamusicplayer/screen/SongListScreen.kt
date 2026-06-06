@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -43,9 +43,13 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.composables.InputTextPrompt
+import com.andaagii.tacomamusicplayer.composables.MultiSelectPrompt
+import com.andaagii.tacomamusicplayer.composables.PlaylistPrompt
+import com.andaagii.tacomamusicplayer.composables.SongGroupInfoView
+import com.andaagii.tacomamusicplayer.composables.SongItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -67,29 +71,29 @@ private const val HEADER_MENU_INDEX = -2
  *   state to this list: search results when search mode is active, otherwise the group songs.
  * @param songGroupType Display mode — [SongGroupType.ALBUM], [SongGroupType.PLAYLIST], or
  *   [SongGroupType.SEARCH_LIST]. Controls drag handles, per-row menu options, and click routing.
- * @param showHeader Whether to show the [SongGroupInfoView] header above the list. Callers
+ * @param showHeader Whether to show the [com.andaagii.tacomamusicplayer.composables.SongGroupInfoView] header above the list. Callers
  *   hide it when search mode is active or when there are no songs.
- * @param songGroupArtUri Artwork URI for the header [SongGroupInfoView], or `null` for the
+ * @param songGroupArtUri Artwork URI for the header [com.andaagii.tacomamusicplayer.composables.SongGroupInfoView], or `null` for the
  *   default placeholder.
- * @param songGroupTitle Title displayed in the [SongGroupInfoView] header.
+ * @param songGroupTitle Title displayed in the [com.andaagii.tacomamusicplayer.composables.SongGroupInfoView] header.
  * @param isShowingSearchMode Whether the inline search bar is active.
  * @param selectedSongs Songs currently selected via artwork-tap multi-select.
  * @param availablePlaylists All known playlists, pre-filtered by the caller to exclude internal
- *   queue playlists. Passed to [PlaylistPrompt].
+ *   queue playlists. Passed to [com.andaagii.tacomamusicplayer.composables.PlaylistPrompt].
  * @param onSongClick Called with the row index to play a song (non-search mode).
  * @param onArtworkClick Called with the [MediaItem] and the new selection state when the user
  *   taps the artwork area to toggle multi-select.
  * @param onAddToQueue Called with a list of songs to append to the playback queue.
  * @param onRemoveFromPlaylist Called with the songs to remove from the current playlist.
- * @param onHeaderPlayClick Called when the user taps the play button in [SongGroupInfoView].
+ * @param onHeaderPlayClick Called when the user taps the play button in [com.andaagii.tacomamusicplayer.composables.SongGroupInfoView].
  * @param onSearchQueryChanged Called with the current query string as the user types.
  * @param onToggleSearch Called when the user taps the search icon to enter or exit search mode.
  * @param onCancelSearch Called when the user taps Cancel in the search bar.
  * @param onMovePlaylistItem Called with `(from, to)` when a drag completes, so the caller
  *   can persist the new order.
- * @param onDismissMultiSelect Called when the user taps the close icon on [MultiSelectPrompt].
+ * @param onDismissMultiSelect Called when the user taps the close icon on [com.andaagii.tacomamusicplayer.composables.MultiSelectPrompt].
  * @param onConfirmAddToPlaylists Called with the selected playlist titles and the songs to add
- *   when the user confirms [PlaylistPrompt].
+ *   when the user confirms [com.andaagii.tacomamusicplayer.composables.PlaylistPrompt].
  * @param onCreatePlaylist Called with the new playlist name when the user confirms the create
  *   playlist dialog.
  * @param onSearchAlbumClick Called with the album [MediaItem] when the user taps an album
@@ -423,7 +427,7 @@ private fun SongListSearchBar(
 
 /**
  * Per-row helper that resolves display data, routing logic, and the per-row [DropdownMenu]
- * before delegating to [SongItem]. Keeps the [LazyColumn] item block readable.
+ * before delegating to [com.andaagii.tacomamusicplayer.composables.SongItem]. Keeps the [LazyColumn] item block readable.
  */
 @Composable
 private fun SongItemRow(

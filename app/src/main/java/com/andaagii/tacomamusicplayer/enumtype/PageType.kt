@@ -1,7 +1,7 @@
 package com.andaagii.tacomamusicplayer.enumtype
 
 /**
- * Page index mapping for the [com.andaagii.tacomamusicplayer.composables.MusicChooserScreen]
+ * Page index mapping for the [com.andaagii.tacomamusicplayer.screen.MusicChooserScreen]
  * [HorizontalPager].
  *
  * Each entry corresponds to one page in the pager. The integer returned by [type] is the
@@ -12,27 +12,27 @@ package com.andaagii.tacomamusicplayer.enumtype
  */
 enum class PageType {
 
-    /** Index 0 — [com.andaagii.tacomamusicplayer.composables.CurrentQueueScreen]. Displays the active playback queue. */
+    /** Index 0 — [com.andaagii.tacomamusicplayer.screen.CurrentQueueScreen]. Displays the active playback queue. */
     QUEUE_PAGE {
         override fun type(): Int = 0
     },
 
-    /** Index 1 — [com.andaagii.tacomamusicplayer.composables.MusicPlayingScreen]. The full player with controls and album art. */
+    /** Index 1 — [com.andaagii.tacomamusicplayer.screen.MusicPlayingScreen]. The full player with controls and album art. */
     PLAYER_PAGE {
         override fun type(): Int = 1
     },
 
-    /** Index 2 — [com.andaagii.tacomamusicplayer.composables.PlaylistScreen]. Browses user-created playlists. */
+    /** Index 2 — [com.andaagii.tacomamusicplayer.screen.PlaylistScreen]. Browses user-created playlists. */
     PLAYLIST_PAGE {
         override fun type(): Int = 2
     },
 
-    /** Index 3 — [com.andaagii.tacomamusicplayer.composables.AlbumListScreen]. Browses albums discovered from MediaStore. */
+    /** Index 3 — [com.andaagii.tacomamusicplayer.screen.AlbumListScreen]. Browses albums discovered from MediaStore. */
     ALBUM_PAGE {
         override fun type(): Int = 3
     },
 
-    /** Index 4 — [com.andaagii.tacomamusicplayer.composables.SongListScreen]. Displays all tracks in the library. */
+    /** Index 4 — [com.andaagii.tacomamusicplayer.screen.SongListScreen]. Displays all tracks in the library. */
     SONG_PAGE {
         override fun type(): Int = 4
     };

@@ -18,7 +18,7 @@ enum class ScreenType {
     },
 
     /**
-     * Start destination — [com.andaagii.tacomamusicplayer.composables.MusicChooserScreen], which
+     * Start destination — [com.andaagii.tacomamusicplayer.screen.MusicChooserScreen], which
      * hosts the [HorizontalPager] with the queue, player, playlist, album, and song pages.
      */
     MUSIC_CHOOSER_SCREEN {

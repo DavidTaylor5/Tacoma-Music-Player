@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import android.view.LayoutInflater
 import androidx.annotation.OptIn

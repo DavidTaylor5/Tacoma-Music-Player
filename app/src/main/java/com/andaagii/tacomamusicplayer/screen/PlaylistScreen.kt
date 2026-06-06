@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.composables.InputTextPrompt
+import com.andaagii.tacomamusicplayer.composables.PlaylistGridItem
+import com.andaagii.tacomamusicplayer.composables.PlaylistListItem
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.util.SortingUtil
@@ -44,7 +47,7 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
  * Full-screen playlists browsing page.
  *
  * Stateful — manages the sort-options dropdown, the per-row overflow menu, and two
- * [InputTextPrompt] overlays for creating and renaming playlists. Displays playlists in either
+ * [com.andaagii.tacomamusicplayer.composables.InputTextPrompt] overlays for creating and renaming playlists. Displays playlists in either
  * a [LazyColumn] (list) or [LazyVerticalGrid] (grid) depending on [layoutType]. Sorting is
  * applied locally via [SortingUtil.sortPlaylists] for instant UI updates.
  *

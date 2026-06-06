@@ -28,7 +28,7 @@ import com.andaagii.tacomamusicplayer.data.SongData
  * whenever the user is on any page other than the full player and a song is loaded.
  *
  * Stateless — all values are passed in and all interactions surface via lambdas. Visibility
- * is controlled by the caller ([MusicChooserScreen]); this composable is always visible when
+ * is controlled by the caller ([com.andaagii.tacomamusicplayer.screen.MusicChooserScreen]); this composable is always visible when
  * composed.
  *
  * @param modifier Modifier applied to the root [Card].

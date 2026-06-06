@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.composables
+package com.andaagii.tacomamusicplayer.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.andaagii.tacomamusicplayer.R
+import com.andaagii.tacomamusicplayer.composables.AlbumGridItem
+import com.andaagii.tacomamusicplayer.composables.AlbumListItem
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
