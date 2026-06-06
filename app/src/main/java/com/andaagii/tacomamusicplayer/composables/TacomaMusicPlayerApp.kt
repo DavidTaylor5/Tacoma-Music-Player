@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,7 +39,9 @@ import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.activity.MainActivity
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
+import com.andaagii.tacomamusicplayer.viewmodel.AlbumTabViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.viewmodel.PlaylistTabViewModel
 
 /**
  * Root composable for `MainActivity.setContent`. Owns the [NavHost] with two destinations
@@ -56,6 +59,9 @@ fun TacomaMusicPlayerApp(viewModel: MainViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val albumViewModel: AlbumTabViewModel = hiltViewModel()
+    val playlistViewModel: PlaylistTabViewModel = hiltViewModel()
 
     val showLoadingScreen by viewModel.showLoadingScreen.collectAsStateWithLifecycle()
 
@@ -99,7 +105,11 @@ fun TacomaMusicPlayerApp(viewModel: MainViewModel) {
             startDestination = ScreenType.MUSIC_CHOOSER_SCREEN.route()
         ) {
             composable(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
-                MusicChooserScreen()
+                MusicChooserScreen(
+                    mainViewModel = viewModel,
+                    albumViewModel = albumViewModel,
+                    playlistViewModel = playlistViewModel
+                )
             }
             composable(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
                 PermissionDeniedScreen(

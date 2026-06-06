@@ -26,7 +26,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
@@ -51,21 +50,29 @@ import java.io.File
  * tab bar. Replaces [com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment] and
  * [com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter].
  *
- * Stateful — acquires all ViewModels internally and exposes no parameters. Page navigation
- * events from [MainViewModel.navigateToPage] are consumed via [LaunchedEffect] to call
- * [androidx.compose.foundation.pager.PagerState.animateScrollToPage]. Album and playlist
+ * Stateful — receives the three Activity-scoped ViewModels from [TacomaMusicPlayerApp] so
+ * that it shares the same [MainViewModel] instance that owns the [MediaController]. Page
+ * navigation events from [MainViewModel.navigateToPage] are consumed via [LaunchedEffect] to
+ * call [androidx.compose.foundation.pager.PagerState.animateScrollToPage]. Album and playlist
  * image-picker flows are handled via [rememberLauncherForActivityResult] so that no Fragment
  * lifecycle owner is needed.
  *
  * The [HorizontalPager] keeps all five pages alive simultaneously via [beyondViewportPageCount]
  * = 4, matching the old `ViewPager2.offscreenPageLimit = 4` behaviour.
+ *
+ * @param mainViewModel Activity-scoped [MainViewModel]; owns the [MediaController] and all
+ *   playback state.
+ * @param albumViewModel Activity-scoped [AlbumTabViewModel]; provides album list and layout prefs.
+ * @param playlistViewModel Activity-scoped [PlaylistTabViewModel]; provides playlist list and
+ *   layout prefs.
  */
 @OptIn(UnstableApi::class)
 @Composable
-fun MusicChooserScreen() {
-    val mainViewModel: MainViewModel = hiltViewModel()
-    val albumViewModel: AlbumTabViewModel = hiltViewModel()
-    val playlistViewModel: PlaylistTabViewModel = hiltViewModel()
+fun MusicChooserScreen(
+    mainViewModel: MainViewModel,
+    albumViewModel: AlbumTabViewModel,
+    playlistViewModel: PlaylistTabViewModel,
+) {
     val songListViewModel: SongListViewModel = viewModel()
 
     val context = LocalContext.current
