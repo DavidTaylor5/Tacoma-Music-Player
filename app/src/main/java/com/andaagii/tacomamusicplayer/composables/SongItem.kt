@@ -33,13 +33,12 @@ import com.andaagii.tacomamusicplayer.R
 /**
  * Linear list row for a single song entry in the all-songs list or a song-group detail view.
  *
- * Stateless — all display data and callbacks are provided by the caller. Mirrors the
- * `viewholder_song.xml` / `SongListAdapter` pair: a 60 dp card with a drag handle,
- * album art with an optional favourite indicator overlay, song metadata text, an
- * add-to-playlist button, and an overflow menu button.
+ * Stateless — all display data and callbacks are provided by the caller. Renders a 60 dp card
+ * with a drag handle, album art with an optional favourite indicator overlay, song metadata
+ * text, an add-to-playlist button, and an overflow menu button.
  *
- * The drag handle is conditionally visible because `SongListAdapter` hides it for
- * album contexts and shows it only for playlists (where reordering is supported).
+ * The drag handle is conditionally visible — hidden for album contexts (fixed MediaStore order)
+ * and shown only for playlists (where reordering is supported).
  *
  * @param modifier Modifier applied to the root [Card].
  * @param title The song display title.
@@ -53,8 +52,9 @@ import com.andaagii.tacomamusicplayer.R
  * @param onArtworkClick Called when the user taps the artwork / favourite overlay area.
  * @param onAddClick Called when the user taps the add-to-playlist button.
  * @param onMenuClick Called when the user taps the overflow menu button.
- * @param onDragHandleStartDrag Called when the user presses the drag handle to begin
- *   reordering. Connect to the host `LazyListState` drag logic when wiring up.
+ * @param dragHandleModifier Modifier applied to the drag-handle icon. In a reorderable
+ *   `LazyColumn`, the caller passes `Modifier.draggableHandle(...)` from within a
+ *   `ReorderableItem` scope so the library can intercept the gesture. Defaults to no-op.
  */
 @Composable
 fun SongItem(
@@ -69,7 +69,7 @@ fun SongItem(
     onArtworkClick: () -> Unit,
     onAddClick: () -> Unit,
     onMenuClick: () -> Unit,
-    onDragHandleStartDrag: () -> Unit = {}
+    dragHandleModifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
@@ -82,7 +82,7 @@ fun SongItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Drag handle — conditionally visible; press gesture triggers drag initiation
+            // Drag handle — conditionally visible; caller applies draggableHandle modifier
             if (showDragHandle) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_reorder_24),
@@ -91,9 +91,7 @@ fun SongItem(
                     modifier = Modifier
                         .width(40.dp)
                         .height(60.dp)
-                        .pointerInput(Unit) {
-                            detectTapGestures(onPress = { onDragHandleStartDrag() })
-                        }
+                        .then(dragHandleModifier)
                 )
             }
 
@@ -196,7 +194,8 @@ private fun SongItemPreview() {
         onSongClick = {},
         onArtworkClick = {},
         onAddClick = {},
-        onMenuClick = {}
+        onMenuClick = {},
+        dragHandleModifier = Modifier
     )
 }
 

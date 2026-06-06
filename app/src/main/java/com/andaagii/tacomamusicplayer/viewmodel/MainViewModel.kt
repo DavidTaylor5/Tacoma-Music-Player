@@ -609,6 +609,22 @@ class MainViewModel @Inject constructor(
     }
 
     /**
+     * Removes [songsToRemove] from the current playlist group, updates [currentSongGroup]
+     * so the UI re-renders immediately, and persists the new order via [updatePlaylistOrder].
+     *
+     * @param songsToRemove The tracks to remove, matched by media ID.
+     */
+    fun removeSongsFromCurrentPlaylist(songsToRemove: List<MediaItem>) {
+        val current = _currentSongGroup.value ?: return
+        if (current.type != SongGroupType.PLAYLIST) return
+        val updated = current.copy(
+            songs = current.songs.filter { song -> songsToRemove.none { it.mediaId == song.mediaId } }
+        )
+        _currentSongGroup.value = updated
+        updatePlaylistOrder(updated)
+    }
+
+    /**
      * Saves the current songs playing in the queue, to be loaded when the app opens next.
      */
     fun saveQueue() {

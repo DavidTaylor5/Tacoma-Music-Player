@@ -374,9 +374,9 @@ Track deleted files here as migration progresses. A file in this list should not
 - [x] `adapter/QueueListAdapter.kt`
 
 ### Phase 3
-- [ ] `res/layout/fragment_songlist.xml`
-- [ ] `adapter/SongListAdapter.kt`
-- [ ] `res/layout/viewholder_song.xml`
+- [x] `res/layout/fragment_songlist.xml`
+- [x] `adapter/SongListAdapter.kt`
+- [x] `res/layout/viewholder_song.xml`
 - [ ] `res/layout/fragment_albumlist.xml`
 - [ ] `adapter/AlbumListAdapter.kt`
 - [ ] `adapter/AlbumGridAdapter.kt`
