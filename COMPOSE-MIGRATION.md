@@ -391,20 +391,20 @@ Track deleted files here as migration progresses. A file in this list should not
 - [x] `res/layout/viewholder_playlist_prompt.xml`
 
 ### Phase 4
-- [ ] `res/layout/player_display_fragment.xml`
-- [ ] `res/layout-land/player_display_fragment.xml`
-- [ ] `adapter/ScreenSlidePagerAdapter.kt`
+- [x] `res/layout/player_display_fragment.xml`
+- [x] `res/layout-land/player_display_fragment.xml`
+- [x] `adapter/ScreenSlidePagerAdapter.kt`
 
 ### Phase 5
-- [ ] `res/layout/activity_main.xml`
-- [ ] `fragment/PlayerDisplayFragment.kt`
-- [ ] `fragment/PermissionDeniedFragment.kt`
-- [ ] `fragment/MusicPlayingFragment.kt`
-- [ ] `fragment/CurrentQueueFragment.kt`
-- [ ] `fragment/pages/AlbumListFragment.kt`
-- [ ] `fragment/pages/PlaylistFragment.kt`
-- [ ] `fragment/pages/SongListFragment.kt`
-- [ ] `adapter/diff/MediaItemDiffCallback.kt` (if unused)
+- [x] `res/layout/activity_main.xml`
+- [x] `fragment/PlayerDisplayFragment.kt`
+- [x] `fragment/PermissionDeniedFragment.kt`
+- [x] `fragment/MusicPlayingFragment.kt`
+- [x] `fragment/CurrentQueueFragment.kt`
+- [x] `fragment/pages/AlbumListFragment.kt`
+- [x] `fragment/pages/PlaylistFragment.kt`
+- [x] `fragment/pages/SongListFragment.kt`
+- [x] `adapter/diff/` directory (was already empty)
 
 ---
 

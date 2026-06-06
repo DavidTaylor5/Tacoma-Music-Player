@@ -5,8 +5,8 @@ package com.andaagii.tacomamusicplayer.enumtype
  * `NavController` graph.
  *
  * Each entry provides a unique [route] string used as the destination ID when calling
- * `NavController.navigate`. Navigation events are delivered to observers via
- * `MainViewModel`'s `LiveData<ScreenData>`.
+ * `NavController.navigate` from [com.andaagii.tacomamusicplayer.composables.TacomaMusicPlayerApp].
+ * Navigation events are delivered via [com.andaagii.tacomamusicplayer.viewmodel.MainViewModel.screenState].
  *
  * [MUSIC_CHOOSER_SCREEN] is the start destination of the nav graph.
  */
@@ -18,8 +18,8 @@ enum class ScreenType {
     },
 
     /**
-     * Start destination — the main browsing screen that hosts the `ViewPager2` with
-     * the queue, player, playlist, album, and song pages.
+     * Start destination — [com.andaagii.tacomamusicplayer.composables.MusicChooserScreen], which
+     * hosts the [HorizontalPager] with the queue, player, playlist, album, and song pages.
      */
     MUSIC_CHOOSER_SCREEN {
         override fun route(): String = "MUSIC_CHOOSER_SCREEN"

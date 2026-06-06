@@ -61,8 +61,8 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
  * @param onPlaylistClick Called with the tapped [MediaItem] to drill into the playlist's track list.
  * @param onPlayClick Called with the playlist title to start playback immediately.
  * @param onAddToQueue Called with the playlist title to append it to the end of the current queue.
- * @param onAddPlaylistImage Called with the playlist title to launch the image-picker flow.
- *   This bubbles up to the Fragment because [ActivityResultLauncher] requires a Fragment lifecycle.
+ * @param onAddPlaylistImage Called with the playlist title to launch the image-picker flow
+ *   via [rememberLauncherForActivityResult] in [MusicChooserScreen].
  * @param onDeletePlaylist Called with the playlist title to permanently remove it.
  * @param onCreatePlaylist Called with the new playlist name when the user confirms the create prompt.
  * @param onRenamePlaylist Called with the old title and the new title when the user confirms

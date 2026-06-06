@@ -2,228 +2,75 @@ package com.andaagii.tacomamusicplayer.activity
 
 import android.content.Context
 import android.os.Bundle
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.View
-import android.view.inputmethod.InputMethodManager
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.annotation.OptIn
-import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavController
-import androidx.navigation.createGraph
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.fragment
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
-import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
-import com.andaagii.tacomamusicplayer.enumtype.ScreenType
-import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
-import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
-import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
-import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
+import com.andaagii.tacomamusicplayer.composables.TacomaMusicPlayerApp
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
 
-//Preferences DataStore, for storing settings in my app
+// Preferences DataStore, for storing settings in the app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 /**
- * The sole [AppCompatActivity] in the app.
+ * The sole [ComponentActivity] in the app.
  *
  * Responsibilities:
- * - Sets up the programmatic [NavController] nav graph with two destinations:
- *   [PlayerDisplayFragment] (main browsing screen) and [PermissionDeniedFragment].
- * - Handles the `READ_MEDIA_AUDIO` permission request lifecycle: observes
- *   [MainViewModel.isAudioPermissionGranted], requests the permission if not yet granted,
- *   and initialises music playback + cataloging once permission is confirmed.
- * - Enqueues [CatalogMusicWorker] via [WorkManager] to scan and catalog the device library.
- * - Delegates back-press handling to [onBackPressedCallback] so the nav stack is consumed
- *   before the activity finishes.
- * - Hides system UI chrome in [onResume] via [UtilImpl.hideNavigationUI].
+ * - Calls [enableEdgeToEdge] and [setContent] with [TacomaMusicPlayerApp], which owns the
+ *   Compose [androidx.navigation.compose.NavHost] and all screen navigation logic.
+ * - Enqueues [CatalogMusicWorker] via [WorkManager] to scan and catalog the device library
+ *   after audio permission is granted (called from [TacomaMusicPlayerApp] via [queryMusic]).
+ * - Re-hides system UI chrome in [onResume] via [UtilImpl.hideNavigationUI].
  * - Persists the playback queue to the database in [onPause].
+ * - Forwards runtime permission results to [MainViewModel.handlePermissionResult].
  *
  * The [dataStore] extension property is a top-level DataStore instance that backs
  * [com.andaagii.tacomamusicplayer.util.DataStoreUtil] preferences.
  */
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
-    private val viewModel: MainViewModel by viewModels()
-    private lateinit var binding: ActivityMainBinding
-    private val permissionManager = AppPermissionUtil()
-    private lateinit var navController: NavController
+class MainActivity : ComponentActivity() {
+    val viewModel: MainViewModel by viewModels()
+
     private lateinit var workManager: WorkManager
     private lateinit var currentWorkerId: UUID
-    private var musicObserver: MusicContentObserver? = null
 
-    private val onBackPressedCallback = object: OnBackPressedCallback(true) {
-        override fun handleOnBackPressed() {
-            Timber.d("handleOnBackPressed: BACK PRESSED!")
-            if(!navController.popBackStack()) {
-                finish()
-            }
-        }
-    }
-
-    private lateinit var gesture: GestureDetector
-
-    private val detector = object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: ")
-            return super.onDoubleTap(e)
-        }
-
-        override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent,
-            velocityX: Float,
-            velocityY: Float
-        ): Boolean {
-            Timber.d("onFling: ")
-            return super.onFling(e1, e2, velocityX, velocityY)
-        }
-    }
-
-    @OptIn(UnstableApi::class) override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate: ")
-
-        gesture = GestureDetector(this, detector)
-
-        // Setup view binding in the project
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.notifyHideKeyboard.collect {
-                    removeVirtualKeyboard()
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isAudioPermissionGranted.collect { isGranted ->
-                    isGranted ?: return@collect
-                    if (!isGranted) {
-                        Timber.d("onCreate: isGranted=$isGranted")
-                        permissionManager.requestReadMediaAudioPermission(this@MainActivity)
-                    } else {
-                        viewModel.initializeMusicPlaying()
-
-                        // Music Access is allowed, start looking through user library
-                        queryMusic()
-
-                        //TODO add back code for music content observer?
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.showLoadingScreen.collect { showLoadingScreen ->
-                    if (showLoadingScreen) {
-                        binding.loadingScreen.visibility = View.VISIBLE
-                    } else {
-                        binding.loadingScreen.visibility = View.INVISIBLE
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.screenState.collect { screenType ->
-                    Timber.d("onCreate: screenState screenType.route=${screenType.route()}")
-                    navController.navigate(screenType.route())
-                }
-            }
-        }
-
-        setupNavigation()
-
-        onBackPressedDispatcher.addCallback(onBackPressedCallback)
-    }
-
-    /**
-     * Builds the programmatic nav graph and wires the [NavController] from the [NavHostFragment].
-     *
-     * The graph has two destinations: [PlayerDisplayFragment] (start destination) and
-     * [PermissionDeniedFragment]. Navigation between them is driven by [MainViewModel.screenState].
-     */
-    private fun setupNavigation() {
-        //Retrieve the NavController [will instantiate the fragment before grabbing it's navController]
-        navController = binding.navHostFragment.getFragment<NavHostFragment>().navController
-
-        // Add navigation graph to the NavController
-        navController.graph = navController.createGraph(
-            startDestination = ScreenType.MUSIC_CHOOSER_SCREEN.route()
-        ) {
-            //associate each destination with one of the route constants.
-//            fragment<MusicPlayingFragment>(ScreenType.MUSIC_PLAYING_SCREEN.route()) {
-//                label = "Player"
-//            }
-            fragment<PlayerDisplayFragment>(ScreenType.MUSIC_CHOOSER_SCREEN.route()) {
-                label = "Choose Music!"
-            }
-            fragment<PermissionDeniedFragment>(ScreenType.PERMISSION_DENIED_SCREEN.route()) {
-                label = "Permission Denied"
-            }
-//            fragment<CurrentQueueFragment>(ScreenType.MUSIC_QUEUE_SCREEN.route()) {
-//                label = "Music Queue"
-//            }
+        enableEdgeToEdge()
+        setContent {
+            TacomaMusicPlayerApp(viewModel = viewModel)
         }
     }
 
     override fun onResume() {
         super.onResume()
         Timber.d("onResume: ")
-
-        // Re-hide system bars on every resume in case the OS restored them (e.g. after a dialog)
+        // Re-hide system bars on every resume in case the OS restored them (e.g. after a dialog).
         UtilImpl.hideNavigationUI(window)
-
         viewModel.checkPermissionsIfOnPermissionDeniedScreen()
     }
 
     override fun onPause() {
         super.onPause()
-        //Saves the current song list in queue
         viewModel.saveQueue()
-        //Saves the original song list order [in case the user has shuffled]
-        //viewModel.saveOriginalOrder()
-
-        musicObserver?.let {
-            contentResolver.unregisterContentObserver(it)
-            Timber.d("onDestroy: unregistered, musicobserver")
-        }
-    }
-
-    /** Hides the soft keyboard by clearing the window token's input focus. */
-    private fun removeVirtualKeyboard() {
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(window.decorView.rootView.windowToken, 0)
     }
 
     /**
      * Receives the result of a runtime permission request and forwards it to [MainViewModel].
      *
      * [MainViewModel.handlePermissionResult] updates [MainViewModel.isAudioPermissionGranted],
-     * which this activity observes to initiate playback and library scanning if granted.
+     * which [TacomaMusicPlayerApp] observes to initiate playback and library scanning if granted.
      */
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -242,20 +89,13 @@ class MainActivity : AppCompatActivity() {
      * could produce duplicate database entries. Called once after audio permission is granted.
      */
     fun queryMusic() {
-        //Catalog all of the music on the user's device to a database in the background
-        //TODO I also need to run a workrequest everytime I observe a change in the MUSIC folder
         val catalogWorkRequest: WorkRequest = OneTimeWorkRequestBuilder<CatalogMusicWorker>()
             .build()
 
         workManager = WorkManager.getInstance(this)
         currentWorkerId = catalogWorkRequest.id
 
-        //TODO there is still another parallel execution that is happening, two workers are finishing at the same
-        //time and I need to figure that out...
-
-        //Cancel previous work
         workManager.cancelAllWork()
-
         workManager.enqueue(catalogWorkRequest)
     }
 }

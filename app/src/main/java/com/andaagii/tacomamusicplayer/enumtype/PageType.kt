@@ -1,38 +1,38 @@
 package com.andaagii.tacomamusicplayer.enumtype
 
 /**
- * ViewPager2 page index mapping for the `PlayerDisplayFragment` swipe layout.
+ * Page index mapping for the [com.andaagii.tacomamusicplayer.composables.MusicChooserScreen]
+ * [HorizontalPager].
  *
- * Each entry corresponds to one page in the pager and the `Fragment` that occupies it.
- * The integer returned by [type] is the zero-based position used by `ViewPager2` and
- * `ScreenSlidePagerAdapter`. Use [determinePageFromPosition] to convert a raw scroll
- * position back to a typed value.
+ * Each entry corresponds to one page in the pager. The integer returned by [type] is the
+ * zero-based position used by [HorizontalPager]. Use [determinePageFromPosition] to convert
+ * a raw scroll position back to a typed value.
  *
  * Page order (left → right): Queue → Player → Playlist → Album → Song.
  */
 enum class PageType {
 
-    /** Index 0 — `CurrentQueueFragment`. Displays the active playback queue. */
+    /** Index 0 — [com.andaagii.tacomamusicplayer.composables.CurrentQueueScreen]. Displays the active playback queue. */
     QUEUE_PAGE {
         override fun type(): Int = 0
     },
 
-    /** Index 1 — `MusicPlayingFragment`. The mini/full player with controls and album art. */
+    /** Index 1 — [com.andaagii.tacomamusicplayer.composables.MusicPlayingScreen]. The full player with controls and album art. */
     PLAYER_PAGE {
         override fun type(): Int = 1
     },
 
-    /** Index 2 — `PlaylistFragment`. Browses user-created playlists. */
+    /** Index 2 — [com.andaagii.tacomamusicplayer.composables.PlaylistScreen]. Browses user-created playlists. */
     PLAYLIST_PAGE {
         override fun type(): Int = 2
     },
 
-    /** Index 3 — `AlbumListFragment`. Browses albums discovered from MediaStore. */
+    /** Index 3 — [com.andaagii.tacomamusicplayer.composables.AlbumListScreen]. Browses albums discovered from MediaStore. */
     ALBUM_PAGE {
         override fun type(): Int = 3
     },
 
-    /** Index 4 — `SongListFragment`. Displays all tracks in the library. */
+    /** Index 4 — [com.andaagii.tacomamusicplayer.composables.SongListScreen]. Displays all tracks in the library. */
     SONG_PAGE {
         override fun type(): Int = 4
     };

@@ -38,7 +38,8 @@ import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 
 /**
- * Full-screen player page shown at index 1 in `PlayerDisplayFragment`'s `ViewPager2`.
+ * Full-screen player page shown at [com.andaagii.tacomamusicplayer.enumtype.PageType.PLAYER_PAGE]
+ * in [MusicChooserScreen]'s [HorizontalPager].
  *
  * Stateless — all playback state is passed as parameters and all user interactions are surfaced
  * via lambda callbacks. When no song is active the screen shows a placeholder illustration;

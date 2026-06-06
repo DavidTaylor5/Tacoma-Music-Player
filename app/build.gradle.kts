@@ -74,7 +74,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         compose = true
     }
@@ -101,7 +100,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.google.material)
-    implementation(libs.androidx.constraintlayout)
 
     // Timber logs
     implementation(libs.timber)
@@ -123,16 +121,19 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 
+    // Hilt + Compose integration
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     // Media3 — all modules must stay on the same version
     // Note: kept at 1.2.1; 1.4.1+ does not show album art on the notification
     implementation(libs.bundles.media3)
 
-    // ViewModel / Fragment extensions
+    // Activity KTX (provides by viewModels(), setContent, etc.)
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
 
     // Navigation Component
-    implementation(libs.bundles.navigation)
+    implementation(libs.androidx.navigation.compose)
 
     // Testing
     testImplementation(libs.junit)

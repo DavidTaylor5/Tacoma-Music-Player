@@ -36,8 +36,8 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.andaagii.tacomamusicplayer.R
 
 /**
- * Full-screen page for the current playback queue, hosted at index 0 in
- * `PlayerDisplayFragment`'s `ViewPager2`.
+ * Full-screen page for the current playback queue, hosted at [PageType.QUEUE_PAGE] in
+ * [MusicChooserScreen]'s [HorizontalPager].
  *
  * Stateful — manages a local copy of [songs] for immediate drag-reorder visual feedback, and
  * tracks which row's dropdown menu is open. Drag reorder is backed by `sh.calvin.reorderable`;
