@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.composables
 
+import android.view.LayoutInflater
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -119,13 +120,20 @@ fun MusicPlayingScreen(
                 )
 
                 // Seek bar — PlayerView has no Compose equivalent; AndroidView is the
-                // supported interop path until Media3 ships a Compose-native player surface.
+                // supported interop path. Inflate from XML so controller_layout_id /
+                // player_layout_id (XML-only attributes) restrict the surface to just the
+                // progress bar, matching the pre-Compose Views UI. The transport controls
+                // below are the real ones; the PlayerView contributes only the timebar.
                 AndroidView(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(10.dp),
                     factory = { ctx ->
-                        PlayerView(ctx).apply {
-                            player = mediaController
-                            showController()
-                        }
+                        (LayoutInflater.from(ctx)
+                            .inflate(R.layout.view_progress_only_player, null) as PlayerView)
+                            .apply {
+                                player = mediaController
+                                showController()
+                            }
                     },
                     update = { playerView -> playerView.player = mediaController }
                 )
