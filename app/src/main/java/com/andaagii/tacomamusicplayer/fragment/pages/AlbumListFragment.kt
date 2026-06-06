@@ -3,43 +3,35 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.adapter.AlbumGridAdapter
-import com.andaagii.tacomamusicplayer.adapter.AlbumListAdapter
-import com.andaagii.tacomamusicplayer.databinding.FragmentAlbumlistBinding
+import com.andaagii.tacomamusicplayer.composables.AlbumListScreen
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.AlbumTabViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
  * Albums browsing page hosted at index 3 in `PlayerDisplayFragment`'s `ViewPager2`.
  *
- * Collects [AlbumTabViewModel.albumTabState] to react to sort-order and layout-preference
- * changes, swapping between [AlbumListAdapter] (linear) and [AlbumGridAdapter] (grid) as
- * needed. Routes album tap, play, and add-to-queue actions to [MainViewModel].
+ * Thin ComposeView shell — all display logic lives in [AlbumListScreen]. This fragment retains
+ * only the [ActivityResultContracts] launchers for the image-picker → uCrop workflow, which
+ * cannot be moved to Compose because they require a Fragment lifecycle owner.
  *
  * Custom album art is selected via a two-step async flow:
  * 1. [getPicture] opens the system image picker.
@@ -48,7 +40,6 @@ import timber.log.Timber
  */
 @AndroidEntryPoint
 class AlbumListFragment : Fragment() {
-    private lateinit var binding: FragmentAlbumlistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: AlbumTabViewModel by activityViewModels()
 
@@ -64,9 +55,6 @@ class AlbumListFragment : Fragment() {
      * same async-callback reason as [albumCustomImageName].
      */
     private var selectedAlbumName = "unknown"
-
-    /** Tracks the current layout so the toggle button icon can be updated reactively. */
-    private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
 
     /**
      * Receives the cropped image result from uCrop.
@@ -121,103 +109,31 @@ class AlbumListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentAlbumlistBinding.inflate(inflater)
-
-        // Collect with STARTED lifecycle so the flow pauses while the fragment is off-screen
-        // in the ViewPager2, matching when the RecyclerView is actually visible.
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.albumTabState.collect { state ->
-
-                    val sortedAlbums = SortingUtil.sortAlbums(state.albums, state.sorting)
-
-                    // Keep the layout-toggle icon in sync with the current preference.
-                    currLayout = state.layout
-                    if (currLayout == LayoutType.LINEAR_LAYOUT) {
-                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_table_rows_24)
-                    } else {
-                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_grid_view_24)
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val context = LocalContext.current
+                val state by viewModel.albumTabState.collectAsStateWithLifecycle()
+                AlbumListScreen(
+                    albums = state.albums,
+                    layoutType = state.layout,
+                    sorting = state.sorting,
+                    onAlbumClick = ::onAlbumClick,
+                    onPlayClick = parentViewModel::playAlbum,
+                    onMenuOption = ::handleAlbumSetting,
+                    onLayoutToggle = {
+                        val next = if (state.layout == LayoutType.LINEAR_LAYOUT)
+                            LayoutType.TWO_GRID_LAYOUT
+                        else
+                            LayoutType.LINEAR_LAYOUT
+                        viewModel.saveAlbumLayout(context, next)
+                    },
+                    onSortingSelected = { option ->
+                        viewModel.saveAlbumSorting(context, option)
                     }
-
-                    if (binding.displayRecyclerview.adapter != null) {
-                        // Adapter already exists — check whether the layout type changed.
-                        // If the type mismatches, reinitialise the whole adapter to swap
-                        // LayoutManager and adapter class. Otherwise just submit the new list.
-                        if (binding.displayRecyclerview.adapter is AlbumListAdapter
-                            && state.layout != LayoutType.LINEAR_LAYOUT) {
-                            initializeGridLayout(albums = sortedAlbums)
-                        } else if (binding.displayRecyclerview.adapter is AlbumGridAdapter
-                            && state.layout != LayoutType.TWO_GRID_LAYOUT) {
-                            initializeLinearLayout(albums = sortedAlbums)
-                        } else {
-                            val adapter = binding.displayRecyclerview.adapter
-                            when (adapter) {
-                                is AlbumListAdapter -> adapter.submitList(sortedAlbums)
-                                is AlbumGridAdapter -> adapter.submitList(sortedAlbums)
-                                else -> Timber.e("onCreateView: Error Unable to submit list of unknown adapter type.")
-                            }
-                        }
-                    } else {
-                        // First emission — create the adapter for the user's saved layout preference.
-                        when (state.layout) {
-                            LayoutType.LINEAR_LAYOUT -> initializeLinearLayout(sortedAlbums)
-                            LayoutType.TWO_GRID_LAYOUT -> initializeGridLayout(sortedAlbums)
-                        }
-                    }
-                }
+                )
             }
         }
-
-        binding.layoutOption.setOnClickListener {
-            if (currLayout == LayoutType.LINEAR_LAYOUT) {
-                viewModel.saveAlbumLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                viewModel.saveAlbumLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-            }
-        }
-
-        binding.settingsOption.setOnClickListener {
-            val menu = PopupMenu(
-                this.context,
-                binding.settingsOption,
-                Gravity.START,
-                0,
-                R.style.PopupMenuBlack
-            )
-            menu.menuInflater.inflate(R.menu.sorting_options_album, menu.menu)
-
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
-                viewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
-        }
-
-        return binding.root
-    }
-
-    /** Sets up a vertical [LinearLayoutManager] and attaches an [AlbumListAdapter] with [albums]. */
-    private fun initializeLinearLayout(albums: List<MediaItem>) {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.displayRecyclerview.adapter = AlbumListAdapter(
-            this@AlbumListFragment::onAlbumClick,
-            parentViewModel::playAlbum,
-            this@AlbumListFragment::handleAlbumSetting
-        )
-        (binding.displayRecyclerview.adapter as AlbumListAdapter).submitList(albums)
-    }
-
-    /** Sets up a [GridLayoutManager] and attaches an [AlbumGridAdapter] with [albums]. */
-    private fun initializeGridLayout(albums: List<MediaItem>) {
-        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
-        binding.displayRecyclerview.adapter = AlbumGridAdapter(
-            this@AlbumListFragment::onAlbumClick,
-            parentViewModel::playAlbum,
-            this@AlbumListFragment::handleAlbumSetting
-        )
-        (binding.displayRecyclerview.adapter as AlbumGridAdapter).submitList(albums)
     }
 
     /**

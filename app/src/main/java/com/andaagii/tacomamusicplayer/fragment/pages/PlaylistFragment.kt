@@ -3,51 +3,35 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 import android.app.Activity.RESULT_OK
 import android.net.Uri
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.andaagii.tacomamusicplayer.R
-import com.andaagii.tacomamusicplayer.adapter.PlaylistAdapter
-import com.andaagii.tacomamusicplayer.adapter.PlaylistGridAdapter
-import com.andaagii.tacomamusicplayer.composables.InputTextPrompt
-import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
+import com.andaagii.tacomamusicplayer.composables.PlaylistScreen
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.PlaylistTabViewModel
 import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
  * Playlists browsing page hosted at index 2 in `PlayerDisplayFragment`'s `ViewPager2`.
  *
- * Mirrors [AlbumListFragment] for playlists: collects [PlaylistTabViewModel.playlistTabState]
- * to react to layout and sort changes, and swaps between [PlaylistAdapter] (linear) and
- * [PlaylistGridAdapter] (grid). Additionally hosts the [com.andaagii.tacomamusicplayer.composables.InputTextPrompt] overlay for
- * creating and renaming playlists.
+ * Thin ComposeView shell — all display logic, sorting, layout switching, and the create/rename
+ * prompt overlays live in [PlaylistScreen]. This fragment retains only the [ActivityResultContracts]
+ * launchers for the image-picker → uCrop workflow, which cannot be moved to Compose because they
+ * require a Fragment lifecycle owner.
  *
  * Custom playlist art uses the same two-step async flow as albums:
  * 1. [getPicture] opens the system image picker.
@@ -55,8 +39,6 @@ import timber.log.Timber
  */
 @AndroidEntryPoint
 class PlaylistFragment : Fragment() {
-
-    private lateinit var binding: FragmentPlaylistBinding
     private val parentViewModel: MainViewModel by activityViewModels()
     private val viewModel: PlaylistTabViewModel by activityViewModels()
 
@@ -65,17 +47,6 @@ class PlaylistFragment : Fragment() {
      * [getCroppedPicture] fires asynchronously after [addPlaylistImage] returns.
      */
     private var playlistThatNeedsNewImage = "empty"
-
-    /** Tracks the current layout so the toggle button icon can be updated reactively. */
-    private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
-
-    private enum class PromptMode { CREATE, RENAME }
-
-    /** Controls which mode [InputTextPrompt] is in. Changing this resets the text field via key(). */
-    private var promptMode by mutableStateOf(PromptMode.CREATE)
-
-    /** Title of the playlist being renamed; set before switching to [PromptMode.RENAME]. */
-    private var renameTargetTitle = ""
 
     /**
      * Receives the cropped image result from uCrop.
@@ -129,209 +100,35 @@ class PlaylistFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentPlaylistBinding.inflate(inflater)
-
-        binding.playlistPrompt.apply {
+        return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                key(promptMode) {
-                    InputTextPrompt(
-                        hint = if (promptMode == PromptMode.CREATE) Const.NEW_PLAYLIST_HINT else Const.RENAME_PLAYLIST_HINT,
-                        option1Text = Const.CANCEL,
-                        option2Text = if (promptMode == PromptMode.CREATE) Const.ADD else Const.UPDATE,
-                        onOption1Click = { _ ->
-                            parentViewModel.removeVirtualKeyboard()
-                            binding.playlistPrompt.visibility = View.GONE
-                        },
-                        onOption2Click = { text ->
-                            parentViewModel.removeVirtualKeyboard()
-                            binding.playlistPrompt.visibility = View.GONE
-                            if (promptMode == PromptMode.CREATE) {
-                                parentViewModel.createNamedPlaylist(text)
-                            } else {
-                                parentViewModel.updatePlaylistTitle(renameTargetTitle, text)
-                                promptMode = PromptMode.CREATE
-                            }
-                        }
-                    )
-                }
-            }
-        }
-
-        // Collect with STARTED lifecycle so the flow pauses while the fragment is off-screen
-        // in the ViewPager2, matching when the RecyclerView is actually visible.
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.playlistTabState.collect { state ->
-                    val sortedPlaylists = SortingUtil.sortPlaylists(state.playlists, state.sorting)
-
-                    // Keep the layout-toggle icon in sync with the current preference.
-                    currLayout = state.layout
-                    if (currLayout == LayoutType.LINEAR_LAYOUT) {
-                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_table_rows_24)
-                    } else {
-                        binding.layoutOption.setBackgroundResource(R.drawable.baseline_grid_view_24)
+                val context = LocalContext.current
+                val state by viewModel.playlistTabState.collectAsStateWithLifecycle()
+                PlaylistScreen(
+                    playlists = state.playlists,
+                    layoutType = state.layout,
+                    sorting = state.sorting,
+                    onPlaylistClick = ::onPlaylistClick,
+                    onPlayClick = parentViewModel::playPlaylist,
+                    onAddToQueue = parentViewModel::addPlaylistToBackOfQueue,
+                    onAddPlaylistImage = ::addPlaylistImage,
+                    onDeletePlaylist = { title -> parentViewModel.removePlaylists(listOf(title)) },
+                    onCreatePlaylist = parentViewModel::createNamedPlaylist,
+                    onRenamePlaylist = { old, new -> parentViewModel.updatePlaylistTitle(old, new) },
+                    onLayoutToggle = {
+                        val next = if (state.layout == LayoutType.LINEAR_LAYOUT)
+                            LayoutType.TWO_GRID_LAYOUT
+                        else
+                            LayoutType.LINEAR_LAYOUT
+                        viewModel.savePlaylistLayout(context, next)
+                    },
+                    onSortingSelected = { option ->
+                        viewModel.savePlaylistSorting(context, option)
                     }
-
-                    if (binding.displayRecyclerview.adapter != null) {
-                        // Adapter already exists — swap it out if the layout type changed,
-                        // otherwise just push the updated list to the existing adapter.
-                        if (binding.displayRecyclerview.adapter is PlaylistAdapter
-                            && state.layout != LayoutType.LINEAR_LAYOUT) {
-                            initializeGridLayout(playlists = sortedPlaylists)
-                        } else if (binding.displayRecyclerview.adapter is PlaylistGridAdapter
-                            && state.layout != LayoutType.TWO_GRID_LAYOUT) {
-                            initializeLinearLayout(playlists = sortedPlaylists)
-                        } else {
-                            val adapter = binding.displayRecyclerview.adapter
-                            when (adapter) {
-                                is PlaylistAdapter -> adapter.submitList(sortedPlaylists)
-                                is PlaylistGridAdapter -> adapter.submitList(sortedPlaylists)
-                                else -> Timber.e("onCreateView: Error Unable to submit list of unknown adapter type.")
-                            }
-                        }
-                    } else {
-                        // First emission — create the adapter for the user's saved layout preference.
-                        when (state.layout) {
-                            LayoutType.LINEAR_LAYOUT -> initializeLinearLayout(sortedPlaylists)
-                            LayoutType.TWO_GRID_LAYOUT -> initializeGridLayout(sortedPlaylists)
-                        }
-                    }
-                }
+                )
             }
         }
-
-        // Driven by MainViewModel so that SongListFragment can trigger the create-playlist
-        // prompt on this page after the user selects "Create playlist" from the song list.
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.shouldShowAddPlaylistPromptOnPlaylistPage.collect {
-                    promptMode = PromptMode.CREATE
-                    binding.playlistPrompt.visibility = View.VISIBLE
-                }
-            }
-        }
-
-        binding.layoutOption.setOnClickListener {
-            if (currLayout == LayoutType.LINEAR_LAYOUT) {
-                viewModel.savePlaylistLayout(requireContext(), LayoutType.TWO_GRID_LAYOUT)
-            } else {
-                viewModel.savePlaylistLayout(requireContext(), LayoutType.LINEAR_LAYOUT)
-            }
-        }
-
-        binding.settingsOption.setOnClickListener {
-            val menu = PopupMenu(
-                this.context,
-                binding.settingsOption,
-                Gravity.START,
-                0,
-                R.style.PopupMenuBlack
-            )
-            menu.menuInflater.inflate(R.menu.sorting_options_playlist, menu.menu)
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
-                viewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
-                return@setOnMenuItemClickListener true
-            }
-            menu.show()
-        }
-
-        binding.addPlaylistBtn.setOnClickListener {
-            parentViewModel.showAddPlaylistPromptOnPlaylistPage()
-        }
-
-        setupCreatePlaylistPrompt()
-        return binding.root
-    }
-
-    /** Sets up a vertical [LinearLayoutManager] and attaches a [PlaylistAdapter] with [playlists]. */
-    private fun initializeLinearLayout(playlists: List<MediaItem>) {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.displayRecyclerview.adapter = PlaylistAdapter(
-            this::onPlaylistClick,
-            parentViewModel::playPlaylist,
-            this::handlePlaylistSetting
-        )
-        (binding.displayRecyclerview.adapter as PlaylistAdapter).submitList(playlists)
-    }
-
-    /** Sets up a [GridLayoutManager] and attaches a [PlaylistGridAdapter] with [playlists]. */
-    private fun initializeGridLayout(playlists: List<MediaItem>) {
-        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
-        binding.displayRecyclerview.adapter = PlaylistGridAdapter(
-            this::onPlaylistClick,
-            parentViewModel::playPlaylist,
-            this::handlePlaylistSetting
-        )
-        (binding.displayRecyclerview.adapter as PlaylistGridAdapter).submitList(playlists)
-    }
-
-    /**
-     * Routes a popup menu selection to the appropriate action.
-     *
-     * [playlists] must be non-empty for any action to proceed; an empty list is logged and
-     * returned early.
-     *
-     * @param option The menu action chosen by the user.
-     * @param playlists The list of playlist titles the action should be applied to.
-     */
-    private fun handlePlaylistSetting(option: MenuOptionUtil.MenuOption, playlists: List<String>) {
-        Timber.d("handlePlaylistSetting: option=$option, playlists=$playlists")
-        if (playlists.isEmpty()) {
-            Timber.d("handlePlaylistSetting: Playlists are empty, cannot handle setting.")
-            return
-        }
-        when (option) {
-            MenuOptionUtil.MenuOption.PLAY_PLAYLIST_ONLY -> playPlaylistOnly(playlists)
-            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> addPlaylistToQueue(listOf(playlists[0]))
-            MenuOptionUtil.MenuOption.RENAME_PLAYLIST -> renamePlaylist(playlists[0])
-            MenuOptionUtil.MenuOption.ADD_PLAYLIST_IMAGE -> addPlaylistImage(playlists[0])
-            MenuOptionUtil.MenuOption.REMOVE_PLAYLIST -> removePlaylists(playlists)
-            else -> Timber.d("handleMenuItem: UNKNOWN menuitem...")
-        }
-    }
-
-    /**
-     * Plays the first (and expected only) playlist in [playlists].
-     *
-     * Only the first element is used; passing more than one playlist title has no effect
-     * beyond the first entry.
-     *
-     * @param playlists A list containing the title of the playlist to play. Should have exactly
-     *   one element.
-     */
-    private fun playPlaylistOnly(playlists: List<String>) {
-        Timber.d("playPlaylistOnly: ")
-        if (playlists.isNotEmpty()) {
-            parentViewModel.playPlaylist(playlists[0])
-        }
-    }
-
-    /**
-     * Appends the first playlist in [playlists] to the end of the current queue.
-     *
-     * @param playlists A list containing the title of the playlist to enqueue.
-     */
-    private fun addPlaylistToQueue(playlists: List<String>) {
-        Timber.d("addPlaylistToQueue: ")
-        if (playlists.isNotEmpty()) {
-            parentViewModel.addPlaylistToBackOfQueue(playlists[0])
-        }
-    }
-
-    /**
-     * Reconfigures the text input prompt for renaming and makes it visible.
-     *
-     * After the rename completes (option 2), the prompt is reset to the create-playlist
-     * configuration by calling [setupCreatePlaylistPrompt].
-     *
-     * @param playlistTitle The current title of the playlist being renamed.
-     */
-    private fun renamePlaylist(playlistTitle: String) {
-        setupRenamePlaylistPrompt(playlistTitle)
-        binding.playlistPrompt.visibility = View.VISIBLE
     }
 
     /**
@@ -345,35 +142,6 @@ class PlaylistFragment : Fragment() {
     private fun addPlaylistImage(playlistTitle: String) {
         playlistThatNeedsNewImage = playlistTitle
         getPicture.launch("image/*")
-    }
-
-    /**
-     * Deletes each playlist in [playlists] via [MainViewModel].
-     *
-     * @param playlists The titles of the playlists to remove.
-     */
-    private fun removePlaylists(playlists: List<String>) {
-        Timber.d("removePlaylists: playlists=$playlists")
-        parentViewModel.removePlaylists(playlists)
-    }
-
-    /**
-     * Wires the text prompt for the rename-playlist flow.
-     *
-     * Option 1 (Cancel) dismisses the prompt without saving.
-     * Option 2 (Update) calls [MainViewModel.updatePlaylistTitle] with the user-entered name,
-     * then resets the prompt to the create-playlist configuration via [setupCreatePlaylistPrompt].
-     *
-     * @param playlistTitle The current title passed to [MainViewModel.updatePlaylistTitle] as
-     *   the "old" name to be replaced.
-     */
-    private fun setupRenamePlaylistPrompt(playlistTitle: String) {
-        renameTargetTitle = playlistTitle
-        promptMode = PromptMode.RENAME
-    }
-
-    private fun setupCreatePlaylistPrompt() {
-        promptMode = PromptMode.CREATE
     }
 
     /**

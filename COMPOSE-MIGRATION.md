@@ -377,18 +377,18 @@ Track deleted files here as migration progresses. A file in this list should not
 - [x] `res/layout/fragment_songlist.xml`
 - [x] `adapter/SongListAdapter.kt`
 - [x] `res/layout/viewholder_song.xml`
-- [ ] `res/layout/fragment_albumlist.xml`
-- [ ] `adapter/AlbumListAdapter.kt`
-- [ ] `adapter/AlbumGridAdapter.kt`
-- [ ] `res/layout/viewholder_album.xml`
-- [ ] `res/layout/viewholder_album_grid_layout.xml`
-- [ ] `res/layout/fragment_playlist.xml`
-- [ ] `adapter/PlaylistAdapter.kt`
-- [ ] `adapter/PlaylistGridAdapter.kt`
-- [ ] `adapter/PlaylistPromptAdapter.kt`
-- [ ] `res/layout/viewholder_playlist.xml`
-- [ ] `res/layout/viewholder_playlist_grid_layout.xml`
-- [ ] `res/layout/viewholder_playlist_prompt.xml`
+- [x] `res/layout/fragment_albumlist.xml`
+- [x] `adapter/AlbumListAdapter.kt`
+- [x] `adapter/AlbumGridAdapter.kt`
+- [x] `res/layout/viewholder_album.xml`
+- [x] `res/layout/viewholder_album_grid_layout.xml`
+- [x] `res/layout/fragment_playlist.xml`
+- [x] `adapter/PlaylistAdapter.kt`
+- [x] `adapter/PlaylistGridAdapter.kt`
+- [x] `adapter/PlaylistPromptAdapter.kt`
+- [x] `res/layout/viewholder_playlist.xml`
+- [x] `res/layout/viewholder_playlist_grid_layout.xml`
+- [x] `res/layout/viewholder_playlist_prompt.xml`
 
 ### Phase 4
 - [ ] `res/layout/player_display_fragment.xml`

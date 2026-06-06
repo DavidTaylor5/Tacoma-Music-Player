@@ -35,6 +35,7 @@
     <string name="order_by_recently_modified">Order by Recently Modified</string>
     <string name="choose_a_playlist_to_view">Choose a playlist to View</string>
     <string name="choose_an_album_to_view">Choose an album to View</string>
+    <string name="no_albums_found">No albums found</string>
     <string name="search_for_albums_and_songs">Search for Albums and Songs</string>
     <string name="queue">Queue</string>
     <string name="no_music_in_queue">No songs in queue…</string>
