@@ -1,5 +1,6 @@
 package com.andaagii.tacomamusicplayer.fragment.pages
 
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,8 +13,10 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.res.ResourcesCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -33,6 +36,13 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
+import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.andaagii.tacomamusicplayer.composables.InformationScreen
+import com.andaagii.tacomamusicplayer.composables.InputTextPrompt
+import com.andaagii.tacomamusicplayer.composables.MultiSelectPrompt
+import com.andaagii.tacomamusicplayer.composables.PlaylistPrompt
+import com.andaagii.tacomamusicplayer.composables.SongGroupInfoView
 import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
@@ -91,6 +101,12 @@ class SongListFragment : Fragment() {
      * taps "Add to playlist"; read when the user confirms the prompt selection.
      */
     private var songsToAddToPlaylistPrompt: List<MediaItem>? = null
+
+    /** URI of the artwork for the currently displayed song group. Drives [SongGroupInfoView]. */
+    private var songGroupArtUri by mutableStateOf<Uri?>(null)
+
+    /** Title of the currently displayed song group. Drives [SongGroupInfoView]. */
+    private var songGroupTitle by mutableStateOf("")
 
     /**
      * Provides drag-to-reorder behaviour for playlist song lists.
@@ -318,65 +334,55 @@ class SongListFragment : Fragment() {
             }
         }
 
-        // Filter out the internal queue and original-order playlists so they never appear
-        // in the "add to playlist" chooser presented to the user.
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.availablePlaylists.collect { playlists ->
-                    val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE &&
-                            playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
-                    }
-                    binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isShowingPlaylistPrompt.collect { isShowing ->
-                    if (isShowing) {
-                        binding.playlistPrompt.visibility = View.VISIBLE
-                    } else {
-                        binding.playlistPrompt.visibility = View.GONE
-                    }
-                }
-            }
-        }
-
-        binding.songGroupInfo.setOnPlayIconPressed {
-            handlePlaySongGroup()
-        }
-
-        binding.songGroupInfo.setOnMenuIconPressed {
-            val menu = PopupMenu(
-                binding.root.context,
-                binding.songGroupInfo.getMenuIconView(),
-                Gravity.START,
-                0,
-                R.style.PopupMenuBlack
-            )
-            menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
-                    parentViewModel.currentSongGroup.value?.songs ?: listOf()
+        binding.songListInformationScreen.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                InformationScreen(
+                    firstIcon = painterResource(R.drawable.playlist_icon),
+                    firstInfo = getString(R.string.choose_a_playlist_to_view),
+                    onFirstClick = { parentViewModel.setPage(PageType.PLAYLIST_PAGE) },
+                    secondIcon = painterResource(R.drawable.browse_album_icon),
+                    secondInfo = getString(R.string.choose_an_album_to_view),
+                    onSecondClick = { parentViewModel.setPage(PageType.ALBUM_PAGE) }
                 )
-                return@setOnMenuItemClickListener true
             }
-            menu.show()
+        }
+
+        binding.songGroupInfo.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                SongGroupInfoView(
+                    imageUri = songGroupArtUri,
+                    title = songGroupTitle,
+                    onPlayClick = { handlePlaySongGroup() },
+                    onMenuClick = {
+                        val menu = PopupMenu(
+                            context,
+                            binding.songGroupInfo,
+                            Gravity.START,
+                            0,
+                            R.style.PopupMenuBlack
+                        )
+                        menu.menuInflater.inflate(R.menu.songlist_songgroup_options, menu.menu)
+                        menu.setOnMenuItemClickListener { item ->
+                            Toast.makeText(context, "You Clicked ${item.title}", Toast.LENGTH_SHORT).show()
+                            handleSongSetting(
+                                MenuOptionUtil.determineMenuOptionFromTitle(item.toString()),
+                                parentViewModel.currentSongGroup.value?.songs ?: listOf()
+                            )
+                            true
+                        }
+                        menu.show()
+                    }
+                )
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.currentlySelectedSongs.collect { currentlySelectedSongs ->
-                    binding.multiSelectPrompt.setPromptText("${currentlySelectedSongs.size} songs selected")
-
                     if (currentlySelectedSongs.isEmpty()) {
-                        Timber.d("onCreateView: set multiselectPrompt to GONE")
-                        // INVISIBLE rather than GONE because custom views can exhibit layout glitches
-                        // when re-adding a GONE view to the hierarchy mid-animation.
+                        Timber.d("onCreateView: set multiselectPrompt to INVISIBLE")
                         binding.multiSelectPrompt.visibility = View.INVISIBLE
                     } else {
                         Timber.d("onCreateView: set multiselectPrompt to VISIBLE")
@@ -392,38 +398,89 @@ class SongListFragment : Fragment() {
             }
         }
 
-        binding.multiSelectPrompt.setOnMenuIconClick {
-            val menu = PopupMenu(
-                this.context,
-                binding.multiSelectPrompt,
-                Gravity.START,
-                0,
-                R.style.PopupMenuBlack
-            )
-            // Show playlist-specific options (e.g., remove) when inside a playlist;
-            // show album options (e.g., add to queue) otherwise.
-            if (currentSongGroup?.type == SongGroupType.PLAYLIST) {
-                menu.menuInflater.inflate(R.menu.multi_select_playlist_options, menu.menu)
-            } else {
-                menu.menuInflater.inflate(R.menu.multi_select_album_options, menu.menu)
-            }
-            menu.setOnMenuItemClickListener {
-                Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
-                handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),
-                    viewModel.currentlySelectedSongs.value
+        binding.multiSelectPrompt.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val selectedSongs by viewModel.currentlySelectedSongs.collectAsStateWithLifecycle()
+                MultiSelectPrompt(
+                    descriptionText = "${selectedSongs.size} songs selected",
+                    onMenuIconClick = {
+                        val menu = PopupMenu(
+                            context,
+                            binding.multiSelectPrompt,
+                            Gravity.START,
+                            0,
+                            R.style.PopupMenuBlack
+                        )
+                        if (currentSongGroup?.type == SongGroupType.PLAYLIST) {
+                            menu.menuInflater.inflate(R.menu.multi_select_playlist_options, menu.menu)
+                        } else {
+                            menu.menuInflater.inflate(R.menu.multi_select_album_options, menu.menu)
+                        }
+                        menu.setOnMenuItemClickListener { item ->
+                            Toast.makeText(context, "You Clicked ${item.title}", Toast.LENGTH_SHORT).show()
+                            handleSongSetting(
+                                MenuOptionUtil.determineMenuOptionFromTitle(item.title.toString()),
+                                viewModel.currentlySelectedSongs.value
+                            )
+                            true
+                        }
+                        menu.show()
+                    },
+                    onCloseIconClick = {
+                        (binding.displayRecyclerview.adapter as? SongListAdapter)?.clearAllSelected()
+                        viewModel.clearMultiSelectSongs()
+                        binding.createPlaylistPrompt.visibility = View.GONE
+                        binding.playlistPrompt.visibility = View.GONE
+                    }
                 )
-                return@setOnMenuItemClickListener true
             }
-            menu.show()
         }
 
-        binding.multiSelectPrompt.setOnCloseIconClick {
-            binding.displayRecyclerview.adapter?.let { adapter ->
-                (adapter as SongListAdapter).clearAllSelected()
-                viewModel.clearMultiSelectSongs()
-                binding.createPlaylistPrompt.closePrompt()
-                binding.playlistPrompt.closePrompt()
+        binding.playlistPrompt.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val allPlaylists by parentViewModel.availablePlaylists.collectAsStateWithLifecycle()
+                val playlists = allPlaylists.filter {
+                    it.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE &&
+                        it.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+                }
+                PlaylistPrompt(
+                    playlists = playlists,
+                    onAddClick = { checkedTitles ->
+                        parentViewModel.addSongsToAPlaylist(checkedTitles.toList(), songsToAddToPlaylistPrompt ?: listOf())
+                        viewModel.clearMultiSelectSongs()
+                        binding.playlistPrompt.visibility = View.GONE
+                    },
+                    onCloseClick = {
+                        binding.createPlaylistPrompt.visibility = View.GONE
+                        binding.playlistPrompt.visibility = View.GONE
+                    },
+                    onCreateNewPlaylistClick = {
+                        binding.createPlaylistPrompt.visibility = View.VISIBLE
+                    }
+                )
+            }
+        }
+
+        binding.createPlaylistPrompt.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                InputTextPrompt(
+                    hint = Const.NEW_PLAYLIST_HINT,
+                    option1Text = Const.CANCEL,
+                    option2Text = Const.ADD,
+                    onOption1Click = { _ ->
+                        parentViewModel.removeVirtualKeyboard()
+                        binding.createPlaylistPrompt.visibility = View.GONE
+                        viewModel.clearMultiSelectSongs()
+                    },
+                    onOption2Click = { text ->
+                        parentViewModel.removeVirtualKeyboard()
+                        parentViewModel.createNamedPlaylist(text)
+                        binding.createPlaylistPrompt.visibility = View.GONE
+                    }
+                )
             }
         }
 
@@ -455,15 +512,13 @@ class SongListFragment : Fragment() {
             binding.searchEditText.text.clear()
         }
 
-        setupCreatePlaylistPrompt()
-        setupPlaylistPrompt()
         setupPage()
 
         return binding.root
     }
 
     /**
-     * Populates the `CustomSongGroupInfoView` header with the active group's title and artwork,
+     * Updates the [com.andaagii.tacomamusicplayer.composables.SongGroupInfoView] header state
      * and enables or disables drag-to-reorder based on group type.
      *
      * Drag is enabled only for [SongGroupType.PLAYLIST] groups — album tracks have a fixed
@@ -472,16 +527,9 @@ class SongListFragment : Fragment() {
     private fun initializeSongGroupInfo() {
         Timber.d("initializeSongGroupInfo: ")
         currentSongGroup?.let { songGroup ->
-            binding.songGroupInfo.setSongGroupTitleText(songGroup.group.mediaMetadata.albumTitle.toString())
-
+            songGroupTitle = songGroup.group.mediaMetadata.albumTitle.toString()
             val artFile = File(songGroup.group.mediaMetadata.artworkUri.toString())
-            if (artFile.exists()) {
-                binding.songGroupInfo.getSongGroupImage().setImageURI(songGroup.group.mediaMetadata.artworkUri)
-            } else {
-                binding.songGroupInfo.getSongGroupImage().setImageDrawable(
-                    AppCompatResources.getDrawable(binding.root.context, R.drawable.white_note)
-                )
-            }
+            songGroupArtUri = if (artFile.exists()) songGroup.group.mediaMetadata.artworkUri else null
 
             // Detach drag from albums so users cannot accidentally reorder tracks that
             // have a fixed MediaStore order. Attach for playlists.
@@ -593,69 +641,6 @@ class SongListFragment : Fragment() {
     }
 
     /**
-     * Wires the create-playlist text prompt in the song list context.
-     *
-     * Option 1 (Cancel) closes the prompt and clears multi-select state.
-     * Option 2 (Add) calls [MainViewModel.createNamedPlaylist] with the user-entered name.
-     */
-    private fun setupCreatePlaylistPrompt() {
-        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
-
-        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
-        binding.createPlaylistPrompt.setOption1ButtonOnClick {
-            binding.createPlaylistPrompt.closePrompt()
-            parentViewModel.removeVirtualKeyboard()
-            viewModel.clearMultiSelectSongs()
-        }
-
-        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
-        binding.createPlaylistPrompt.setOption2ButtonOnClick {
-            parentViewModel.removeVirtualKeyboard()
-            parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
-            binding.createPlaylistPrompt.visibility = View.GONE
-        }
-    }
-
-    /**
-     * Wires the "add songs to playlist" prompt overlay.
-     *
-     * The Add button calls [MainViewModel.addSongsToAPlaylist] with the checked playlists and
-     * the songs staged in [songsToAddToPlaylistPrompt]. The "Create new playlist" shortcut
-     * opens [binding.createPlaylistPrompt] inline. The Close button dismisses both prompts.
-     */
-    private fun setupPlaylistPrompt() {
-        binding.playlistPrompt.onAddButtonClick {
-            val checkedPlaylists: List<String> = viewModel.checkedPlaylists.value
-            val playlistAddSongs: List<MediaItem> = songsToAddToPlaylistPrompt ?: listOf()
-
-            parentViewModel.addSongsToAPlaylist(checkedPlaylists, playlistAddSongs)
-            viewModel.clearMultiSelectSongs()
-            binding.playlistPrompt.closePrompt()
-        }
-
-        binding.playlistPrompt.onCreateNewPlaylistClicked {
-            binding.createPlaylistPrompt.showPrompt()
-        }
-
-        binding.playlistPrompt.onCloseButtonClicked {
-            binding.createPlaylistPrompt.closePrompt()
-            binding.playlistPrompt.closePrompt()
-        }
-
-        binding.playlistPrompt.setPlaylistCheckedHandler { playlistTitle, isChecked ->
-            viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isPlaylistPromptAddClickable.collect { isClickable ->
-                    binding.playlistPrompt.updateAddButtonClickability(isClickable)
-                }
-            }
-        }
-    }
-
-    /**
      * Routes a song-level or group-level menu action to the appropriate handler.
      *
      * For [REMOVE_FROM_PLAYLIST]: a single-item removal uses [RecyclerView.Adapter.notifyItemRemoved]
@@ -680,7 +665,6 @@ class SongListFragment : Fragment() {
         when (menuOption) {
             PLAY_SONG_GROUP -> handlePlaySongGroup()
             ADD_TO_PLAYLIST -> {
-                viewModel.prepareSongsForPlaylists()
                 songsToAddToPlaylistPrompt = mediaItems
                 handleAddToPlaylist(mediaItems)
             }
@@ -772,7 +756,7 @@ class SongListFragment : Fragment() {
      * @param mediaItems The tracks to be added to the chosen playlist(s).
      */
     private fun handleAddToPlaylist(mediaItems: List<MediaItem>) {
-        binding.playlistPrompt.showPrompt()
+        binding.playlistPrompt.visibility = View.VISIBLE
     }
 
     /**
@@ -836,19 +820,6 @@ class SongListFragment : Fragment() {
      * empty-state information screen that navigate to the playlist and album browsing pages.
      */
     private fun setupPage() {
-        binding.songGroupInfo.setSongGroupTitleText("PARTICULAR ALBUM - ARTIST")
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-
-        binding.songListInformationScreen.setFirstInfo(getString(R.string.choose_a_playlist_to_view))
-        ResourcesCompat.getDrawable(resources, R.drawable.playlist_icon, null)?.let { drawable ->
-            binding.songListInformationScreen.setFirstIcon(drawable)
-        }
-        binding.songListInformationScreen.setFirstIconCallback { parentViewModel.setPage(PageType.PLAYLIST_PAGE) }
-
-        binding.songListInformationScreen.setSecondInfo(getString(R.string.choose_an_album_to_view))
-        ResourcesCompat.getDrawable(resources, R.drawable.browse_album_icon, null)?.let { drawable ->
-            binding.songListInformationScreen.setSecondIcon(drawable)
-        }
-        binding.songListInformationScreen.setSecondIconCallback { parentViewModel.setPage(PageType.ALBUM_PAGE) }
     }
 }

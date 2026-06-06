@@ -10,8 +10,9 @@ import timber.log.Timber
 /**
  * ViewModel that manages multi-select state for song list screens.
  *
- * Tracks which songs the user has long-pressed to select, which playlists they have ticked in
- * the add-to-playlist prompt, and whether the prompt dialogs are visible.
+ * Tracks which songs the user has long-pressed to select and whether the multi-select
+ * action bar is visible. Playlist checkbox state is managed internally by the
+ * [com.andaagii.tacomamusicplayer.composables.PlaylistPrompt] composable.
  *
  * Note: Hilt injection is currently disabled (`@HiltViewModel` is commented out); this ViewModel
  * must be instantiated manually at the call site.
@@ -19,9 +20,7 @@ import timber.log.Timber
  * Exposed state:
  * - [isShowingPlaylistPrompt] — whether the add-to-playlist sheet is visible.
  * - [isShowingMultiSelectPrompt] — whether the multi-select action bar is visible.
- * - [checkedPlaylists] — playlist titles the user has ticked in the prompt.
  * - [currentlySelectedSongs] — songs the user has selected via long-press.
- * - [isPlaylistPromptAddClickable] — whether the "Add" button in the prompt is enabled.
  */
 //@HiltViewModel
 class SongListViewModel: ViewModel() {
@@ -41,46 +40,12 @@ class SongListViewModel: ViewModel() {
     private val _isShowingMultiSelectPrompt = MutableStateFlow(false)
 
     /**
-     * Titles of playlists ticked by the user in the add-to-playlist prompt.
-     * Reset to an empty list by [prepareSongsForPlaylists] at the start of each add flow.
-     */
-    val checkedPlaylists: StateFlow<List<String>>
-        get() = _checkedPlaylists
-    private val _checkedPlaylists = MutableStateFlow<List<String>>(emptyList())
-
-    /**
      * Accumulates [MediaItem] objects as the user long-presses songs.
      * Cleared by [clearMultiSelectSongs].
      */
     val currentlySelectedSongs: StateFlow<List<MediaItem>>
         get() = _currentlySelectedSongs
     private val _currentlySelectedSongs = MutableStateFlow<List<MediaItem>>(emptyList())
-
-    /**
-     * `true` when at least one playlist is checked in the prompt; controls the enabled state of
-     * the "Add" button. Updated by [updatePlaylistPromptAddClickability].
-     */
-    val isPlaylistPromptAddClickable: StateFlow<Boolean>
-        get() = _isPlaylistPromptAddClickable
-    private val _isPlaylistPromptAddClickable = MutableStateFlow(false)
-
-    /**
-     * Resets [checkedPlaylists] to empty and disables the Add button in preparation for a fresh
-     * add-to-playlist flow.
-     *
-     * Call this before showing the add-to-playlist prompt so that any previously ticked playlists
-     * do not carry over to the new selection.
-     */
-    fun prepareSongsForPlaylists() {
-        Timber.d("prepareSongsForPlaylists: ")
-
-        val resetCheckedPlaylists = emptyList<String>()
-
-        // No playlist selected yet at the start of a new add flow
-        _checkedPlaylists.value = resetCheckedPlaylists
-
-        updatePlaylistPromptAddClickability(resetCheckedPlaylists)
-    }
 
     /**
      * Adds [songs] to [currentlySelectedSongs] and optionally shows the multi-select action bar.
@@ -131,52 +96,5 @@ class SongListViewModel: ViewModel() {
 
         _currentlySelectedSongs.value = emptyList()
         _isShowingMultiSelectPrompt.value = false
-    }
-
-    /**
-     * Adds or removes [playlistTitle] from [checkedPlaylists] based on [isChecked], then updates
-     * [isPlaylistPromptAddClickable] as a side effect.
-     *
-     * @param playlistTitle The title of the playlist the user tapped in the prompt.
-     * @param isChecked `true` if the user checked the playlist; `false` if they unchecked it.
-     */
-    fun updateCheckedPlaylists(playlistTitle: String, isChecked: Boolean ) {
-        Timber.d("updateCheckedPlaylists: ")
-
-        // Maintain a local copy to pass to clickability update after the StateFlow update
-        var updatedPlaylistsWithCheckmarks = mutableListOf<String>()
-
-        if(isChecked) {
-            // Add the playlist if it isn't already in the checked list
-            val checkedPlaylists = _checkedPlaylists.value
-            if(!checkedPlaylists.contains(playlistTitle)) {
-                updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
-                updatedPlaylistsWithCheckmarks.add(playlistTitle)
-                _checkedPlaylists.value = updatedPlaylistsWithCheckmarks
-            }
-
-        } else {
-            // Remove the playlist if it is currently checked
-            val checkedPlaylists = _checkedPlaylists.value
-            if(checkedPlaylists.contains(playlistTitle)) {
-                updatedPlaylistsWithCheckmarks = checkedPlaylists.toMutableList()
-                updatedPlaylistsWithCheckmarks.removeAll {
-                    it == playlistTitle
-                }
-                _checkedPlaylists.value = updatedPlaylistsWithCheckmarks
-            }
-        }
-
-        updatePlaylistPromptAddClickability(updatedPlaylistsWithCheckmarks)
-    }
-
-    /**
-     * Enables the "Add" button in the add-to-playlist prompt when at least one playlist is
-     * checked; disables it when the list is empty.
-     *
-     * @param checkedPlaylists The current list of ticked playlist titles.
-     */
-    private fun updatePlaylistPromptAddClickability(checkedPlaylists: List<String>) {
-        _isPlaylistPromptAddClickable.value = checkedPlaylists.isNotEmpty()
     }
 }
