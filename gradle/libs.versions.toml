@@ -39,6 +39,7 @@ media3              = "1.2.1"
 material            = "1.11.0"
 coil                = "2.5.0"
 ucrop               = "2.2.11"
+reorderable         = "2.4.3"
 
 # Utilities
 timber              = "4.7.1"
@@ -81,6 +82,7 @@ hilt-android-compiler                = { group = "com.google.dagger",           
 # Hilt — AndroidX extensions
 androidx-hilt-work                   = { group = "androidx.hilt",                name = "hilt-work",                  version.ref = "hilt-androidx" }
 androidx-hilt-compiler               = { group = "androidx.hilt",                name = "hilt-compiler",              version.ref = "hilt-androidx" }
+androidx-hilt-navigation-compose     = { group = "androidx.hilt",                name = "hilt-navigation-compose",    version.ref = "hilt-androidx" }
 
 # Jetpack Compose — BOM + libraries (BOM manages all compose.* versions)
 androidx-compose-bom                 = { group = "androidx.compose",             name = "compose-bom",                version.ref = "compose-bom" }
@@ -89,6 +91,8 @@ androidx-compose-ui-tooling-preview  = { group = "androidx.compose.ui",         
 androidx-compose-ui-tooling          = { group = "androidx.compose.ui",          name = "ui-tooling" }
 androidx-compose-material3           = { group = "androidx.compose.material3",   name = "material3" }
 androidx-activity-compose            = { group = "androidx.activity",            name = "activity-compose" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle",           name = "lifecycle-viewmodel-compose" }
+androidx-navigation-compose          = { group = "androidx.navigation",          name = "navigation-compose",          version.ref = "navigation" }
 
 # Coroutines
 kotlinx-coroutines-core              = { group = "org.jetbrains.kotlinx",        name = "kotlinx-coroutines-core",    version.ref = "coroutines" }
@@ -114,6 +118,7 @@ google-material                      = { group = "com.google.android.material", 
 coil                                 = { group = "io.coil-kt",                   name = "coil",                       version.ref = "coil" }
 coil-compose                         = { group = "io.coil-kt",                   name = "coil-compose",               version.ref = "coil" }
 ucrop                                = { group = "com.github.yalantis",           name = "ucrop",                      version.ref = "ucrop" }
+reorderable                          = { group = "sh.calvin.reorderable",         name = "reorderable",                version.ref = "reorderable" }
 
 # Utilities
 timber                               = { group = "com.jakewharton.timber",       name = "timber",                     version.ref = "timber" }

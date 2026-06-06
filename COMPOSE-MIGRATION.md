@@ -368,43 +368,43 @@ Track deleted files here as migration progresses. A file in this list should not
 ### Phase 2
 - [x] `res/layout/fragment_permission_denied.xml`
 - [x] `res/layout-land/fragment_permission_denied.xml`
-- [ ] `res/layout/fragment_music_playing.xml`
-- [ ] `res/layout-land/fragment_music_playing.xml`
-- [ ] `res/layout/fragment_current_queue.xml`
-- [ ] `adapter/QueueListAdapter.kt`
+- [x] `res/layout/fragment_music_playing.xml`
+- [x] `res/layout-land/fragment_music_playing.xml`
+- [x] `res/layout/fragment_current_queue.xml`
+- [x] `adapter/QueueListAdapter.kt`
 
 ### Phase 3
-- [ ] `res/layout/fragment_songlist.xml`
-- [ ] `adapter/SongListAdapter.kt`
-- [ ] `res/layout/viewholder_song.xml`
-- [ ] `res/layout/fragment_albumlist.xml`
-- [ ] `adapter/AlbumListAdapter.kt`
-- [ ] `adapter/AlbumGridAdapter.kt`
-- [ ] `res/layout/viewholder_album.xml`
-- [ ] `res/layout/viewholder_album_grid_layout.xml`
-- [ ] `res/layout/fragment_playlist.xml`
-- [ ] `adapter/PlaylistAdapter.kt`
-- [ ] `adapter/PlaylistGridAdapter.kt`
-- [ ] `adapter/PlaylistPromptAdapter.kt`
-- [ ] `res/layout/viewholder_playlist.xml`
-- [ ] `res/layout/viewholder_playlist_grid_layout.xml`
-- [ ] `res/layout/viewholder_playlist_prompt.xml`
+- [x] `res/layout/fragment_songlist.xml`
+- [x] `adapter/SongListAdapter.kt`
+- [x] `res/layout/viewholder_song.xml`
+- [x] `res/layout/fragment_albumlist.xml`
+- [x] `adapter/AlbumListAdapter.kt`
+- [x] `adapter/AlbumGridAdapter.kt`
+- [x] `res/layout/viewholder_album.xml`
+- [x] `res/layout/viewholder_album_grid_layout.xml`
+- [x] `res/layout/fragment_playlist.xml`
+- [x] `adapter/PlaylistAdapter.kt`
+- [x] `adapter/PlaylistGridAdapter.kt`
+- [x] `adapter/PlaylistPromptAdapter.kt`
+- [x] `res/layout/viewholder_playlist.xml`
+- [x] `res/layout/viewholder_playlist_grid_layout.xml`
+- [x] `res/layout/viewholder_playlist_prompt.xml`
 
 ### Phase 4
-- [ ] `res/layout/player_display_fragment.xml`
-- [ ] `res/layout-land/player_display_fragment.xml`
-- [ ] `adapter/ScreenSlidePagerAdapter.kt`
+- [x] `res/layout/player_display_fragment.xml`
+- [x] `res/layout-land/player_display_fragment.xml`
+- [x] `adapter/ScreenSlidePagerAdapter.kt`
 
 ### Phase 5
-- [ ] `res/layout/activity_main.xml`
-- [ ] `fragment/PlayerDisplayFragment.kt`
-- [ ] `fragment/PermissionDeniedFragment.kt`
-- [ ] `fragment/MusicPlayingFragment.kt`
-- [ ] `fragment/CurrentQueueFragment.kt`
-- [ ] `fragment/pages/AlbumListFragment.kt`
-- [ ] `fragment/pages/PlaylistFragment.kt`
-- [ ] `fragment/pages/SongListFragment.kt`
-- [ ] `adapter/diff/MediaItemDiffCallback.kt` (if unused)
+- [x] `res/layout/activity_main.xml`
+- [x] `fragment/PlayerDisplayFragment.kt`
+- [x] `fragment/PermissionDeniedFragment.kt`
+- [x] `fragment/MusicPlayingFragment.kt`
+- [x] `fragment/CurrentQueueFragment.kt`
+- [x] `fragment/pages/AlbumListFragment.kt`
+- [x] `fragment/pages/PlaylistFragment.kt`
+- [x] `fragment/pages/SongListFragment.kt`
+- [x] `adapter/diff/` directory (was already empty)
 
 ---
 

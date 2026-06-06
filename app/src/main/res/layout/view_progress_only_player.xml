@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.media3.ui.PlayerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/progress_only_player_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:use_controller="true"
+    app:auto_show="false"
+    app:hide_on_touch="false"
+    app:show_timeout="0"
+    app:controller_layout_id="@layout/custom_exo_controller_update"
+    app:player_layout_id="@layout/custom_exo_player_update" />

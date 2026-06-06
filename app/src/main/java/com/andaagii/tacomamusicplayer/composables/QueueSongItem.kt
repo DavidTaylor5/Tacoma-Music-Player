@@ -54,8 +54,9 @@ private val QueuePlayingGreen = Color(0xFF4CAF50)
  *   card border; `false` renders a white border. Corresponds to [DisplaySong.showPlayIndicator].
  * @param onSongClick Called when the user taps the row to jump to this song in the queue.
  * @param onMenuClick Called when the user taps the overflow menu button.
- * @param onDragHandleStartDrag Called when the user presses the drag handle to begin
- *   reordering. Connect to the host `LazyListState` drag logic when wiring up.
+ * @param dragHandleModifier Modifier applied to the drag-handle icon. In a reorderable
+ *   `LazyColumn`, the caller passes `Modifier.draggableHandle(...)` from within a
+ *   `ReorderableItem` scope so the library can intercept the gesture.
  */
 @Composable
 fun QueueSongItem(
@@ -67,7 +68,7 @@ fun QueueSongItem(
     isCurrentlyPlaying: Boolean,
     onSongClick: () -> Unit,
     onMenuClick: () -> Unit,
-    onDragHandleStartDrag: () -> Unit = {}
+    dragHandleModifier: Modifier = Modifier
 ) {
     // Border color distinguishes the active track from the rest of the queue
     val borderColor = if (isCurrentlyPlaying) QueuePlayingGreen else Color.White
@@ -98,9 +99,7 @@ fun QueueSongItem(
                     .width(40.dp)
                     .height(60.dp)
                     .padding(horizontal = 10.dp)
-                    .pointerInput(Unit) {
-                        detectTapGestures(onPress = { onDragHandleStartDrag() })
-                    }
+                    .then(dragHandleModifier)
             )
 
             // Artwork area with playing indicator overlay — same 60×60 dp structure as SongItem

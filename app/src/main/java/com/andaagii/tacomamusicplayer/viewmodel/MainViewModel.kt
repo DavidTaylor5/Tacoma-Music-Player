@@ -73,7 +73,7 @@ import javax.inject.Inject
  * - [availablePlaylists] — live list of all user-created playlists.
  *
  * Exposed Flow/Channel (one-shot events):
- * - [navigateToPage] — one-shot event to scroll the ViewPager2 to a specific [PageType].
+ * - [navigateToPage] — one-shot event to scroll the [HorizontalPager] to a specific [PageType].
  * - [isPlaylistNameDuplicate] — one-shot event for a duplicate-playlist-name error.
  * - [screenState] — one-shot navigation event to a [ScreenType] destination.
  * - [notifyHideKeyboard] — one-shot keyboard-dismiss trigger.
@@ -151,7 +151,7 @@ class MainViewModel @Inject constructor(
     val screenState: Flow<ScreenType> = _screenState.receiveAsFlow()
 
     /**
-     * One-shot event that scrolls the [PlayerDisplayFragment] ViewPager2 to the given [PageType].
+     * One-shot event that scrolls the [MusicChooserScreen] [HorizontalPager] to the given [PageType].
      *
      * Backed by a [Channel] so each emission is consumed exactly once and is not re-delivered
      * on Fragment view recreation (unlike plain [MutableLiveData]).
@@ -510,7 +510,7 @@ class MainViewModel @Inject constructor(
 
     /**
      * Emits [page] as a one-shot navigation event on [navigateToPage], causing the
-     * [PlayerDisplayFragment] ViewPager2 to scroll to that page.
+     * [MusicChooserScreen] [HorizontalPager] to scroll to that page.
      *
      * @param page The [PageType] to navigate to.
      */
@@ -606,6 +606,22 @@ class MainViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * Removes [songsToRemove] from the current playlist group, updates [currentSongGroup]
+     * so the UI re-renders immediately, and persists the new order via [updatePlaylistOrder].
+     *
+     * @param songsToRemove The tracks to remove, matched by media ID.
+     */
+    fun removeSongsFromCurrentPlaylist(songsToRemove: List<MediaItem>) {
+        val current = _currentSongGroup.value ?: return
+        if (current.type != SongGroupType.PLAYLIST) return
+        val updated = current.copy(
+            songs = current.songs.filter { song -> songsToRemove.none { it.mediaId == song.mediaId } }
+        )
+        _currentSongGroup.value = updated
+        updatePlaylistOrder(updated)
     }
 
     /**
