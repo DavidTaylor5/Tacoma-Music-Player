@@ -37,6 +37,7 @@
     <string name="choose_an_album_to_view">Choose an album to View</string>
     <string name="search_for_albums_and_songs">Search for Albums and Songs</string>
     <string name="queue">Queue</string>
+    <string name="no_music_in_queue">No songs in queue…</string>
     <string name="clear">Clear</string>
     <string name="add_playlist">Add Playlist</string>
     <string name="song_title_song_artist">Song Title - Song Artist</string>

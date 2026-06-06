@@ -146,6 +146,9 @@ dependencies {
     // uCrop — image cropping
     implementation(libs.ucrop)
 
+    // Drag-to-reorder for LazyColumn (used in CurrentQueueScreen)
+    implementation(libs.reorderable)
+
     // Jetpack Compose — BOM pins all compose.* versions together
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

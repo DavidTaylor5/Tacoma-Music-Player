@@ -370,8 +370,8 @@ Track deleted files here as migration progresses. A file in this list should not
 - [x] `res/layout-land/fragment_permission_denied.xml`
 - [x] `res/layout/fragment_music_playing.xml`
 - [x] `res/layout-land/fragment_music_playing.xml`
-- [ ] `res/layout/fragment_current_queue.xml`
-- [ ] `adapter/QueueListAdapter.kt`
+- [x] `res/layout/fragment_current_queue.xml`
+- [x] `adapter/QueueListAdapter.kt`
 
 ### Phase 3
 - [ ] `res/layout/fragment_songlist.xml`
