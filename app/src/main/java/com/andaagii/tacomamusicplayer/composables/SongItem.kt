@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.composables
 
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,8 +49,8 @@ import com.andaagii.tacomamusicplayer.R
  * @param duration Pre-formatted duration string (e.g. "3:45").
  * @param artworkUri Content URI for the album artwork, or `null` for the placeholder.
  * @param showDragHandle Whether to render the reorder drag-handle icon. Defaults to `true`.
- * @param showFavoriteIndicator Whether to show the favourite/star overlay on the artwork.
- *   Defaults to `false`.
+ * @param isSelected Whether this song is selected in multi-select mode. Drives the animated
+ *   green selection border that sweeps in around the artwork. Defaults to `false`.
  * @param onSongClick Called when the user taps the text area to play the song.
  * @param onArtworkClick Called when the user taps the artwork / favourite overlay area.
  * @param onAddClick Called when the user taps the add-to-playlist button.
@@ -64,18 +67,26 @@ fun SongItem(
     duration: String,
     artworkUri: Uri?,
     showDragHandle: Boolean = true,
-    showFavoriteIndicator: Boolean = false,
+    isSelected: Boolean = false,
     onSongClick: () -> Unit,
     onArtworkClick: () -> Unit,
     onAddClick: () -> Unit,
     onMenuClick: () -> Unit,
     dragHandleModifier: Modifier = Modifier
 ) {
+    // The tap gesture detectors below run inside pointerInput(Unit), which never restarts and
+    // would otherwise capture the first callback instances forever. rememberUpdatedState keeps
+    // them pointing at the latest lambdas so artwork taps toggle the current selection state.
+    val currentArtworkClick by rememberUpdatedState(onArtworkClick)
+    val currentSongClick by rememberUpdatedState(onSongClick)
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .height(60.dp),
         shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = ListItemCardBackground),
+        border = BorderStroke(1.dp, ListItemCardStroke),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
@@ -95,15 +106,22 @@ fun SongItem(
                 )
             }
 
-            // Artwork area with favourite indicator overlay — 60×60 dp ConstraintLayout equivalent
+            // Artwork area with selection-border overlay — 60×60 dp ConstraintLayout equivalent.
+            // The border layer sits behind the 50 dp art (offset 5 dp top/start) so the green
+            // frames it, matching the original viewholder_song.xml z-order.
             Box(
                 modifier = Modifier
                     .size(60.dp)
                     .pointerInput(Unit) {
-                        detectTapGestures(onTap = { onArtworkClick() })
+                        detectTapGestures(onTap = { currentArtworkClick() })
                     },
                 contentAlignment = Alignment.Center
             ) {
+                SelectionBorder(
+                    isActive = isSelected,
+                    modifier = Modifier.size(60.dp)
+                )
+
                 AsyncImage(
                     model = artworkUri,
                     contentDescription = null,
@@ -115,17 +133,6 @@ fun SongItem(
                         .padding(top = 5.dp, start = 5.dp)
                         .align(Alignment.TopStart)
                 )
-
-                // Favourite star overlay — shown when the indicator is active.
-                // The original used AnimationDrawable; full animation can be wired in later.
-                if (showFavoriteIndicator) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_star_24_green),
-                        contentDescription = null,
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
             }
 
             // Song metadata — weight=10 taking the remaining row space, clickable to play
@@ -134,7 +141,7 @@ fun SongItem(
                     .weight(10f)
                     .padding(top = 10.dp, start = 10.dp)
                     .pointerInput(Unit) {
-                        detectTapGestures(onTap = { onSongClick() })
+                        detectTapGestures(onTap = { currentSongClick() })
                     }
             ) {
                 Text(
@@ -190,7 +197,7 @@ private fun SongItemPreview() {
         duration = "6:22",
         artworkUri = null,
         showDragHandle = true,
-        showFavoriteIndicator = false,
+        isSelected = false,
         onSongClick = {},
         onArtworkClick = {},
         onAddClick = {},
@@ -208,7 +215,7 @@ private fun SongItemFavouritePreview() {
         duration = "5:34",
         artworkUri = null,
         showDragHandle = false,
-        showFavoriteIndicator = true,
+        isSelected = true,
         onSongClick = {},
         onArtworkClick = {},
         onAddClick = {},

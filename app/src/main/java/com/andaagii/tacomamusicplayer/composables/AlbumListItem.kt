@@ -1,6 +1,7 @@
 package com.andaagii.tacomamusicplayer.composables
 
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -61,6 +62,8 @@ fun AlbumListItem(
             .fillMaxWidth()
             .height(60.dp),
         shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = ListItemCardBackground),
+        border = BorderStroke(1.dp, ListItemCardStroke),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(

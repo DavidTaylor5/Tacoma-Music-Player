@@ -486,7 +486,7 @@ private fun SongItemRow(
         duration = durationLabel,
         artworkUri = meta.artworkUri,
         showDragHandle = songGroupType == SongGroupType.PLAYLIST,
-        showFavoriteIndicator = isSelected,
+        isSelected = isSelected,
         onSongClick = rowClickAction,
         onArtworkClick = onArtworkClick,
         onAddClick = onAddToPlaylist,

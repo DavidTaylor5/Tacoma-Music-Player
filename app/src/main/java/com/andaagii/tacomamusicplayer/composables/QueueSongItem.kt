@@ -31,9 +31,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.andaagii.tacomamusicplayer.R
 
-/** Green stroke color matching `#4CAF50` shown on the currently playing queue row. */
-private val QueuePlayingGreen = Color(0xFF4CAF50)
-
 /**
  * Linear list row for a single song entry in the current playback queue.
  *
@@ -42,8 +39,9 @@ private val QueuePlayingGreen = Color(0xFF4CAF50)
  * [SongItem] except:
  * - The drag handle is always shown (queue reordering is always available).
  * - There is no add-to-playlist button; only the overflow menu icon is present.
- * - The card border switches between green ([QueuePlayingGreen]) when [isCurrentlyPlaying]
+ * - The 2 dp card border switches between green ([Color.Green]) when [isCurrentlyPlaying]
  *   is `true` and white when `false`, giving a clear visual indicator of the active track.
+ * - The active track also shows the animated green [SelectionBorder] around its artwork.
  *
  * @param modifier Modifier applied to the root [Card].
  * @param title The song display title.
@@ -71,7 +69,7 @@ fun QueueSongItem(
     dragHandleModifier: Modifier = Modifier
 ) {
     // Border color distinguishes the active track from the rest of the queue
-    val borderColor = if (isCurrentlyPlaying) QueuePlayingGreen else Color.White
+    val borderColor = if (isCurrentlyPlaying) Color.Green else Color.White
 
     Card(
         modifier = modifier
@@ -79,6 +77,7 @@ fun QueueSongItem(
             .height(60.dp)
             .padding(top = 2.dp),
         shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = ListItemCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = BorderStroke(2.dp, borderColor)
     ) {
@@ -102,11 +101,18 @@ fun QueueSongItem(
                     .then(dragHandleModifier)
             )
 
-            // Artwork area with playing indicator overlay — same 60×60 dp structure as SongItem
+            // Artwork area with playing-indicator overlay — same 60×60 dp structure as SongItem.
+            // The border layer sits behind the 50 dp art so the green frames it, matching the
+            // original viewholder_queue_song.xml z-order.
             Box(
                 modifier = Modifier.size(60.dp),
                 contentAlignment = Alignment.Center
             ) {
+                SelectionBorder(
+                    isActive = isCurrentlyPlaying,
+                    modifier = Modifier.size(60.dp)
+                )
+
                 AsyncImage(
                     model = artworkUri,
                     contentDescription = null,
@@ -118,17 +124,6 @@ fun QueueSongItem(
                         .padding(top = 5.dp, start = 5.dp)
                         .align(Alignment.TopStart)
                 )
-
-                // Playing indicator — shown when this is the active track.
-                // The original used AnimationDrawable; full animation can be wired in later.
-                if (isCurrentlyPlaying) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_star_24_green),
-                        contentDescription = null,
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
             }
 
             // Song metadata
