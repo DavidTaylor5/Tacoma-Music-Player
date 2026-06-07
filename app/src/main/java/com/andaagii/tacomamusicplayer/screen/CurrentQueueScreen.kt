@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenu
@@ -64,7 +65,8 @@ fun CurrentQueueScreen(
     onSongClick: (position: Int) -> Unit,
     onRemoveSong: (position: Int) -> Unit,
     onMoveItem: (from: Int, to: Int) -> Unit,
-    onClearQueue: () -> Unit
+    onClearQueue: () -> Unit,
+    listState: LazyListState = rememberLazyListState()
 ) {
     // Local shadow list for immediate drag-reorder feedback; reset when the external queue changes.
     var localSongs by remember(songs) { mutableStateOf(songs) }
@@ -75,7 +77,6 @@ fun CurrentQueueScreen(
     // Drag tracking — start index captured on drag-handle press, cleared on release.
     var dragStartIndex by remember { mutableIntStateOf(-1) }
 
-    val listState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(
         lazyListState = listState,
         onMove = { from, to ->

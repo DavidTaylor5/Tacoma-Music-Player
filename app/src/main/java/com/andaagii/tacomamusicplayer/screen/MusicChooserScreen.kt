@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.annotation.OptIn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -92,6 +93,7 @@ fun MusicChooserScreen(
     val isSearchMode   by mainViewModel.isShowingSearchMode.collectAsStateWithLifecycle()
     val allPlaylists   by mainViewModel.availablePlaylists.collectAsStateWithLifecycle()
     val selectedSongs  by songListViewModel.currentlySelectedSongs.collectAsStateWithLifecycle()
+    val queueListState = rememberLazyListState()
 
     val albumState     by albumViewModel.albumTabState.collectAsStateWithLifecycle()
     val playlistState  by playlistViewModel.playlistTabState.collectAsStateWithLifecycle()
@@ -212,6 +214,7 @@ fun MusicChooserScreen(
                 PageType.QUEUE_PAGE -> CurrentQueueScreen(
                     songs = queueSongs,
                     currentlyPlayingTitle = songInfo?.songTitle,
+                    listState = queueListState,
                     onSongClick = { pos ->
                         controller?.seekTo(pos, 0L)
                         controller?.play()
