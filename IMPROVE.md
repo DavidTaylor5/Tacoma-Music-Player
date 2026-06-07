@@ -4,10 +4,20 @@
 > Items are grouped by category and ordered **Critical → High → Medium → Low** within each section.
 > File paths are relative to `app/src/main/java/com/andaagii/tacomamusicplayer/` unless noted otherwise.
 
+> **Context (2026-06-06 re-audit):** The UI has now been **migrated from Views + Fragments to
+> Jetpack Compose**. The old `fragment/` and `adapter/` packages are empty leftovers; UI now lives
+> in `screen/` (full screens) and `composables/` (reusable widgets), wired with Navigation-Compose
+> from `composables/TacomaMusicPlayerApp.kt`. `MainViewModel` has been migrated off `LiveData` to
+> `StateFlow` + `Channel`. **Section 0 below is the post-migration backlog** — the highest-value
+> work right now. Later sections are the original backend audit; most of those files (util, repo,
+> dao, service) were untouched by the UI migration, so they still apply — re-verify line numbers
+> before acting.
+
 ---
 
 ## Table of Contents
 
+0. [Post-Compose-Migration Opportunities](#0-post-compose-migration-opportunities) ⭐ **start here**
 1. [Architecture & Separation of Concerns](#1-architecture--separation-of-concerns)
 2. [State Management](#2-state-management)
 3. [Concurrency & Threading](#3-concurrency--threading)
@@ -21,13 +31,208 @@
 
 ---
 
+## 0. Post-Compose-Migration Opportunities
+
+These are the improvements unlocked (or newly exposed) by moving to Compose. They are the
+fastest path to less code and cleaner state.
+
+### 🔴 Critical — Adopt a Design System (no `MaterialTheme`, hardcoded dp/colors everywhere)
+
+**Files:** all of `screen/` and `composables/`
+
+There is currently **no theme package and zero `MaterialTheme` usage**. Instead the UI hardcodes:
+
+- ~185 raw `.dp` literals
+- ~37 raw `.sp` literals
+- ~70+ `Color.White` / `Color.Black` / `Color(0x…)` literals
+
+This directly violates the `CLAUDE.md` UI guideline ("Use custom design system tokens (Colors,
+Typography, Shapes) rather than hardcoded values") and makes dark mode, restyling, and visual
+consistency nearly impossible. A partial helper already exists in `composables/ListItemStyle.kt` —
+formalize it.
+
+**Fix:** Create a `ui/theme/` package with `Color.kt`, `Type.kt`, `Shape.kt`, and a
+`TacomaTheme { }` wrapper backed by `MaterialTheme`. Wrap the root in `TacomaMusicPlayerApp`.
+Then replace literals with tokens:
+
+```kotlin
+// ❌ Before
+Text(color = Color.White, fontSize = 16.sp)
+Spacer(Modifier.height(8.dp))
+
+// ✅ After
+Text(color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+Spacer(Modifier.height(Dimens.SpacingSmall))
+```
+
+Do this incrementally, one screen at a time, starting with the most-reused tokens (spacing scale,
+the two or three brand colors, the text styles).
+
+---
+
+### 🟡 High — Deduplicate the List/Grid Item Composables
+
+**Files:** `composables/AlbumListItem.kt`, `AlbumGridItem.kt`, `PlaylistListItem.kt`,
+`PlaylistGridItem.kt` (and `SongItem.kt` / `QueueSongItem.kt`)
+
+`AlbumListItem` and `PlaylistListItem` are near-identical (artwork + title + subtitle + overflow
+menu in a row), as are `AlbumGridItem` and `PlaylistGridItem`. Four files encode two layouts.
+
+**Fix:** Extract two generic composables driven by parameters, not type:
+
+```kotlin
+@Composable
+fun MediaListItem(
+    modifier: Modifier = Modifier,
+    artUri: Uri?,
+    title: String,
+    subtitle: String?,
+    onClick: () -> Unit,
+    onPlayClick: () -> Unit,
+    menu: @Composable () -> Unit,
+)
+
+@Composable
+fun MediaGridItem( /* same params */ )
+```
+
+Album- and playlist-specific behavior (menu contents, subtitle source) is passed in. This collapses
+four files to two and means a styling change happens once.
+
+---
+
+### 🟡 High — Collapse `AlbumTab*` / `PlaylistTab*` Mirror Triplets into One Generic
+
+**Files:**
+- `viewmodel/AlbumTabViewModel.kt` ↔ `viewmodel/PlaylistTabViewModel.kt`
+- `state/AlbumTabState.kt` ↔ `state/PlaylistTabState.kt`
+- `screen/AlbumListScreen.kt` ↔ `screen/PlaylistScreen.kt`
+
+A structural diff of the two ViewModels shows they differ only in the words "album"/"playlist" and
+which repository flow they read. The two state classes are byte-for-byte equivalent in shape. The
+two screens follow the same sort/layout-toggle + list/grid pattern.
+
+**Fix:** Introduce a single parameterized layer:
+
+```kotlin
+data class GroupTabState(
+    val items: List<MediaItem>,
+    val sort: SortingUtil.SortingOption,
+    val layout: LayoutType,
+)
+
+@HiltViewModel
+class GroupTabViewModel @AssistedInject constructor(
+    private val musicRepo: MusicRepository,
+    @Assisted private val groupType: SongGroupType, // ALBUM or PLAYLIST
+) : ViewModel() { /* one implementation */ }
+```
+
+A single `GroupListScreen(state, onSort, onLayout, itemContent)` composable then renders both pages.
+This removes ~250 lines of duplicated ViewModel/state/screen code and guarantees the two pages stay
+in sync. (Note: `PlaylistTabViewModel` currently declares its backing flow `private val` while
+`AlbumTabViewModel` uses `private var` — exactly the drift a shared base prevents.)
+
+---
+
+### 🟡 High — Remove `Context` Parameters from ViewModels
+
+**Files:** `viewmodel/MainViewModel.kt` (`setMusicPlayingPrefs`, `determineLoopingPref`,
+`determineShufflePref`, `saveLoopingPref`, `saveShufflePref`),
+`viewmodel/AlbumTabViewModel.kt` (`saveAlbumLayout`, `saveAlbumSorting`),
+`viewmodel/PlaylistTabViewModel.kt` (`savePlaylistLayout`, `savePlaylistSorting`)
+
+Nine ViewModel methods take a `context: Context` purely to reach DataStore. Passing `Context` (often
+the Compose `LocalContext`) into ViewModel methods couples the ViewModel to the UI layer, risks
+leaks, and makes these methods awkward to unit-test.
+
+**Fix:** Inject the DataStore access object once. Either `@Inject` `DataStoreUtil` (backed by an
+`@ApplicationContext`-scoped DataStore provided by Hilt) into each ViewModel, or move these reads/
+writes behind the repository. Method signatures then drop the `Context` entirely:
+
+```kotlin
+fun saveAlbumLayout(layout: LayoutType) {
+    viewModelScope.launch { dataStore.setAlbumLayout(layout) }
+}
+```
+
+---
+
+### 🟡 High — Type-Safe Navigation-Compose Routes
+
+**File:** `composables/TacomaMusicPlayerApp.kt`
+
+Navigation currently builds string routes from `ScreenType.route()` and calls
+`navController.navigate(stringRoute)`. String routes are stringly-typed and error-prone.
+
+**Fix:** Adopt type-safe Navigation-Compose (2.8+) with `@Serializable` route objects:
+
+```kotlin
+@Serializable object MusicChooser
+@Serializable object PermissionDenied
+
+NavHost(navController, startDestination = MusicChooser) {
+    composable<MusicChooser> { MusicChooserScreen(...) }
+    composable<PermissionDenied> { PermissionDeniedScreen(...) }
+}
+navController.navigate(PermissionDenied)
+```
+
+Arguments (if any are added later) become typed constructor parameters instead of string-encoded
+query params.
+
+---
+
+### 🟢 Medium — Delete Dead Migration Leftovers
+
+- `fragment/` and `fragment/pages/` are **empty directories** — delete them.
+- `adapter/` is an **empty directory** — delete it (and confirm `adapter/diff/MediaItemDiffCallback`
+  is gone or relocated; it was View-RecyclerView-only).
+- `composables/PlaylistModPrompt.kt` (26 lines) is an unfinished placeholder — implement or delete.
+- `view/CustomPlaylistModPrompt.kt` was listed as an empty placeholder pre-migration; confirm it is
+  removed.
+- Update `DEV-GUIDE.md` and `FILE-DIRECTORY.md` — both still describe the Views + Fragments
+  architecture and list `fragment/`, `adapter/`, `view/`, and XML layouts as current. They are now
+  the single biggest source of stale onboarding info.
+
+---
+
+### 🟢 Medium — Add `@Immutable` / `@Stable` to UI State & Data Classes
+
+**Files:** `state/AlbumTabState.kt`, `state/PlaylistTabState.kt`, `data/SongGroup.kt`,
+`data/DisplaySong.kt`, etc.
+
+Compose skips recomposition for composables whose inputs are stable. Plain data classes that hold a
+`List<MediaItem>` are treated as **unstable** (because `List` and `MediaItem` aren't provably
+stable), forcing extra recompositions on every state emission.
+
+**Fix:** Mark UI-facing state classes `@Immutable` (per `CLAUDE.md`'s recomposition guideline), and
+prefer `ImmutableList<…>` from `kotlinx.collections.immutable` for list fields. Verify gains with
+the Compose compiler stability report or Layout Inspector recomposition counts.
+
+---
+
+### 🟢 Low — Prefer `rememberSaveable` for UI-Local State
+
+**Files:** `screen/` and `composables/` (currently only 2 `rememberSaveable` vs scattered `remember`)
+
+Most state is correctly hoisted to ViewModels (good). For the small amount of genuinely UI-local
+state (expanded/collapsed toggles, scroll-driven flags, in-progress text fields not yet committed),
+prefer `rememberSaveable` over `remember` so it survives configuration changes and process death, as
+called out in `CLAUDE.md`.
+
+---
+
 ## 1. Architecture & Separation of Concerns
 
 ### 🔴 Critical — Split `MainViewModel` (God Object)
 
-**File:** `viewmodel/MainViewModel.kt` (~1,050 lines)
+**File:** `viewmodel/MainViewModel.kt` (~1,429 lines — *grew during migration*)
 
-`MainViewModel` handles at least eight distinct concerns: `MediaController`/`MediaBrowser` lifecycle, playback controls, queue build/save/restore, shuffle logic, permission checks, screen navigation, playlist CRUD, and search. This makes it impossible to unit-test individual concerns and makes the class fragile to change.
+`MainViewModel` handles at least eight distinct concerns: `MediaController`/`MediaBrowser` lifecycle,
+playback controls, queue build/save/restore, shuffle logic, permission checks, screen navigation,
+playlist CRUD, and search. This makes it impossible to unit-test individual concerns and makes the
+class fragile to change.
 
 **Recommended split:**
 
@@ -37,30 +242,23 @@
 | `QueueViewModel` | Queue build (`addTracksSaveTrackOrder`), save, restore, current queue `StateFlow` |
 | `PlaylistViewModel` | Playlist CRUD, `availablePlaylists` `StateFlow` |
 | `PermissionViewModel` | `READ_MEDIA_AUDIO` check, `screenState` navigation event |
-| `MainViewModel` (thin) | Wire the above together; expose only what `PlayerDisplayFragment` needs directly |
+| `MainViewModel` (thin) | Wire the above together; expose only what `MusicChooserScreen` needs directly |
 
----
-
-### 🔴 Critical — Business Logic Inside `SongListFragment`
-
-**File:** `fragment/pages/SongListFragment.kt` (~827 lines)
-
-Two methods that belong in `SongListViewModel` are currently inline in the fragment:
-
-- `savePlaylistChanges()` — persists a reordered playlist to the repository.
-- `determineIfPlaylistSongsHaveChanged()` — computes equality between two lists of `MediaItem`.
-
-Both are pure domain operations. Moving them to the ViewModel makes them testable and removes the 827-line fragment's most avoidable responsibility.
+In a Compose world, individual screens can collect from the narrower ViewModels via
+`hiltViewModel()`, which also reduces unnecessary recomposition scope.
 
 ---
 
 ### 🟡 High — `SongGroup.songs` Should Be Immutable
 
-**File:** `data/SongGroup.kt` (line ~24)
+**File:** `data/SongGroup.kt`
 
-`songs` is declared `var` to allow in-place shuffling. Mutating shared state in a data class breaks referential integrity when multiple observers hold the same `SongGroup` instance.
+`songs` is declared `var` to allow in-place shuffling. Mutating shared state in a data class breaks
+referential integrity when multiple observers hold the same `SongGroup` instance — and defeats
+Compose stability (see §0).
 
-**Fix:** Change to `val`. On shuffle, produce a new `SongGroup` via `copy(songs = shuffled)` instead of mutating the original.
+**Fix:** Change to `val`. On shuffle, produce a new `SongGroup` via `copy(songs = shuffled)` instead
+of mutating the original.
 
 ---
 
@@ -68,402 +266,265 @@ Both are pure domain operations. Moving them to the ViewModel makes them testabl
 
 ### 🔴 Critical — Enable Hilt Injection on `SongListViewModel`
 
-**File:** `viewmodel/SongListViewModel.kt` (line ~26)
+**File:** `viewmodel/SongListViewModel.kt` (line ~25)
 
-`@HiltViewModel` is commented out, forcing all host fragments to instantiate the ViewModel manually. This breaks the Hilt DI contract and prevents proper scoping.
+`@HiltViewModel` is still commented out (`//@HiltViewModel`), forcing host screens to instantiate the
+ViewModel manually instead of via `hiltViewModel()`. This breaks the Hilt DI contract and prevents
+proper scoping.
 
-**Fix:** Re-enable `@HiltViewModel` and inject via `by viewModels()` in the host fragment.
-
----
-
-### 🟡 High — Standardize on `StateFlow` (Remove `LiveData` from ViewModels)
-
-**File:** `viewmodel/MainViewModel.kt` (lines ~99–271), `viewmodel/SongListViewModel.kt`
-
-`MainViewModel` mixes `MutableLiveData` (most properties) with `MutableStateFlow` (`availablePlaylists`, `currentlyPlayingSongs`). `SongListViewModel` uses only `MutableLiveData`. This inconsistency increases cognitive load and prevents collecting state in coroutine scopes.
-
-**Fix:** Migrate all `MutableLiveData<T>` → `MutableStateFlow<T>` with sensible initial values. In fragments, replace `observe {}` with `viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(STARTED) { collect {} } }`.
-
-**Note:** Ensure all `StateFlow` backing fields are initialized with a non-null default so observers never receive `null`.
+**Fix:** Re-enable `@HiltViewModel` + `@Inject constructor(...)` and obtain it with `hiltViewModel()`
+in `SongListScreen`.
 
 ---
 
-### 🟡 High — Async Callback State Stored in Mutable Fragment Fields
+### ✅ Done — Standardize on `StateFlow`
 
-**Files:**
-- `fragment/pages/AlbumListFragment.kt` — `albumCustomImageName: String?`, `selectedAlbumName: String?`
-- `fragment/pages/SongListFragment.kt` — `currentSongGroup`, `lastDisplaySongGroup`
+`MainViewModel` has been migrated from `LiveData` to `MutableStateFlow` (continuous state) plus
+`Channel` (one-off events like navigation, keyboard-hide, clear-queue). `SongListViewModel`,
+`AlbumTabViewModel`, and `PlaylistTabViewModel` are `StateFlow`-only. Screens collect with
+`collectAsStateWithLifecycle()` (16 call sites). **This item from the previous audit is resolved.**
 
-These fields store state across async boundaries (e.g., the user selects an album, then a uCrop `ActivityResult` fires and reads the field). If the user selects a different album before the crop result arrives, the wrong image is applied.
+**Remaining nit:** confirm every exposed `StateFlow` has a non-null initial value so a screen never
+renders a `null` flash on first composition (several are typed `StateFlow<T?>` with `null` initial —
+e.g. `shuffleMode`, `loopMode`, `currentSongGroup` — make sure each screen handles the `null`/loading
+case explicitly rather than crashing or showing empty content).
 
-**Fix:** Route this state through the ViewModel. Create a `StateFlow<PendingImageSelection?>` in `AlbumTabViewModel` that is set when an album is chosen and cleared when the crop result is applied.
+---
+
+### 🟡 High — Async Callback State (Pending Image Selection)
+
+**File:** `screen/AlbumListScreen.kt` / `screen/SongListScreen.kt` (was `AlbumListFragment` /
+`SongListFragment` pre-migration)
+
+The pre-migration audit flagged mutable fragment fields (`albumCustomImageName`, `selectedAlbumName`)
+holding state across the uCrop `ActivityResult` boundary, causing the wrong image to be applied if
+the user re-selects mid-crop. **Re-verify how this is handled now in Compose** — the uCrop launch is
+likely a `rememberLauncherForActivityResult`. The selected target must live in the ViewModel as a
+`StateFlow<PendingImageSelection?>`, set when an album is chosen and cleared when the crop result is
+applied — not in a `remember {}` that can desync from the in-flight crop.
 
 ---
 
 ## 3. Concurrency & Threading
 
-### 🔴 Critical — `Handler` in `MainViewModel` Bypasses Coroutine Cancellation
-
-**File:** `viewmodel/MainViewModel.kt` (line ~252)
-
-```kotlin
-// Current — Runnable is not cancelled when ViewModel is cleared
-loadingHandler = Handler(Looper.getMainLooper())
-loadingHandler.postDelayed({ _showLoadingScreen.postValue(false) }, 500)
-```
-
-If the ViewModel is cleared before the 500 ms fires, the `Runnable` still executes and posts to a dead `LiveData`.
-
-**Fix:**
-```kotlin
-viewModelScope.launch {
-    delay(500)
-    _showLoadingScreen.value = false
-}
-```
-
----
+> These files were not touched by the UI migration. Verify line numbers, then act.
 
 ### 🔴 Critical — Missing `Dispatchers.IO` in `MusicRepositoryImpl`
 
 **File:** `repository/MusicRepositoryImpl.kt`
 
-Several `suspend` functions perform Room queries or disk I/O without `withContext(Dispatchers.IO)`:
+Several `suspend` functions perform Room queries or disk I/O without `withContext(Dispatchers.IO)`
+(`searchMusic()`, `createInitialQueueIfEmpty()`, `getSongsByAlbum()`, `getSongsByArtist()`). Room
+suspend functions won't crash off-thread, but the work runs on the caller's dispatcher (often Main),
+causing jank.
 
-- `searchMusic()` (line ~31)
-- `createInitialQueueIfEmpty()` (line ~160)
-- `getSongsByAlbum()` / `getSongsByArtist()` (lines ~175, ~202)
-
-Because Room suspend functions are safe to call on any thread, these won't crash — but the work runs on the calling coroutine's dispatcher (often `Main`), which can cause jank.
-
-**Fix:** Wrap each database call in `withContext(Dispatchers.IO) { ... }` or annotate the function with `@WorkerThread` at minimum.
-
----
-
-### 🟡 High — `postValue()` Called Inside `Dispatchers.IO` Block
-
-**File:** `viewmodel/MainViewModel.kt` (`querySearchData`, `querySongsFromPlaylist`)
-
-```kotlin
-viewModelScope.launch(Dispatchers.IO) {
-    _currentSearchList.postValue(musicRepo.searchMusic(search)) // misleading
-}
-```
-
-`postValue` is safe from any thread, but mixing `Dispatchers.IO` and `LiveData` updates is a smell. When `LiveData` is fully replaced by `StateFlow`, `emit` must be called on Main (or use `MutableStateFlow.value` which is thread-safe).
+**Fix:** Wrap each DB/disk call in `withContext(Dispatchers.IO) { ... }`.
 
 ---
 
 ### 🟡 High — `pendingSeek` Race Condition in `MusicService`
 
-**File:** `service/MusicService.kt` (line ~143)
+**File:** `service/MusicService.kt`
 
-`pendingSeek: Int?` is written from `onAddMediaItems()` (which can be called from a binder thread) and read from `PlayerEventListener` callbacks. The comment states "must only be written from the main thread" but there is no enforcement.
+`pendingSeek: Int?` is written from `onAddMediaItems()` (callable from a binder thread) and read from
+`PlayerEventListener` callbacks. The comment claims "main thread only" but nothing enforces it.
 
-**Fix:** Annotate write sites with `@MainThread`, add a `check(Looper.myLooper() == Looper.getMainLooper())` assertion in debug builds, or guard with `AtomicInteger`.
+**Fix:** Annotate write sites with `@MainThread`, add a debug `Looper` assertion, or guard with
+`AtomicInteger`.
 
 ---
 
 ## 4. Null Safety & Crash Risks
 
-### 🔴 Critical — SQL Bug: `getAllSongsFromArtist` Queries Wrong Column
+> Backend/util files — re-verify each line number against current code.
 
-**File:** `database/dao/SongDao.kt` (line ~43)
+### 🔴 Critical — Verify SQL Bug: `getAllSongsFromArtist`
 
-```kotlin
-// Current — queries album_title, not song_artist
-@Query("SELECT * FROM song_table WHERE album_title = :artist")
-suspend fun getAllSongsFromArtist(artist: String): List<SongEntity>
-```
+**File:** `database/dao/SongDao.kt` (~line 43)
 
-Every call to this DAO method silently returns songs whose **album title** matches the artist name — correct results only by coincidence.
-
-**Fix:**
-```kotlin
-@Query("SELECT * FROM song_table WHERE song_artist = :artist")
-suspend fun getAllSongsFromArtist(artist: String): List<SongEntity>
-```
+The previous audit found this `@Query` selecting `WHERE album_title = :artist` instead of
+`WHERE song_artist = :artist`, silently returning wrong results. **Confirm the `@Query` annotation
+above the function** and fix to `song_artist` if still wrong.
 
 ---
 
-### 🔴 Critical — `foundSongs[0]` Without Bounds Check
+### 🔴 Critical — Unguarded Index Access
 
-**File:** `repository/MusicRepositoryImpl.kt` (line ~235)
+- `repository/MusicRepositoryImpl.kt` — `foundSongs[0]` without an empty-list check → use
+  `foundSongs.firstOrNull() ?: return …`.
+- `util/SortingUtil.kt` — `timestamps[0]` / `timestamps[1]` from a `split(":")` → use `getOrNull`.
+- `util/MediaItemUtil.kt` — `mediaItem.mediaId` (nullable) used with `.split()` directly → guard with
+  `?: return null`.
+- `util/UtilImpl.kt` — `uri.path.toString()` turns `null` into the literal `"null"` → use
+  `uri.path ?: return`.
 
-`foundSongs[0]` is accessed directly after a database query. If the query returns an empty list, this throws `IndexOutOfBoundsException`.
-
-**Fix:** Replace with `foundSongs.firstOrNull() ?: return <appropriate default>`.
-
----
-
-### 🔴 Critical — `indexOfFirst` Result Used as Array Index Without Guard
-
-**File:** `adapter/QueueListAdapter.kt` (line ~79)
-
-`indexOfFirst { ... }` returns `-1` when no match is found. The result is immediately used as an array index (`dataSet[currSongPos]`), which crashes with `ArrayIndexOutOfBoundsException`.
-
-**Fix:**
-```kotlin
-val currSongPos = dataSet.indexOfFirst { it.showPlayIndicator }
-if (currSongPos >= 0) dataSet[currSongPos].showPlayIndicator = false
-```
+*(The `QueueListAdapter.indexOfFirst` crash from the prior audit is moot — that adapter was deleted in
+the migration. Confirm the equivalent guard exists in `QueueSongItem` / `CurrentQueueScreen`'s
+playing-indicator logic.)*
 
 ---
 
-### 🟡 High — `split()` Result Accessed Without Bounds Check
+### 🟢 Low — Remove Remaining `!!` Double-Bangs
 
-**File:** `util/SortingUtil.kt` (lines ~143–160)
-
-```kotlin
-val timestamps = description.split(":")
-val creation = timestamps[0]   // crashes if split produces < 1 element
-val modified = timestamps[1]   // crashes if split produces < 2 elements
-```
-
-**Fix:** Use `getOrNull`:
-```kotlin
-val creation = timestamps.getOrNull(0) ?: ""
-val modified = timestamps.getOrNull(1) ?: ""
-```
-
----
-
-### 🟡 High — `mediaItem.mediaId` Used Without Null Check
-
-**File:** `util/MediaItemUtil.kt` (line ~277)
-
-`mediaItem.mediaId` is a nullable `String?`. Calling `.split()` directly on it will throw if the ID is null.
-
-**Fix:** Guard with `?: return null` or use safe-call: `mediaItem.mediaId?.split(":") ?: return null`.
-
----
-
-### 🟡 High — `uri.path.toString()` Converts `null` to the String `"null"`
-
-**File:** `util/UtilImpl.kt` (line ~321)
-
-`Uri.path` returns `String?`. Calling `.toString()` on a null returns the string literal `"null"`, which is then used as a file path and silently fails downstream.
-
-**Fix:** Use `uri.path ?: return` or `uri.path.orEmpty()` with an appropriate guard.
+Three `!!` assertions remain in `app/src/main/java`. `CLAUDE.md` says avoid them "at all costs."
+Replace with `?.`, `?:`, or explicit null handling.
 
 ---
 
 ## 5. Resource Leaks
 
+> Backend files — unaffected by UI migration.
+
 ### 🔴 Critical — `MediaMetadataRetriever` Never Released
 
-**Files:**
-- `util/MediaStoreUtil.kt` (line ~113)
-- `util/UtilImpl.kt` (line ~300)
+**Files:** `util/MediaStoreUtil.kt`, `util/UtilImpl.kt`
 
-`MediaMetadataRetriever` holds a native handle. If `setDataSource` or any subsequent call throws, `release()` is never called.
+`MediaMetadataRetriever` holds a native handle; if `setDataSource` or a later call throws, `release()`
+is never reached.
 
-**Fix:**
-```kotlin
-val retriever = MediaMetadataRetriever()
-try {
-    retriever.setDataSource(context, uri)
-    // ... use retriever
-} finally {
-    retriever.release()
-}
-```
-
-Or use Kotlin's `use {}` with a wrapper since `MediaMetadataRetriever` implements `AutoCloseable` on API 29+.
+**Fix:** Wrap in `try { … } finally { retriever.release() }` (or `use {}` — it is `AutoCloseable` on
+API 29+; min SDK here is 30, so `use {}` is safe).
 
 ---
 
 ### 🟡 High — ExoPlayer Listener Accumulates on Service Restart
 
-**File:** `service/MusicService.kt` (line ~641)
+**File:** `service/MusicService.kt`
 
-`player.addListener(PlayerEventListener())` is called in `initializePlayer()` but `removeListener()` is never called in `onDestroy()`. If `MusicService` is restarted by the system, a new listener is added each time without removing the old one.
-
-**Fix:** Store the listener instance and remove it:
-```kotlin
-private val playerEventListener = PlayerEventListener()
-// in initializePlayer():
-player.addListener(playerEventListener)
-// in onDestroy():
-player.removeListener(playerEventListener)
-```
+`player.addListener(PlayerEventListener())` is never paired with `removeListener()` in `onDestroy()`.
+Store the instance and remove it on teardown.
 
 ---
 
 ### 🟡 High — Temp Files Created but Never Deleted
 
-**File:** `util/UtilImpl.kt` (`uriToFile`, line ~456)
+**File:** `util/UtilImpl.kt` (`uriToFile`)
 
-`File.createTempFile(...)` writes to `context.cacheDir` or a temp directory but there is no corresponding cleanup. On low-storage devices, these accumulate.
-
-**Fix:** Either delete the file after use, or implement a cleanup pass (e.g., delete cache files older than 24 hours) in `CatalogMusicWorker`.
+`File.createTempFile(...)` output is never cleaned up. Delete after use, or add a periodic cache-prune
+pass in `CatalogMusicWorker`.
 
 ---
 
 ## 6. Error Handling
 
-### 🔴 Critical — `CatalogMusicWorker` Swallows All Exceptions
+### 🔴 Critical — `CatalogMusicWorker` Swallows Exceptions
 
-**File:** `worker/CatalogMusicWorker.kt` (line ~35)
+**File:** `worker/CatalogMusicWorker.kt`
 
-`doWork()` calls `catalogMusic()` with no try-catch. Any thrown exception causes the coroutine to fail silently and `Result.success()` is never reached — WorkManager marks the work as failed but the app has no record of what went wrong.
-
-**Fix:**
-```kotlin
-override suspend fun doWork(): Result {
-    return try {
-        catalogMusic()
-        Result.success()
-    } catch (e: Exception) {
-        Timber.e(e, "Music catalog failed")
-        Result.failure()
-    }
-}
-```
+`doWork()` has no try-catch; a thrown exception fails the coroutine silently. Wrap `catalogMusic()` in
+`try/catch`, log with Timber, and return `Result.failure()`.
 
 ---
 
 ### 🔴 Critical — `MusicService.onPlayerError()` Is Empty
 
-**File:** `service/MusicService.kt` (line ~727)
+**File:** `service/MusicService.kt`
 
-`onPlayerError()` contains only a TODO comment. Playback errors (corrupt file, codec unsupported, MediaStore URI revoked) are silently ignored, leaving the user with a frozen player and no feedback.
-
-**Fix:** At minimum, log with Timber and emit an error state that `MainViewModel` can surface as a Snackbar or toast. For auto-recoverable errors (e.g., `ERROR_CODE_BEHIND_LIVE_WINDOW`), call `player.prepare()`.
+Playback errors (corrupt file, unsupported codec, revoked URI) are silently ignored. Log them and emit
+an error state the UI can surface (Snackbar). For recoverable errors call `player.prepare()`.
 
 ---
 
 ### 🟡 High — `MediaController`/`MediaBrowser` Future Has No Error Handling
 
-**File:** `viewmodel/MainViewModel.kt` (line ~1005)
+**File:** `viewmodel/MainViewModel.kt` (~line 1005)
 
-```kotlin
-controllerFuture.addListener({
-    val controller = controllerFuture.get() // no try-catch
-    _mediaController.value = controller
-}, MoreExecutors.directExecutor())
-```
-
-If `controllerFuture.get()` throws (e.g., `CancellationException`, `ExecutionException`), the exception is silently swallowed and `_mediaController` is never set.
-
-**Fix:** Wrap in try-catch and emit a failure state or retry.
+`controllerFuture.get()` inside the listener has no try-catch; a `CancellationException` /
+`ExecutionException` leaves `_mediaController` permanently null. Wrap and emit a failure/retry state.
 
 ---
 
 ### 🟡 High — `workManager.cancelAllWork()` Is Too Broad
 
-**File:** `activity/MainActivity.kt` (line ~217)
+**File:** `activity/MainActivity.kt`
 
-`cancelAllWork()` cancels every enqueued `WorkRequest` in the app, not just the music catalog worker. This is dangerous if other workers are ever added.
-
-**Fix:** Use the unique work name: `workManager.cancelUniqueWork("catalog_music")` (matching the enqueue call).
+Cancels every enqueued worker, not just cataloging. Use `cancelUniqueWork("catalog_music")` matching
+the enqueue name.
 
 ---
 
 ## 7. Code Duplication (DRY)
 
-### 🟡 High — `SongListAdapter` Constructed 3× With Identical Parameters
-
-**File:** `fragment/pages/SongListFragment.kt` (lines ~217, ~255, ~505)
-
-The `SongListAdapter(...)` constructor call with the same 6–8 lambda parameters is copy-pasted three times. Any change to the adapter's constructor requires three edits.
-
-**Fix:** Extract a private `buildSongListAdapter(): SongListAdapter` helper that captures the fragment's lambdas once and returns a configured instance.
-
----
-
-### 🟡 High — Queue Adapter Rebuilt With Duplicate Code
-
-**File:** `fragment/pages/CurrentQueueFragment.kt` (lines ~118–158)
-
-Two separate `observe {}` / `collect {}` branches initialize `QueueListAdapter` with identical setup code.
-
-**Fix:** Merge into one observer or extract a `buildQueueAdapter()` helper called from both branches.
-
----
+> The pre-migration adapter/fragment duplication items (`SongListAdapter` built 3×, queue adapter
+> rebuilt twice, RecyclerView DiffUtil) are **obsolete** — those classes were deleted. The live
+> duplication targets are now in **§0** (item composables, Album/Playlist triplets). One backend item
+> survives:
 
 ### 🟡 High — Artwork URI Resolution Logic Duplicated
 
 **File:** `util/MediaItemUtil.kt`
 
-The `determineArtUri()` method's logic (check `useCustomArt`, resolve `customArtPath` vs. `originalArtPath`) is duplicated inside at least `createAlbumMediaItemFromSongGroupEntity` (lines ~128–140) and one other creation method.
-
-**Fix:** Consolidate all artwork resolution into the single `determineArtUri()` method and call it from all construction paths.
+`determineArtUri()`'s logic (check `useCustomArt`, resolve custom vs. original path) appears to be
+re-implemented inside more than one `MediaItem` construction method. Consolidate so every construction
+path calls the single `determineArtUri()`.
 
 ---
 
 ## 8. Modern Android APIs
 
-### 🟡 High — Deprecated Permission Handling
+### ✅ Likely Done — Permission Handling
 
-**File:** `activity/MainActivity.kt`
-
-`onRequestPermissionsResult()` is deprecated in API 33+ and requires manually correlating request codes. The modern replacement is type-safe and lifecycle-aware.
-
-**Fix:** Replace with `registerForActivityResult(ActivityResultContracts.RequestPermission())` in `onCreate()`. Remove the `onRequestPermissionsResult()` override and the `REQUEST_CODE_*` constants it uses.
+The pre-migration audit flagged the deprecated `onRequestPermissionsResult()` override in
+`MainActivity`. With the Compose migration, `MainActivity` is now ~101 lines and uses `setContent`.
+**Verify** permissions now go through `rememberLauncherForActivityResult` /
+`ActivityResultContracts.RequestPermission()`; if any `onRequestPermissionsResult` / `REQUEST_CODE_*`
+remnants survive, remove them.
 
 ---
 
-### 🟡 High — RecyclerView Adapters Lack DiffUtil
+### ✅ Done — RecyclerView DiffUtil
 
-**Files:** `adapter/SongListAdapter.kt`, `adapter/QueueListAdapter.kt`
-
-Both adapters call `notifyDataSetChanged()` on every data update, which redraws every visible row even when only one item changed. This causes janky scrolling on large song lists.
-
-The project already has `adapter/diff/MediaItemDiffCallback.kt` — it is used by `AlbumListAdapter` and `AlbumGridAdapter` but not by these two adapters.
-
-**Fix:** Change both to extend `ListAdapter<MediaItem, *>` and pass `MediaItemDiffCallback()` to the superclass constructor. Replace manual `dataSet` management with `submitList()`.
+Obsolete — RecyclerView adapters are gone. Compose `LazyColumn`/`LazyVerticalGrid` handle diffing via
+stable `key = { it.mediaId }` lambdas. **Verify** every `items(...)` call in `screen/` passes a stable
+`key` so item identity survives reorders (important for the drag-to-reorder queue).
 
 ---
 
 ## 9. Documentation (APP-COMMENTS.md Compliance)
 
+### 🟡 High — Refresh `DEV-GUIDE.md` & `FILE-DIRECTORY.md` for Compose
+
+Both guides describe the old Views + Fragments architecture (they list `fragment/`, `adapter/`,
+`view/`, ViewBinding, and every XML layout as current). Update the tech-stack table, the package
+tree (`screen/`, `composables/`), the navigation section (Navigation-Compose, not programmatic
+`NavController.createGraph`), and remove the now-empty packages. This is the highest-leverage doc fix.
+
+---
+
 ### 🟡 High — TODO Comments Without Ticket References
 
-**Files:** `viewmodel/MainViewModel.kt`, `service/MusicService.kt`, `repository/MusicRepositoryImpl.kt`, `worker/CatalogMusicWorker.kt` (and others)
-
-Per `APP-COMMENTS.md §9`, `// TODO` with no ticket number is an anti-pattern because it is orphaned intent that will never be acted on. Dozens of such TODOs exist throughout the codebase.
-
-**Fix:** For each TODO, either:
-1. Resolve it immediately, or
-2. Replace it with a reference to a tracked issue: `// TODO(#123): description`.
+Per `APP-COMMENTS.md §9`, bare `// TODO` is an anti-pattern. Several remain (e.g.
+`MainViewModel.playAlbum()` carries `//TODO I don't think this is working...`). Resolve, or convert to
+`// TODO(#123): …`.
 
 ---
 
 ### 🟡 High — Commented-Out Production Code
 
-**File:** `repository/MusicRepositoryImpl.kt` (lines ~89–102)
+**File:** `repository/MusicRepositoryImpl.kt`
 
-`removeSongsFromPlaylist` is entirely commented out with a note indicating uncertainty about the implementation.
-
-Per `APP-COMMENTS.md §9`, commented-out code pollutes history. Git exists for recovery.
-
-**Fix:** Either implement the method (it is declared on the `MusicRepository` interface) or delete the commented block and keep a reference to the git commit in the issue tracker.
+`removeSongsFromPlaylist` (declared on the interface) was commented out. Implement it or delete the
+block — git covers recovery.
 
 ---
 
-### 🟡 High — Missing Class-Level KDoc
+### 🟡 High — `@Preview` Coverage & Class-Level KDoc
 
-Per `APP-COMMENTS.md §2.4`, every class must have a KDoc covering responsibility, lifecycle/threading constraints, and exposed state. The following classes are missing it:
-
-| File | Class |
-|---|---|
-| `activity/MainActivity.kt` | `MainActivity` |
-| `adapter/SongListAdapter.kt` | `SongListAdapter` |
-| `adapter/QueueListAdapter.kt` | `QueueListAdapter` |
-| `worker/CatalogMusicWorker.kt` | `CatalogMusicWorker` |
-| `fragment/pages/CurrentQueueFragment.kt` | `CurrentQueueFragment` |
-| `service/MusicService.kt` | `MusicService` |
+- 31 `@Preview`s exist — good. Ensure each new `screen/` and `composables/` file has at least one
+  preview with dummy data (`CLAUDE.md` guideline), especially the large screens
+  (`SongListScreen`, `PlaylistScreen`).
+- Add missing class/composable KDoc per `APP-COMMENTS.md §2.4 / §5` to: `MainActivity`,
+  `CatalogMusicWorker`, `MusicService`, and any `screen`/`composable` lacking a top-level doc that
+  notes stateless-vs-stateful and documents each state param / lambda callback.
 
 ---
 
 ### 🟡 High — Hardcoded Debug File Path in Production Code
 
-**File:** `util/UtilImpl.kt` (`drawMp3agicBitmap`, line ~116)
+**File:** `util/UtilImpl.kt` (`drawMp3agicBitmap`)
 
-A hardcoded path to a specific local file (`/storage/emulated/0/Music/Clipse/...`) exists in what appears to be debug-only code that was never removed.
-
-**Fix:** Delete the method or gate it behind `if (BuildConfig.DEBUG)` with a clear explanation of its purpose.
+A hardcoded path to a local file (`/storage/emulated/0/Music/...`) remains in apparent debug code.
+Delete it or gate behind `BuildConfig.DEBUG`.
 
 ---
 
@@ -471,57 +532,33 @@ A hardcoded path to a specific local file (`/storage/emulated/0/Music/Clipse/...
 
 ### 🟢 Low — `AlbumTabViewModel._albums` Declared as `var`
 
-**File:** `viewmodel/AlbumTabViewModel.kt` (line ~72)
-
-`_albums` is a `StateFlow` backing field that is assigned once in the constructor and never reassigned. Declaring it `var` instead of `val` incorrectly signals mutability.
-
-**Fix:** Change to `private val _albums`.
+Assigned once, never reassigned — declare `private val`. (`PlaylistTabViewModel` already uses `val`;
+a shared `GroupTabViewModel` per §0 removes the inconsistency entirely.)
 
 ---
 
 ### 🟢 Low — Sentinel Strings in `SongData` Should Be Constants
 
-**File:** `data/SongData.kt` (lines ~53–54)
+**File:** `data/SongData.kt`
 
-The string literals `"null"` and `"UNKNOWN"` are used as sentinel values. If the same strings need to be checked elsewhere, the comparison must be duplicated.
-
-**Fix:** Extract to a companion object:
-```kotlin
-companion object {
-    const val UNKNOWN_VALUE = "UNKNOWN"
-    const val NULL_SENTINEL = "null"
-}
-```
+`"null"` and `"UNKNOWN"` sentinels should be `const val` in a companion object so comparisons aren't
+duplicated.
 
 ---
 
 ### 🟢 Low — `Const.kt` Should Be Organized by Domain
 
-**File:** `constants/Const.kt`
-
-All constants live in a single flat `companion object`. As the app grows, constants for unrelated domains (media IDs, DataStore keys, playlist names, storage paths) are indistinguishable at a glance.
-
-**Fix:** Group into nested objects or separate files:
-```kotlin
-object MediaIds { ... }
-object DataStoreKeys { ... }
-object PlaylistNames { ... }
-```
+Flat companion object — group into nested `object MediaIds`, `object DataStoreKeys`,
+`object PlaylistNames`, etc.
 
 ---
 
-### 🟢 Low — Magic Numbers in Fragments Should Be Named Constants
+### 🟢 Low — Magic Numbers Should Be Named Constants
 
-**Files:**
-- `fragment/PlayerDisplayFragment.kt` — `offscreenPageLimit = 4`, swipe velocity threshold `500`
-- `fragment/pages/MusicPlayingFragment.kt` — hardcoded animation durations
-
-**Fix:** Extract to companion object constants with descriptive names:
-```kotlin
-private const val VIEWPAGER_OFFSCREEN_LIMIT = 4
-private const val MIN_FLING_VELOCITY_DP_PER_S = 500
-```
+Pager offscreen limits, swipe/fling velocity thresholds, and animation durations (now in
+`MusicChooserScreen` / `MiniPlayer` / `MusicPlayingScreen`) should be named `private const val`s or
+design-system tokens (§0).
 
 ---
 
-*Last audited: 2026-05-25*
+*Last audited: 2026-06-06 (post-Compose-migration re-audit). Prior backend audit: 2026-05-25.*
