@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
+import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
@@ -41,12 +42,24 @@ class CurrentQueueFragment: Fragment() {
         val simpleItemTouchCallback =
         object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
 
+            var currFrom: Int? = null
+            var currTo: Int? = null
+
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 super.onSelectedChanged(viewHolder, actionState)
-
                 //When an item is being dragged, I set alpha to .5
                 if(actionState == ACTION_STATE_DRAG) {
                     viewHolder?.itemView?.alpha = 0.5f
+                }
+
+                if(actionState == ACTION_STATE_IDLE) {
+                    currFrom?.let { from ->
+                        currTo?.let { to ->
+                            parentViewModel.mediaController.value?.moveMediaItem(from, to)
+                            currFrom = null
+                            currTo = null
+                        }
+                    }
                 }
             }
 
@@ -67,6 +80,9 @@ class CurrentQueueFragment: Fragment() {
                 val from = viewHolder.bindingAdapterPosition
                 val to = target.bindingAdapterPosition
 
+                if(currFrom == null) currFrom = from
+                currTo = to
+
                 Timber.d("onMove: from=$from, to=$to")
 
                 /*
@@ -76,9 +92,12 @@ class CurrentQueueFragment: Fragment() {
                 adapter.moveItem(from, to)
 
                 // Update the mediaController playlist
-                parentViewModel.mediaController.value?.moveMediaItem(from, to)
+//                if(currActionState == ACTION_STATE_IDLE) { // TODO right idea but doesn't work...
+//                    parentViewModel.mediaController.value?.moveMediaItem(from, to)
+//                }
 
                 // 3. Tell adapter to render the model update.
+
                 adapter.notifyItemMoved(from, to)
 
                 return true
