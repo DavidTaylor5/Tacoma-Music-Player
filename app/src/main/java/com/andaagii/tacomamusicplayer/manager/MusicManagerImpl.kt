@@ -11,6 +11,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.andaagii.tacomamusicplayer.manager.state.PlayerControlState
 import com.andaagii.tacomamusicplayer.service.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +32,10 @@ class MusicManagerImpl @Inject constructor(
     private lateinit var mediaBrowser: MediaBrowser
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
+
+    val playerControlState: LiveData<PlayerControlState>
+        get() = _playerControlState
+    private val _playerControlState: MutableLiveData<PlayerControlState> = MutableLiveData(PlayerControlState())
 
     override fun initialize() {
         Timber.d("initialize: ")
@@ -135,15 +140,17 @@ class MusicManagerImpl @Inject constructor(
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            //TODO Figure out this Logic
-//            _isPlaying.postValue(isPlaying)
+            _playerControlState.value = _playerControlState.value?.copy(
+                isPlaying = isPlaying
+            )
         }
 
         override fun onRepeatModeChanged(repeatMode: Int) {
             Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
-            //TODO Figure out this Logic
-//            _loopMode.postValue(repeatMode)
+            _playerControlState.value = _playerControlState.value?.copy(
+                loopMode = repeatMode
+            )
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
