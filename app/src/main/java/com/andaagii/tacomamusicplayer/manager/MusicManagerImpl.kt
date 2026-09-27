@@ -11,10 +11,16 @@ import androidx.media3.common.Timeline
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.manager.state.PlayerControlState
 import com.andaagii.tacomamusicplayer.service.MusicService
+import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -33,9 +39,24 @@ class MusicManagerImpl @Inject constructor(
     private var rootMediaItem: MediaItem? = null
     private lateinit var sessionToken: SessionToken
 
-    val playerControlState: LiveData<PlayerControlState>
-        get() = _playerControlState
-    private val _playerControlState: MutableLiveData<PlayerControlState> = MutableLiveData(PlayerControlState())
+    private val loopingFlow: Flow<Int> = DataStoreUtil.getLoopingPreference(context)
+    private val shuffleFlow: Flow<ShuffleType> =
+        DataStoreUtil.getShufflePreference(context).map { shuffleStr ->
+            ShuffleType.determineShuffleTypeFromString(shuffleStr)
+        }
+    private val isPlayingFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    val playerControlFlow: Flow<PlayerControlState>
+        get() = _playerControlFlow
+    private val _playerControlFlow: Flow<PlayerControlState> = combine(
+        loopingFlow, shuffleFlow, isPlayingFlow
+    ) { looping, shuffle, isPlaying ->
+        PlayerControlState(
+            isPlaying = isPlaying,
+            loopMode = looping,
+            shuffleMode = shuffle
+        )
+    }
 
     override fun initialize() {
         Timber.d("initialize: ")
@@ -67,15 +88,11 @@ class MusicManagerImpl @Inject constructor(
             _mediaController.value = controller
 
             //TODO Figure out this Logic
-//            determineLoopingPref(context)
-//
 //            //Add old queue to the mediaController
 //            restoreQueue()
 //
 //            //Restore the original ordering for current songs in mediaController
 //            restoreQueueOrder()
-//
-//            _loopMode.postValue(controller.repeatMode)
 
             controller.addListener(playerListener)
         }, MoreExecutors.directExecutor())
@@ -140,17 +157,16 @@ class MusicManagerImpl @Inject constructor(
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            _playerControlState.value = _playerControlState.value?.copy(
-                isPlaying = isPlaying
-            )
+            isPlayingFlow.value = isPlaying
         }
 
         override fun onRepeatModeChanged(repeatMode: Int) {
             Timber.d("onRepeatModeChanged: ")
             super.onRepeatModeChanged(repeatMode)
-            _playerControlState.value = _playerControlState.value?.copy(
-                loopMode = repeatMode
-            )
+            // TODO Update Repeat Mode on DataStore
+//            _playerControlState.value = _playerControlState.value?.copy(
+//                loopMode = repeatMode
+//            )
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
