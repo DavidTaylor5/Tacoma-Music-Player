@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.data.SongData
@@ -68,6 +67,11 @@ class PlaybackManagerImpl @Inject constructor(
     val currentPlayingSongInfo: Flow<SongData?>
         get() = _currentPlayingSongInfo
     private val _currentPlayingSongInfo: MutableStateFlow<SongData?> = MutableStateFlow(null)
+
+    // New property for selectedIndex
+    val selectedIndex: Flow<Int>
+        get() = _selectedIndex
+    private val _selectedIndex: MutableStateFlow<Int> = MutableStateFlow(-1)
 
     override fun initialize() {
         Timber.d("initialize: ")
@@ -153,6 +157,7 @@ class PlaybackManagerImpl @Inject constructor(
                         artworkUri = mediaMetadata.artworkUri.toString(),
                         duration = mediaMetadata.description.toString()
                     ))
+            _selectedIndex.value = queue.value.indexOfFirst { it.mediaId == mediaMetadata.mediaId }
             super.onMediaMetadataChanged(mediaMetadata)
         }
 
