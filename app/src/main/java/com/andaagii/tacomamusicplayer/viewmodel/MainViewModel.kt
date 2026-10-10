@@ -17,7 +17,9 @@ import com.andaagii.tacomamusicplayer.enumtype.QueueAddType
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
 import com.andaagii.tacomamusicplayer.manager.PlaybackManager
+import com.andaagii.tacomamusicplayer.manager.state.ControlState
 import com.andaagii.tacomamusicplayer.manager.state.PlaybackState
+import com.andaagii.tacomamusicplayer.manager.state.PositionState
 import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
@@ -104,6 +106,20 @@ class MainViewModel @Inject constructor(
             PlaybackState()
         )
 
+    val controlStateFlow: StateFlow<ControlState> = playbackManager.controlStateFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            ControlState()
+        )
+
+    val positionStateFlow: StateFlow<PositionState> = playbackManager.positionStateFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            PositionState()
+        )
+
     val availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
         .stateIn(
             viewModelScope,
@@ -158,6 +174,8 @@ class MainViewModel @Inject constructor(
     fun seekForward() = viewModelScope.launch { playbackManager.seekForward()  }
 
     fun seekBackward() = viewModelScope.launch { playbackManager.seekBackward() }
+
+    fun getController() = playbackManager.getController()
 
     /**
      * Experimental code, which page for music chooser fragment?

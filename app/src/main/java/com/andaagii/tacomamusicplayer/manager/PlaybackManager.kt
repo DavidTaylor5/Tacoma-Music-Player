@@ -2,7 +2,10 @@ package com.andaagii.tacomamusicplayer.manager
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import com.andaagii.tacomamusicplayer.manager.state.ControlState
 import com.andaagii.tacomamusicplayer.manager.state.PlaybackState
+import com.andaagii.tacomamusicplayer.manager.state.PositionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -13,6 +16,9 @@ import kotlinx.coroutines.withContext
  */
 interface PlaybackManager {
     val playbackStateFlow: Flow<PlaybackState>
+
+    val positionStateFlow: Flow<PositionState>
+    val controlStateFlow: Flow<ControlState>
 
     fun initialize()
     fun release()
@@ -50,4 +56,10 @@ interface PlaybackManager {
     suspend fun seekForward()
 
     suspend fun seekBackward()
+
+    /**
+     * Only use this for populating player timeline!
+     * Don't use any commands on the controller!
+     */
+    fun getController(): MediaController?
 }

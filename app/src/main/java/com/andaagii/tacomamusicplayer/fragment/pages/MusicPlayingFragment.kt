@@ -5,6 +5,7 @@ import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -12,9 +13,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
+import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
@@ -34,6 +37,7 @@ class MusicPlayingFragment: Fragment() {
         super.onCreate(savedInstanceState)
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,34 +47,44 @@ class MusicPlayingFragment: Fragment() {
         binding = FragmentMusicPlayingBinding.inflate(inflater)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED ) {
-                parentViewModel.playbackStateFlow.collect { state ->
-
-                    if(state.controlState.isPlaying) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.controlStateFlow.collect { state ->
+                    if(state.isPlaying) {
                         binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
                     } else {
                         binding.playButton?.setBackgroundResource(R.drawable.baseline_play_arrow_24)
                     }
 
-                    state.positionState.currentlyPlayingSong?.let {
-                        updateUIForCurrentSong(it)
-                    }
-
-                    showActivePlayer(
-                        show = !SongData.isNullSong(state.positionState.currentlyPlayingSong)
-                    )
-
-                    when(state.controlState.loopMode) {
+                    when(state.loopMode) {
                         Player.REPEAT_MODE_OFF -> {  binding.loopToggle?.setBackgroundResource(R.drawable.one_x) }
                         Player.REPEAT_MODE_ONE -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat_one) }
                         Player.REPEAT_MODE_ALL -> {  binding.loopToggle?.setBackgroundResource(R.drawable.repeat) }
                     }
 
-                    if(state.controlState.shuffleMode == ShuffleType.SHUFFLED) {
+                    if(state.shuffleMode == ShuffleType.SHUFFLED) {
                         binding.shuffleToggle?.setBackgroundResource(R.drawable.shuffle)
                     } else {
                         binding.shuffleToggle?.setBackgroundResource(R.drawable.right_arrow)
                     }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.positionStateFlow.collect { state ->
+                    if(binding.playerControls?.player == null) {
+                        binding.playerControls?.player = parentViewModel.getController()
+                        binding.playerControls?.show()
+                    }
+
+                    state.currentlyPlayingSong?.let {
+                        updateUIForCurrentSong(it)
+                    }
+
+                    showActivePlayer(
+                        show = !SongData.isNullSong(state.currentlyPlayingSong)
+                    )
                 }
             }
         }

@@ -2,9 +2,7 @@ package com.andaagii.tacomamusicplayer.fragment
 
 import android.os.Bundle
 import android.util.Size
-import android.view.GestureDetector
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
@@ -17,14 +15,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.PlayerDisplayFragmentBinding
 import com.andaagii.tacomamusicplayer.enumtype.PageType
-import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,39 +36,6 @@ class PlayerDisplayFragment: Fragment() {
     var currentlyPlayingSong: SongData? = null
 
     private var currPage: Int? = null
-
-    private val detector = object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            Timber.d("onDoubleTap: navigate to the music chooser screen!")
-
-            //navigate to the music chooser fragment...
-            findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-
-            return super.onDoubleTap(e)
-        }
-
-        override fun onDown(e: MotionEvent): Boolean {
-            Timber.d("onDown: ")
-            return true
-        }
-
-        override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent,
-            velocityX: Float,
-            velocityY: Float
-        ): Boolean {
-            Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
-            if(velocityY > 500) {
-                Timber.d("onFling: navigate to the music chooser screen!")
-
-                //navigate to the music chooser fragment...
-                findNavController().navigate(ScreenType.MUSIC_PLAYING_SCREEN.route())
-            }
-
-            return super.onFling(e1, e2, velocityX, velocityY)
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -111,25 +74,31 @@ class PlayerDisplayFragment: Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.playbackStateFlow.collect { state ->
+                parentViewModel.controlStateFlow.collect { state ->
+                    if(state.isPlaying) {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                    }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.positionStateFlow.collect { state ->
                     // Don't show the mini player on the player page // Or if the current song is null
-                    if(currPage != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(state.positionState.currentlyPlayingSong)) {
+                    if(currPage != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(state.currentlyPlayingSong)) {
                         binding.miniPlayerControls?.visibility = View.VISIBLE
                     } else {
                         binding.miniPlayerControls?.visibility = View.GONE
                     }
 
-                    if(state.controlState.isPlaying) {
-                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-                    } else {
-                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
-                    }
-
-                    state.positionState.currentlyPlayingSong?.let { songData ->
+                    state.currentlyPlayingSong?.let { songData ->
                         updateMiniPlayerForCurrentSong(songData)
                     }
 
-                    currentlyPlayingSong = state.positionState.currentlyPlayingSong
+                    currentlyPlayingSong = state.currentlyPlayingSong
                 }
             }
         }

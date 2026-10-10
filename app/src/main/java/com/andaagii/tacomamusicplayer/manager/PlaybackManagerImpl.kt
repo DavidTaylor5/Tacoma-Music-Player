@@ -63,6 +63,8 @@ class PlaybackManagerImpl @Inject constructor(
 
     private val _isPlaying: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    override val controlStateFlow: Flow<ControlState>
+        get() = _controlFlow
     private val _controlFlow: Flow<ControlState> = combine(
         _loopingFlow, _shuffleFlow, _isPlaying
     ) { looping, shuffle, playing ->
@@ -80,6 +82,8 @@ class PlaybackManagerImpl @Inject constructor(
     private val _queue: MutableStateFlow<List<MediaItem>> = MutableStateFlow(listOf())
     private var _unshuffledQueue: MutableStateFlow<List<MediaItem>> = MutableStateFlow(listOf())
 
+    override val positionStateFlow: Flow<PositionState>
+        get() = _positionFlow
     private val _positionFlow: Flow<PositionState> = combine(
         _queue, _unshuffledQueue, _currentPlayingSong, _songPosition
     ) { queue, unshuffled, currSong, position ->
@@ -400,5 +404,9 @@ class PlaybackManagerImpl @Inject constructor(
     override suspend fun seekBackward() = withContext(Dispatchers.Main) {
         val controller = _mediaController.value ?: return@withContext
         controller.seekBack()
+    }
+
+    override fun getController(): MediaController? {
+        return _mediaController.value
     }
 }
