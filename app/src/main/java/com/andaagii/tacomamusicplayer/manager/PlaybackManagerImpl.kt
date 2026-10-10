@@ -371,6 +371,8 @@ class PlaybackManagerImpl @Inject constructor(
                     duration = mediaMetadata.description.toString()
                 )
 
+            _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
+
             super.onMediaMetadataChanged(mediaMetadata)
         }
 

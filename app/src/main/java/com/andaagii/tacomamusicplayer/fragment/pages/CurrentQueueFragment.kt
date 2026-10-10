@@ -125,12 +125,14 @@ class CurrentQueueFragment: Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                parentViewModel.playbackStateFlow.collect { state ->
+                parentViewModel.positionStateFlow.collect { state ->
                     (binding.displayRecyclerview.adapter as QueueListAdapter).submitList(
-                        state.positionState.queue.map { mediaItem ->  DisplaySong(
-                            mediaItem = mediaItem,
-                            showPlayIndicator = false
-                        ) }
+                        state.queue.mapIndexed { index, mediaItem ->
+                            DisplaySong(
+                                mediaItem = mediaItem,
+                                showPlayIndicator = index == state.songPosition
+                            )
+                        }
                     )
                 }
             }
