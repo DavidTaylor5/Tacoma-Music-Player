@@ -116,18 +116,12 @@
 
         </LinearLayout>
 
-
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/player_view"
+        <androidx.media3.ui.PlayerControlView
+            android:id="@+id/player_controls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:show_timeout="0"
-            app:controller_layout_id="@layout/custom_exo_controller_update"
-            app:player_layout_id="@layout/custom_exo_player_update"
-            app:hide_on_touch="false"
-            app:use_controller="true"
-            app:auto_show="false"
-            />
+            app:controller_layout_id="@layout/custom_exo_controller_update" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/player_control_buttons"

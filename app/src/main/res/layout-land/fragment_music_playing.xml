@@ -5,41 +5,31 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/player_view"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:background="@color/primary"
-        app:auto_show="false"
-        app:controller_layout_id="@layout/custom_exo_controller_update"
-        app:hide_on_touch="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:player_layout_id="@layout/custom_exo_player_update"
-        app:show_timeout="0"
-        app:use_controller="true" />
+<!--    <androidx.media3.ui.PlayerControlView-->
+<!--        android:id="@+id/player_controls"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:show_timeout="0"-->
+<!--        app:controller_layout_id="@layout/custom_exo_controller_update" />-->
 
-    <Button
-        android:id="@+id/psycho_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:backgroundTint="@color/accent"
-        android:text="DEFAULT"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/player_view" />
+<!--    <Button-->
+<!--        android:id="@+id/psycho_button"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="24dp"-->
+<!--        android:backgroundTint="@color/accent"-->
+<!--        android:text="DEFAULT"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/player_view" />-->
 
-    <Button
-        android:id="@+id/navigate_choose_music"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="564dp"
-        android:backgroundTint="@color/accent"
-        android:text="DEFAULT"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="347dp" />
+<!--    <Button-->
+<!--        android:id="@+id/navigate_choose_music"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="564dp"-->
+<!--        android:backgroundTint="@color/accent"-->
+<!--        android:text="DEFAULT"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        tools:layout_editor_absoluteY="347dp" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
