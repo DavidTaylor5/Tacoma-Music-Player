@@ -14,6 +14,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
@@ -25,6 +28,7 @@ import com.andaagii.tacomamusicplayer.enumtype.ScreenType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -33,6 +37,7 @@ class PlayerDisplayFragment: Fragment() {
     private lateinit var binding: PlayerDisplayFragmentBinding
 
     private val parentViewModel: MainViewModel by activityViewModels()
+    var currentlyPlayingSong: SongData? = null
 
     private var currPage: Int? = null
 
@@ -58,7 +63,6 @@ class PlayerDisplayFragment: Fragment() {
             velocityY: Float
         ): Boolean {
             Timber.d("onFling: e1=$e1, e2=$e2, velocityX=$velocityX, velocityY=$velocityY")
-
             if(velocityY > 500) {
                 Timber.d("onFling: navigate to the music chooser screen!")
 
@@ -75,19 +79,6 @@ class PlayerDisplayFragment: Fragment() {
         super.onCreate(savedInstanceState)
         pagerAdapter =  ScreenSlidePagerAdapter(requireActivity())
     }
-
-    override fun onStart() {
-        super.onStart()
-        //TODO add code to add to controller new music...
-    }
-
-
-
-//    private fun setupPlayingAnimation(binding: FragmentMusicChooserBinding) {
-//        binding.playingAnimation!!.setBackgroundResource(R.drawable.playing_animation)
-//        val frameAnimation = binding.playingAnimation.background as AnimationDrawable
-//        frameAnimation.start()
-//    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -118,13 +109,30 @@ class PlayerDisplayFragment: Fragment() {
             WindowInsetsCompat.CONSUMED
         }
 
-        //val gesture = GestureDetector(container!!.context, detector)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.playbackStateFlow.collect { state ->
+                    // Don't show the mini player on the player page // Or if the current song is null
+                    if(currPage != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(state.positionState.currentlyPlayingSong)) {
+                        binding.miniPlayerControls?.visibility = View.VISIBLE
+                    } else {
+                        binding.miniPlayerControls?.visibility = View.GONE
+                    }
 
-        //setupPlayingAnimation(binding)
+                    if(state.controlState.isPlaying) {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
+                    } else {
+                        binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
+                    }
 
-//        binding.playingAnimation!!.setOnTouchListener { v, event ->
-//            gesture.onTouchEvent(event)
-//        }
+                    state.positionState.currentlyPlayingSong?.let { songData ->
+                        updateMiniPlayerForCurrentSong(songData)
+                    }
+
+                    currentlyPlayingSong = state.positionState.currentlyPlayingSong
+                }
+            }
+        }
 
         binding.pager.adapter = pagerAdapter
         binding.pager.offscreenPageLimit = 4
@@ -139,13 +147,6 @@ class PlayerDisplayFragment: Fragment() {
                 super.onPageSelected(position)
 
                 currPage = position
-
-                // Don't show the mini player on the player page // Or if the current song is null
-                if(position != PageType.PLAYER_PAGE.type() && !SongData.isNullSong(parentViewModel.currentPlayingSongInfo.value)) {
-                    binding.miniPlayerControls?.visibility = View.VISIBLE
-                } else {
-                    binding.miniPlayerControls?.visibility = View.GONE
-                }
 
                 //observe the current page
                 parentViewModel.observeCurrentPage(PageType.determinePageFromPosition(position))
@@ -171,6 +172,10 @@ class PlayerDisplayFragment: Fragment() {
                         binding.navigationControl.setFocusOnNavigationButton(PageType.SONG_PAGE)
                     }
                 }
+
+                binding.miniPlayerControls?.visibility =
+                    if(position != PageType.PLAYER_PAGE.type() && currentlyPlayingSong != null) View.VISIBLE
+                    else View.GONE
             }
         }
 
@@ -197,32 +202,20 @@ class PlayerDisplayFragment: Fragment() {
             binding.pager.currentItem = page.type()
         }
 
-        parentViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
-            if(isPlaying) {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.baseline_pause_24)
-            } else {
-                binding.miniPlayerPlayButton?.setBackgroundResource(R.drawable.white_play_arrow)
-            }
-        }
-
         binding.miniPlayerPlayButton?.setOnClickListener {
             parentViewModel.flipPlayingState()
         }
 
         binding.miniPlayerPrevButton?.setOnClickListener {
-            parentViewModel.mediaController.value?.seekToPrevious()
+            parentViewModel.seekPreviousSong()
         }
 
         binding.miniPlayerNextButton?.setOnClickListener {
-            parentViewModel.mediaController.value?.seekToNextMediaItem()
+            parentViewModel.seekNextSong()
         }
 
         binding.miniPlayerControls?.setOnClickListener {
             navigateToPlayerPage()
-        }
-
-        parentViewModel.currentPlayingSongInfo.observe(requireActivity()) { currentSong ->
-            updateMiniPlayerForCurrentSong(currentSong)
         }
 
         return binding.root
