@@ -7,6 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
@@ -23,15 +26,16 @@ import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
 class CurrentQueueFragment: Fragment() {
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
+    //TODO have the queue exist in the viewmodel, have the fragment observe the queue and update adapter
 
     //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
@@ -55,7 +59,7 @@ class CurrentQueueFragment: Fragment() {
                 if(actionState == ACTION_STATE_IDLE) {
                     currFrom?.let { from ->
                         currTo?.let { to ->
-                            parentViewModel.mediaController.value?.moveMediaItem(from, to)
+                            parentViewModel.moveInQueue(from, to)
                             currFrom = null
                             currTo = null
                         }
@@ -84,22 +88,7 @@ class CurrentQueueFragment: Fragment() {
                 currTo = to
 
                 Timber.d("onMove: from=$from, to=$to")
-
-                /*
-                2. Update the backing model. Custom implementation in SongListAdapter. You need to
-                implement reordering of the backing model inside the method.
-                 */
-                adapter.moveItem(from, to)
-
-                // Update the mediaController playlist
-//                if(currActionState == ACTION_STATE_IDLE) { // TODO right idea but doesn't work...
-//                    parentViewModel.mediaController.value?.moveMediaItem(from, to)
-//                }
-
-                // 3. Tell adapter to render the model update.
-
                 adapter.notifyItemMoved(from, to)
-
                 return true
             }
 
@@ -127,80 +116,23 @@ class CurrentQueueFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentCurrentQueueBinding.inflate(inflater)
+        binding.displayRecyclerview.adapter = QueueListAdapter(
+            handleSongSetting = this::handleSongSetting,
+            onHandleDrag = this::handleViewHolderHandleDrag,
+            playSongAtPosition = this::playSongAtPosition
+        )
 
-        parentViewModel.showLoadingScreen.observe(viewLifecycleOwner) { loadingMusic ->
-            Timber.d("onCreateView: loadingMusic=$loadingMusic")
-            if(!loadingMusic) {
-                parentViewModel.mediaController.value?.let { controller ->
-                    val songs = UtilImpl.getSongListFromMediaController(controller)
-                    Timber.d("onCreateView: queueSongs=$songs")
-                    val displaySongs = songs.map {song ->
-                        if(song == controller.currentMediaItem) {
-                            DisplaySong(
-                                song,
-                                true
-                            )
-                        } else {
-                            DisplaySong(
-                                song,
-                                false
-                            )
-                        }
-                    }
-
-                    binding.displayRecyclerview.adapter = QueueListAdapter(
-                        displaySongs,
-                        this::handleSongSetting,
-                        this::handleViewHolderHandleDrag,
-                        this::handleRemoveSong,
-                        this::playSongAtPosition
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                parentViewModel.playbackStateFlow.collect { state ->
+                    (binding.displayRecyclerview.adapter as QueueListAdapter).submitList(
+                        state.positionState.queue.map { mediaItem ->  DisplaySong(
+                            mediaItem = mediaItem,
+                            showPlayIndicator = false
+                        ) }
                     )
-                    determineIfShowingEmptyPlaylistScreen(songs)
                 }
-            }
-        }
-
-        parentViewModel.currentlyPlayingSongs.observe(viewLifecycleOwner) { currSongs ->
-            parentViewModel.mediaController.value?.let { controller ->
-                val songs = UtilImpl.getSongListFromMediaController(controller)
-                Timber.d("onCreateView: queueSongs=$songs")
-                val displaySongs = songs.map {song ->
-                    if(song == controller.currentMediaItem) {
-                        DisplaySong(
-                            song,
-                            true
-                        )
-                    } else {
-                        DisplaySong(
-                            song,
-                            false
-                        )
-                    }
-                }
-
-                binding.displayRecyclerview.adapter = QueueListAdapter(
-                    displaySongs,
-                    this::handleSongSetting,
-                    this::handleViewHolderHandleDrag,
-                    this::handleRemoveSong,
-                    this::playSongAtPosition
-                )
-                determineIfShowingEmptyPlaylistScreen(songs)
-            }
-        }
-
-        parentViewModel.currentPlayingSongInfo.observe(viewLifecycleOwner) { currSong ->
-            binding.displayRecyclerview.adapter?.let {
-                (it as QueueListAdapter).updateCurrentSongIndicator(currSong)
-            }
-        }
-
-        parentViewModel.clearQueue.observe(viewLifecycleOwner) { shouldClear ->
-            if(shouldClear) {
-                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
-                parentViewModel.handledClearningQueue()
             }
         }
 
@@ -218,19 +150,6 @@ class CurrentQueueFragment: Fragment() {
         return binding.root
     }
 
-    override fun onResume() {
-        super.onResume()
-
-
-    }
-
-    private fun handleRemoveSong(songPosition: Int) {
-        binding.displayRecyclerview.adapter?.let { adapter ->
-            adapter.notifyItemRemoved(songPosition)
-            parentViewModel.mediaController.value?.removeMediaItem(songPosition)
-        }
-    }
-
     /**
      * Shows a prompt for the user to choose a playlist or album.
      * Should show when there is no songs in the current song list, not an empty playlist.
@@ -244,10 +163,9 @@ class CurrentQueueFragment: Fragment() {
     }
 
     private fun playSongAtPosition(position: Int) {
-        parentViewModel.mediaController.value?.let {controller ->
-            controller.seekTo(position, 0L)
-            controller.play()
-        }
+        parentViewModel.playQueueAtPosition(
+            position
+        )
     }
 
     private fun handleViewHolderHandleDrag(viewHolder: ViewHolder) {
@@ -259,18 +177,16 @@ class CurrentQueueFragment: Fragment() {
         when (menuOption) {
             MenuOptionUtil.MenuOption.CLEAR_QUEUE -> {
                 parentViewModel.clearQueue()
-                (binding.displayRecyclerview.adapter as QueueListAdapter).clearQueue()
             }
             MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
                 //TODO ADD to playlist code
+                //parentViewModel.addSongsToAPlaylist()
             }
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
 
     private fun setupPage() {
-        //binding.sectionTitle.text = "PARTICULAR ALBUM - ARTIST"
-
         binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     }
 }

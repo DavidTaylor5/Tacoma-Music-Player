@@ -1,0 +1,6 @@
+- Kotlin with Jetpack Compose; no XML layouts.
+- Use Kotlin Flows and StateFlow for state; expose immutable StateFlow from ViewModels.
+- Dependency injection with Hilt.
+- Local storage with Room.
+- Prefer small, focused changes; don't rewrite unrelated code.
+- When explaining proposed code changes, show the diff with removals in red and additions in green like github. 

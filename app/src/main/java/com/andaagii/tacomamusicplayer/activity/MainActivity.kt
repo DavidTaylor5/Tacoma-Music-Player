@@ -13,9 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.createGraph
@@ -34,11 +31,9 @@ import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
 
-//Preferences DataStore, for storing settings in my app
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @AndroidEntryPoint
@@ -98,33 +93,18 @@ class MainActivity : AppCompatActivity() {
                 Timber.d("onCreate: isGranted=$isGranted")
                 permissionManager.requestReadMediaAudioPermission(this)
             } else {
-                viewModel.initializeMusicPlaying()
-
-                // Music Access is allowed, start looking through user library
                 queryMusic()
-
-                //TODO add back code for music content observer?
-//                val handler = Handler(Looper.getMainLooper())
-//                musicObserver = MusicContentObserver(
-//                    handler = handler,
-//                    context = this,
-//                    onContentChange = viewModel::queryAvailableAlbums
-//                )
-//                contentResolver.registerContentObserver(
-//                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-//                    true,
-//                    musicObserver!!
-//                )
             }
         }
 
-        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
-            if(showLoadingScreen) {
-                binding.loadingScreen.visibility = View.VISIBLE
-            } else {
-                binding.loadingScreen.visibility = View.INVISIBLE
-            }
-        }
+//        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
+//            if(showLoadingScreen) {
+//                binding.loadingScreen.visibility = View.VISIBLE
+//            } else {
+//                binding.loadingScreen.visibility = View.INVISIBLE
+//            }
+//        }
+        binding.loadingScreen.visibility = View.INVISIBLE
 
         viewModel.screenState.observe(this) {data ->
             Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
@@ -171,11 +151,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        //Saves the current song list in queue
-        viewModel.saveQueue()
-        //Saves the original song list order [in case the user has shuffled]
-        //viewModel.saveOriginalOrder()
-
+        viewModel.savePlaybackState()
         musicObserver?.let {
             contentResolver.unregisterContentObserver(it)
             Timber.d("onDestroy: unregistered, musicobserver")

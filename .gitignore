@@ -16,3 +16,4 @@ gradle.properties
 local.properties
 tacoma-music-player-personal-access-token.txt
 my-release-key.keystore
+.aider*

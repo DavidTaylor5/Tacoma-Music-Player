@@ -1,9 +1,10 @@
 package com.andaagii.tacomamusicplayer.di
 
+import com.andaagii.tacomamusicplayer.manager.PlaybackManager
+import com.andaagii.tacomamusicplayer.manager.PlaybackManagerImpl
 import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepositoryImpl
-import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -24,4 +25,10 @@ abstract class AppModule {
     abstract fun bindMusicProviderRepository(
         impl: MusicRepositoryImpl
     ): MusicProviderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMusicManager(
+        impl: PlaybackManagerImpl
+    ): PlaybackManager
 }
