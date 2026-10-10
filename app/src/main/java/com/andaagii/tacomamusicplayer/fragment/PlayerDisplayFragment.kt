@@ -15,6 +15,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
 import androidx.viewpager2.widget.ViewPager2
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.ScreenSlidePagerAdapter
@@ -35,7 +36,7 @@ class PlayerDisplayFragment: Fragment() {
     private val parentViewModel: MainViewModel by activityViewModels()
     var currentlyPlayingSong: SongData? = null
 
-    private var currPage: Int? = null
+    private var currPage: Int? = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate: ")
@@ -72,6 +73,13 @@ class PlayerDisplayFragment: Fragment() {
             WindowInsetsCompat.CONSUMED
         }
 
+        binding.pager.adapter = pagerAdapter
+        binding.pager.offscreenPageLimit = 4
+
+        //Start app on player page
+        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
+        navigateToPlayerPage()
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.controlStateFlow.collect { state ->
@@ -95,20 +103,16 @@ class PlayerDisplayFragment: Fragment() {
                     }
 
                     state.currentlyPlayingSong?.let { songData ->
-                        updateMiniPlayerForCurrentSong(songData)
+                        updateMiniPlayerForCurrentSong(
+                            song = songData,
+                            queue = state.queue
+                        )
                     }
 
                     currentlyPlayingSong = state.currentlyPlayingSong
                 }
             }
         }
-
-        binding.pager.adapter = pagerAdapter
-        binding.pager.offscreenPageLimit = 4
-
-        //Start app on player page
-        binding.navigationControl.setFocusOnNavigationButton(PageType.PLAYER_PAGE)
-        navigateToPlayerPage()
 
         val onPageChangedCallback = object: ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -194,23 +198,28 @@ class PlayerDisplayFragment: Fragment() {
         binding.pager.currentItem = 1
     }
 
-    private fun updateMiniPlayerForCurrentSong(song: SongData) {
+    private var displayAlbum: String? = null
+    private fun updateMiniPlayerForCurrentSong(song: SongData, queue: List<MediaItem>) {
         val miniPlayerShowing = binding.miniPlayerControls?.visibility ?: View.GONE
-        if(SongData.isNullSong(song)) {
+        if(queue.isEmpty()) {
             binding.miniPlayerControls?.visibility = View.GONE
         } else if(miniPlayerShowing == View.GONE && currPage != null && currPage != PageType.PLAYER_PAGE.type()) {
             binding.miniPlayerControls?.visibility = View.VISIBLE
         }
 
-        //Set mini player song image
-        val customImage = "album_${song.albumTitle}"
-        UtilImpl.drawMediaItemArt(
-            binding.miniPlayerImage!!,
-            song.artworkUri.toUri(),
-            Size(300, 300),
-            customImage,
-            synchronous = true
-        )
+        if(displayAlbum != song.albumTitle) { //prevent flicker on same album art
+            //Set mini player song image
+            val customImage = "album_${song.albumTitle}"
+            UtilImpl.drawMediaItemArt(
+                binding.miniPlayerImage!!,
+                song.artworkUri.toUri(),
+                Size(300, 300),
+                customImage,
+                synchronous = true
+            )
+        }
+
+        displayAlbum = song.albumTitle
 
         //Set mini player description
         val songDescription = "${song.songTitle} - ${song.artist}"

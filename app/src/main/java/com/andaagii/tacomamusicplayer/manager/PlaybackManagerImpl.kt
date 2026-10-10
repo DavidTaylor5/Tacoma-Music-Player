@@ -145,8 +145,11 @@ class PlaybackManagerImpl @Inject constructor(
         }
     }
 
-    private fun restorePlaybackState() {
+    fun restorePlaybackState() {
         Timber.d("restorePlaybackState: ")
+        // No need to restore playback state if it's already playing
+        if(_isPlaying.value) return
+
         appScope.launch(Dispatchers.IO) {
             val playbackPosition = DataStoreUtil.getPlaybackPosition(context).firstOrNull()
             val songPosition = DataStoreUtil.getSongPosition(context).firstOrNull()
@@ -265,6 +268,8 @@ class PlaybackManagerImpl @Inject constructor(
             val controller = controllerFuture.get()
             _mediaController.value = controller
             controller.addListener(playerListener)
+
+            restorePlaybackState()
         }, MoreExecutors.directExecutor())
     }
 

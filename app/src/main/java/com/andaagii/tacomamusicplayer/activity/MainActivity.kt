@@ -145,7 +145,6 @@ class MainActivity : AppCompatActivity() {
         Timber.d("onResume: ")
 
         UtilImpl.hideNavigationUI(window)
-
         viewModel.checkPermissionsIfOnPermissionDeniedScreen()
     }
 
