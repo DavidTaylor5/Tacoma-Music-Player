@@ -25,7 +25,7 @@ interface PlaybackManager {
 
     fun saveState()
 
-    fun moveInQueue(from: Int, to: Int)
+    suspend fun moveInQueue(from: Int, to: Int)
 
     fun clearQueue()
 
@@ -62,4 +62,6 @@ interface PlaybackManager {
      * Don't use any commands on the controller!
      */
     fun getController(): MediaController?
+
+    fun requestSynchronousSongPosition()
 }

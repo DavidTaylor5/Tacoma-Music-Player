@@ -35,6 +35,7 @@ import timber.log.Timber
 import java.util.Collections
 import javax.inject.Inject
 import kotlin.collections.map
+import kotlin.to
 
 class PlaybackManagerImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -190,13 +191,21 @@ class PlaybackManagerImpl @Inject constructor(
         }
     }
 
-    override fun moveInQueue(from: Int, to: Int) {
+    override suspend fun moveInQueue(from: Int, to: Int) {
         val tempQ = _queue.value.toMutableList()
-        Collections.swap(tempQ, from, to)
+        tempQ.add(to, tempQ.removeAt(from))
         _queue.value = tempQ
         if(_shuffleFlow.value == ShuffleType.NOT_SHUFFLED) {
             _unshuffledQueue.value = tempQ
         }
+
+        // After queue is updated, player must reflect queue
+        _mediaController.value?.moveMediaItem(from, to)
+        _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
+    }
+
+    override fun requestSynchronousSongPosition() {
+        _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
     }
 
     override fun clearQueue() {
@@ -370,6 +379,8 @@ class PlaybackManagerImpl @Inject constructor(
                     artworkUri = mediaMetadata.artworkUri.toString(),
                     duration = mediaMetadata.description.toString()
                 )
+
+            _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
 
             super.onMediaMetadataChanged(mediaMetadata)
         }
