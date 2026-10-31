@@ -206,13 +206,6 @@ class PlaybackManagerImpl @Inject constructor(
         _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
     }
 
-    override suspend fun updateQueueBySwipe(queue: List<MediaItem>) {
-        _queue.value = queue
-        if(_shuffleFlow.value == ShuffleType.NOT_SHUFFLED) {
-            _unshuffledQueue.value = queue
-        }
-    }
-
     override fun requestSynchronousSongPosition() {
         _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
     }

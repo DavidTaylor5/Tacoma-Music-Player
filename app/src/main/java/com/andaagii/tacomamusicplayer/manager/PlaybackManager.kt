@@ -28,8 +28,6 @@ interface PlaybackManager {
 
     suspend fun moveInQueue(from: Int, to: Int)
 
-    suspend fun updateQueueBySwipe(queue: List<MediaItem>)
-
     fun clearQueue()
 
     suspend fun addToQueue(songs: List<MediaItem>, clear: Boolean)

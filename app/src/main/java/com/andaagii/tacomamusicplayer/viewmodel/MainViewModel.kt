@@ -167,9 +167,6 @@ class MainViewModel @Inject constructor(
     fun flipPlayingState() = viewModelScope.launch { playbackManager.flipPlayingState() }
 
     fun moveInQueue(from: Int, to: Int) = viewModelScope.launch { playbackManager.moveInQueue(from, to) }
-
-    fun updateQueueBySwipe(queue: List<MediaItem>) = viewModelScope.launch { playbackManager.updateQueueBySwipe(queue) }
-
     fun seekPreviousSong() = viewModelScope.launch { playbackManager.seekPreviousSong()  }
 
     fun seekNextSong() = viewModelScope.launch { playbackManager.seekNextSong() }
