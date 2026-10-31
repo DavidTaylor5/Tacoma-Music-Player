@@ -12,8 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
-import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
 import androidx.recyclerview.widget.ItemTouchHelper.END
 import androidx.recyclerview.widget.ItemTouchHelper.START
@@ -35,9 +33,7 @@ import timber.log.Timber
 class CurrentQueueFragment: Fragment() {
     private lateinit var binding: FragmentCurrentQueueBinding
     private val parentViewModel: MainViewModel by activityViewModels()
-    //TODO have the queue exist in the viewmodel, have the fragment observe the queue and update adapter
 
-    //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
         /*
         1. Specify all 4 directions, specifying START and END also allows more organic dragging
@@ -124,18 +120,6 @@ class CurrentQueueFragment: Fragment() {
         setupPage()
 
         return binding.root
-    }
-
-    /**
-     * Shows a prompt for the user to choose a playlist or album.
-     * Should show when there is no songs in the current song list, not an empty playlist.
-     */
-    private fun determineIfShowingEmptyPlaylistScreen(songs: List<MediaItem>) {
-        if(songs.isEmpty()){
-            binding.noMusicAddedText.visibility = View.VISIBLE
-        } else {
-            binding.noMusicAddedText.visibility = View.GONE
-        }
     }
 
     private fun playSongAtPosition(position: Int) {
