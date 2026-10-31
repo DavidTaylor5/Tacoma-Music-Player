@@ -65,6 +65,13 @@ class CurrentQueueFragment: Fragment() {
                 parentViewModel.moveInQueue(from, to)
                 return true
             }
+
+            override fun onSwiped(
+                viewHolder: ViewHolder,
+                direction: Int
+            ) {
+                TODO("Not yet implemented")
+            }
         }
         ItemTouchHelper(simpleItemTouchCallback)
     }
