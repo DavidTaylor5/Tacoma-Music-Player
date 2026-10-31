@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.di.ApplicationScope
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
@@ -202,6 +203,13 @@ class PlaybackManagerImpl @Inject constructor(
         // After queue is updated, player must reflect queue
         _mediaController.value?.moveMediaItem(from, to)
         _songPosition.value = _mediaController.value?.currentMediaItemIndex ?: 0
+    }
+
+    override suspend fun updateQueueBySwipe(queue: List<MediaItem>) {
+        _queue.value = queue
+        if(_shuffleFlow.value == ShuffleType.NOT_SHUFFLED) {
+            _unshuffledQueue.value = queue
+        }
     }
 
     override fun requestSynchronousSongPosition() {

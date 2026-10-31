@@ -45,28 +45,6 @@ class CurrentQueueFragment: Fragment() {
          */
         val simpleItemTouchCallback =
         object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
-
-            var currFrom: Int? = null
-            var currTo: Int? = null
-
-            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                super.onSelectedChanged(viewHolder, actionState)
-                //When an item is being dragged, I set alpha to .5
-                if(actionState == ACTION_STATE_DRAG) {
-                    viewHolder?.itemView?.alpha = 0.5f
-                }
-
-                if(actionState == ACTION_STATE_IDLE) {
-                    currFrom?.let { from ->
-                        currTo?.let { to ->
-                            parentViewModel.moveInQueue(from, to)
-                            currFrom = null
-                            currTo = null
-                        }
-                    }
-                }
-            }
-
             override fun clearView(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
@@ -80,23 +58,12 @@ class CurrentQueueFragment: Fragment() {
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                val adapter = recyclerView.adapter as QueueListAdapter
                 val from = viewHolder.bindingAdapterPosition
                 val to = target.bindingAdapterPosition
 
-                if(currFrom == null) currFrom = from
-                currTo = to
-
                 Timber.d("onMove: from=$from, to=$to")
-                adapter.notifyItemMoved(from, to)
+                parentViewModel.moveInQueue(from, to)
                 return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                /*
-                4. Code block for horizontal swipe. ItemTouchHelper handles horizontal swipes
-                as well, but it is not relevant to reordering. Ignore
-                 */
             }
         }
         ItemTouchHelper(simpleItemTouchCallback)
