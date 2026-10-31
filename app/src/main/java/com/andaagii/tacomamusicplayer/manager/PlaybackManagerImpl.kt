@@ -127,6 +127,7 @@ class PlaybackManagerImpl @Inject constructor(
     override suspend fun playQueueAtPosition(position: Int) = withContext(Dispatchers.Main) {
         val controller = _mediaController.value ?: return@withContext
         controller.seekTo(position, 0L)
+        controller.play()
     }
 
     private fun saveQueueState() {

@@ -43,7 +43,7 @@ class CurrentQueueFragment: Fragment() {
         object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
             override fun clearView(
                 recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder
+                viewHolder: ViewHolder
             ) {
                 super.clearView(recyclerView, viewHolder)
                 viewHolder.itemView.alpha = 1.0f
@@ -51,8 +51,8 @@ class CurrentQueueFragment: Fragment() {
 
             override fun onMove(
                 recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
+                viewHolder: ViewHolder,
+                target: ViewHolder
             ): Boolean {
                 val from = viewHolder.bindingAdapterPosition
                 val to = target.bindingAdapterPosition
@@ -112,13 +112,9 @@ class CurrentQueueFragment: Fragment() {
             parentViewModel.clearQueue()
         }
 
-        //For smoother scrolling I keep 30 viewholders saved in memory offscreen. optimized for ~40
-        //TODO Remove this code when I implement coil or glide....
         binding.displayRecyclerview.setItemViewCacheSize(30)
         itemTouchHelper.attachToRecyclerView(binding.displayRecyclerview)
-
         setupPage()
-
         return binding.root
     }
 

@@ -78,13 +78,8 @@ class QueueListAdapter(
                 songDurationReadable = UtilImpl.calculateHumanReadableTimeFromMilliseconds(songDurationInLong)
             }
 
-            if(currentList[position].showPlayIndicator) {
-                Timber.d("onBindViewHolder: songTitle=$songTitle, is showing play indicator!")
-
-                viewHolder.binding.songContainer.strokeColor = Color.GREEN
-            } else {
-                viewHolder.binding.songContainer.strokeColor = Color.WHITE
-            }
+            val container = viewHolder.binding.songContainer
+            container.strokeColor = if(currentList[position].showPlayIndicator) Color.GREEN else Color.WHITE
 
             viewHolder.binding.songContainer.setOnClickListener {
                 playSongAtPosition(viewHolder.absoluteAdapterPosition)
@@ -106,36 +101,12 @@ class QueueListAdapter(
             }
 
             viewHolder.binding.favoriteAnimation.setBackgroundDrawable(null)
-//                viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
             viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-//                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
             viewHolder.isFavorited = false
-
-//            if(favoriteList[position]) {
-//                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
-//            } else {
-//                viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-//            }
 
             (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).stop()
             (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).selectDrawable(0)
             (viewHolder.binding.favoriteAnimation.background as AnimationDrawable).invalidateSelf()
-
-            //TODO Add back song selection in the queue, currently disabled.
-//            viewHolder.binding.albumArt.setOnClickListener {
-//
-//                if(favoriteList[position]) { //currently favorited so, ontap turn to un favorited...
-//                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.unfavorite_animation)
-//                    viewHolder.isFavorited = false
-//                    favoriteList[position] = false
-//                } else { //currently un favorited, turn to favorited...
-//                    viewHolder.binding.favoriteAnimation.setBackgroundResource(R.drawable.favorite_animation)
-//                    viewHolder.isFavorited = true
-//                    favoriteList[position] = true
-//                }
-//                val frameAnimation = viewHolder.binding.favoriteAnimation.background as AnimationDrawable
-//                frameAnimation.start()
-//            }
         }
 
         viewHolder.binding.songTitleTextView.text = songTitle
