@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
@@ -166,7 +167,6 @@ class MainViewModel @Inject constructor(
     fun flipPlayingState() = viewModelScope.launch { playbackManager.flipPlayingState() }
 
     fun moveInQueue(from: Int, to: Int) = viewModelScope.launch { playbackManager.moveInQueue(from, to) }
-
     fun seekPreviousSong() = viewModelScope.launch { playbackManager.seekPreviousSong()  }
 
     fun seekNextSong() = viewModelScope.launch { playbackManager.seekNextSong() }

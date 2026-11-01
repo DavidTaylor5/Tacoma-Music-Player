@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
+import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.di.ApplicationScope
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
@@ -64,15 +65,18 @@ class PlaybackManagerImpl @Inject constructor(
 
     private val _isPlaying: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    private val _mediaControllerAvailable: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     override val controlStateFlow: Flow<ControlState>
         get() = _controlFlow
     private val _controlFlow: Flow<ControlState> = combine(
-        _loopingFlow, _shuffleFlow, _isPlaying
-    ) { looping, shuffle, playing ->
+        _loopingFlow, _shuffleFlow, _isPlaying, _mediaControllerAvailable
+    ) { looping, shuffle, playing, controllerAvailable ->
         ControlState(
             loopMode = looping,
             shuffleMode = shuffle,
-            isPlaying = playing
+            isPlaying = playing,
+            mediaControllerAvailable = controllerAvailable
         )
     }
 
@@ -116,6 +120,7 @@ class PlaybackManagerImpl @Inject constructor(
         Timber.d("release: ")
         _mediaController.value?.removeListener(playerListener)
         _mediaController.value?.release()
+        _mediaControllerAvailable.value = false
     }
 
     override fun saveState() {
@@ -126,6 +131,7 @@ class PlaybackManagerImpl @Inject constructor(
     override suspend fun playQueueAtPosition(position: Int) = withContext(Dispatchers.Main) {
         val controller = _mediaController.value ?: return@withContext
         controller.seekTo(position, 0L)
+        controller.play()
     }
 
     private fun saveQueueState() {
@@ -149,6 +155,8 @@ class PlaybackManagerImpl @Inject constructor(
     fun restorePlaybackState() {
         Timber.d("restorePlaybackState: ")
         // No need to restore playback state if it's already playing
+
+        Timber.d("restorePlaybackState: _isPlaying.value=${_isPlaying.value}")
         if(_isPlaying.value) return
 
         appScope.launch(Dispatchers.IO) {
@@ -275,10 +283,11 @@ class PlaybackManagerImpl @Inject constructor(
         val controllerFuture = MediaController.Builder(context, session).buildAsync()
         controllerFuture.addListener({
             val controller = controllerFuture.get()
+            Timber.d("connected: new=${System.identityHashCode(controller)} items=${controller.mediaItemCount}")   // <-- add this
             _mediaController.value = controller
             controller.addListener(playerListener)
-
             restorePlaybackState()
+            _mediaControllerAvailable.value = true
         }, MoreExecutors.directExecutor())
     }
 

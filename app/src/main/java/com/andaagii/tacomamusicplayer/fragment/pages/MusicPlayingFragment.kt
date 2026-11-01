@@ -49,6 +49,19 @@ class MusicPlayingFragment: Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.controlStateFlow.collect { state ->
+                    if(binding.playerControls?.player == null && state.mediaControllerAvailable) {
+                        Timber.d("onCreateView: Set player Controls!")
+                        val c = parentViewModel.getController()
+                        Timber.d("attach: controller=${System.identityHashCode(c)} connected=${c?.isConnected} items=${c?.mediaItemCount}")   // <-- add this
+                        binding.playerControls?.player = parentViewModel.getController()
+                        binding.playerControls?.show()
+
+                        parentViewModel.getController()?.let {
+                            Timber.d("onCreateView items=${it.mediaItemCount} timelineEmpty=${it.currentTimeline.isEmpty} " +
+                                    "duration=${it.duration} state=${it.playbackState}")
+                        }
+                    }
+
                     if(state.isPlaying) {
                         binding.playButton?.setBackgroundResource(R.drawable.baseline_pause_24)
                     } else {
@@ -73,15 +86,9 @@ class MusicPlayingFragment: Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.positionStateFlow.collect { state ->
-                    if(binding.playerControls?.player == null) {
-                        binding.playerControls?.player = parentViewModel.getController()
-                        binding.playerControls?.show()
-                    }
-
                     state.currentlyPlayingSong?.let {
                         updateUIForCurrentSong(it)
                     }
-
                     showActivePlayer(
                         show = !SongData.isNullSong(state.currentlyPlayingSong)
                     )

@@ -3,7 +3,6 @@ package com.andaagii.tacomamusicplayer.fragment.pages
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Size
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -44,15 +43,12 @@ import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEU
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST
-import com.andaagii.tacomamusicplayer.util.UtilImpl
 import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
 import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
-
-//TODO fix for clicking add to queue for a single song by updating mediaId
 
 @AndroidEntryPoint
 class SongListFragment(): Fragment() {
@@ -65,16 +61,11 @@ class SongListFragment(): Fragment() {
 
     private var songsToAddToPlaylistPrompt: List<MediaItem>? = null
 
-    //Adds functionality for moving items around the recyclerview.
     private val itemTouchHelper by lazy {
-        /*
-        1. Specify all 4 directions, specifying START and END also allows more organic dragging
-        than just specifying UP and DOWN.
-         */
         val simpleItemTouchCallback =
             object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
 
-                override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                override fun onSelectedChanged(viewHolder: ViewHolder?, actionState: Int) {
                     super.onSelectedChanged(viewHolder, actionState)
 
                     //When an item is being dragged, I set alpha to .5
@@ -85,7 +76,7 @@ class SongListFragment(): Fragment() {
 
                 override fun clearView(
                     recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder
+                    viewHolder: ViewHolder
                 ) {
                     super.clearView(recyclerView, viewHolder)
                     viewHolder.itemView.alpha = 1.0f
@@ -93,8 +84,8 @@ class SongListFragment(): Fragment() {
 
                 override fun onMove(
                     recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    target: RecyclerView.ViewHolder
+                    viewHolder: ViewHolder,
+                    target: ViewHolder
                 ): Boolean {
                     val adapter = recyclerView.adapter as SongListAdapter
                     val from = viewHolder.bindingAdapterPosition
@@ -559,14 +550,6 @@ class SongListFragment(): Fragment() {
             viewModel.updateCheckedPlaylists(playlistTitle, isChecked)
         }
 
-//        viewModel.isShowingMultiSelectPrompt.observe(viewLifecycleOwner) { isShowing ->
-//            if(isShowing) {
-//                binding.multiSelectPrompt.visibility = View.VISIBLE
-//            } else {
-//                binding.multiSelectPrompt.visibility = View.GONE
-//            }
-//        }
-
         viewModel.isPlaylistPromptAddClickable.observe(viewLifecycleOwner) { isClickable ->
             binding.playlistPrompt.updateAddButtonClickability(isClickable)
         }
@@ -601,7 +584,7 @@ class SongListFragment(): Fragment() {
                 }
             }
             ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
-            CHECK_STATS -> handleCheckStats()
+            CHECK_STATS -> { /*TODO */ }
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
@@ -650,10 +633,6 @@ class SongListFragment(): Fragment() {
     private fun handleAddToQueue(mediaItems: List<MediaItem>) {
         Timber.d("handleAddToQueue: mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
         parentViewModel.addSongsToEndOfQueue(mediaItems)
-    }
-
-    private fun handleCheckStats() {
-        //TODO...
     }
 
     /**
