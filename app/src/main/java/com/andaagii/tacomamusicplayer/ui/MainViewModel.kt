@@ -27,6 +27,7 @@ import com.andaagii.tacomamusicplayer.util.MediaItemUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -92,8 +93,6 @@ class MainViewModel @Inject constructor(
     val showLoadingScreen: LiveData<Boolean>
         get() = _showLoadingScreen
     private val _showLoadingScreen: MutableLiveData<Boolean> = MutableLiveData(true)
-
-    val loadingHandler = Handler(Looper.getMainLooper())
 
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
@@ -196,6 +195,11 @@ class MainViewModel @Inject constructor(
         Timber.d("init: ")
         checkPermissions()
         playbackManager.initialize()
+        _showLoadingScreen.value = true
+        viewModelScope.launch {
+            delay(1_000)
+            _showLoadingScreen.value = false
+        }
     }
 
     /**

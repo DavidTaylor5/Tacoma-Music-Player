@@ -97,14 +97,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-//        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
-//            if(showLoadingScreen) {
-//                binding.loadingScreen.visibility = View.VISIBLE
-//            } else {
-//                binding.loadingScreen.visibility = View.INVISIBLE
-//            }
-//        }
-        binding.loadingScreen.visibility = View.INVISIBLE
+        viewModel.showLoadingScreen.observe(this) { showLoadingScreen ->
+            if(showLoadingScreen) {
+                binding.loadingScreen.visibility = View.VISIBLE
+            } else {
+                binding.loadingScreen.visibility = View.INVISIBLE
+            }
+        }
 
         viewModel.screenState.observe(this) {data ->
             Timber.d("onCreate: observe screenState data.route=${data.currentScreen.route()}")
