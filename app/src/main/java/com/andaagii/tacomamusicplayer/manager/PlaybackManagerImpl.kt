@@ -38,6 +38,8 @@ import javax.inject.Inject
 import kotlin.collections.map
 import kotlin.to
 
+// Shuffle isn't updating queue correctly
+
 class PlaybackManagerImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
     @param:ApplicationScope private val appScope: CoroutineScope,
@@ -219,6 +221,7 @@ class PlaybackManagerImpl @Inject constructor(
     override fun clearQueue() {
         _queue.value = listOf()
         _unshuffledQueue.value = listOf()
+        _mediaController.value?.clearMediaItems()
     }
 
     override suspend fun addToQueue(song: MediaItem, clear: Boolean) {
@@ -263,6 +266,15 @@ class PlaybackManagerImpl @Inject constructor(
             !positions.contains(index)
         }
         _queue.value = tempQ
+
+        val removePositions = positions.sorted().toMutableList()
+        while(removePositions.isNotEmpty()) {
+            val currPosition = removePositions.removeAt(0)
+            _mediaController.value?.removeMediaItem(currPosition)
+            //as the list is shortened, update later positions to reflect that
+            removePositions.forEach { position -> position - 1 }
+        }
+
         if(_shuffleFlow.value == ShuffleType.NOT_SHUFFLED) {
             _unshuffledQueue.value = tempQ
         } else {
@@ -312,12 +324,14 @@ class PlaybackManagerImpl @Inject constructor(
 
         if(shuffledSongs.isNotEmpty()) {
             _queue.value = shuffledSongs
+            _mediaController.value?.clearMediaItems()
             _mediaController.value?.addMediaItems(_queue.value)
         }
     }
 
     private suspend fun unshuffleSongs() = withContext(Dispatchers.Main) {
         _queue.value = _unshuffledQueue.value
+        _mediaController.value?.clearMediaItems()
         _mediaController.value?.addMediaItems(_queue.value)
     }
 
