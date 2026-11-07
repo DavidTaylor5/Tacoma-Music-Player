@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment.pages
+package com.andaagii.tacomamusicplayer.ui.pages.SongPage
 
 import android.os.Bundle
 import android.text.Editable
@@ -22,14 +22,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG
-import androidx.recyclerview.widget.ItemTouchHelper.DOWN
-import androidx.recyclerview.widget.ItemTouchHelper.END
-import androidx.recyclerview.widget.ItemTouchHelper.START
-import androidx.recyclerview.widget.ItemTouchHelper.UP
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.adapter.SongListAdapter
 import com.andaagii.tacomamusicplayer.constants.Const
@@ -37,14 +31,8 @@ import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.databinding.FragmentSonglistBinding
 import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.SongGroupType
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.ADD_TO_QUEUE
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.CHECK_STATS
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.PLAY_SONG_GROUP
-import com.andaagii.tacomamusicplayer.util.MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
-import com.andaagii.tacomamusicplayer.viewmodel.SongListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -63,20 +51,20 @@ class SongListFragment(): Fragment() {
 
     private val itemTouchHelper by lazy {
         val simpleItemTouchCallback =
-            object : ItemTouchHelper.SimpleCallback(UP or DOWN or START or END, 0) {
+            object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.START or ItemTouchHelper.END, 0) {
 
-                override fun onSelectedChanged(viewHolder: ViewHolder?, actionState: Int) {
+                override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                     super.onSelectedChanged(viewHolder, actionState)
 
                     //When an item is being dragged, I set alpha to .5
-                    if(actionState == ACTION_STATE_DRAG) {
+                    if(actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
                         viewHolder?.itemView?.alpha = 0.5f
                     }
                 }
 
                 override fun clearView(
                     recyclerView: RecyclerView,
-                    viewHolder: ViewHolder
+                    viewHolder: RecyclerView.ViewHolder
                 ) {
                     super.clearView(recyclerView, viewHolder)
                     viewHolder.itemView.alpha = 1.0f
@@ -84,8 +72,8 @@ class SongListFragment(): Fragment() {
 
                 override fun onMove(
                     recyclerView: RecyclerView,
-                    viewHolder: ViewHolder,
-                    target: ViewHolder
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
                 ): Boolean {
                     val adapter = recyclerView.adapter as SongListAdapter
                     val from = viewHolder.bindingAdapterPosition
@@ -252,7 +240,7 @@ class SongListFragment(): Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 parentViewModel.availablePlaylists.collect { playlists ->
                     val playlistsWithoutQueue = playlists.filter { playlist ->
-                        playlist.mediaMetadata.albumTitle != Const.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.ORIGINAL_QUEUE_ORDER
+                        playlist.mediaMetadata.albumTitle != Const.Companion.PLAYLIST_QUEUE_TITLE && playlist.mediaMetadata.albumTitle != Const.Companion.ORIGINAL_QUEUE_ORDER
                     }
                     binding.playlistPrompt.setPlaylistData(playlistsWithoutQueue)
                 }
@@ -288,7 +276,7 @@ class SongListFragment(): Fragment() {
             menu.setOnMenuItemClickListener {
                 Toast.makeText(binding.root.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 handleSongSetting(
-                    MenuOptionUtil.determineMenuOptionFromTitle(it.toString()),
+                    MenuOptionUtil.Companion.determineMenuOptionFromTitle(it.toString()),
                     parentViewModel.currentSongGroup.value?.songs ?: listOf()
                 )
                 return@setOnMenuItemClickListener true
@@ -333,7 +321,7 @@ class SongListFragment(): Fragment() {
             menu.setOnMenuItemClickListener {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
                 //I don't need to add any more songs here, already added when selected.
-                handleSongSetting(MenuOptionUtil.determineMenuOptionFromTitle(it.title.toString()),  viewModel.currentlySelectedSongs.value ?: listOf())
+                handleSongSetting(MenuOptionUtil.Companion.determineMenuOptionFromTitle(it.title.toString()),  viewModel.currentlySelectedSongs.value ?: listOf())
                 return@setOnMenuItemClickListener true
             }
             menu.show()
@@ -359,7 +347,7 @@ class SongListFragment(): Fragment() {
                 false
             }
         }
-        
+
         binding.searchEditText.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 
@@ -495,16 +483,16 @@ class SongListFragment(): Fragment() {
         clearCurrentSongs()
     }
 
-    private fun handleViewHolderHandleDrag(viewHolder: ViewHolder) {
+    private fun handleViewHolderHandleDrag(viewHolder: RecyclerView.ViewHolder) {
         itemTouchHelper.startDrag(viewHolder)
     }
 
     private fun setupCreatePlaylistPrompt() {
         //set playlist prompt hint
-        binding.createPlaylistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
+        binding.createPlaylistPrompt.setTextInputHint(Const.Companion.NEW_PLAYLIST_HINT)
 
         //Option 1 Button will be Cancel the prompt
-        binding.createPlaylistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.createPlaylistPrompt.setOption1ButtonText(Const.Companion.CANCEL)
         binding.createPlaylistPrompt.setOption1ButtonOnClick {
             binding.createPlaylistPrompt.closePrompt()
             parentViewModel.removeVirtualKeyboard()
@@ -512,7 +500,7 @@ class SongListFragment(): Fragment() {
         }
 
         //Option 2 Button will be add a new playlist
-        binding.createPlaylistPrompt.setOption2ButtonText(Const.ADD)
+        binding.createPlaylistPrompt.setOption2ButtonText(Const.Companion.ADD)
         binding.createPlaylistPrompt.setOption2ButtonOnClick {
             parentViewModel.removeVirtualKeyboard()
             parentViewModel.createNamedPlaylist(binding.createPlaylistPrompt.getUserInputtedText())
@@ -559,15 +547,15 @@ class SongListFragment(): Fragment() {
         Timber.d("handleSongSetting: menuOption=$menuOption, mediaItems=${mediaItems.map { it.mediaMetadata.title }}")
 
         when (menuOption) {
-            PLAY_SONG_GROUP -> handlePlaySongGroup()
-            ADD_TO_PLAYLIST -> {
+            MenuOptionUtil.MenuOption.PLAY_SONG_GROUP -> handlePlaySongGroup()
+            MenuOptionUtil.MenuOption.ADD_TO_PLAYLIST -> {
                 viewModel.prepareSongsForPlaylists()
                 songsToAddToPlaylistPrompt = mediaItems
                 handleAddToPlaylist(mediaItems)
 
                 //TODO there is an edgecase where user can add a song from a playlist to the same playlist and it wont refresh...
             }
-            REMOVE_FROM_PLAYLIST -> {
+            MenuOptionUtil.MenuOption.REMOVE_FROM_PLAYLIST -> {
                 if(mediaItems.isNotEmpty()) {
                     val deletedSongPositions = (binding.displayRecyclerview.adapter as SongListAdapter).removeSongs(mediaItems.map { it.mediaMetadata.title.toString() })
                     if(deletedSongPositions.size == 1) {
@@ -583,8 +571,8 @@ class SongListFragment(): Fragment() {
                     viewModel.clearMultiSelectSongs()
                 }
             }
-            ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
-            CHECK_STATS -> { /*TODO */ }
+            MenuOptionUtil.MenuOption.ADD_TO_QUEUE -> handleAddToQueue(mediaItems)
+            MenuOptionUtil.MenuOption.CHECK_STATS -> { /*TODO */ }
             else -> { Timber.d("handleSongSetting: UNKNOWN SETTING") }
         }
     }
@@ -640,7 +628,7 @@ class SongListFragment(): Fragment() {
      * Should show when there is no songs in the current song list, not an empty playlist.
      */
     private fun determineIfShowingInformationScreen(songGroup: SongGroup?) {
-        
+
         Timber.d("determineIfShowingInformationScreen: songGroup.type=${songGroup?.type}, songGroup.songs=${songGroup?.songs}")
 
         if(songGroup == null) {
@@ -667,7 +655,8 @@ class SongListFragment(): Fragment() {
     private fun setupPage() {
         binding.songGroupInfo.setSongGroupTitleText("PARTICULAR ALBUM - ARTIST")
 
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         //First Icon will be the playlists
         binding.songListInformationScreen.setFirstInfo(getString(R.string.choose_a_playlist_to_view))

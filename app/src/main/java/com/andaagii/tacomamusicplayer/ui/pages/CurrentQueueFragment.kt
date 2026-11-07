@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment.pages
+package com.andaagii.tacomamusicplayer.ui.pages
 
 import android.os.Bundle
 import android.transition.TransitionInflater
@@ -24,7 +24,7 @@ import com.andaagii.tacomamusicplayer.adapter.QueueListAdapter
 import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.databinding.FragmentCurrentQueueBinding
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber

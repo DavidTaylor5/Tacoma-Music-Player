@@ -4,11 +4,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.andaagii.tacomamusicplayer.enumtype.PageType
-import com.andaagii.tacomamusicplayer.fragment.pages.CurrentQueueFragment
-import com.andaagii.tacomamusicplayer.fragment.pages.MusicPlayingFragment
-import com.andaagii.tacomamusicplayer.fragment.pages.AlbumListFragment
-import com.andaagii.tacomamusicplayer.fragment.pages.PlaylistFragment
-import com.andaagii.tacomamusicplayer.fragment.pages.SongListFragment
+import com.andaagii.tacomamusicplayer.ui.pages.CurrentQueueFragment
+import com.andaagii.tacomamusicplayer.ui.pages.MusicPlayingFragment
+import com.andaagii.tacomamusicplayer.ui.pages.AlbumPage.AlbumListFragment
+import com.andaagii.tacomamusicplayer.ui.pages.PlaylistPage.PlaylistFragment
+import com.andaagii.tacomamusicplayer.ui.pages.SongPage.SongListFragment
 
 private const val NUM_PAGES = 5
 class ScreenSlidePagerAdapter(

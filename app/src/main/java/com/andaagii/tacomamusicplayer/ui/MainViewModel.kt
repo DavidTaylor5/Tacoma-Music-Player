@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.viewmodel
+package com.andaagii.tacomamusicplayer.ui
 
 import android.app.Application
 import android.content.pm.PackageManager
@@ -9,7 +9,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
-import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.ScreenData
 import com.andaagii.tacomamusicplayer.data.SongGroup
 import com.andaagii.tacomamusicplayer.database.PlayerDatabase
@@ -25,7 +24,7 @@ import com.andaagii.tacomamusicplayer.repository.MusicProviderRepository
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.MediaItemUtil
-import com.andaagii.tacomamusicplayer.util.UtilImpl.Companion.deletePicture
+import com.andaagii.tacomamusicplayer.util.UtilImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -98,33 +97,34 @@ class MainViewModel @Inject constructor(
 
     val shouldShowAddPlaylistPromptOnPlaylistPage: LiveData<Boolean>
         get() = _shouldShowAddPlaylistPromptOnPlaylistPage
-    private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> = MutableLiveData(false)
+    private val _shouldShowAddPlaylistPromptOnPlaylistPage: MutableLiveData<Boolean> =
+        MutableLiveData(false)
 
     val playbackStateFlow: StateFlow<PlaybackState> = playbackManager.playbackStateFlow
         .stateIn(
             viewModelScope,
-            SharingStarted.Eagerly,
+            SharingStarted.Companion.Eagerly,
             PlaybackState()
         )
 
     val controlStateFlow: StateFlow<ControlState> = playbackManager.controlStateFlow
         .stateIn(
             viewModelScope,
-            SharingStarted.Eagerly,
+            SharingStarted.Companion.Eagerly,
             ControlState()
         )
 
     val positionStateFlow: StateFlow<PositionState> = playbackManager.positionStateFlow
         .stateIn(
             viewModelScope,
-            SharingStarted.Eagerly,
+            SharingStarted.Companion.Eagerly,
             PositionState()
         )
 
     val availablePlaylists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
+            SharingStarted.Companion.WhileSubscribed(5_000),
             listOf()
         )
 
@@ -233,7 +233,7 @@ class MainViewModel @Inject constructor(
             addListOfSongMediaItemsToAPlaylist(playlist, songs)
         }
     }
-    
+
     fun updatePlaylistTitle(currentTitle: String, newTitle: String ) {
         Timber.d("updatePlaylistTitle: currentTitle=$currentTitle, newTitle=$newTitle")
         viewModelScope.launch(Dispatchers.IO) {
@@ -393,7 +393,7 @@ class MainViewModel @Inject constructor(
 
         //clear the previous album
         _currentSongGroup.value = SongGroup(
-            type=SongGroupType.ALBUM,
+            type = SongGroupType.ALBUM,
             songs = listOf(),
             group = MediaItem.EMPTY,
         )
@@ -497,17 +497,20 @@ class MainViewModel @Inject constructor(
     private fun removePlaylist(playlistTitle: String) {
         Timber.d("removePlaylist: playlistTitle=$playlistTitle")
         viewModelScope.launch(Dispatchers.IO) {
-            val playlist = PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+            val playlist = PlayerDatabase.Companion.getDatabase(getApplication<Application>().applicationContext)
                 .songGroupDao()
                 .findSongGroupByName(playlistTitle)
 
             if(playlist != null) {
-                PlayerDatabase.getDatabase(getApplication<Application>().applicationContext)
+                PlayerDatabase.Companion.getDatabase(getApplication<Application>().applicationContext)
                     .songGroupDao()
                     .deleteSongGroups(playlist)
 
                 //remove associated image
-                deletePicture(getApplication<Application>().applicationContext, "$playlistTitle.jpg")
+                UtilImpl.Companion.deletePicture(
+                    getApplication<Application>().applicationContext,
+                    "$playlistTitle.jpg"
+                )
             }
         }
     }
@@ -533,7 +536,7 @@ class MainViewModel @Inject constructor(
         grantResults: IntArray
     ) {
         Timber.d("handlePermissionResult: requestCode=$requestCode, permissions=$permissions, grantResults=$grantResults")
-        if(requestCode == AppPermissionUtil.readMediaAudioRequestCode) {
+        if(requestCode == AppPermissionUtil.Companion.readMediaAudioRequestCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Timber.d("handlePermissionResult: read audio granted!")
                 _isAudioPermissionGranted.value = true
@@ -541,7 +544,7 @@ class MainViewModel @Inject constructor(
                 Timber.d("handlePermissionResult: read audio NOT granted!")
                 setScreenData(ScreenType.PERMISSION_DENIED_SCREEN)
             }
-        } else if(requestCode == AppPermissionUtil.readExternalStorageCode) {
+        } else if(requestCode == AppPermissionUtil.Companion.readExternalStorageCode) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Timber.d("handlePermissionResult: read audio granted!")
                 _isAudioPermissionGranted.value = true

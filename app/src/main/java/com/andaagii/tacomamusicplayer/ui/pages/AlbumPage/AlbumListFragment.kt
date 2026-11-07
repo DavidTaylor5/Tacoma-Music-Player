@@ -1,6 +1,6 @@
-package com.andaagii.tacomamusicplayer.fragment.pages
+package com.andaagii.tacomamusicplayer.ui.pages.AlbumPage
 
-import android.app.Activity.RESULT_OK
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
@@ -27,8 +27,7 @@ import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
-import com.andaagii.tacomamusicplayer.viewmodel.AlbumTabViewModel
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -48,7 +47,7 @@ class AlbumListFragment: Fragment() {
     private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
 
     private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if(result.resultCode == RESULT_OK) {
+        if(result.resultCode == Activity.RESULT_OK) {
             Timber.d("getCroppedPicture: RESULT_OK")
             result.data?.let { cropData ->
                 val croppedUri = UCrop.getOutput(cropData)
@@ -76,7 +75,7 @@ class AlbumListFragment: Fragment() {
         }
 
         pictureUri?.let { uri ->
-            val saveFileUri = UtilImpl.getSaveFileUri(
+            val saveFileUri = UtilImpl.Companion.getSaveFileUri(
                 context = requireContext(),
                 fileName = selectedAlbumName,
                 isCustom = true
@@ -100,7 +99,7 @@ class AlbumListFragment: Fragment() {
                 viewModel.albumTabState.collect { state ->
 
                     // Sort the albums by user preference
-                    val sortedAlbums = SortingUtil.sortAlbums(
+                    val sortedAlbums = SortingUtil.Companion.sortAlbums(
                         state.albums,
                         state.sorting
                     )
@@ -164,7 +163,7 @@ class AlbumListFragment: Fragment() {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Update the Sorting for the tab.
-                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+                val chosenSortingOption = SortingUtil.Companion.determineSortingOptionFromTitle(it.title.toString())
                 viewModel.saveAlbumSorting(requireContext(), chosenSortingOption)
 
                 return@setOnMenuItemClickListener true
@@ -178,7 +177,8 @@ class AlbumListFragment: Fragment() {
     private fun initializeLinearLayout(
         albums: List<MediaItem>
     ) {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding.displayRecyclerview.adapter = AlbumListAdapter(
             this@AlbumListFragment::onAlbumClick,
             parentViewModel::playAlbum,
@@ -191,7 +191,8 @@ class AlbumListFragment: Fragment() {
     private fun initializeGridLayout(
         albums: List<MediaItem>
     ) {
-        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
+        binding.displayRecyclerview.layoutManager =
+            GridLayoutManager(context, UtilImpl.Companion.determineGridSize())
         binding.displayRecyclerview.adapter = AlbumGridAdapter(
             this@AlbumListFragment::onAlbumClick,
             parentViewModel::playAlbum,
@@ -201,7 +202,7 @@ class AlbumListFragment: Fragment() {
             .submitList(albums)
     }
 
-    private fun addCustomAlbumImage(album:MediaItem, customAlbumImageName: String) {
+    private fun addCustomAlbumImage(album: MediaItem, customAlbumImageName: String) {
         //Album that I should update the image for
         albumCustomImageName = customAlbumImageName
         selectedAlbumName = album.mediaMetadata.albumTitle.toString()

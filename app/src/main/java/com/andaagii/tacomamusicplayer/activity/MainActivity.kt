@@ -23,12 +23,12 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import com.andaagii.tacomamusicplayer.databinding.ActivityMainBinding
 import com.andaagii.tacomamusicplayer.enumtype.ScreenType
-import com.andaagii.tacomamusicplayer.fragment.PermissionDeniedFragment
-import com.andaagii.tacomamusicplayer.fragment.PlayerDisplayFragment
+import com.andaagii.tacomamusicplayer.ui.PermissionDeniedFragment
+import com.andaagii.tacomamusicplayer.ui.PlayerDisplayFragment
 import com.andaagii.tacomamusicplayer.observer.MusicContentObserver
 import com.andaagii.tacomamusicplayer.util.AppPermissionUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import com.andaagii.tacomamusicplayer.worker.CatalogMusicWorker
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber

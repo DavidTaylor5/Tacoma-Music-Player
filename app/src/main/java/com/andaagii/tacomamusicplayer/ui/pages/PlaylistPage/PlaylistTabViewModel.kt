@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.viewmodel
+package com.andaagii.tacomamusicplayer.ui.pages.PlaylistPage
 
 import android.app.Application
 import android.content.Context
@@ -7,11 +7,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.repository.MusicRepository
-import com.andaagii.tacomamusicplayer.state.AlbumTabState
 import com.andaagii.tacomamusicplayer.state.PlaylistTabState
 import com.andaagii.tacomamusicplayer.util.DataStoreUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
-import com.andaagii.tacomamusicplayer.util.SortingUtil.SortingOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,26 +26,26 @@ class PlaylistTabViewModel @Inject constructor(
     application: Application,
     private val musicRepo: MusicRepository,
 ): AndroidViewModel(application) {
-    private val _sortingFlow = DataStoreUtil.getPlaylistSortingPreference(application.applicationContext)
-        .map { layoutStr -> SortingUtil.determineSortingOptionFromTitle(layoutStr) }
+    private val _sortingFlow = DataStoreUtil.Companion.getPlaylistSortingPreference(application.applicationContext)
+        .map { layoutStr -> SortingUtil.Companion.determineSortingOptionFromTitle(layoutStr) }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            SortingOption.SORTING_TITLE_ALPHABETICAL
+            SharingStarted.Companion.WhileSubscribed(5_000),
+            SortingUtil.SortingOption.SORTING_TITLE_ALPHABETICAL
         )
 
-    private val _layoutFlow = DataStoreUtil.getPlaylistLayoutPreference(application.applicationContext)
-        .map { layoutStr ->  LayoutType.determineLayoutFromString(layoutStr) }
+    private val _layoutFlow = DataStoreUtil.Companion.getPlaylistLayoutPreference(application.applicationContext)
+        .map { layoutStr ->  LayoutType.Companion.determineLayoutFromString(layoutStr) }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
+            SharingStarted.Companion.WhileSubscribed(5_000),
             LayoutType.LINEAR_LAYOUT
         )
 
     private val _playlists: StateFlow<List<MediaItem>> = musicRepo.getAllAvailablePlaylistFlow()
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
+            SharingStarted.Companion.WhileSubscribed(5_000),
             listOf()
         )
 
@@ -63,10 +61,10 @@ class PlaylistTabViewModel @Inject constructor(
         )
     }.stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(5_000),
+        SharingStarted.Companion.WhileSubscribed(5_000),
         PlaylistTabState(
             playlists = listOf(),
-            sorting = SortingOption.SORTING_TITLE_ALPHABETICAL,
+            sorting = SortingUtil.SortingOption.SORTING_TITLE_ALPHABETICAL,
             layout = LayoutType.LINEAR_LAYOUT
         )
     )
@@ -74,14 +72,14 @@ class PlaylistTabViewModel @Inject constructor(
     fun savePlaylistLayout(context: Context, layout: LayoutType) {
         Timber.d("savePlaylistLayout: layout=$layout")
         viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setPlaylistLayoutPreference(context, layout)
+            DataStoreUtil.Companion.setPlaylistLayoutPreference(context, layout)
         }
     }
 
     fun savePlaylistSorting(context: Context, sorting: SortingUtil.SortingOption) {
         Timber.d("savePlaylistSorting: sorting=$sorting")
         viewModelScope.launch(Dispatchers.IO) {
-            DataStoreUtil.setPlaylistSortingPreference(context, sorting)
+            DataStoreUtil.Companion.setPlaylistSortingPreference(context, sorting)
         }
     }
 }

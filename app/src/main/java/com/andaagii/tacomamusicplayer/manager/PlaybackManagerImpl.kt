@@ -8,7 +8,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.di.ApplicationScope
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
@@ -33,12 +32,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.Collections
 import javax.inject.Inject
 import kotlin.collections.map
-import kotlin.to
-
-// Shuffle isn't updating queue correctly
 
 class PlaybackManagerImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
