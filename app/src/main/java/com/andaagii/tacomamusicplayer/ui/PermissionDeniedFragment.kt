@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment
+package com.andaagii.tacomamusicplayer.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater

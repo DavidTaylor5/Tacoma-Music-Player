@@ -1,10 +1,9 @@
-package com.andaagii.tacomamusicplayer.viewmodel
+package com.andaagii.tacomamusicplayer.ui.pages.SongPage
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
-import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
 
 //@HiltViewModel
@@ -24,7 +23,8 @@ class SongListViewModel: ViewModel() {
 
     val currentlySelectedSongs: LiveData<List<MediaItem>>
         get() = _currentlySelectedSongs
-    private val _currentlySelectedSongs: MutableLiveData<List<MediaItem>> = MutableLiveData(listOf())
+    private val _currentlySelectedSongs: MutableLiveData<List<MediaItem>> =
+        MutableLiveData(listOf())
 
     val isPlaylistPromptAddClickable: LiveData<Boolean>
         get() = _isPlaylistPromptAddClickable
@@ -35,7 +35,7 @@ class SongListViewModel: ViewModel() {
      */
     fun prepareSongsForPlaylists() {
         Timber.d("prepareSongsForPlaylists: ")
-        
+
         val resetCheckedPlaylists = mutableListOf<String>()
 
         //As I prepare a song for playlists, I don't yet know which playlist I'm going to add it to
@@ -70,7 +70,7 @@ class SongListViewModel: ViewModel() {
 
     fun clearMultiSelectSongs() {
         Timber.d("clearMultiSelectSongs: ")
-        
+
         _currentlySelectedSongs.postValue(listOf())
         _isShowingMultiSelectPrompt.postValue(false)
     }
@@ -83,7 +83,7 @@ class SongListViewModel: ViewModel() {
      */
     fun updateCheckedPlaylists(playlistTitle: String, isChecked: Boolean ) {
         Timber.d("updateCheckedPlaylists: ")
-        
+
         //I keep a copy of updated playlists, to determine if 'Add' button is enabled.
         var updatedPlaylistsWithCheckmarks = mutableListOf<String>()
 

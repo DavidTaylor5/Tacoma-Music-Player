@@ -1,4 +1,4 @@
-package com.andaagii.tacomamusicplayer.fragment.pages
+package com.andaagii.tacomamusicplayer.ui.pages
 
 import android.os.Bundle
 import android.util.Size
@@ -17,10 +17,9 @@ import androidx.media3.common.util.UnstableApi
 import com.andaagii.tacomamusicplayer.R
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.databinding.FragmentMusicPlayingBinding
-import com.andaagii.tacomamusicplayer.enumtype.PageType
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
 import com.andaagii.tacomamusicplayer.util.UtilImpl
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber

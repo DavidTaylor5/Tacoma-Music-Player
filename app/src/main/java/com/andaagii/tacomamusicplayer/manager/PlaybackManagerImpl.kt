@@ -8,7 +8,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.andaagii.tacomamusicplayer.constants.Const
-import com.andaagii.tacomamusicplayer.data.DisplaySong
 import com.andaagii.tacomamusicplayer.data.SongData
 import com.andaagii.tacomamusicplayer.di.ApplicationScope
 import com.andaagii.tacomamusicplayer.enumtype.ShuffleType
@@ -33,12 +32,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.Collections
 import javax.inject.Inject
 import kotlin.collections.map
-import kotlin.to
-
-// Shuffle isn't updating queue correctly
 
 class PlaybackManagerImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -361,7 +356,7 @@ class PlaybackManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun flipLoopMode() = withContext(Dispatchers.IO) {
+    override suspend fun flipLoopMode() = withContext(Dispatchers.Main) {
         if(_loopingFlow.value == Player.REPEAT_MODE_OFF) {
             Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_ONE}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ONE
@@ -372,7 +367,6 @@ class PlaybackManagerImpl @Inject constructor(
             Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_OFF}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_OFF
         }
-
         saveLoopingPref(context, _mediaController.value?.repeatMode ?: Player.REPEAT_MODE_ONE)
     }
 

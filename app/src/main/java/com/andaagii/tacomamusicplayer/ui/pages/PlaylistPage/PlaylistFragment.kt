@@ -1,13 +1,14 @@
-package com.andaagii.tacomamusicplayer.fragment.pages
+package com.andaagii.tacomamusicplayer.ui.pages.PlaylistPage
 
-import android.app.Activity.RESULT_OK
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
-import android.text.Layout
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -24,17 +25,15 @@ import com.andaagii.tacomamusicplayer.constants.Const
 import com.andaagii.tacomamusicplayer.databinding.FragmentPlaylistBinding
 import com.andaagii.tacomamusicplayer.enumtype.LayoutType
 import com.andaagii.tacomamusicplayer.enumtype.PageType
+import com.andaagii.tacomamusicplayer.ui.MainViewModel
 import com.andaagii.tacomamusicplayer.util.MenuOptionUtil
 import com.andaagii.tacomamusicplayer.util.SortingUtil
 import com.andaagii.tacomamusicplayer.util.UtilImpl
-import com.andaagii.tacomamusicplayer.viewmodel.MainViewModel
-import com.andaagii.tacomamusicplayer.viewmodel.PlaylistTabViewModel
+import com.andaagii.tacomamusicplayer.ui.pages.PlaylistPage.PlaylistTabViewModel
 import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import android.widget.PopupMenu
-import android.widget.Toast
 
 @AndroidEntryPoint
 class PlaylistFragment: Fragment() {
@@ -49,7 +48,7 @@ class PlaylistFragment: Fragment() {
     private var currLayout: LayoutType = LayoutType.LINEAR_LAYOUT
 
     private val getCroppedPicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if(result.resultCode == RESULT_OK) {
+        if(result.resultCode == Activity.RESULT_OK) {
             Timber.d("getCroppedPicture: RESULT_OK")
             result.data?.let { cropData ->
                 val croppedUri = UCrop.getOutput(cropData)
@@ -77,7 +76,7 @@ class PlaylistFragment: Fragment() {
         }
 
         pictureUri?.let { uri ->
-            val saveFileUri = UtilImpl.getSaveFileUri(
+            val saveFileUri = UtilImpl.Companion.getSaveFileUri(
                 context = requireContext(),
                 fileName = playlistThatNeedsNewImage,
                 isCustom = true
@@ -100,7 +99,7 @@ class PlaylistFragment: Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.playlistTabState.collect { state ->
                     // Sort the playlists by user preference
-                    val sortedPlaylists = SortingUtil.sortPlaylists(
+                    val sortedPlaylists = SortingUtil.Companion.sortPlaylists(
                         state.playlists,
                         state.sorting
                     )
@@ -172,7 +171,7 @@ class PlaylistFragment: Fragment() {
                 Toast.makeText(this.context, "You Clicked " + it.title, Toast.LENGTH_SHORT).show()
 
                 //Update the Sorting for the tab.
-                val chosenSortingOption = SortingUtil.determineSortingOptionFromTitle(it.title.toString())
+                val chosenSortingOption = SortingUtil.Companion.determineSortingOptionFromTitle(it.title.toString())
                 viewModel.savePlaylistSorting(requireContext(), chosenSortingOption)
 
                 return@setOnMenuItemClickListener true
@@ -191,7 +190,8 @@ class PlaylistFragment: Fragment() {
     private fun initializeLinearLayout(
         playlists: List<MediaItem>
     ) {
-        binding.displayRecyclerview.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.displayRecyclerview.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding.displayRecyclerview.adapter = PlaylistAdapter(
             this::onPlaylistClick,
             parentViewModel::playPlaylist,
@@ -204,7 +204,8 @@ class PlaylistFragment: Fragment() {
     private fun initializeGridLayout(
         playlists: List<MediaItem>
     ) {
-        binding.displayRecyclerview.layoutManager = GridLayoutManager(context, UtilImpl.determineGridSize())
+        binding.displayRecyclerview.layoutManager =
+            GridLayoutManager(context, UtilImpl.Companion.determineGridSize())
         binding.displayRecyclerview.adapter = PlaylistGridAdapter(
             this::onPlaylistClick,
             parentViewModel::playPlaylist,
@@ -269,17 +270,17 @@ class PlaylistFragment: Fragment() {
 
     private fun setupRenamePlaylistPrompt(playlistTitle: String) {
         //set playlist prompt hint
-        binding.playlistPrompt.setTextInputHint(Const.RENAME_PLAYLIST_HINT)
+        binding.playlistPrompt.setTextInputHint(Const.Companion.RENAME_PLAYLIST_HINT)
 
         // Option 1 will be to cancel
-        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.playlistPrompt.setOption1ButtonText(Const.Companion.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
-        binding.playlistPrompt.setOption2ButtonText(Const.UPDATE)
+        binding.playlistPrompt.setOption2ButtonText(Const.Companion.UPDATE)
         binding.playlistPrompt.setOption2ButtonOnClick {
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
@@ -292,17 +293,17 @@ class PlaylistFragment: Fragment() {
 
     private fun setupCreatePlaylistPrompt() {
         //set playlist prompt hint
-        binding.playlistPrompt.setTextInputHint(Const.NEW_PLAYLIST_HINT)
+        binding.playlistPrompt.setTextInputHint(Const.Companion.NEW_PLAYLIST_HINT)
 
         // Option 1 will be to cancel
-        binding.playlistPrompt.setOption1ButtonText(Const.CANCEL)
+        binding.playlistPrompt.setOption1ButtonText(Const.Companion.CANCEL)
         binding.playlistPrompt.setOption1ButtonOnClick {
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
         }
 
         // Option 2 will be to create a new playlist with given name
-        binding.playlistPrompt.setOption2ButtonText(Const.ADD)
+        binding.playlistPrompt.setOption2ButtonText(Const.Companion.ADD)
         binding.playlistPrompt.setOption2ButtonOnClick {
             parentViewModel.removeVirtualKeyboard()
             binding.playlistPrompt.visibility = View.GONE
