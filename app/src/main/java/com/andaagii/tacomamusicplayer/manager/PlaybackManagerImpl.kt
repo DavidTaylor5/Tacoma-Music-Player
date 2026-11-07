@@ -356,7 +356,7 @@ class PlaybackManagerImpl @Inject constructor(
         }
     }
 
-    override suspend fun flipLoopMode() = withContext(Dispatchers.IO) {
+    override suspend fun flipLoopMode() = withContext(Dispatchers.Main) {
         if(_loopingFlow.value == Player.REPEAT_MODE_OFF) {
             Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_ONE}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_ONE
@@ -367,7 +367,6 @@ class PlaybackManagerImpl @Inject constructor(
             Timber.d("flipRepeatMode: ${Player.REPEAT_MODE_OFF}")
             _mediaController.value?.repeatMode = Player.REPEAT_MODE_OFF
         }
-
         saveLoopingPref(context, _mediaController.value?.repeatMode ?: Player.REPEAT_MODE_ONE)
     }
 
